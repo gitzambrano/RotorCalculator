@@ -508,7 +508,7 @@ Private Sub BuildPageGeom
 	pnlBack0.Initialize("")
 	pnlBack0.Color = ColorPnlInput5
 	scvGeom.Initialize(2500)
-	pnlBack0.AddView(scvGeom, 0, 0, root.Width, root.Height - 102dip * sc)
+	pnlBack0.AddView(scvGeom, 0, 0, root.Width, root.Height - HeaderHeight)
 	
 	Dim ib As Int = 4dip
 	Dim tb As Int = 48dip
@@ -618,7 +618,7 @@ Private Sub BuildPageCond
 	pnlBack1.Initialize("")
 	pnlBack1.Color = ColorPnlInput5
 	scvCond.Initialize(2500)
-	pnlBack1.AddView(scvCond, 0, 0, root.Width, root.Height - 102dip * sc)
+	pnlBack1.AddView(scvCond, 0, 0, root.Width, root.Height - HeaderHeight)
 	
 	Dim ib As Int = 4dip
 	Dim tb As Int = 48dip
@@ -705,7 +705,7 @@ Private Sub BuildPageRes
 	pnlBack2.Initialize("")
 	pnlBack2.Color = ColorPnlInput5
 	scvRes.Initialize(2500)
-	pnlBack2.AddView(scvRes, 0, 0, root.Width, root.Height - 102dip * sc)
+	pnlBack2.AddView(scvRes, 0, 0, root.Width, root.Height - HeaderHeight)
 	
 	Dim PanelHeight1 As Int = 40dip * sc
 	
