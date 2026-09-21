@@ -45,7 +45,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
       - name: Install numerical test dependencies
         run: python -m pip install --disable-pip-version-check numpy pandas matplotlib pytest
       - name: Verify zBET reference cases
@@ -361,6 +360,7 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_2
+          emulator-build: '7425822'
           emulator-boot-timeout: 420
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
