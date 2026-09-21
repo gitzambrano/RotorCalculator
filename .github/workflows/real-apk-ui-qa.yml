@@ -1,9 +1,6 @@
-name: Real APK UI QA
+name: Legacy Prebuilt APK UI QA
 
 on:
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
