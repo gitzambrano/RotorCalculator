@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - ui/frontend-5-star
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
