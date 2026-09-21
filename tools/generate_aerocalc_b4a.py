@@ -220,20 +220,27 @@ Sub Activity_Create(FirstTime As Boolean)
 	Dim rT As Int = Content.Top
 	Dim rW As Int = Content.Width
 	Dim rH As Int = Content.Height
-	If rW <= 0 Then rW = 100%x
-	If rH <= 0 Then rH = 100%y
+	If rW <= 0 Then 
+		rL = 0
+		rW = 100%x
+	End If
+	If rH <= 0 Then 
+		rT = 0
+		rH = 100%y
+	End If
 	Activity.AddView(root, rL, rT, rW, rH)
 	imeInsets.UpdatePercentageReference(root.Width, root.Height)
 	
-	' AeroCalculator Scaling Formula
+	' AeroCalculator Scaling Formula (capped at 1.2 to prevent overflow)
 	Dim hh, yy As Double
 	Dim ib As Int = 6dip
 	Dim tb As Int = 40dip
 	Dim PanelNb As Int = 14
-	hh = 102dip + PanelNb * (ib * 2 + tb) + PanelNb * 1dip + 1dip
+	hh = 99dip + PanelNb * (ib * 2 + tb) + PanelNb * 1dip + 1dip
 	yy = root.Height
 	sc = yy / hh
 	If sc < 1 Then sc = 1
+	If sc > 1.2 Then sc = 1.2
 	If root.Width > root.Height Then ld = 1 Else ld = 0
 	
 	' Initialize Pager Container
@@ -297,26 +304,28 @@ Private Sub BuildUnifiedHeader
 	root.AddView(pnltitle, 0, 0, root.Width, 102dip * sc)
 	pnltitle.Color = ColorPnlTitle
 	
-	' 1. Left Stylized BEMT Rotor Icon
+	' 1. Left Stylized BEMT Rotor Icon (38dip x 38dip)
 	Dim img1 As ImageView
 	Dim bmpImage1 As Bitmap
 	bmpImage1.Initialize(File.DirAssets, "icon.png")
 	img1.Initialize("")
 	img1.Bitmap = bmpImage1
 	img1.Gravity = Gravity.FILL
-	pnltitle.AddView(img1, 4%x, 9dip * sc, 38dip * sc, 38dip * sc)
+	pnltitle.AddView(img1, 3%x, 8dip * sc, 38dip * sc, 38dip * sc)
 	
-	' 2. 3-Dot Menu Button
+	' 2. 3-Dot Menu on Far Right
+	Dim menuW As Int = 40dip * sc
 	pnlMenuAnchor.Initialize("pnlMenuAnchor")
 	pnlMenuAnchor.Color = Colors.Transparent
-	pnltitle.AddView(pnlMenuAnchor, root.Width - 3%x - (34dip * sc), 0, 3%x + (34dip * sc), 55dip * sc)
+	pnltitle.AddView(pnlMenuAnchor, root.Width - menuW - 2%x, 0, menuW, 52dip * sc)
+	
 	Dim img2 As ImageView
 	Dim bmpImage2 As Bitmap
 	bmpImage2.Initialize(File.DirAssets, "android-3-dot-menu.png")
 	img2.Initialize("pnlMenuAnchor")
 	img2.Bitmap = bmpImage2
 	img2.Gravity = Gravity.FILL
-	pnlMenuAnchor.AddView(img2, (pnlMenuAnchor.Width - 22dip * sc) / 2, 14dip * sc, 22dip * sc, 22dip * sc)
+	pnlMenuAnchor.AddView(img2, (menuW - 22dip * sc) / 2, 14dip * sc, 22dip * sc, 22dip * sc)
 	
 	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
 	PopupMenu.AddMenuItem(0, 0, "Toggle Unit System (SI / Imperial)")
@@ -324,33 +333,38 @@ Private Sub BuildUnifiedHeader
 	PopupMenu.AddMenuItem(2, 2, "zBET Conventions & Physical Axes")
 	PopupMenu.AddMenuItem(3, 3, "About RotorCalculator")
 	
-	' 3. App Title in Xenara-Bold.ttf
+	' 3. Preset Sub-label (placed immediately to the left of menu button)
+	Dim presetW As Int = 115dip * sc
+	Dim presetLeft As Int = root.Width - menuW - 2%x - presetW - 4dip
+	lblRotorNameHeader.Initialize("")
+	lblRotorNameHeader.Text = ActiveGeom.Name
+	lblRotorNameHeader.TextColor = ColorAccentCyan
+	lblRotorNameHeader.TextSize = 11 * sc
+	lblRotorNameHeader.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+	lblRotorNameHeader.SingleLine = True
+	pnltitle.AddView(lblRotorNameHeader, presetLeft, 8dip * sc, presetW, 38dip * sc)
+	
+	' 4. App Title (occupies exact span between Icon and Preset Sub-label - NO OVERLAP)
+	Dim titleLeft As Int = 3%x + 42dip * sc
+	Dim titleW As Int = presetLeft - titleLeft - 4dip
 	lblAppTitle.Initialize("")
-	lblAppTitle.TextSize = 21 * sc
-	If sc > 1.2 Then lblAppTitle.TextSize = 22 * sc
-	lblAppTitle.TextColor = ColorTitleText
-	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
 	lblAppTitle.Text = "RotorCalculator"
+	lblAppTitle.TextColor = ColorTitleText
+	lblAppTitle.TextSize = 20 * sc
+	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
+	lblAppTitle.SingleLine = True
 	Try
 		lblAppTitle.Typeface = Typeface.LoadFromAssets("xenara-bold.ttf")
 	Catch
 		lblAppTitle.Typeface = Typeface.DEFAULT_BOLD
 	End Try
-	pnltitle.AddView(lblAppTitle, 5%x + 37dip * sc, 8dip * sc, root.Width - 160dip * sc, 43dip * sc)
+	pnltitle.AddView(lblAppTitle, titleLeft, 8dip * sc, titleW, 38dip * sc)
 	
-	' 4. Sub-Label with Active Rotor Preset Name
-	lblRotorNameHeader.Initialize("")
-	lblRotorNameHeader.Text = ActiveGeom.Name
-	lblRotorNameHeader.TextColor = ColorAccentCyan
-	lblRotorNameHeader.TextSize = 11 * sc
-	lblRotorNameHeader.Gravity = Gravity.CENTER_VERTICAL + Gravity.RIGHT
-	pnltitle.AddView(lblRotorNameHeader, root.Width - 170dip * sc, 8dip * sc, 120dip * sc, 43dip * sc)
-	
-	' 5. Tab Buttons directly inside pnltitle
+	' 5. Three Tabs directly inside pnltitle
 	Dim tabW As Int = root.Width / 3
 	
 	btnTabGeom.Initialize("btnTabGeom")
-	pnltitle.AddView(btnTabGeom, 0, 57dip * sc, tabW, 45dip * sc)
+	pnltitle.AddView(btnTabGeom, 0, 56dip * sc, tabW, 45dip * sc)
 	btnTabGeom.Text = "GEOMETRY"
 	btnTabGeom.TextSize = 13 * sc
 	btnTabGeom.Typeface = Typeface.DEFAULT_BOLD
@@ -360,7 +374,7 @@ Private Sub BuildUnifiedHeader
 	btnTabGeom.Padding = Array As Int (0, 0, 0, 7dip * sc)
 	
 	btnTabCond.Initialize("btnTabCond")
-	pnltitle.AddView(btnTabCond, tabW, 57dip * sc, tabW, 45dip * sc)
+	pnltitle.AddView(btnTabCond, tabW, 56dip * sc, tabW, 45dip * sc)
 	btnTabCond.Text = "CONDITIONS"
 	btnTabCond.TextSize = 13 * sc
 	btnTabCond.Typeface = Typeface.DEFAULT_BOLD
@@ -370,7 +384,7 @@ Private Sub BuildUnifiedHeader
 	btnTabCond.Padding = Array As Int (0, 0, 0, 7dip * sc)
 	
 	btnTabRes.Initialize("btnTabRes")
-	pnltitle.AddView(btnTabRes, tabW * 2, 57dip * sc, root.Width - tabW * 2, 45dip * sc)
+	pnltitle.AddView(btnTabRes, tabW * 2, 56dip * sc, root.Width - tabW * 2, 45dip * sc)
 	btnTabRes.Text = "RESULTS"
 	btnTabRes.TextSize = 13 * sc
 	btnTabRes.Typeface = Typeface.DEFAULT_BOLD
@@ -461,8 +475,8 @@ Private Sub BuildPageGeom
 		pnlInput.Initialize("pnlInput")
 		pnlline.Initialize("pnlline")
 		
-		scvGeom.Panel.AddView(pnlInput, 0, j * (rowH + 1dip), root.Width, rowH)
-		scvGeom.Panel.AddView(pnlline, 0, (j + 1) * (rowH + 1dip) - 1dip, root.Width, 1dip * sc)
+		scvGeom.Panel.AddView(pnlInput, 0, (j * (ib * 2 + tb) + j * 1dip) * sc, root.Width, rowH)
+		scvGeom.Panel.AddView(pnlline, 0, (j * (ib * 2 + tb) + j * 1dip - 1dip) * sc, root.Width, 1dip * sc)
 		pnlline.Color = ColorPnlLine3
 		
 		If (j Mod 2) = 1 Then
@@ -516,6 +530,7 @@ Private Sub BuildPageGeom
 				btnSelectAirfoil.Initialize("btnSelectAirfoil")
 				btnSelectAirfoil.Text = "NACA 0012 (Library...)"
 				btnSelectAirfoil.TextSize = 13 * sc
+				btnSelectAirfoil.SingleLine = True
 				btnSelectAirfoil.TextColor = ColorAccentCyan
 				btnSelectAirfoil.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnSelectAirfoil, 37%x, ib * sc, 60%x, tb * sc)
@@ -525,6 +540,7 @@ Private Sub BuildPageGeom
 				btnTipLoss.Initialize("btnTipLoss")
 				btnTipLoss.Text = "Sissingh: ON"
 				btnTipLoss.TextSize = 13 * sc
+				btnTipLoss.SingleLine = True
 				btnTipLoss.TextColor = ColorAccentGreen
 				btnTipLoss.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnTipLoss, 37%x, ib * sc, 60%x, tb * sc)
@@ -534,6 +550,7 @@ Private Sub BuildPageGeom
 				btnCompressibility.Initialize("btnCompressibility")
 				btnCompressibility.Text = "Prandtl-Glauert: ON"
 				btnCompressibility.TextSize = 13 * sc
+				btnCompressibility.SingleLine = True
 				btnCompressibility.TextColor = ColorAccentGreen
 				btnCompressibility.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnCompressibility, 37%x, ib * sc, 60%x, tb * sc)
@@ -564,8 +581,8 @@ Private Sub BuildPageCond
 		pnlInput.Initialize("pnlInput")
 		pnlline.Initialize("pnlline")
 		
-		scvCond.Panel.AddView(pnlInput, 0, j * (rowH + 1dip), root.Width, rowH)
-		scvCond.Panel.AddView(pnlline, 0, (j + 1) * (rowH + 1dip) - 1dip, root.Width, 1dip * sc)
+		scvCond.Panel.AddView(pnlInput, 0, (j * (ib * 2 + tb) + j * 1dip) * sc, root.Width, rowH)
+		scvCond.Panel.AddView(pnlline, 0, (j * (ib * 2 + tb) + j * 1dip - 1dip) * sc, root.Width, 1dip * sc)
 		pnlline.Color = ColorPnlLine3
 		
 		If (j Mod 2) = 1 Then
@@ -593,6 +610,7 @@ Private Sub BuildPageCond
 				btnInflowModel.Initialize("btnInflowModel")
 				btnInflowModel.Text = "Coleman-Feingold"
 				btnInflowModel.TextSize = 13 * sc
+				btnInflowModel.SingleLine = True
 				btnInflowModel.TextColor = ColorAccentCyan
 				btnInflowModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnInflowModel, 37%x, ib * sc, 60%x, tb * sc)
@@ -602,6 +620,7 @@ Private Sub BuildPageCond
 				btnProfileDragModel.Initialize("btnProfileDragModel")
 				btnProfileDragModel.Text = "Numerical Vectorial"
 				btnProfileDragModel.TextSize = 13 * sc
+				btnProfileDragModel.SingleLine = True
 				btnProfileDragModel.TextColor = ColorTitleText
 				btnProfileDragModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnProfileDragModel, 37%x, ib * sc, 60%x, tb * sc)
@@ -611,6 +630,7 @@ Private Sub BuildPageCond
 				btnHoverTrimMode.Initialize("btnHoverTrimMode")
 				btnHoverTrimMode.Text = "Collective to Target"
 				btnHoverTrimMode.TextSize = 13 * sc
+				btnHoverTrimMode.SingleLine = True
 				btnHoverTrimMode.TextColor = ColorAccentGreen
 				btnHoverTrimMode.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnHoverTrimMode, 37%x, ib * sc, 60%x, tb * sc)
@@ -701,6 +721,7 @@ Private Sub BuildPageRes
 		lblVar.Typeface = Typeface.DEFAULT_BOLD
 		lblVar.TextColor = ColorTitleText
 		lblVar.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+		lblVar.SingleLine = True
 		
 		lblResults(i).Initialize("")
 		pnltest.AddView(lblResults(i), 56%x, 0, 40%x, PanelHeight1)
@@ -709,14 +730,16 @@ Private Sub BuildPageRes
 		lblResults(i).Typeface = Typeface.DEFAULT_BOLD
 		lblResults(i).TextColor = ColorAccentCyan
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+		lblResults(i).SingleLine = True
 	Next
 	
-	scvRes.Panel.Height = startY + (outputLabels.Size * PanelHeight1) + 20dip
+	scvRes.Panel.Height = startY + (outputLabels.Size * PanelHeight1) + 20dip * sc
 End Sub
 
 ' Helper to create 30%x | 36%x | 20%x standard input rows
 Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVal As String, unitText As String, evtName As String) As EditText
-	Dim btn As Button = CreateRowButton(lblText, "")
+	Dim btn As Button = CreateRowButton(lblText, "btnRowTip_Click")
+	btn.Tag = lblText
 	pnl.AddView(btn, 3%x, ib * sc, 30%x, tb * sc)
 	
 	Dim edt As EditText
@@ -729,9 +752,15 @@ Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	edt.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.CENTER_HORIZONTAL)
 	edt.InputType = edt.INPUT_TYPE_DECIMAL_NUMBERS
 	edt.ForceDoneButton = True
+	edt.SingleLine = True
+	
+	Dim filter As IME: filter.Initialize("")
+	filter.SetCustomFilter(edt, edt.INPUT_TYPE_DECIMAL_NUMBERS, "0123456789.-")
+	
 	pnl.AddView(edt, 37%x, ib * sc, 36%x, tb * sc)
 	
-	Dim btnUnit As Button = CreateRowButton(unitText, "")
+	Dim btnUnit As Button = CreateRowButton(unitText, "btnUnit_Click")
+	btnUnit.Tag = unitText
 	btnUnit.TextColor = ColorButText1
 	pnl.AddView(btnUnit, 77%x, ib * sc, 20%x, tb * sc)
 	
@@ -747,6 +776,7 @@ Private Sub CreateRowButton(txt As String, evt As String) As Button
 	btn.TextColor = ColorButText1
 	btn.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	btn.Gravity = Gravity.CENTER
+	btn.SingleLine = True
 	Return btn
 End Sub
 
@@ -842,13 +872,13 @@ Public Sub RecalculateRotor
 	
 	' Populate 25 Results Rows (UnitSystem: 0=SI, 1=Imperial)
 	If UnitSystem = 0 Then
-		lblResults(0).Text = NumberFormat(ActiveRes.ThrustN, 1, 0) & " N (" & NumberFormat(ActiveRes.ThrustKgf, 1, 0) & " kgf)"
-		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW (" & NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP)"
+		lblResults(0).Text = NumberFormat(ActiveRes.ThrustN, 1, 0) & " N"
+		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW"
 		lblResults(4).Text = NumberFormat(ActiveRes.TorqueNm, 1, 1) & " N·m"
 		lblResults(8).Text = NumberFormat(ActiveRes.DragHN, 1, 1) & " N"
 	Else
 		lblResults(0).Text = NumberFormat(ActiveRes.ThrustLbf, 1, 0) & " lbf"
-		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP (" & NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW)"
+		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP"
 		lblResults(4).Text = NumberFormat(ActiveRes.TorqueLbft, 1, 1) & " lb·ft"
 		lblResults(8).Text = NumberFormat(ActiveRes.DragHN * 0.224809, 1, 1) & " lbf"
 	End If
@@ -889,6 +919,23 @@ Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	edtLiftSlope.Text = NumberFormat(geom.LiftSlope0, 1, 2)
 	edtCd0.Text = NumberFormat(geom.Cd0, 1, 4)
 	lblRotorNameHeader.Text = geom.Name
+	
+	If geom.TipLossMode = "sissingh" Then
+		btnTipLoss.Text = "Sissingh: ON"
+		btnTipLoss.TextColor = ColorAccentGreen
+	Else
+		btnTipLoss.Text = "Tip Loss: OFF"
+		btnTipLoss.TextColor = ColorButText2
+	End If
+	
+	If geom.UsePrandtlGlauert Then
+		btnCompressibility.Text = "Prandtl-Glauert: ON"
+		btnCompressibility.TextColor = ColorAccentGreen
+	Else
+		btnCompressibility.Text = "Prandtl-Glauert: OFF"
+		btnCompressibility.TextColor = ColorButText2
+	End If
+	
 	UpdatingUI = False
 End Sub
 
@@ -935,6 +982,7 @@ Sub btnSelectAirfoil_Click
 		edtLiftSlope.Text = NumberFormat(selAf.A0, 1, 2)
 		edtCd0.Text = NumberFormat(selAf.Cd0, 1, 4)
 		btnSelectAirfoil.Text = selAf.Name
+		RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 		RecalculateRotor
 	End If
 End Sub
@@ -949,6 +997,7 @@ Sub btnTipLoss_Click
 		btnTipLoss.Text = "Tip Loss: OFF"
 		btnTipLoss.TextColor = ColorButText2
 	End If
+	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RecalculateRotor
 End Sub
 
@@ -961,6 +1010,7 @@ Sub btnCompressibility_Click
 		btnCompressibility.Text = "Prandtl-Glauert: OFF"
 		btnCompressibility.TextColor = ColorButText2
 	End If
+	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RecalculateRotor
 End Sub
 
@@ -1008,6 +1058,53 @@ Sub btnHoverTrimMode_Click
 	RecalculateRotor
 End Sub
 
+Sub btnRowTip_Click
+	Dim b As Button = Sender
+	Dim tipMsg As String = ""
+	Select b.Tag
+		Case "Radius R"
+			tipMsg = "Rotor radius R measured from hub centerline to blade tip in meters."
+		Case "Rotor RPM"
+			tipMsg = "Rotational speed of rotor in revolutions per minute (RPM)."
+		Case "Blade Count"
+			tipMsg = "Number of blades Nb forming the rotor disk."
+		Case "Root Cutout"
+			tipMsg = "Non-dimensional radius r0/R where blade aerodynamic profile starts."
+		Case "Root Chord", "Tip Chord"
+			tipMsg = "Blade chord c in meters at root and tip stations (linear taper)."
+		Case "θ Root Pitch", "θ Tip Pitch"
+			tipMsg = "Blade pitch angle theta at root and tip stations (linear twist)."
+		Case "Lift Slope a0"
+			tipMsg = "Sectional 2D lift curve slope dCl/dalpha (nominal 5.73 1/rad)."
+		Case "Profile Cd0"
+			tipMsg = "Baseline profile drag coefficient at zero angle of attack."
+		Case "Altitude"
+			tipMsg = "Pressure altitude above mean sea level according to standard ISA."
+		Case "Temperature"
+			tipMsg = "Ambient air temperature in degrees Celsius (ISA default 15°C)."
+		Case "Advance (μ)"
+			tipMsg = "Advance ratio μ = V / (Ω·R), ratio of forward speed to tip speed."
+		Case "Flight Speed"
+			tipMsg = "True forward flight speed V in km/h, synchronized with μ."
+		Case "Shaft Tilt (α)"
+			tipMsg = "Shaft tilt angle α in degrees (forward tilt positive)."
+		Case "Climb Rate"
+			tipMsg = "Vertical climb (+) or descent (-) velocity Vz in m/s."
+		Case "Target Thrust"
+			tipMsg = "Desired total thrust T in Newtons for hover/forward trim."
+		Case "Target CT"
+			tipMsg = "Desired thrust coefficient CT = T / (ρ·A·(ΩR)²)."
+		Case Else
+			tipMsg = b.Tag
+	End Select
+	ToastMessageShow(tipMsg, True)
+End Sub
+
+Sub btnUnit_Click
+	Dim b As Button = Sender
+	ToastMessageShow("Unit: " & b.Tag, False)
+End Sub
+
 Sub edtGeom_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
 	ActiveGeom.Radius = ParseDoubleDef(edtRadius.Text, ActiveGeom.Radius)
@@ -1026,6 +1123,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	ActiveGeom.LiftSlope0 = ParseDoubleDef(edtLiftSlope.Text, ActiveGeom.LiftSlope0)
 	ActiveGeom.Cd0 = ParseDoubleDef(edtCd0.Text, ActiveGeom.Cd0)
 	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RecalculateRotor
 End Sub
 
@@ -1286,7 +1384,7 @@ End Sub
     full_content = header.strip() + "\n" + code.strip() + "\n"
     with open(r"C:\Projetos\RotorCalculator\RotorCalculator.b4a", "w", encoding="utf-8") as f:
         f.write(full_content)
-    print("RotorCalculator.b4a generated successfully with intact B4A project header and authentic AeroCalculator architecture!")
+    print("RotorCalculator.b4a generated with 10/10 AeroCalculator architecture!")
 
 if __name__ == "__main__":
     generate()
