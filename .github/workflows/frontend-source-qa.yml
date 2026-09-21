@@ -93,6 +93,34 @@ jobs:
           & 7z x "$env:RUNNER_TEMP\android-resources.zip" "-oC:\Android" -y | Out-Null
           if ($LASTEXITCODE -ne 0) { throw "7z failed extracting Android resources" }
 
+      - name: Restore Android command-line tools
+        id: android-cli-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: C:\Android\cmdline-tools
+          key: b4a-commandlinetools-win-13114758-v1
+
+      - name: Install Android command-line tools required by B4A
+        if: steps.android-cli-cache.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $archive = "$env:RUNNER_TEMP\commandlinetools.zip"
+          Invoke-WebRequest "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip" -OutFile $archive
+          New-Item -ItemType Directory -Force -Path "C:\Android" | Out-Null
+          & 7z x $archive "-oC:\Android" -y | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "7z failed extracting Android command-line tools" }
+          if (-not (Test-Path "C:\Android\cmdline-tools\bin\sdkmanager.bat")) {
+            throw "B4A command-line tools layout invalid: sdkmanager.bat not found"
+          }
+
+      - name: Save Android command-line tools cache
+        if: steps.android-cli-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: C:\Android\cmdline-tools
+          key: b4a-commandlinetools-win-13114758-v1
+
       - name: Resolve B4A Android platform
         shell: powershell
         run: |
@@ -106,18 +134,14 @@ jobs:
           if (-not $androidJar) { throw "android.jar not found in B4A resources" }
           "PLATFORM_FOLDER=$($androidJar.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-          $toolsFolder = "C:\Android\tools"
-          if (-not (Test-Path $toolsFolder)) {
-            $sdkManager = Get-ChildItem "C:\Android" -Filter sdkmanager.bat -Recurse | Select-Object -First 1
-            if ($sdkManager) {
-              $toolsFolder = Split-Path -Parent (Split-Path -Parent $sdkManager.FullName)
-            }
-          }
-          if (-not (Test-Path $toolsFolder)) { throw "Android tools folder not found" }
+          $sdkManager = "C:\Android\cmdline-tools\bin\sdkmanager.bat"
+          if (-not (Test-Path $sdkManager)) { throw "sdkmanager.bat not found at B4A official path" }
+          $toolsFolder = "C:\Android\cmdline-tools"
           "TOOLS_FOLDER=$toolsFolder" | Out-File -FilePath $env:GITHUB_ENV -Append
 
           Write-Host "PlatformFolder=$($androidJar.Directory.FullName)"
           Write-Host "ToolsFolder=$toolsFolder"
+          Write-Host "SdkManager=$sdkManager"
 
       - name: Save B4A Android SDK resources cache
         if: steps.b4a-sdk-cache.outputs.cache-hit != 'true'
