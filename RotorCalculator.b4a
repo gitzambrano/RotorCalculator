@@ -59,8 +59,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: RotorCalculator
 	#MultiDex: False
-	#VersionCode: 1
-	#VersionName: 1.00
+	#VersionCode: 2
+	#VersionName: 1.10
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -228,10 +228,10 @@ Sub Activity_Create(FirstTime As Boolean)
 	' Compact landscape header; portrait preserves the AeroCalculator proportions.
 	If ld = 1 Then
 		sc = 1
-		HeaderTopH = 42dip
-		HeaderTabsY = 42dip
+		HeaderTopH = 48dip
+		HeaderTabsY = 48dip
 		HeaderTabsH = 48dip
-		HeaderHeight = 91dip
+		HeaderHeight = 97dip
 	Else
 		HeaderTopH = 56dip * sc
 		HeaderTabsY = 56dip * sc
@@ -541,8 +541,11 @@ Private Sub BuildPageGeom
 				pnlSpn.AddView(spnRotorSelect, 0, 0, pnlSpn.Width, pnlSpn.Height)
 				RefreshRotorSpinner
 				
-				Dim btnDup As Button = CreateRowButton("⧉", "btnRotorDup")
-				pnlInput.AddView(btnDup, pnlInput.Width * 85 / 100, ib * sc, pnlInput.Width * 12 / 100, tb * sc)
+				Dim dupW As Int = 60dip
+				Dim dupLeft As Int = pnlInput.Width - pnlInput.Width * 3 / 100 - dupW
+				pnlSpn.Width = dupLeft - pnlSpn.Left - 8dip
+				Dim btnDup As Button = CreateRowButton("COPY", "btnRotorDup")
+				pnlInput.AddView(btnDup, dupLeft, ib * sc, dupW, tb * sc)
 				
 			Case 1
 				edtRadius = AddFullInputRow(pnlInput, ib, tb, "Radius R", "5.50", "m", "edtGeom_TextChanged")
@@ -741,8 +744,9 @@ Private Sub BuildPageRes
 	For i = 0 To outputLabels.Size - 1
 		Dim sectionTitle As String = ""
 		Select i
-			Case 0: sectionTitle = "PERFORMANCE"
+			Case 0: sectionTitle = "THRUST & POWER"
 			Case 8: sectionTitle = "FORCES & MOMENTS"
+			Case 13: sectionTitle = "EFFICIENCY"
 			Case 15: sectionTitle = "INFLOW & WAKE"
 			Case 20: sectionTitle = "MACH & ATMOSPHERE"
 		End Select
@@ -819,6 +823,7 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Case "Shaft Tilt (α)": Return "Shaft α"
 		Case "Climb Rate": Return "Climb"
 		Case "Inflow Model": Return "Inflow"
+		Case "Compressibility": Return "Compress."
 		Case "Target Thrust": Return "Target T"
 		Case Else: Return fullText
 	End Select
@@ -1175,6 +1180,15 @@ Private Sub LoadConditionDataToFields
 End Sub
 
 Private Sub RefreshTrimControls
+	If ActiveCond.HoverTrimMode <> "none" And ActiveCond.TargetThrustN <= 0 And ActiveCond.TargetCT <= 0 Then
+		ActiveCond.TargetCT = 0.0065
+		If edtTargetCT.IsInitialized Then
+			Dim wasUpdating As Boolean = UpdatingUI
+			UpdatingUI = True
+			edtTargetCT.Text = NumberFormat(ActiveCond.TargetCT, 1, 5)
+			UpdatingUI = wasUpdating
+		End If
+	End If
 	If ActiveCond.HoverTrimMode = "none" Then
 		btnHoverTrimMode.Text = "Manual Pitch"
 		btnHoverTrimMode.TextColor = ColorButText2
@@ -1263,11 +1277,29 @@ Sub btnSelectAirfoil_Click
 End Sub
 
 Sub btnTipLoss_Click
-	If ActiveGeom.TipLossMode = "none" Then
-		ActiveGeom.TipLossMode = "sissingh"
-	Else
-		ActiveGeom.TipLossMode = "none"
-	End If
+	Dim options As List
+	options.Initialize
+	options.Add("Off (B = 1.00)")
+	options.Add("Fixed B = " & NumberFormat(ActiveGeom.TipLossB, 1, 2))
+	options.Add("Sissingh")
+	
+	Dim selected As Int = 0
+	If ActiveGeom.TipLossMode = "fixed" Then selected = 1
+	If ActiveGeom.TipLossMode = "sissingh" Then selected = 2
+	
+	Dim resIndex As Int = InputList(options, "Tip-Loss Model:", selected)
+	If resIndex < 0 Then Return
+	
+	Select resIndex
+		Case 0
+			ActiveGeom.TipLossMode = "none"
+		Case 1
+			ActiveGeom.TipLossMode = "fixed"
+			If ActiveGeom.TipLossB <= ActiveGeom.RootCutout Or ActiveGeom.TipLossB > 1.0 Then ActiveGeom.TipLossB = 0.97
+		Case 2
+			ActiveGeom.TipLossMode = "sissingh"
+	End Select
+	
 	RefreshTipLossButton(ActiveGeom)
 	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RecalculateRotor
@@ -1486,7 +1518,7 @@ Sub btnViewPolarPlot_Click
 	pnlSweepPopup.BringToFront
 	
 	Dim topBarH As Int
-	If ld = 1 Then topBarH = 42dip Else topBarH = 48dip * sc
+	If ld = 1 Then topBarH = 48dip Else topBarH = 48dip * sc
 	Dim footerH As Int
 	If ld = 1 Then footerH = 50dip Else footerH = 56dip * sc
 	
