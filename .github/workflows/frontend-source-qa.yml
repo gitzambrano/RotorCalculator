@@ -268,7 +268,7 @@ jobs:
         with:
           name: RotorCalculator-b4a-build
           path: ci-build/RotorCalculator-ci.apk
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
 
   ui-qa:
@@ -336,8 +336,13 @@ jobs:
           PY
 
           cat > /tmp/check_bounds.py <<'PY'
-          import sys, json, glob, os
-          w,h=map(int,sys.argv[1].split("x"))
+          import sys, json, glob, os, struct
+          png=sys.argv[1]
+          with open(png,"rb") as fh:
+              header=fh.read(24)
+          if header[:8] != b"\x89PNG\r\n\x1a\n":
+              raise SystemExit("Invalid PNG: "+png)
+          w,h=struct.unpack(">II",header[16:24])
           issues=[]
           for jf in glob.glob(os.path.join(sys.argv[2],"*.json")):
               for n in json.load(open(jf,encoding="utf-8")):
@@ -373,5 +378,5 @@ jobs:
         with:
           name: frontend-source-ui-qa
           path: qa-results
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
