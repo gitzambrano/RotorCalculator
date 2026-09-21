@@ -98,6 +98,9 @@ functional_smoke() {
   python /tmp/ui_node.py "$OUT/02-fixed-tip-loss.xml" > "$OUT/02-fixed-tip-loss.json"
   grep -qi "Fixed B=0.97" "$OUT/02-fixed-tip-loss.json"
 
+  # Lower Geometry controls are outside the initial accessibility viewport.
+  adb shell input swipe 196 760 196 430 250
+  sleep 1
   python /tmp/tap_text.py "Prandtl-Glauert: ON"
   sleep 1
   python /tmp/ui_node.py "$OUT/03-compress-off.xml" > "$OUT/03-compress-off.json"

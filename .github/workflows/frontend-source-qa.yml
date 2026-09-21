@@ -261,13 +261,33 @@ jobs:
           & $apksigner verify --verbose $signed
           if ($LASTEXITCODE -ne 0) { throw "apksigner verification failed with exit code $LASTEXITCODE" }
 
+          # Release candidate: same aligned package, official project key.
+          # Read the existing local signing configuration; do not duplicate credentials in CI.
+          $releaseConfig = Get-Content (Join-Path $env:GITHUB_WORKSPACE "tools\b4a_build.ps1") -Raw
+          $pwMatch = [regex]::Match($releaseConfig, '\[string\]\$KeyPassword\s*=\s*"([^"]+)"')
+          $aliasMatch = [regex]::Match($releaseConfig, '\[string\]\$KeyAlias\s*=\s*"([^"]+)"')
+          if (-not $pwMatch.Success -or -not $aliasMatch.Success) { throw "Release signing configuration not found" }
+          $releasePass = $pwMatch.Groups[1].Value
+          $releaseAlias = $aliasMatch.Groups[1].Value
+          $releaseKey = Join-Path $env:GITHUB_WORKSPACE "Key\key_aero_calc.keystore"
+          $releaseSigned = Join-Path $outDir "RotorCalculator_Signed.apk"
+          if (-not (Test-Path $releaseKey)) { throw "Official release keystore not found" }
+          & $apksigner sign --ks $releaseKey --ks-key-alias $releaseAlias --ks-pass "pass:$releasePass" --key-pass "pass:$releasePass" --out $releaseSigned $aligned
+          if ($LASTEXITCODE -ne 0) { throw "Official APK signing failed with exit code $LASTEXITCODE" }
+          & $apksigner verify --verbose $releaseSigned
+          if ($LASTEXITCODE -ne 0) { throw "Official APK signature verification failed with exit code $LASTEXITCODE" }
+
           $apk = Get-Item $signed
+          $releaseApk = Get-Item $releaseSigned
           Write-Host "Built installable QA APK: $($apk.FullName) ($($apk.Length) bytes)"
+          Write-Host "Built official signed APK candidate: $($releaseApk.FullName) ($($releaseApk.Length) bytes)"
 
       - uses: actions/upload-artifact@v4
         with:
           name: RotorCalculator-b4a-build
-          path: ci-build/RotorCalculator-ci.apk
+          path: |
+            ci-build/RotorCalculator-ci.apk
+            ci-build/RotorCalculator_Signed.apk
           if-no-files-found: error
           retention-days: 7
 

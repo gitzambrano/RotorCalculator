@@ -183,7 +183,7 @@ Sub Globals
 	Private SweepMultiMode As Int = 0
 	Private SweepMaxMuVal As Double = 0.40
 	Private SweepParamSelectedKey As String = "CP"
-	Private SweepParamSelectedLabel As String = "CQ (= CPshaft) — Shaft Power / Torque"
+	Private SweepParamSelectedLabel As String = "CQ / CPshaft — Shaft Power"
 	
 	Private UpdatingUI As Boolean = False
 	

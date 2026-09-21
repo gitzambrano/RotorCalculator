@@ -89,31 +89,31 @@ Public Sub Initialize
 		SweepParamKeys.Initialize
 		SweepParamLabels.Initialize
 		
-		AddSweepParam("CT", "CT — Rotor Thrust Coefficient")
-		AddSweepParam("CP", "CQ (= CPshaft) — Shaft Power / Torque")
-		AddSweepParam("CQi", "CQi — Induced Torque Coefficient")
-		AddSweepParam("CQ0", "CQ0 — Profile Drag Torque Coefficient")
-		AddSweepParam("CH", "CH — Total In-Plane Drag Coefficient (CHi + CH0)")
-		AddSweepParam("CHi", "CHi — Induced In-Plane Drag Coefficient")
-		AddSweepParam("CH0", "CH0 — Profile In-Plane Drag Coefficient")
-		AddSweepParam("CY", "CY — Side Force Coefficient (Starboard)")
-		AddSweepParam("CMx", "CMx — Rolling Moment Coefficient (Right Wing Down)")
-		AddSweepParam("CMy", "CMy — Pitching Moment Coefficient (Nose Up)")
-		AddSweepParam("CPair", "CPair — Air Power Coefficient (Energy Balance)")
-		AddSweepParam("lambda", "λ — Total Mean Inflow Ratio (μz + λi)")
-		AddSweepParam("lambda_i", "λi — Induced Downwash Inflow Ratio")
-		AddSweepParam("L_D_eff", "L/D eff — Effective Rotor Lift-to-Drag Ratio")
-		AddSweepParam("FoM", "FoM — Hover Figure of Merit")
-		AddSweepParam("Kx", "Kx — Longitudinal Inflow Gradient Factor")
-		AddSweepParam("Ky", "Ky — Lateral Inflow Gradient Factor")
-		AddSweepParam("chi", "χ — Wake Skew Angle (°)")
-		AddSweepParam("Mat", "Mat — Advancing Tip Mach Number")
-		AddSweepParam("PowerKW", "Shaft Power P (kW)")
-		AddSweepParam("PowerHP", "Shaft Power P (HP)")
-		AddSweepParam("ThrustN", "Total Thrust T (N)")
-		AddSweepParam("ThrustKgf", "Total Thrust T (kgf)")
-		AddSweepParam("TorqueNm", "Shaft Torque Q (N·m)")
-		AddSweepParam("DragHN", "In-Plane Drag H (N)")
+		AddSweepParam("CT", "CT — Thrust")
+		AddSweepParam("CP", "CQ / CPshaft — Shaft Power")
+		AddSweepParam("CQi", "CQi — Induced Torque")
+		AddSweepParam("CQ0", "CQ0 — Profile Torque")
+		AddSweepParam("CH", "CH — In-Plane Drag")
+		AddSweepParam("CHi", "CHi — Induced Drag")
+		AddSweepParam("CH0", "CH0 — Profile Drag")
+		AddSweepParam("CY", "CY — Side Force")
+		AddSweepParam("CMx", "CMx — Roll Moment")
+		AddSweepParam("CMy", "CMy — Pitch Moment")
+		AddSweepParam("CPair", "CPair — Air Power")
+		AddSweepParam("lambda", "λ — Total Inflow")
+		AddSweepParam("lambda_i", "λi — Induced Inflow")
+		AddSweepParam("L_D_eff", "L/D eff — Rotor Efficiency")
+		AddSweepParam("FoM", "FoM — Figure of Merit")
+		AddSweepParam("Kx", "Kx — Longitudinal Inflow")
+		AddSweepParam("Ky", "Ky — Lateral Inflow")
+		AddSweepParam("chi", "χ — Wake Skew (°)")
+		AddSweepParam("Mat", "Mat — Advancing Tip Mach")
+		AddSweepParam("PowerKW", "Shaft Power (kW)")
+		AddSweepParam("PowerHP", "Shaft Power (HP)")
+		AddSweepParam("ThrustN", "Thrust (N)")
+		AddSweepParam("ThrustKgf", "Thrust (kgf)")
+		AddSweepParam("TorqueNm", "Torque (N·m)")
+		AddSweepParam("DragHN", "In-Plane Drag (N)")
 	End If
 End Sub
 
@@ -125,7 +125,7 @@ End Sub
 Private Sub SweepPlotTitle(paramKey As String) As String
 	Select paramKey
 		Case "CT": Return "CT — Thrust"
-		Case "CP", "CQ": Return "CQ (= CPshaft) — Shaft Power / Torque"
+		Case "CP", "CQ": Return "CQ / CPshaft — Shaft Power"
 		Case "CQi": Return "CQi — Induced Torque"
 		Case "CQ0": Return "CQ0 — Profile Torque"
 		Case "CH": Return "CH — In-Plane Drag"
