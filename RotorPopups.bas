@@ -180,19 +180,18 @@ Public Sub DrawSweepPlot( _
 	Dim colText As Int = 0xFF8F9CAE
 	Dim colCurrentPoint As Int = 0xFFFFB300
 	Dim colAccent As Int = 0xFF00E5FF
+	' Refined Aero-Tonal Palette (Subtle accents, no multi-color rainbow)
+	Dim colC1 As Int = 0xFF475569   ' Deep slate
+	Dim colC2 As Int = 0xFF0284C7   ' Medium aero blue
+	Dim colC3 As Int = 0xFF00E5FF   ' Electric cyan nominal
+	Dim colC4 As Int = 0xFF7DD3FC   ' Ice cyan
+	Dim colC5 As Int = 0xFFE2E8F0   ' Platinum white
 	
-	' Palette for curve families
-	Dim colC1 As Int = 0xFF7C4DFF   ' Violet
-	Dim colC2 As Int = 0xFF29B6F6   ' Sky blue
-	Dim colC3 As Int = 0xFF00E5FF   ' Electric Cyan
-	Dim colC4 As Int = 0xFF00E676   ' Emerald green
-	Dim colC5 As Int = 0xFFFF5252   ' Red / Coral
-	
-	' Specific Inflow Model Colors
-	Dim colUniform As Int = 0xFFB0BEC5      ' Silver
-	Dim colColemanSimple As Int = 0xFFFFB300' Amber
-	Dim colColemanFG As Int = 0xFF00E5FF    ' Electric Cyan
-	Dim colDrees As Int = 0xFF00E676        ' Emerald green
+	' Unified Inflow Model Colors
+	Dim colUniform As Int = 0xFF64748B      ' Muted slate
+	Dim colColemanSimple As Int = 0xFF38BDF8' Sky cyan
+	Dim colColemanFG As Int = 0xFF00E5FF    ' Electric cyan primary
+	Dim colDrees As Int = 0xFFBAE6FD        ' Light ice cyan
 	
 	cvs.DrawColor(colBg)
 	

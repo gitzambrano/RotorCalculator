@@ -606,12 +606,15 @@ input:checked + .slider:before {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
+  background: rgba(0, 229, 255, 0.45);
 }
 
-.hud-tile.thrust::before { background: var(--cyan); }
-.hud-tile.power::before { background: var(--amber); }
-.hud-tile.ld::before { background: var(--green); }
-.hud-tile.fom::before { background: var(--violet); }
+.hud-tile.thrust::before,
+.hud-tile.power::before,
+.hud-tile.ld::before,
+.hud-tile.fom::before {
+  background: rgba(0, 229, 255, 0.45);
+}
 
 .hud-label {
   font-family: 'Chakra Petch', sans-serif;
@@ -628,12 +631,15 @@ input:checked + .slider:before {
   font-weight: 700;
   margin: 4px 0 2px;
   white-space: nowrap;
+  color: #F8FAFC;
 }
 
-.hud-tile.thrust .hud-main { color: var(--cyan); }
-.hud-tile.power .hud-main { color: var(--amber); }
-.hud-tile.ld .hud-main { color: var(--green); }
-.hud-tile.fom .hud-main { color: #B388FF; }
+.hud-tile.thrust .hud-main,
+.hud-tile.power .hud-main,
+.hud-tile.ld .hud-main,
+.hud-tile.fom .hud-main {
+  color: #F8FAFC;
+}
 
 .hud-sub {
   font-family: 'JetBrains Mono', monospace;
@@ -966,6 +972,10 @@ input:checked + .slider:before {
           <span>Unit System</span>
           <span id="setUnitVal" style="color:var(--cyan)">SI (Metric)</span>
         </div>
+        <div class="settings-item" onclick="cyclePrecision()">
+          <span>Precision</span>
+          <span id="setPrecisionVal" style="color:var(--cyan)">4 Digits</span>
+        </div>
         <div class="settings-item" onclick="resetToFactoryPreset()">
           <span>Reset to Factory</span>
           <span style="color:var(--amber)">Default</span>
@@ -980,7 +990,7 @@ input:checked + .slider:before {
       <div class="app-tabs">
         <button class="tab-btn active" id="tabGeom" onclick="switchTab(0)">GEOMETRY</button>
         <button class="tab-btn" id="tabCond" onclick="switchTab(1)">CONDITIONS</button>
-        <button class="tab-btn" id="tabRes" onclick="switchTab(2)">RESULTS</button>
+        <button class="tab-btn" id="tabRes" onclick="switchTab(2)">RESULTS <span style="display:inline-block; width:6px; height:6px; background:var(--cyan); border-radius:50%; margin-left:3px; box-shadow:0 0 6px var(--cyan);"></span></button>
         <div class="tab-indicator" id="tabIndicator" style="left: 0%; width: 33.33%;"></div>
       </div>
 
@@ -1011,15 +1021,27 @@ input:checked + .slider:before {
             <div class="grid-3">
               <div class="field">
                 <span class="field-label">Radius <span class="field-unit">m</span></span>
-                <input type="number" step="0.01" class="field-input" id="inpRadius" value="8.18" oninput="recalcAll()">
+                <div class="stepper-wrap">
+                  <button class="step-btn" onclick="stepVal('inpRadius', -0.1)">−</button>
+                  <input type="number" step="0.01" class="field-input" id="inpRadius" value="8.18" oninput="recalcAll()">
+                  <button class="step-btn" onclick="stepVal('inpRadius', 0.1)">+</button>
+                </div>
               </div>
               <div class="field">
                 <span class="field-label">Speed <span class="field-unit">RPM</span></span>
-                <input type="number" step="1" class="field-input" id="inpRPM" value="258" oninput="recalcAll()">
+                <div class="stepper-wrap">
+                  <button class="step-btn" onclick="stepVal('inpRPM', -5)">−</button>
+                  <input type="number" step="1" class="field-input" id="inpRPM" value="258" oninput="recalcAll()">
+                  <button class="step-btn" onclick="stepVal('inpRPM', 5)">+</button>
+                </div>
               </div>
               <div class="field">
                 <span class="field-label">Blades <span class="field-unit">#</span></span>
-                <input type="number" step="1" min="1" max="10" class="field-input" id="inpNBlades" value="4" oninput="recalcAll()">
+                <div class="stepper-wrap">
+                  <button class="step-btn" onclick="stepVal('inpNBlades', -1, 1, 10)">−</button>
+                  <input type="number" step="1" min="1" max="10" class="field-input" id="inpNBlades" value="4" oninput="recalcAll()">
+                  <button class="step-btn" onclick="stepVal('inpNBlades', 1, 1, 10)">+</button>
+                </div>
               </div>
             </div>
             <div class="field-calc">
@@ -1138,7 +1160,11 @@ input:checked + .slider:before {
             <div class="grid-2">
               <div class="field">
                 <span class="field-label">Advance Ratio μ <span class="field-unit">V/ΩR</span></span>
-                <input type="number" step="0.01" min="0" max="0.5" class="field-input" id="inpMu" value="0.20" oninput="recalcAll()">
+                <div class="stepper-wrap">
+                  <button class="step-btn" onclick="stepVal('inpMu', -0.02, 0, 0.5)">−</button>
+                  <input type="number" step="0.01" min="0" max="0.5" class="field-input" id="inpMu" value="0.20" oninput="recalcAll()">
+                  <button class="step-btn" onclick="stepVal('inpMu', 0.02, 0, 0.5)">+</button>
+                </div>
               </div>
               <div class="field">
                 <span class="field-label">Forward Speed <span class="field-unit">km/h</span></span>
@@ -1160,11 +1186,19 @@ input:checked + .slider:before {
             <div class="grid-2">
               <div class="field">
                 <span class="field-label">Disk Tilt α <span class="field-unit">deg (fwd -)</span></span>
-                <input type="number" step="0.5" class="field-input" id="inpShaftTilt" value="-5.0" oninput="recalcAll()">
+                <div class="stepper-wrap">
+                  <button class="step-btn" onclick="stepVal('inpShaftTilt', -1)">−</button>
+                  <input type="number" step="0.5" class="field-input" id="inpShaftTilt" value="-5.0" oninput="recalcAll()">
+                  <button class="step-btn" onclick="stepVal('inpShaftTilt', 1)">+</button>
+                </div>
               </div>
               <div class="field">
                 <span class="field-label">Climb Rate Vz <span class="field-unit">m/s</span></span>
-                <input type="number" step="0.5" class="field-input" id="inpClimbRate" value="0.0" oninput="recalcAll()">
+                <div class="stepper-wrap">
+                  <button class="step-btn" onclick="stepVal('inpClimbRate', -1)">−</button>
+                  <input type="number" step="0.5" class="field-input" id="inpClimbRate" value="0.0" oninput="recalcAll()">
+                  <button class="step-btn" onclick="stepVal('inpClimbRate', 1)">+</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1176,7 +1210,7 @@ input:checked + .slider:before {
               <span class="card-badge">zBET Engine</span>
             </div>
             <div class="field" style="margin-bottom: 8px;">
-              <span class="field-label">Harmonic Inflow Model</span>
+              <span class="field-label">Harmonic Inflow Model <button class="info-btn" onclick="openTheoryInfo('inflow')">ℹ</button></span>
               <select class="preset-select" id="selInflowModel" onchange="recalcAll()">
                 <option value="coleman_feingold" selected>Coleman-Feingold (Kx = 15π/32 tan χ/2, Ky = -1.5μ)</option>
                 <option value="drees">Drees Linear Inflow (Wake Geometry Formula)</option>
@@ -1186,7 +1220,7 @@ input:checked + .slider:before {
             </div>
             <div class="toggle-row">
               <div class="toggle-label">
-                <span>Prandtl-Glauert Compressibility</span>
+                <span>Prandtl-Glauert Compressibility <button class="info-btn" onclick="openTheoryInfo('compressibility')">ℹ</button></span>
                 <span class="toggle-desc">Tip Mach correction 1/√(1-M²)</span>
               </div>
               <label class="switch">
@@ -1196,7 +1230,7 @@ input:checked + .slider:before {
             </div>
             <div class="toggle-row">
               <div class="toggle-label">
-                <span>Sissingh Tip Loss Factor</span>
+                <span>Sissingh Tip Loss Factor <button class="info-btn" onclick="openTheoryInfo('tiploss')">ℹ</button></span>
                 <span class="toggle-desc">Effective radius B = 1 - √(2CT)/b</span>
               </div>
               <label class="switch">
@@ -1206,7 +1240,7 @@ input:checked + .slider:before {
             </div>
             <div class="toggle-row">
               <div class="toggle-label">
-                <span>2D Gauss-Legendre Quadrature</span>
+                <span>2D Gauss-Legendre Quadrature <button class="info-btn" onclick="openTheoryInfo('gauss')">ℹ</button></span>
                 <span class="toggle-desc">Radial (16) & Azimuthal (24) profile drag integration</span>
               </div>
               <label class="switch">
@@ -1250,8 +1284,8 @@ input:checked + .slider:before {
               <span class="card-badge">zBET Results</span>
             </div>
             <table class="data-table">
-              <tr><td class="name">Thrust Coefficient (CT)</td><td class="val" id="valCT">0.007842</td><td class="unit">-</td></tr>
-              <tr><td class="name">Power / Torque Coefficient (CP = CQ)</td><td class="val" id="valCP">0.000523</td><td class="unit">-</td></tr>
+              <tr onclick="showToast('Copied CT = ' + activeRes.CT.toFixed(precisionDecimals))"><td class="name">Thrust Coefficient (CT)</td><td class="val" id="valCT">0.007842</td><td class="unit">-</td></tr>
+              <tr onclick="showToast('Copied CP = ' + activeRes.CP.toFixed(precisionDecimals))"><td class="name">Power / Torque Coefficient (CP = CQ)</td><td class="val" id="valCP">0.000523</td><td class="unit">-</td></tr>
               <tr><td class="name">Induced Torque Coefficient (CQi)</td><td class="val" id="valCQi">0.000349</td><td class="unit">-</td></tr>
               <tr><td class="name">Profile Drag Torque Coefficient (CQ₀)</td><td class="val" id="valCQ0">0.000174</td><td class="unit">-</td></tr>
               <tr><td class="name">Total In-Plane Drag (CH = CHi + CH₀)</td><td class="val" id="valCH">0.000185</td><td class="unit">-</td></tr>
@@ -1271,7 +1305,7 @@ input:checked + .slider:before {
               <span class="card-badge">BEMT Solver</span>
             </div>
             <table class="data-table">
-              <tr><td class="name">Total Mean Inflow Ratio (λ = μz + λi)</td><td class="val" id="valLambda">0.0418</td><td class="unit">-</td></tr>
+              <tr onclick="showToast('Copied λ = ' + activeRes.lambda.toFixed(precisionDecimals))"><td class="name">Total Mean Inflow Ratio (λ = μz + λi)</td><td class="val" id="valLambda">0.0418</td><td class="unit">-</td></tr>
               <tr><td class="name">Induced Inflow Ratio (λi)</td><td class="val" id="valLambdaI">0.0243</td><td class="unit">-</td></tr>
               <tr><td class="name">Longitudinal Inflow Gradient (Kx)</td><td class="val" id="valKx">0.512</td><td class="unit">-</td></tr>
               <tr><td class="name">Lateral Inflow Gradient (Ky)</td><td class="val" id="valKy">-0.300</td><td class="unit">-</td></tr>
@@ -1348,7 +1382,10 @@ input:checked + .slider:before {
 
         <div class="sweep-footer">
           <span id="sweepOperatingPoint">Operating point (μ=0.20): 0.000523</span>
-          <button class="btn-preset" onclick="alertSweepTable()" style="padding: 4px 8px; font-size: 10px;">📋 Table</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-preset" onclick="exportSweepCSV()" style="padding: 4px 10px; font-size: 10px; color:var(--cyan); border-color:var(--cyan); font-weight:700;">📥 Export CSV</button>
+            <button class="btn-preset" onclick="alertSweepTable()" style="padding: 4px 8px; font-size: 10px;">📋 Table</button>
+          </div>
         </div>
       </div>
 
@@ -1697,7 +1734,11 @@ function recalcAll() {
   // Update Geometry Card Calculations
   const omega = activeGeom.rpm * (2.0 * PI / 60.0);
   const vtip = omega * activeGeom.radius;
-  document.getElementById("calcTipSpeed").textContent = `${vtip.toFixed(1)} m/s (${(vtip * 3.6).toFixed(0)} km/h)`;
+  if (vtip > 225.0) {
+    document.getElementById("calcTipSpeed").innerHTML = `<span style="color:var(--amber); font-weight:700;">${vtip.toFixed(1)} m/s (⚠️ Transonic Drag Rise)</span>`;
+  } else {
+    document.getElementById("calcTipSpeed").innerHTML = `<span>${vtip.toFixed(1)} m/s (${(vtip * 3.6).toFixed(0)} km/h)</span>`;
+  }
   document.getElementById("badgeBladeCount").textContent = `b = ${activeGeom.nBlades}`;
 
   const diskArea = PI * activeGeom.radius * activeGeom.radius;
@@ -2031,9 +2072,9 @@ function renderSweepPlot() {
   ctx.textAlign = "center";
   ctx.fillText("Advance Ratio (μ)", mLeft + plotW * 0.5, mTop + plotH + 32);
 
-  // Palettes
-  const colorsInflow = ["#B0BEC5", "#FFB300", "#00E5FF", "#00E676"];
-  const colorsFamily = ["#7C4DFF", "#29B6F6", "#00E5FF", "#00E676", "#FF5252"];
+  // Refined Aero-Tonal Palette (Subtle accents, no multi-color rainbow)
+  const colorsInflow = ["#64748B", "#38BDF8", "#00E5FF", "#BAE6FD"];
+  const colorsFamily = ["#475569", "#0284C7", "#00E5FF", "#7DD3FC", "#E2E8F0"];
 
   // Draw Curves
   curvesData.forEach((pts, cIdx) => {
@@ -2145,6 +2186,67 @@ function renderSweepPlot() {
 
     document.getElementById("sweepOperatingPoint").textContent = `Operating point (μ=${curMu.toFixed(2)}): ${curVal.toFixed(4)}`;
   }
+
+  // Interactive Hover Scrubber Crosshair & Tooltip
+  if (hoverMu !== null && hoverMu >= 0.0 && hoverMu <= sweepMaxMu) {
+    const hx = mLeft + (hoverMu / sweepMaxMu) * plotW;
+
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "rgba(0, 229, 255, 0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(hx, mTop);
+    ctx.lineTo(hx, mTop + plotH);
+    ctx.stroke();
+    ctx.restore();
+
+    const tooltipW = 135;
+    const tooltipH = 16 + curvesData.length * 13;
+    let tipX = hx + 10;
+    if (tipX + tooltipW > w - 10) tipX = hx - tooltipW - 10;
+    const tipY = mTop + 10;
+
+    ctx.fillStyle = "rgba(11, 14, 20, 0.92)";
+    ctx.strokeStyle = "rgba(0, 229, 255, 0.4)";
+    ctx.lineWidth = 1;
+    ctx.fillRect(tipX, tipY, tooltipW, tooltipH);
+    ctx.strokeRect(tipX, tipY, tooltipW, tooltipH);
+
+    ctx.fillStyle = "#00E5FF";
+    ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(`μ = ${hoverMu.toFixed(3)}`, tipX + 8, tipY + 11);
+
+    curvesData.forEach((pts, cIdx) => {
+      const idx0 = Math.min(pts.length - 2, Math.max(0, Math.floor((hoverMu / sweepMaxMu) * (pts.length - 1))));
+      const p0 = pts[idx0], p1 = pts[idx0 + 1];
+      const t = (hoverMu - p0.mu) / (p1.mu - p0.mu);
+      const vHover = p0.val + t * (p1.val - p0.val);
+      const cyHover = mTop + plotH - ((vHover - yMin) / (yMax - yMin)) * plotH;
+
+      ctx.fillStyle = (sweepMultiMode === 0) ? colorsInflow[cIdx] : colorsFamily[cIdx];
+      ctx.beginPath();
+      ctx.arc(hx, cyHover, 3.5, 0, 2 * PI);
+      ctx.fill();
+
+      let legLabel = `C${cIdx + 1}: `;
+      if (sweepMultiMode === 0) {
+        const nms = ["Unif", "ColeS", "CFG", "Drees"];
+        legLabel = `${nms[cIdx]}: `;
+      } else if (sweepMultiMode === 1) {
+        const alphas = ["-10°", "-5°", "0°", "+5°", "+10°"];
+        legLabel = `${alphas[cIdx]}: `;
+      } else if (sweepMultiMode === 2) {
+        const vzs = ["-10", "-5", "0", "+5", "+10"];
+        legLabel = `${vzs[cIdx]}m/s: `;
+      }
+      ctx.fillStyle = "#E2E8F0";
+      ctx.font = "8.5px 'JetBrains Mono', monospace";
+      ctx.fillText(`${legLabel}${vHover.toFixed(4)}`, tipX + 8, tipY + 24 + cIdx * 12);
+    });
+  }
+
 }
 
 // Device Viewport Switcher
@@ -2248,6 +2350,132 @@ window.addEventListener("DOMContentLoaded", () => {
   onPresetChange("uh60");
   auditLayoutClips();
 });
+
+// UI Enhancements Helpers
+let hoverMu = null;
+let precisionDecimals = 4;
+
+function setupCanvasScrubber() {
+  const canvas = document.getElementById("sweepCanvas");
+  if (!canvas) return;
+
+  function handleX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const mLeft = 56;
+    const mRight = 20;
+    const plotW = rect.width - mLeft - mRight;
+    if (x >= mLeft && x <= mLeft + plotW) {
+      hoverMu = ((x - mLeft) / plotW) * sweepMaxMu;
+      renderSweepPlot();
+    }
+  }
+
+  canvas.addEventListener("mousemove", (e) => handleX(e.clientX));
+  canvas.addEventListener("mouseleave", () => {
+    hoverMu = null;
+    renderSweepPlot();
+  });
+  canvas.addEventListener("touchmove", (e) => {
+    if (e.touches.length > 0) {
+      handleX(e.touches[0].clientX);
+    }
+  });
+  canvas.addEventListener("touchend", () => {
+    hoverMu = null;
+    renderSweepPlot();
+  });
+}
+
+function exportSweepCSV() {
+  const paramKey = document.getElementById("selSweepParam").value;
+  let csv = `Advance_Ratio_mu,${paramKey}\n`;
+  for (let i = 0; i <= 25; i++) {
+    const mu = i * (sweepMaxMu / 25.0);
+    const tempCond = { ...activeCond, mu };
+    const res = calculateRotor(activeGeom, tempCond);
+    const val = extractParam(res, paramKey);
+    csv += `${mu.toFixed(4)},${val.toFixed(6)}\n`;
+  }
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `rotor_sweep_${paramKey}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast(`✓ Exported rotor_sweep_${paramKey}.csv`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toastMsg");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+function stepVal(id, delta, minVal, maxVal) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let val = parseFloat(el.value) || 0;
+  val += delta;
+  if (minVal !== undefined && val < minVal) val = minVal;
+  if (maxVal !== undefined && val > maxVal) val = maxVal;
+  if (Math.abs(delta) < 0.05) el.value = val.toFixed(2);
+  else if (Math.abs(delta) < 1.0) el.value = val.toFixed(1);
+  else el.value = val.toFixed(0);
+  recalcAll();
+}
+
+function cyclePrecision() {
+  if (precisionDecimals === 4) precisionDecimals = 6;
+  else if (precisionDecimals === 6) precisionDecimals = 2;
+  else precisionDecimals = 4;
+  document.getElementById("setPrecisionVal").textContent = `${precisionDecimals} Digits`;
+  recalcAll();
+  showToast(`Precision set to ${precisionDecimals} decimals`);
+}
+
+function openTheoryInfo(topic) {
+  const titles = {
+    inflow: "Harmonic Inflow Modeling (BEMT)",
+    compressibility: "Prandtl-Glauert Compressibility",
+    tiploss: "Sissingh Tip Loss Model",
+    gauss: "2D Gauss-Legendre Quadrature"
+  };
+  const bodies = {
+    inflow: "Calculates non-uniform induced downwash across the rotor disc (v = v0*(1 + Kx*r*cos(psi) + Ky*r*sin(psi))). Coleman-Feingold uses wake skew angle chi. Drees derives gradients directly from vortex wake geometry.",
+    compressibility: "Corrects blade section lift-curve slope via a_eff = a0 / sqrt(1 - M^2) as advancing tip Mach approaches drag divergence (Mat = M_hover * (1 + mu)).",
+    tiploss: "Accounts for finite blade tip vortex roll-up by truncating effective lifting radius to B = 1 - sqrt(2*CT)/b, preventing overestimation of thrust at the outer tip.",
+    gauss: "Performs high-order numerical double integration across 16 radial and 24 azimuthal blade stations for exact profile drag torque CQ0, capturing reverse flow and high-mu stall."
+  };
+  document.getElementById("theoryTitle").textContent = titles[topic] || "Aerodynamics Theory";
+  document.getElementById("theoryBody").textContent = bodies[topic] || "";
+  document.getElementById("theoryModal").classList.add("active");
+}
+
+function closeTheoryModal() {
+  const m = document.getElementById("theoryModal");
+  if (m) m.classList.remove("active");
+}
+
+setupCanvasScrubber();
 </script>
+
+<!-- Floating Toast Message -->
+<div class="toast-msg" id="toastMsg">✓ Copied to clipboard</div>
+
+<!-- Theory Info Modal Dialog -->
+<div class="settings-modal" id="theoryModal" style="top:50%; left:50%; transform:translate(-50%, -50%); width:320px; max-width:92vw; padding:16px; background:#121826; border:1px solid var(--cyan); box-shadow:0 12px 50px rgba(0,0,0,0.85); z-index:200;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #1E293B; padding-bottom:6px;">
+    <span id="theoryTitle" style="font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--cyan); font-size:13px; letter-spacing:0.6px;">Theory Reference</span>
+    <button class="btn-icon" style="width:26px; height:26px;" onclick="closeTheoryModal()">✕</button>
+  </div>
+  <p id="theoryBody" style="font-size:11.5px; line-height:1.55; color:var(--text-dim); margin-bottom:12px;"></p>
+  <button class="btn-preset" style="width:100%; justify-content:center; color:var(--cyan); border-color:var(--cyan);" onclick="closeTheoryModal()">Understood</button>
+</div>
+
 </body>
 </html>

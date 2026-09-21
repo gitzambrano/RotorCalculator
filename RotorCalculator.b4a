@@ -604,7 +604,7 @@ Private Sub BuildPageRes(parent As Panel)
 	
 	lblHudPowerMain.Initialize("")
 	lblHudPowerMain.Text = "--- kW"
-	lblHudPowerMain.TextColor = ColorAccentAmber
+	lblHudPowerMain.TextColor = ColorTextMain
 	lblHudPowerMain.TextSize = 20 * sc
 	lblHudPowerMain.Typeface = Typeface.DEFAULT_BOLD
 	pHud.AddView(lblHudPowerMain, cardW / 2 + 6dip, 28dip * sc, (cardW - 24dip) / 2, 32dip * sc)
@@ -643,8 +643,8 @@ Private Sub BuildPageRes(parent As Panel)
 	Dim rowH As Int = 24dip * sc
 	Dim cY As Int = 30dip * sc
 	
-	lblCoefCT = AddTelemetryRow(pCardCoef, cY, "Thrust Coefficient (CT):", "---", ColorAccentGreen) : cY = cY + rowH
-	lblCoefCP = AddTelemetryRow(pCardCoef, cY, "Power Coefficient (CP):", "---", ColorAccentAmber) : cY = cY + rowH
+	lblCoefCT = AddTelemetryRow(pCardCoef, cY, "Thrust Coefficient (CT):", "---", ColorAccentCyan) : cY = cY + rowH
+	lblCoefCP = AddTelemetryRow(pCardCoef, cY, "Power Coefficient (CP):", "---", ColorAccentCyan) : cY = cY + rowH
 	lblCoefCQ = AddTelemetryRow(pCardCoef, cY, "Total Torque Coefficient (CQ):", "---", ColorTextMain) : cY = cY + rowH
 	lblCoefCQi = AddTelemetryRow(pCardCoef, cY, "  - Induced Torque (CQi):", "---", ColorTextDim) : cY = cY + rowH
 	lblCoefCQ0 = AddTelemetryRow(pCardCoef, cY, "  - Profile Drag Torque (CQ0):", "---", ColorTextDim) : cY = cY + rowH
@@ -1216,13 +1216,13 @@ Private Sub UpdateSweepMultiButtonText
 	Select Case SweepMultiMode
 		Case 0
 			btnSweepMultiModel.Text = "Curves: 4 Inflow Models"
-			btnSweepMultiModel.TextColor = ColorAccentGreen
+			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 1
 			btnSweepMultiModel.Text = "Curves: 5 Alphas (-10°..+10°)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 2
 			btnSweepMultiModel.Text = "Curves: 5 Vz (-10..+10 m/s)"
-			btnSweepMultiModel.TextColor = ColorAccentAmber
+			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 3
 			btnSweepMultiModel.Text = "Curves: Single Active"
 			btnSweepMultiModel.TextColor = ColorTextDim
