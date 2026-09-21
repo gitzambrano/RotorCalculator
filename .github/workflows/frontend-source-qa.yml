@@ -34,6 +34,25 @@ jobs:
               gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/force-cancel" >/dev/null 2>&1 || true
             done
 
+
+  engine-qa:
+    name: zbet-engine-regression
+    needs: cleanup-stale-qa
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install numerical test dependencies
+        run: python -m pip install --disable-pip-version-check numpy pandas matplotlib pytest
+      - name: Verify zBET reference cases
+        run: python tools/verify_engine.py
+      - name: Run rotor engine tests
+        run: python -m pytest -q tests/test_rotor_engine.py
+
   build-b4a:
     name: build-b4a-source
     needs: cleanup-stale-qa
