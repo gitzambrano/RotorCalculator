@@ -47,18 +47,18 @@ Group=Default Group
 Library1=core
 Library2=phone
 Library3=rspopupmenu
-Library4=runtimepermissions
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
 NumberOfFiles=22
-NumberOfLibraries=4
+NumberOfLibraries=3
 NumberOfModules=3
 Version=13
 @EndOfDesignText@
 #Region  Project Attributes 
 	#ApplicationLabel: RotorCalculator
+	#MultiDex: False
 	#VersionCode: 1
 	#VersionName: 1.00
 	#SupportedOrientations: unspecified
@@ -74,9 +74,6 @@ Version=13
 	#IgnoreWarnings: 1, 2, 3, 4, 5, 6
 #End Region
 Sub Process_Globals
-	
-	' Runtime permissions
-	Private rp As RuntimePermissions
 	
 	' Theme Colors (AeroCalculator Cockpit Stealth Palette)
 	Public ColorPnlTitle As Int = 0xFF0D121B     ' Dark Stealth Cockpit Header
@@ -204,7 +201,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	
 	' Initialize Independent Sub-Modules
 	If FirstTime Then
-		RotorStorage.Initialize(rp)
+		RotorStorage.Initialize
 		RotorPopups.Initialize
 		ActiveGeom = RotorStorage.GetActiveRotor
 		ActiveCond = zBETEngine.CreateDefaultCondition
