@@ -37,19 +37,29 @@ jobs:
           "B4A_BUILDER=$builder" | Out-File -FilePath $env:GITHUB_ENV -Append
           Write-Host "B4A builder: $builder"
 
-      - name: Install B4X OpenJDK 19
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '19'
+
+      - name: Configure Java path for B4A
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          Invoke-WebRequest "https://www.b4x.com/b4j/files/jdk-19.0.2.zip" -OutFile "$env:RUNNER_TEMP\jdk.zip"
-          New-Item -ItemType Directory -Force -Path "C:\java" | Out-Null
-          & 7z x "$env:RUNNER_TEMP\jdk.zip" "-oC:\java" -y | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw "7z failed extracting OpenJDK" }
-          $javac = Get-ChildItem "C:\java" -Filter javac.exe -Recurse | Select-Object -First 1
-          if (-not $javac) { throw "javac.exe not found" }
-          "JAVA_BIN=$($javac.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $javac = Get-Command javac -ErrorAction Stop
+          $javaBin = Split-Path -Parent $javac.Source
+          "JAVA_BIN=$javaBin" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "JavaBin=$javaBin"
+
+      - name: Cache B4A Android SDK resources
+        id: b4a-sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: C:\Android
+          key: b4a-android-resources-7-25-v1
 
       - name: Install B4A Android SDK resources
+        if: steps.b4a-sdk-cache.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
@@ -57,6 +67,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path "C:\Android" | Out-Null
           & 7z x "$env:RUNNER_TEMP\android-resources.zip" "-oC:\Android" -y | Out-Null
           if ($LASTEXITCODE -ne 0) { throw "7z failed extracting Android resources" }
+
+      - name: Resolve B4A Android platform
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
           $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse |
             Where-Object { $_.FullName -match "android-36" } | Select-Object -First 1
           if (-not $androidJar) {
@@ -65,6 +80,7 @@ jobs:
           }
           if (-not $androidJar) { throw "android.jar not found in B4A resources" }
           "PLATFORM_FOLDER=$($androidJar.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "PlatformFolder=$($androidJar.Directory.FullName)"
 
       - name: Configure B4A and compile source
         shell: powershell
