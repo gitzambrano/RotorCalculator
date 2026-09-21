@@ -46,6 +46,14 @@ capture_screen() {
   adb exec-out screencap -p > "$OUT/05-results-top.png"
   python /tmp/ui_node.py "$OUT/05-results-top.xml" > "$OUT/05-results-top.json"
 
+  # Open Sweep while its action is still visible. This is robust even on short landscape screens.
+  python /tmp/tap_text.py "OPEN PARAMETER SWEEP"
+  sleep 1
+  adb exec-out screencap -p > "$OUT/08-sweep.png"
+  python /tmp/ui_node.py "$OUT/08-sweep.xml" > "$OUT/08-sweep.json"
+  adb shell input keyevent 4
+  sleep 1
+
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
   adb exec-out screencap -p > "$OUT/06-results-mid.png"
@@ -55,14 +63,6 @@ capture_screen() {
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
   adb exec-out screencap -p > "$OUT/07-results-bottom.png"
   python /tmp/ui_node.py "$OUT/07-results-bottom.xml" > "$OUT/07-results-bottom.json"
-
-  adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*9/10)) 250 || true
-  adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*9/10)) 250 || true
-  adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*9/10)) 250 || true
-  python /tmp/tap_text.py "OPEN PARAMETER SWEEP"
-  sleep 1
-  adb exec-out screencap -p > "$OUT/08-sweep.png"
-  python /tmp/ui_node.py "$OUT/08-sweep.xml" > "$OUT/08-sweep.json"
 
   python /tmp/check_bounds.py "$OUT/01-geometry-top.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
@@ -143,6 +143,11 @@ functional_smoke() {
   grep -qi "Drees Linear" "$OUT/10-rotated.json"
   adb shell settings put system user_rotation 0
   sleep 2
+  python /tmp/tap_text.py "GEOMETRY"
+  sleep 1
+  python /tmp/ui_node.py "$OUT/10b-geometry-after-rotation.xml" > "$OUT/10b-geometry-after-rotation.json"
+  grep -q '"text": "14"' "$OUT/10b-geometry-after-rotation.json"
+  grep -q '"text": "-4"' "$OUT/10b-geometry-after-rotation.json"
 
   # Results must render and unit toggle must switch the dimensional outputs.
   python /tmp/tap_text.py "RESULTS"
@@ -165,6 +170,7 @@ functional_smoke() {
   adb exec-out screencap -p > "$OUT/13-sweep.png"
   python /tmp/ui_node.py "$OUT/13-sweep.xml" > "$OUT/13-sweep.json"
   grep -qi "PARAMETER SWEEP" "$OUT/13-sweep.json"
+  grep -qi "Operating μ=0.00" "$OUT/13-sweep.json"
   adb shell input keyevent 4
   sleep 1
   python /tmp/ui_node.py "$OUT/14-after-sweep-back.xml" > "$OUT/14-after-sweep-back.json"

@@ -147,7 +147,7 @@ A solução é encontrada via algoritmo de bissecção ultrarrápido (convergind
 
 ## 4. Arquitetura do Frontend e Design de Interface
 
-O frontend usa exclusivamente componentes B4A nativos. As três páginas principais — **Geometry**, **Conditions** e **Results** — são painéis independentes controlados pelas tabs fixas do header. Não há `painéis nativos`, `IME`, `RichString`, `RuntimePermissions` ou navegação baseada em bibliotecas legadas.
+O frontend usa exclusivamente componentes B4A nativos. As três páginas principais — **Geometry**, **Conditions** e **Results** — são painéis independentes controlados pelas tabs fixas do header. Não há `AHViewPager`, `IME`, `RichString`, `RuntimePermissions` ou navegação baseada em bibliotecas legadas.
 
 O layout é responsivo desde 320dp, possui largura máxima de conteúdo em tablets, mantém alvos acionáveis de pelo menos 48dp e possui tratamento específico para landscape. Labels e unidades são apresentadas como tipografia; superfícies elevadas são reservadas a campos e controles realmente interativos. Em telas compactas apenas os rótulos que precisam são abreviados, mantendo o significado completo por tooltip.
 
@@ -176,7 +176,7 @@ Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Mom
 
 ### 4.4 Parameter Sweep
 
-O Sweep usa `Canvas` nativo e permite selecionar a grandeza do eixo Y, comparar modelos de inflow, α, Vz ou a condição ativa e alternar μ máximo. Portrait usa controles empilhados; landscape usa uma única faixa horizontal de controles para preservar altura útil do gráfico. O botão Back fecha o Sweep antes de navegar entre tabs.
+O Sweep trabalha sobre uma cópia independente da condição ativa: abrir uma varredura ou tabela nunca altera μ, μz ou o estado de trim do ponto de operação. O Sweep usa `Canvas` nativo e permite selecionar a grandeza do eixo Y, comparar modelos de inflow, α, Vz ou a condição ativa e alternar μ máximo. Portrait usa controles empilhados; landscape usa uma única faixa horizontal de controles para preservar altura útil do gráfico. O botão Back fecha o Sweep antes de navegar entre tabs.
 
 ---
 

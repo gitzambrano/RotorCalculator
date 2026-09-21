@@ -171,6 +171,53 @@ Public Sub CreateDefaultCondition As FlightCondition
 	Return c
 End Sub
 
+' Custom B4A Types are reference objects. These helpers create independent values
+' so calculations and sweeps never mutate the caller's operating state.
+Public Sub CloneGeometry(src As RotorGeometry) As RotorGeometry
+	Dim dst As RotorGeometry
+	dst.Initialize
+	dst.Name = src.Name
+	dst.RPM = src.RPM
+	dst.Radius = src.Radius
+	dst.LiftSlope0 = src.LiftSlope0
+	dst.RootCutout = src.RootCutout
+	dst.Cd0 = src.Cd0
+	dst.SolidityMode = src.SolidityMode
+	dst.SigmaRef = src.SigmaRef
+	dst.SigmaGeom = src.SigmaGeom
+	dst.SigmaThrust = src.SigmaThrust
+	dst.NBlades = src.NBlades
+	dst.ChordRoot = src.ChordRoot
+	dst.ChordTip = src.ChordTip
+	dst.PitchMode = src.PitchMode
+	dst.Theta0 = src.Theta0
+	dst.ThetaRoot = src.ThetaRoot
+	dst.ThetaTip = src.ThetaTip
+	dst.TipLossMode = src.TipLossMode
+	dst.TipLossB = src.TipLossB
+	dst.UsePrandtlGlauert = src.UsePrandtlGlauert
+	Return dst
+End Sub
+
+Public Sub CloneCondition(src As FlightCondition) As FlightCondition
+	Dim dst As FlightCondition
+	dst.Initialize
+	dst.Rho = src.Rho
+	dst.SpeedOfSound = src.SpeedOfSound
+	dst.Mu = src.Mu
+	dst.MuZ = src.MuZ
+	dst.InflowModel = src.InflowModel
+	dst.ProfileDragModel = src.ProfileDragModel
+	dst.InducedTorqueModel = src.InducedTorqueModel
+	dst.HoverTrimMode = src.HoverTrimMode
+	dst.TargetThrustN = src.TargetThrustN
+	dst.TargetCT = src.TargetCT
+	dst.KInd = src.KInd
+	dst.FxColeman = src.FxColeman
+	dst.FyColeman = src.FyColeman
+	Return dst
+End Sub
+
 ' Resolve e unifica as três definições de solidez
 Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
 	Dim x0 As Double = geom.RootCutout
@@ -447,7 +494,7 @@ End Sub
 
 ' Rotina de Trim de Hover (Collective, RPM ou None)
 Public Sub PerformHoverTrim(geom As RotorGeometry, cond As FlightCondition) As Object()
-	Dim trimmedGeom As RotorGeometry = geom
+	Dim trimmedGeom As RotorGeometry = CloneGeometry(geom)
 	Dim targetCT As Double = cond.TargetCT
 	Dim diskArea As Double = cPI * geom.Radius * geom.Radius
 	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0

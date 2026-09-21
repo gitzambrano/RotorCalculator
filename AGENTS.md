@@ -83,5 +83,6 @@ Antes de concluir qualquer entrega de desenvolvimento:
 - O manifesto suporta Android 5.0+ (`minSdkVersion=21`) e usa `targetSdkVersion=36`.
 - Labels e unidades são tipografia, não botões falsos. Superfícies elevadas ficam reservadas para controles realmente acionáveis.
 - `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.
+- `RotorGeometry` e `FlightCondition` são custom `Type` B4A e portanto objetos por referência. Qualquer rotina temporária de cálculo, trim, sweep ou duplicação deve usar `zBETEngine.CloneGeometry` / `CloneCondition` antes de modificar campos; cálculos não podem alterar silenciosamente o estado do chamador.
 - Tip-loss deve representar explicitamente `none`, `fixed` e `sissingh`; presets com fator fixo não podem ser apresentados como OFF.
 - Antes de uma entrega final, o workflow deve executar os testes zBET, compilar B4A, instalar o APK gerado no emulador, capturar as nove configurações alvo e executar smoke tests de interação. Screenshots reais devem ser inspecionadas antes de substituir o APK assinado versionado no repositório.

@@ -90,7 +90,7 @@ Public Sub Initialize
 		SweepParamLabels.Initialize
 		
 		AddSweepParam("CT", "CT — Rotor Thrust Coefficient")
-		AddSweepParam("CP", "CP / CQ — Rotor Power / Shaft Torque Coefficient")
+		AddSweepParam("CP", "CQ (= CPshaft) — Shaft Power / Torque")
 		AddSweepParam("CQi", "CQi — Induced Torque Coefficient")
 		AddSweepParam("CQ0", "CQ0 — Profile Drag Torque Coefficient")
 		AddSweepParam("CH", "CH — Total In-Plane Drag Coefficient (CHi + CH0)")
@@ -120,6 +120,37 @@ End Sub
 Private Sub AddSweepParam(key As String, label As String)
 	SweepParamKeys.Add(key)
 	SweepParamLabels.Add(label)
+End Sub
+
+Private Sub SweepPlotTitle(paramKey As String) As String
+	Select paramKey
+		Case "CT": Return "CT — Thrust"
+		Case "CP", "CQ": Return "CQ (= CPshaft) — Shaft Power / Torque"
+		Case "CQi": Return "CQi — Induced Torque"
+		Case "CQ0": Return "CQ0 — Profile Torque"
+		Case "CH": Return "CH — In-Plane Drag"
+		Case "CHi": Return "CHi — Induced Drag"
+		Case "CH0": Return "CH0 — Profile Drag"
+		Case "CY": Return "CY — Side Force"
+		Case "CMx": Return "CMx — Roll Moment"
+		Case "CMy": Return "CMy — Pitch Moment"
+		Case "CPair": Return "CPair — Air Power"
+		Case "lambda": Return "λ — Total Inflow"
+		Case "lambda_i": Return "λi — Induced Inflow"
+		Case "L_D_eff": Return "Effective L/D"
+		Case "FoM": Return "Figure of Merit"
+		Case "Kx": Return "Kx — Longitudinal Inflow"
+		Case "Ky": Return "Ky — Lateral Inflow"
+		Case "chi": Return "χ — Wake Skew (°)"
+		Case "Mat": Return "Mat — Advancing Tip Mach"
+		Case "PowerKW": Return "Shaft Power (kW)"
+		Case "PowerHP": Return "Shaft Power (HP)"
+		Case "ThrustN": Return "Thrust (N)"
+		Case "ThrustKgf": Return "Thrust (kgf)"
+		Case "TorqueNm": Return "Torque (N·m)"
+		Case "DragHN": Return "In-Plane Drag H (N)"
+		Case Else: Return paramKey
+	End Select
 End Sub
 
 ' Extracts the target parameter value from the results data structure
@@ -229,7 +260,7 @@ Public Sub DrawSweepPlot( _
 	Dim yMin As Double = 1e9
 	
 	For cIdx = 0 To nCurves - 1
-		Dim tempCond As FlightCondition = cond
+		Dim tempCond As FlightCondition = zBETEngine.CloneCondition(cond)
 		Dim alphaDeg As Double = 0.0
 		Dim vzRate As Double = 0.0
 		
@@ -325,7 +356,7 @@ Public Sub DrawSweepPlot( _
 	Next
 	
 	' Axes title labels
-	cvs.DrawText(paramTitle, mLeft, mTop - 12dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
+	cvs.DrawText(SweepPlotTitle(paramKey), mLeft, mTop - 12dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
 	cvs.DrawText("Advance Ratio (μ)", mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 11, colText, "CENTER")
 	
 	' Draw curves
@@ -415,8 +446,7 @@ Public Sub DrawSweepPlot( _
 		cvs.DrawCircle(cx, cy, 5dip, colCurrentPoint, True, 1dip)
 		cvs.DrawCircle(cx, cy, 9dip, colCurrentPoint, False, 1.5dip)
 		
-		Dim lblPoint As String = "μ=" & NumberFormat(currentMu, 1, 2) & ": " & NumberFormat(curVal, 1, 4)
-		cvs.DrawText(lblPoint, cx + 8dip, cy - 8dip, Typeface.DEFAULT_BOLD, 10, colCurrentPoint, "LEFT")
+
 	End If
 	
 	Return bmp
