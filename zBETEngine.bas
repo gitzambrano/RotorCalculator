@@ -1,0 +1,651 @@
+B4A=true
+Group=Default Group
+ModulesStructureVersion=1
+Type=StaticCode
+Version=13
+@EndOfDesignText@
+' zBETEngine.bas — Motor Aerodinâmico Puro zBET para B4A
+' Implementação fiel e analítica da Teoria do Elemento de Pá (BET) e Teoria do Momentum
+' Referências: Wayne Johnson (Rotorcraft Aeromechanics) & Gordon Leishman (Principles of Helicopter Aerodynamics)
+
+Sub Process_Globals
+	
+	' Tipos de Dados Estruturados do Sistema
+	Type RotorGeometry ( _
+		Name As String, _
+		RPM As Double, _
+		Radius As Double, _
+		LiftSlope0 As Double, _
+		RootCutout As Double, _
+		Cd0 As Double, _
+		SolidityMode As String, _
+		SigmaRef As Double, _
+		SigmaGeom As Double, _
+		SigmaThrust As Double, _
+		NBlades As Int, _
+		ChordRoot As Double, _
+		ChordTip As Double, _
+		PitchMode As String, _
+		Theta0 As Double, _
+		ThetaRoot As Double, _
+		ThetaTip As Double, _
+		TipLossMode As String, _
+		TipLossB As Double, _
+		UsePrandtlGlauert As Boolean _
+	)
+	
+	Type FlightCondition ( _
+		Rho As Double, _
+		SpeedOfSound As Double, _
+		Mu As Double, _
+		MuZ As Double, _
+		InflowModel As String, _
+		ProfileDragModel As String, _
+		InducedTorqueModel As String, _
+		HoverTrimMode As String, _
+		TargetThrustN As Double, _
+		TargetCT As Double, _
+		KInd As Double, _
+		FxColeman As Double, _
+		FyColeman As Double _
+	)
+	
+	Type RotorResults ( _
+		CT As Double, _
+		CQ As Double, _
+		CQi As Double, _
+		CQ0 As Double, _
+		CH As Double, _
+		CHi As Double, _
+		CH0 As Double, _
+		CY As Double, _
+		CMx As Double, _
+		CMy As Double, _
+		CPair As Double, _
+		InflowLambda As Double, _
+		InflowLambdaI As Double, _
+		L_D_eff As Double, _
+		FoM As Double, _
+		ThrustN As Double, _
+		ThrustKgf As Double, _
+		ThrustLbf As Double, _
+		PowerShaftW As Double, _
+		PowerShaftKW As Double, _
+		PowerShaftHP As Double, _
+		TorqueNm As Double, _
+		TorqueLbft As Double, _
+		DragHN As Double, _
+		TipSpeed As Double, _
+		AdvancingTipMach As Double, _
+		InflowKx As Double, _
+		InflowKy As Double, _
+		WakeSkewChiDeg As Double, _
+		BFactor As Double, _
+		EffectiveLiftSlope As Double, _
+		TrimmedRPM As Double, _
+		TrimmedTheta0Deg As Double _
+	)
+
+	' Nós e pesos de quadratura de Gauss-Legendre (16 nós radiais, 24 nós azimutais)
+	Private GL_X16() As Double
+	Private GL_W16() As Double
+	Private GL_X24() As Double
+	Private GL_W24() As Double
+	Private InitializedGL As Boolean = False
+	
+End Sub
+
+' Inicializa tabelas de quadratura de Gauss-Legendre
+Private Sub InitGaussQuadrature
+	If InitializedGL Then Return
+	
+	GL_X16 = Array As Double( _
+		-0.98940093499165, -0.94457502307323, -0.86563120238783, -0.75540440835500, _
+		-0.61787624440264, -0.45801677765723, -0.28160355077926, -0.09501250983764, _
+		 0.09501250983764,  0.28160355077926,  0.45801677765723,  0.61787624440264, _
+		 0.75540440835500,  0.86563120238783,  0.94457502307323,  0.98940093499165)
+		 
+	GL_W16 = Array As Double( _
+		0.02715245941175, 0.06225352393865, 0.09515851168249, 0.12462897125553, _
+		0.14959598881658, 0.16915651939500, 0.18260341504492, 0.18945061045507, _
+		0.18945061045507, 0.18260341504492, 0.16915651939500, 0.14959598881658, _
+		0.12462897125553, 0.09515851168249, 0.06225352393865, 0.02715245941175)
+		
+	GL_X24 = Array As Double( _
+		-0.9951872200, -0.9747285560, -0.9382745520, -0.8864155270, -0.8200019860, -0.7401241916, _
+		-0.6480936519, -0.5454214714, -0.4337935076, -0.3150426797, -0.1911188675, -0.0640568929, _
+		 0.0640568929,  0.1911188675,  0.3150426797,  0.4337935076,  0.5454214714,  0.6480936519, _
+		 0.7401241916,  0.8200019860,  0.8864155270,  0.9382745520,  0.9747285560,  0.9951872200)
+		 
+	GL_W24 = Array As Double( _
+		0.0123412298, 0.0285313886, 0.0442774388, 0.0592985849, 0.0733464814, 0.0861901615, _
+		0.0976186521, 0.1074442701, 0.1155056681, 0.1216704729, 0.1258374563, 0.1279381953, _
+		0.1279381953, 0.1258374563, 0.1216704729, 0.1155056681, 0.1074442701, 0.0976186521, _
+		0.0861901615, 0.0733464814, 0.0592985849, 0.0442774388, 0.0285313886, 0.0123412298)
+		
+	InitializedGL = True
+End Sub
+
+' Cria uma geometria padrão calibrada
+Public Sub CreateDefaultGeometry As RotorGeometry
+	Dim g As RotorGeometry
+	g.Initialize
+	g.Name = "Padrão zBET"
+	g.RPM = 390.0
+	g.Radius = 5.5
+	g.LiftSlope0 = 5.73
+	g.RootCutout = 0.15
+	g.Cd0 = 0.009
+	g.SolidityMode = "sigma_ref"
+	g.SigmaRef = 0.075
+	g.NBlades = 4
+	g.ChordRoot = 0.324
+	g.ChordTip = 0.324
+	g.PitchMode = "constant"
+	g.Theta0 = 0.0
+	g.ThetaRoot = 12.0 * cPI / 180.0
+	g.ThetaTip = 4.0 * cPI / 180.0
+	g.TipLossMode = "none"
+	g.TipLossB = 0.97
+	g.UsePrandtlGlauert = False
+	Return ResolveSolidity(g)
+End Sub
+
+' Cria uma condição de voo padrão calibrada
+Public Sub CreateDefaultCondition As FlightCondition
+	Dim c As FlightCondition
+	c.Initialize
+	c.Rho = 1.225
+	c.SpeedOfSound = 340.3
+	c.Mu = 0.0
+	c.MuZ = 0.0
+	c.InflowModel = "coleman_feingold"
+	c.ProfileDragModel = "numerical_vectorial"
+	c.InducedTorqueModel = "energy_balance"
+	c.HoverTrimMode = "collective"
+	c.TargetCT = 0.0065
+	c.TargetThrustN = 0.0
+	c.KInd = 1.15
+	c.FxColeman = 1.0
+	c.FyColeman = 1.0
+	Return c
+End Sub
+
+' Resolve e unifica as três definições de solidez
+Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
+	Dim x0 As Double = geom.RootCutout
+	Dim nb As Int = Max(1, geom.NBlades)
+	Dim rad As Double = Max(0.001, geom.Radius)
+	
+	If geom.SolidityMode = "chords" Then
+		Dim sig_root As Double = nb * geom.ChordRoot / (cPI * rad)
+		Dim sig_tip As Double = nb * geom.ChordTip / (cPI * rad)
+		Dim s1 As Double = (sig_tip - sig_root) / (1.0 - x0)
+		Dim s0 As Double = sig_root - s1 * x0
+		geom.SigmaRef = s0 + 0.5 * s1
+		geom.SigmaGeom = (1.0 - x0) * (s0 + 0.5 * s1 * (1.0 + x0))
+		geom.SigmaThrust = 3.0 * (s0 * (1.0 - Power(x0, 3)) / 3.0 + s1 * (1.0 - Power(x0, 4)) / 4.0)
+	Else If geom.SolidityMode = "sigma_geom" Then
+		geom.SigmaRef = geom.SigmaGeom / (1.0 - x0)
+		geom.SigmaThrust = (1.0 - Power(x0, 3)) * geom.SigmaRef
+		geom.ChordRoot = geom.SigmaRef * cPI * rad / nb
+		geom.ChordTip = geom.ChordRoot
+	Else ' sigma_ref padrão
+		geom.SigmaGeom = (1.0 - x0) * geom.SigmaRef
+		geom.SigmaThrust = (1.0 - Power(x0, 3)) * geom.SigmaRef
+		geom.ChordRoot = geom.SigmaRef * cPI * rad / nb
+		geom.ChordTip = geom.ChordRoot
+	End If
+	Return geom
+End Sub
+
+' Obtém os coeficientes lineares da solidez s0 e s1: sigma(x) = s0 + s1 * x
+Public Sub GetSolidityCoeffs(geom As RotorGeometry) As Double()
+	Dim x0 As Double = geom.RootCutout
+	If geom.ChordRoot == geom.ChordTip Then
+		Return Array As Double(geom.SigmaRef, 0.0)
+	End If
+	Dim sig_root As Double = geom.NBlades * geom.ChordRoot / (cPI * geom.Radius)
+	Dim sig_tip As Double = geom.NBlades * geom.ChordTip / (cPI * geom.Radius)
+	Dim s1 As Double = (sig_tip - sig_root) / (1.0 - x0)
+	Dim s0 As Double = sig_root - s1 * x0
+	Return Array As Double(s0, s1)
+End Sub
+
+' Retorna a solidez local sigma(x)
+Public Sub LocalSolidity(geom As RotorGeometry, x As Double) As Double
+	Dim coeffs() As Double = GetSolidityCoeffs(geom)
+	Return coeffs(0) + coeffs(1) * x
+End Sub
+
+' Obtém os coeficientes lineares do passo t0 e t1: theta(x) = t0 + t1 * x (em radianos)
+Public Sub GetPitchCoeffs(geom As RotorGeometry) As Double()
+	If geom.PitchMode = "constant" Then
+		Return Array As Double(geom.Theta0, 0.0)
+	End If
+	Dim x0 As Double = geom.RootCutout
+	Dim t1 As Double = (geom.ThetaTip - geom.ThetaRoot) / (1.0 - x0)
+	Dim t0 As Double = geom.ThetaRoot - t1 * x0
+	Return Array As Double(t0, t1)
+End Sub
+
+' Retorna o passo local theta(x) em radianos
+Public Sub LocalPitch(geom As RotorGeometry, x As Double) As Double
+	Dim coeffs() As Double = GetPitchCoeffs(geom)
+	Return coeffs(0) + coeffs(1) * x
+End Sub
+
+' Fator de perda de ponta B de Prandtl/Sissingh
+Public Sub GetBFactor(geom As RotorGeometry, ct As Double) As Double
+	If geom.TipLossMode = "none" Then Return 1.0
+	If geom.TipLossMode = "fixed" Then Return geom.TipLossB
+	If geom.TipLossMode = "sissingh" Then
+		If ct <= 0 Then Return 1.0
+		Dim b As Double = 1.0 - Sqrt(2.0 * ct) / geom.NBlades
+		Return Max(geom.RootCutout + 0.01, Min(1.0, b))
+	End If
+	Return 1.0
+End Sub
+
+' Inclinação da curva de sustentação com correção de compressibilidade Prandtl-Glauert
+Public Sub GetLiftSlope(geom As RotorGeometry, mu As Double, speedOfSound As Double) As Double
+	If Not(geom.UsePrandtlGlauert) Then Return geom.LiftSlope0
+	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0
+	Dim vtip As Double = omega * geom.Radius
+	Dim mat As Double = vtip * (1.0 + mu) / speedOfSound
+	If mat >= 0.98 Then mat = 0.98
+	Return geom.LiftSlope0 / Sqrt(1.0 - mat * mat)
+End Sub
+
+' Calcula as integrais radiais puras J_n = integral_{x0}^B (x^n dx)
+Public Sub RadialIntegralsJ(x0 As Double, b As Double) As Double()
+	Dim j(8) As Double
+	For n = 0 To 7
+		j(n) = (Power(b, n + 1) - Power(x0, n + 1)) / (n + 1.0)
+	Next
+	Return j
+End Sub
+
+' Calcula os momentos radiais I_m (solidez) e T_m (solidez * passo)
+Public Sub RadialMoments(geom As RotorGeometry, b As Double) As Object()
+	Dim x0 As Double = geom.RootCutout
+	Dim j() As Double = RadialIntegralsJ(x0, b)
+	
+	Dim s_coeffs() As Double = GetSolidityCoeffs(geom)
+	Dim s0 As Double = s_coeffs(0)
+	Dim s1 As Double = s_coeffs(1)
+	
+	Dim i_mom(6) As Double
+	For m = 0 To 5
+		i_mom(m) = s0 * j(m) + s1 * j(m + 1)
+	Next
+	
+	Dim t_coeffs() As Double = GetPitchCoeffs(geom)
+	Dim t0 As Double = t_coeffs(0)
+	Dim t1 As Double = t_coeffs(1)
+	
+	Dim p0 As Double = s0 * t0
+	Dim p1 As Double = s0 * t1 + s1 * t0
+	Dim p2 As Double = s1 * t1
+	
+	Dim t_mom(6) As Double
+	For m = 0 To 5
+		t_mom(m) = p0 * j(m) + p1 * j(m + 1) + p2 * j(m + 2)
+	Next
+	
+	Return Array(j, i_mom, t_mom)
+End Sub
+
+' Gradientes de influxo harmônico (Kx, Ky)
+Public Sub InflowGradients(mu As Double, lam As Double, model As String, fx As Double, fy As Double) As Double()
+	If model = "uniform" Then Return Array As Double(0.0, 0.0)
+	
+	Dim denom As Double = Sqrt(mu * mu + lam * lam) + Abs(lam)
+	Dim tan_chi_half As Double = 0.0
+	If denom > 1e-15 Then tan_chi_half = mu / denom
+	
+	If model = "coleman_simple" Then
+		Return Array As Double(tan_chi_half, 0.0)
+	Else If model = "coleman_feingold" Or model = "coleman" Then
+		Dim kx As Double = fx * (15.0 * cPI / 32.0) * tan_chi_half
+		Dim ky As Double = -fy * 2.0 * mu
+		Return Array As Double(kx, ky)
+	Else If model = "drees" Then
+		Dim kx As Double = (4.0 / 3.0) * (1.0 - 1.8 * mu * mu) * tan_chi_half
+		Dim ky As Double = -2.0 * mu
+		Return Array As Double(kx, ky)
+	End If
+	
+	Return Array As Double(0.0, 0.0)
+End Sub
+
+' Sustentação do BET analítica CT(lambda, lambda_1s)
+Public Sub CT_BET(mu As Double, lam As Double, lambda_1s As Double, i_mom() As Double, t_mom() As Double, a As Double) As Double
+	Return 0.5 * a * (t_mom(2) + 0.5 * mu * mu * t_mom(0) - (lam + 0.5 * mu * lambda_1s) * i_mom(1))
+End Sub
+
+' Solucionador de influxo via bissecção de alta precisão
+Public Sub SolveInflow(mu As Double, mu_z As Double, geom As RotorGeometry, cond As FlightCondition, b_val As Double) As Double
+	Dim moments() As Object = RadialMoments(geom, b_val)
+	Dim i_mom() As Double = moments(1)
+	Dim t_mom() As Double = moments(2)
+	Dim lift_slope As Double = GetLiftSlope(geom, mu, cond.SpeedOfSound)
+	
+	Dim lo As Double = 0.0
+	Dim lam_lo As Double = mu_z + lo
+	Dim grad_lo() As Double = InflowGradients(mu, lam_lo, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+	Dim bet_lo As Double = CT_BET(mu, lam_lo, grad_lo(1) * lo, i_mom, t_mom, lift_slope)
+	Dim mom_lo As Double = 2.0 * (b_val * b_val) * lo * Sqrt(mu * mu + lam_lo * lam_lo)
+	Dim f_lo As Double = bet_lo - mom_lo
+	
+	If f_lo < 0.0 Then Return 0.0
+	If Abs(f_lo) < 1e-14 Then Return 0.0
+	
+	Dim hi As Double = 0.1
+	Dim f_hi As Double = 1.0
+	For iter_bracket = 1 To 50
+		Dim lam_hi As Double = mu_z + hi
+		Dim grad_hi() As Double = InflowGradients(mu, lam_hi, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+		Dim bet_hi As Double = CT_BET(mu, lam_hi, grad_hi(1) * hi, i_mom, t_mom, lift_slope)
+		Dim mom_hi As Double = 2.0 * (b_val * b_val) * hi * Sqrt(mu * mu + lam_hi * lam_hi)
+		f_hi = bet_hi - mom_hi
+		If f_hi <= 0.0 Or hi >= 100.0 Then Exit
+		hi = hi * 2.0
+	Next
+	
+	' Bissecção
+	For iter_bisect = 1 To 150
+		Dim mid As Double = 0.5 * (lo + hi)
+		Dim lam_mid As Double = mu_z + mid
+		Dim grad_mid() As Double = InflowGradients(mu, lam_mid, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+		Dim bet_mid As Double = CT_BET(mu, lam_mid, grad_mid(1) * mid, i_mom, t_mom, lift_slope)
+		Dim mom_mid As Double = 2.0 * (b_val * b_val) * mid * Sqrt(mu * mu + lam_mid * lam_mid)
+		Dim f_mid As Double = bet_mid - mom_mid
+		
+		If Abs(f_mid) < 1e-13 Or (hi - lo) < 1e-13 Then Return mid
+		If f_mid > 0.0 Then
+			lo = mid
+		Else
+			hi = mid
+		End If
+	Next
+	Return 0.5 * (lo + hi)
+End Sub
+
+' Torque induzido via integral direta BET (analytical_bet)
+Public Sub InducedTorqueBET(mu As Double, lam As Double, l1c As Double, l1s As Double, geom As RotorGeometry, b_val As Double, a As Double) As Double
+	InitGaussQuadrature
+	Dim x0 As Double = geom.RootCutout
+	If b_val <= x0 Then Return 0.0
+	
+	Dim sum_val As Double = 0.0
+	Dim half_span As Double = 0.5 * (b_val - x0)
+	
+	For i = 0 To 15
+		Dim x As Double = half_span * (GL_X16(i) + 1.0) + x0
+		Dim sig_x As Double = LocalSolidity(geom, x)
+		Dim th_x As Double = LocalPitch(geom, x)
+		Dim integrand As Double = 0.5 * sig_x * a * ( _
+			(lam + 0.5 * mu * l1s) * th_x * x * x _
+			- lam * lam * x _
+			- 0.5 * (l1c * l1c + l1s * l1s) * Power(x, 3) _
+		)
+		sum_val = sum_val + half_span * GL_W16(i) * integrand
+	Next
+	Return sum_val
+End Sub
+
+' Coeficientes de arrasto de perfil CH0 e CQ0
+Public Sub ProfileDrag(mu As Double, mu_z As Double, geom As RotorGeometry, model As String) As Double()
+	Dim x0 As Double = geom.RootCutout
+	Dim j() As Double = RadialIntegralsJ(x0, 1.0) ' Arrasto de perfil se estende até a ponta física x=1
+	Dim s_coeffs() As Double = GetSolidityCoeffs(geom)
+	Dim i1 As Double = s_coeffs(0) * j(1) + s_coeffs(1) * j(2)
+	Dim i3 As Double = s_coeffs(0) * j(3) + s_coeffs(1) * j(4)
+	Dim cd0 As Double = geom.Cd0
+	
+	If model = "analytical_tangential" Then
+		Dim ch0 As Double = cd0 * mu * i1 / 2.0
+		Dim cq0 As Double = cd0 / 2.0 * (i3 + 0.5 * mu * mu * i1)
+		Return Array As Double(ch0, cq0)
+	Else If model = "analytical_vectorial" Then
+		Dim ch0 As Double = 0.75 * cd0 * mu * i1
+		Dim cq0 As Double = 0.5 * cd0 * (i3 + (0.75 * mu * mu + 0.5 * mu_z * mu_z) * i1)
+		Return Array As Double(ch0, cq0)
+	End If
+	
+	' numerical_vectorial (Quadratura de Gauss-Legendre 2D)
+	InitGaussQuadrature
+	Dim half_r As Double = 0.5 * (1.0 - x0)
+	Dim ch0_sum As Double = 0.0
+	Dim cq0_sum As Double = 0.0
+	
+	For ir = 0 To 15
+		Dim r_station As Double = half_r * (GL_X16(ir) + 1.0) + x0
+		Dim r_weight As Double = half_r * GL_W16(ir)
+		Dim sig_r As Double = LocalSolidity(geom, r_station)
+		Dim factor As Double = sig_r * cd0 / 2.0
+		
+		For ip = 0 To 23
+			Dim psi As Double = cPI * (GL_X24(ip) + 1.0)
+			Dim psi_weight As Double = 0.5 * GL_W24(ip)
+			
+			Dim sin_p As Double = Sin(psi)
+			Dim cos_p As Double = Cos(psi)
+			Dim u_t As Double = r_station + mu * sin_p
+			Dim u_r As Double = mu * cos_p
+			Dim total_w As Double = Sqrt(u_t * u_t + u_r * u_r + mu_z * mu_z)
+			
+			Dim w_elem As Double = r_weight * psi_weight * factor * total_w
+			ch0_sum = ch0_sum + w_elem * (r_station * sin_p + mu)
+			cq0_sum = cq0_sum + w_elem * u_t * r_station
+		Next
+	Next
+	
+	Return Array As Double(ch0_sum, cq0_sum)
+End Sub
+
+' Rotina de Trim de Hover (Collective, RPM ou None)
+Public Sub PerformHoverTrim(geom As RotorGeometry, cond As FlightCondition) As Object()
+	Dim trimmedGeom As RotorGeometry = geom
+	Dim targetCT As Double = cond.TargetCT
+	Dim diskArea As Double = cPI * geom.Radius * geom.Radius
+	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0
+	Dim vtip As Double = omega * geom.Radius
+	
+	If cond.TargetThrustN > 0 Then
+		targetCT = cond.TargetThrustN / (cond.Rho * diskArea * vtip * vtip)
+	End If
+	
+	If cond.HoverTrimMode = "collective" And targetCT > 0 Then
+		Dim b_val As Double = GetBFactor(geom, targetCT)
+		Dim a_hover As Double = GetLiftSlope(geom, 0.0, cond.SpeedOfSound)
+		Dim lam_hover As Double = Sqrt(targetCT / (2.0 * b_val * b_val))
+		Dim j() As Double = RadialIntegralsJ(geom.RootCutout, b_val)
+		Dim s_coeffs() As Double = GetSolidityCoeffs(geom)
+		Dim i_mom(5) As Double
+		For m = 0 To 4
+			i_mom(m) = s_coeffs(0) * j(m) + s_coeffs(1) * j(m + 1)
+		Next
+		
+		If geom.PitchMode = "constant" Then
+			Dim t0 As Double = (2.0 * targetCT / a_hover + lam_hover * i_mom(1)) / i_mom(2)
+			trimmedGeom.Theta0 = t0
+			trimmedGeom.ThetaRoot = t0
+			trimmedGeom.ThetaTip = t0
+		Else
+			Dim delta_twist As Double = geom.ThetaTip - geom.ThetaRoot
+			Dim t1_twist As Double = delta_twist / (1.0 - geom.RootCutout)
+			Dim t2_twist As Double = t1_twist * (i_mom(3) - geom.RootCutout * i_mom(2))
+			Dim th_root_calc As Double = (2.0 * targetCT / a_hover + lam_hover * i_mom(1) - t2_twist) / i_mom(2)
+			Dim delta_theta As Double = th_root_calc - geom.ThetaRoot
+			trimmedGeom.ThetaRoot = th_root_calc
+			trimmedGeom.ThetaTip = geom.ThetaTip + delta_theta
+			trimmedGeom.Theta0 = 0.5 * (trimmedGeom.ThetaRoot + trimmedGeom.ThetaTip)
+		End If
+		
+	Else If cond.HoverTrimMode = "rpm" And cond.TargetThrustN > 0 Then
+		' Com passo fixo, resolve hover CT e acha RPM requerido
+		Dim b_val As Double = GetBFactor(geom, 0.0)
+		Dim lam_hover As Double = SolveInflow(0.0, 0.0, geom, cond, b_val)
+		Dim ct_hover As Double = 2.0 * (b_val * b_val) * (lam_hover * lam_hover)
+		If ct_hover > 1e-6 Then
+			Dim vtip_req As Double = Sqrt(cond.TargetThrustN / (cond.Rho * diskArea * ct_hover))
+			Dim omega_req As Double = vtip_req / geom.Radius
+			trimmedGeom.RPM = omega_req * 60.0 / (2.0 * cPI)
+		End If
+	End If
+	
+	Return Array(trimmedGeom)
+End Sub
+
+' FUNÇÃO PRINCIPAL: Calcula todos os parâmetros aerodinâmicos do rotor
+Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorResults
+	Dim res As RotorResults
+	res.Initialize
+	
+	' 1. Realiza Trim de Hover se especificado
+	Dim trimObj() As Object = PerformHoverTrim(geom, cond)
+	Dim g As RotorGeometry = trimObj(0)
+	g = ResolveSolidity(g)
+	
+	' 2. Parâmetros Cinemáticos Globais
+	Dim diskArea As Double = cPI * g.Radius * g.Radius
+	Dim omega As Double = g.RPM * 2.0 * cPI / 60.0
+	Dim vtip As Double = omega * g.Radius
+	Dim dynP As Double = cond.Rho * diskArea * (vtip * vtip)
+	
+	res.TipSpeed = vtip
+	res.TrimmedRPM = g.RPM
+	If g.PitchMode = "constant" Then
+		res.TrimmedTheta0Deg = g.Theta0 * 180.0 / cPI
+	Else
+		res.TrimmedTheta0Deg = 0.5 * (g.ThetaRoot + g.ThetaTip) * 180.0 / cPI
+	End If
+	
+	' Mach da pá avançante
+	res.AdvancingTipMach = vtip * (1.0 + cond.Mu) / cond.SpeedOfSound
+	res.EffectiveLiftSlope = GetLiftSlope(g, cond.Mu, cond.SpeedOfSound)
+	
+	' 3. Determina fator de perda de ponta B iterativo
+	Dim b_val As Double = 1.0
+	If g.TipLossMode = "fixed" Then
+		b_val = g.TipLossB
+	Else If g.TipLossMode = "sissingh" Then
+		' Estima CT inicial para obter B
+		b_val = 0.97
+	End If
+	
+	' 4. Resolve velocidade induzida lambda_i
+	Dim lambda_i As Double = SolveInflow(cond.Mu, cond.MuZ, g, cond, b_val)
+	Dim lambda_total As Double = cond.MuZ + lambda_i
+	
+	' 5. Gradientes de Influxo
+	Dim grads() As Double = InflowGradients(cond.Mu, lambda_total, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+	Dim kx As Double = grads(0)
+	Dim ky As Double = grads(1)
+	Dim lambda_1c As Double = kx * lambda_i
+	Dim lambda_1s As Double = ky * lambda_i
+	
+	res.InflowLambda = lambda_total
+	res.InflowLambdaI = lambda_i
+	res.InflowKx = kx
+	res.InflowKy = ky
+	
+	' Ângulo de inclinação da esteira chi
+	Dim denom_chi As Double = Sqrt(cond.Mu * cond.Mu + lambda_total * lambda_total) + Abs(lambda_total)
+	If denom_chi > 1e-15 Then
+		res.WakeSkewChiDeg = 2.0 * ATan(cond.Mu / denom_chi) * 180.0 / cPI
+	Else
+		res.WakeSkewChiDeg = 0.0
+	End If
+	
+	' 6. Momentos Radiais e Forças Aerodinâmicas BET
+	Dim moments() As Object = RadialMoments(g, b_val)
+	Dim i_mom() As Double = moments(1)
+	Dim t_mom() As Double = moments(2)
+	
+	Dim ct_val As Double = CT_BET(cond.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
+	res.CT = ct_val
+	
+	' Se modo sissingh, refina B e CT com 1 iteração
+	If g.TipLossMode = "sissingh" And ct_val > 0 Then
+		b_val = GetBFactor(g, ct_val)
+		lambda_i = SolveInflow(cond.Mu, cond.MuZ, g, cond, b_val)
+		lambda_total = cond.MuZ + lambda_i
+		grads = InflowGradients(cond.Mu, lambda_total, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+		kx = grads(0)
+		ky = grads(1)
+		lambda_1c = kx * lambda_i
+		lambda_1s = ky * lambda_i
+		res.InflowLambda = lambda_total
+		res.InflowLambdaI = lambda_i
+		res.InflowKx = kx
+		res.InflowKy = ky
+		moments = RadialMoments(g, b_val)
+		i_mom = moments(1)
+		t_mom = moments(2)
+		ct_val = CT_BET(cond.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
+		res.CT = ct_val
+	End If
+	res.BFactor = b_val
+	
+	' Força longitudinal induzida CHi
+	res.CHi = (res.EffectiveLiftSlope / 4.0) * ( _
+		lambda_total * cond.Mu * t_mom(0) + lambda_1s * (t_mom(2) - 2.0 * lambda_total * i_mom(1)) _
+	)
+	
+	' Força lateral CY
+	res.CY = -(res.EffectiveLiftSlope * lambda_1c / 4.0) * (t_mom(2) - 2.0 * lambda_total * i_mom(1))
+	
+	' Momentos de rolamento e arfagem
+	res.CMx = -(res.EffectiveLiftSlope * cond.Mu / 2.0) * (t_mom(2) - 0.5 * lambda_total * i_mom(1)) + _
+		(res.EffectiveLiftSlope * lambda_1s / 4.0) * i_mom(3)
+	res.CMy = (res.EffectiveLiftSlope * lambda_1c / 4.0) * i_mom(3)
+	
+	' 7. Arrasto de Perfil (CH0, CQ0)
+	Dim profDrag() As Double = ProfileDrag(cond.Mu, cond.MuZ, g, cond.ProfileDragModel)
+	res.CH0 = profDrag(0)
+	res.CQ0 = profDrag(1)
+	res.CH = res.CHi + res.CH0
+	
+	' 8. Torque Induzido e Potência
+	If cond.InducedTorqueModel = "analytical_bet" Then
+		res.CQi = InducedTorqueBET(cond.Mu, lambda_total, lambda_1c, lambda_1s, g, b_val, res.EffectiveLiftSlope)
+	Else ' energy_balance padrão
+		res.CQi = cond.KInd * lambda_i * ct_val + cond.MuZ * ct_val - cond.Mu * res.CHi
+	End If
+	
+	res.CQ = res.CQi + res.CQ0
+	
+	' Potência do Ar (CPair) via balanço de energia
+	res.CPair = cond.KInd * lambda_i * ct_val + cond.MuZ * ct_val + res.CQ0 + cond.Mu * res.CH0
+	
+	' Eficiência L/D efetiva e Figura de Mérito
+	If res.CPair > 1e-9 Then
+		res.L_D_eff = ct_val * cond.Mu / res.CPair
+	Else
+		res.L_D_eff = 0.0
+	End If
+	
+	If res.CQ > 1e-9 And ct_val > 0 Then
+		res.FoM = (Power(ct_val, 1.5) / Sqrt(2.0)) / res.CQ
+	Else
+		res.FoM = 0.0
+	End If
+	
+	' 9. Grandezas Dimensionais
+	res.ThrustN = ct_val * dynP
+	res.ThrustKgf = res.ThrustN / 9.80665
+	res.ThrustLbf = res.ThrustN * 0.224808943
+	
+	res.DragHN = res.CH * dynP
+	res.TorqueNm = res.CQ * dynP * g.Radius
+	res.TorqueLbft = res.TorqueNm * 0.737562149
+	
+	res.PowerShaftW = res.TorqueNm * omega
+	res.PowerShaftKW = res.PowerShaftW / 1000.0
+	res.PowerShaftHP = res.PowerShaftW / 745.699872
+	
+	Return res
+End Sub
