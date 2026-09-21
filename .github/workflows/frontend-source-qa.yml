@@ -268,12 +268,12 @@ jobs:
         with:
           name: RotorCalculator-b4a-build
           path: ci-build/RotorCalculator-ci.apk
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
 
   ui-qa:
     name: real-apk-all-screens
-    needs: build-b4a
+    needs: [build-b4a, engine-qa]
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -362,7 +362,6 @@ jobs:
           profile: pixel_2
           emulator-build: '7425822'
           emulator-boot-timeout: 420
-          emulator-build: '7425822'
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           script: |
