@@ -106,7 +106,9 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $archive = "$env:RUNNER_TEMP\commandlinetools.zip"
-          Invoke-WebRequest "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip" -OutFile $archive
+          $url = "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip"
+          curl.exe -fL --retry 4 --retry-delay 2 --output $archive $url
+          if ($LASTEXITCODE -ne 0) { throw "Failed downloading Android command-line tools" }
           New-Item -ItemType Directory -Force -Path "C:\Android" | Out-Null
           & 7z x $archive "-oC:\Android" -y | Out-Null
           if ($LASTEXITCODE -ne 0) { throw "7z failed extracting Android command-line tools" }
