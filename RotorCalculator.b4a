@@ -1,0 +1,1353 @@
+Build1=Default,flightdyn.rotorcalculator
+File1=android-3-dot-menu.png
+File10=icon_flat_green_white.png
+File11=icon_flat_transp_green.png
+File12=icon_flat_transp_white.png
+File13=icon_flat_white_green.png
+File14=icon_minus.png
+File15=icon_plus.png
+File16=icon_plus_white.png
+File17=icon_question.png
+File18=icon_right_arrow.png
+File19=icon_warning.png
+File2=ic_action_accept.png
+File20=xenara-bold.ttf
+File21=icon.png
+File22=icon_bezel_green_white.png
+File3=ic_action_cancel.png
+File4=icon_bezel_transp_green.png
+File5=icon_bezel_transp_white.png
+File6=icon_delete.png
+File7=icon_duplicate.png
+File8=icon_edit.png
+File9=icon_error.png
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup14=Default Group
+FileGroup15=Default Group
+FileGroup16=Default Group
+FileGroup17=Default Group
+FileGroup18=Default Group
+FileGroup19=Default Group
+FileGroup2=Default Group
+FileGroup20=Default Group
+FileGroup21=Default Group
+FileGroup22=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Default Group
+Library1=ahviewpager
+Library2=animation
+Library3=core
+Library4=ime
+Library5=phone
+Library6=reflection
+Library7=richstring
+Library8=rspopupmenu
+Library9=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
+Module1=RotorPopups
+Module2=RotorStorage
+Module3=zBETEngine
+NumberOfFiles=22
+NumberOfLibraries=9
+NumberOfModules=3
+Version=13
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: RotorCalculator
+	#VersionCode: 1
+	#VersionName: 1.00
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: False
+#End Region
+
+#Region  Module Attributes 
+	#IgnoreWarnings: 1, 2, 3, 4, 5, 6
+#End Region
+
+Sub Process_Globals
+	
+	Private rp As RuntimePermissions
+	
+	' Aerospace Cyber-Cockpit Palette
+	Public ColorBg As Int = 0xFF0D1117           ' Dark background
+	Public ColorPnlTitle As Int = 0xFF161B22     ' Top navigation bar
+	Public ColorCardBg As Int = 0xFF1C222B       ' Card modules
+	Public ColorCardBorder As Int = 0xFF2D3748   ' Card subtle border
+	Public ColorAccentCyan As Int = 0xFF00E5FF   ' Electric cyan
+	Public ColorAccentGreen As Int = 0xFF00E676  ' Emerald green (Thrust & Efficiency)
+	Public ColorAccentAmber As Int = 0xFFFFB300  ' Aerospace amber (Power & Cautions)
+	Public ColorTextMain As Int = 0xFFFFFFFF     ' Primary crisp white
+	Public ColorTextDim As Int = 0xFF8B949E      ' Secondary labels & units
+	Public ColorInputBg As Int = 0xFF212836      ' Input boxes background
+	
+	' Global Aerodynamic State
+	Public ActiveGeom As RotorGeometry
+	Public ActiveCond As FlightCondition
+	Public ActiveRes As RotorResults
+	
+	' Scaling & Navigation
+	Public sc As Double = 1.0
+	Public CurrentPage As Int = 0
+	
+	' Units: 0 = Metric (SI), 1 = Imperial
+	Public UnitSystem As Int = 0
+
+End Sub
+
+Sub Globals
+	
+	' Edge-to-Edge Safe Container & Soft Keyboard
+	Private root As Panel
+	Private imeInsets As IME
+	
+	' Top Action Bar & Tabs
+	Private pnlTopBar As Panel
+	Private lblAppTitle As Label
+	Private lblRotorNameHeader As Label
+	Private btnMenu As Button
+	
+	Private pnlTabsBar As Panel
+	Private btnTabGeom As Button
+	Private btnTabCond As Button
+	Private btnTabRes As Button
+	Private pnlTabIndicator As Panel
+	
+	' ViewPager & Pages Container
+	Private pager As AHViewPager
+	Private container As AHPageContainer
+	
+	' --- Page 0: Geometry ---
+	Private pnlPageGeom As Panel
+	Private scvGeom As ScrollView
+	Private spnRotorSelect As Spinner
+	Private btnRotorNew As Button
+	Private btnRotorDup As Button
+	Private btnRotorDel As Button
+	Private btnSelectAirfoil As Button
+	
+	Private edtRadius As EditText
+	Private edtRPM As EditText
+	Private edtNBlades As EditText
+	Private edtRootCutout As EditText
+	Private edtChordRoot As EditText
+	Private edtChordTip As EditText
+	Private edtThetaRoot As EditText
+	Private edtThetaTip As EditText
+	Private edtLiftSlope As EditText
+	Private edtCd0 As EditText
+	Private btnTipLoss As Button
+	Private btnCompressibility As Button
+	Private btnPitchMode As Button
+	
+	' --- Page 1: Flight Conditions ---
+	Private pnlPageCond As Panel
+	Private scvCond As ScrollView
+	
+	Private edtAltitude As EditText
+	Private edtTemperature As EditText
+	Private lblPressureDensity As Label
+	Private edtAdvanceMu As EditText
+	Private edtSpeedKmh As EditText
+	Private edtShaftTiltAlpha As EditText
+	Private edtClimbRateW As EditText
+	Private btnInflowModel As Button
+	Private btnProfileDragModel As Button
+	Private btnTorqueModel As Button
+	Private btnHoverTrimMode As Button
+	Private edtTargetCT As EditText
+	Private edtTargetThrust As EditText
+	
+	' --- Page 2: Results & Telemetry ---
+	Private pnlPageRes As Panel
+	Private scvRes As ScrollView
+	
+	' Cockpit HUD Highlights
+	Private lblHudThrustMain As Label
+	Private lblHudThrustSub As Label
+	Private lblHudPowerMain As Label
+	Private lblHudPowerSub As Label
+	Private lblHudTorqueMain As Label
+	Private lblHudEfficiency As Label
+	
+	' Aerodynamic Coefficients Table
+	Private lblCoefCT As Label
+	Private lblCoefCP As Label
+	Private lblCoefCQ As Label
+	Private lblCoefCQi As Label
+	Private lblCoefCQ0 As Label
+	Private lblCoefCH As Label
+	Private lblCoefCY As Label
+	Private lblCoefCMx As Label
+	Private lblCoefCMy As Label
+	Private lblCoefCPair As Label
+	
+	' Flow & Inflow Telemetry
+	Private lblFlowLambda As Label
+	Private lblFlowLambdaI As Label
+	Private lblFlowGradients As Label
+	Private lblFlowWakeChi As Label
+	Private lblFlowTipMach As Label
+	
+	Private btnViewPolarPlot As Button
+	
+	' --- Multi-Parameter μ-Sweep Popup ---
+	Private pnlSweepPopup As Panel
+	Private spnSweepParam As Spinner
+	Private btnSweepMultiModel As Button
+	Private btnSweepMaxMu As Button
+	Private ivSweepPlot As ImageView
+	Private lblSweepCurrentVal As Label
+	Private SweepMultiMode As Int = 0 ' 0=4 Inflow Models, 1=5 Alphas, 2=5 Vertical Speeds, 3=Single Active
+	Private SweepMaxMuVal As Double = 0.40
+	Private SweepParamSelectedKey As String = "CP"
+	Private SweepParamSelectedLabel As String = "CP / CQ — Rotor Power / Shaft Torque Coefficient"
+	
+	' UI state protection
+	Private UpdatingUI As Boolean = False
+	
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	
+	' Initialize Independent Sub-Modules
+	If FirstTime Then
+		RotorStorage.Initialize(rp)
+		RotorPopups.Initialize
+		ActiveGeom = RotorStorage.GetActiveRotor
+		ActiveCond = zBETEngine.CreateDefaultCondition
+	End If
+	
+	' Edge-to-Edge Safe Insets Setup
+	imeInsets.Initialize("imeInsets")
+	root.Initialize("")
+	Dim ContentRect As Rect = imeInsets.GetContentRect
+	Activity.AddView(root, ContentRect.Left, ContentRect.Top, ContentRect.Width, ContentRect.Height)
+	imeInsets.UpdatePercentageReference(root.Width, root.Height)
+	
+	Activity.Color = ColorPnlTitle
+	root.Color = ColorBg
+	
+	' Adaptive Scaling Factor
+	sc = Max(0.85, Min(1.35, root.Width / 360dip))
+	
+	' Build Application Layout
+	BuildTopBar
+	BuildTabsBar
+	BuildViewPager
+	
+	' Populate UI & Execute Initial Calculation
+	LoadRotorDataToFields(ActiveGeom)
+	RecalculateRotor
+	
+End Sub
+
+' Builds the Top Action Bar
+Private Sub BuildTopBar
+	pnlTopBar.Initialize("")
+	pnlTopBar.Color = ColorPnlTitle
+	root.AddView(pnlTopBar, 0, 0, root.Width, 48dip * sc)
+	
+	lblAppTitle.Initialize("")
+	lblAppTitle.Text = "RotorCalculator"
+	lblAppTitle.TextColor = ColorAccentCyan
+	lblAppTitle.TextSize = 15 * sc
+	lblAppTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
+	pnlTopBar.AddView(lblAppTitle, 12dip, 0, 140dip * sc, pnlTopBar.Height)
+	
+	lblRotorNameHeader.Initialize("")
+	lblRotorNameHeader.Text = ActiveGeom.Name
+	lblRotorNameHeader.TextColor = ColorTextDim
+	lblRotorNameHeader.TextSize = 11 * sc
+	lblRotorNameHeader.Gravity = Gravity.CENTER_VERTICAL + Gravity.RIGHT
+	pnlTopBar.AddView(lblRotorNameHeader, 145dip * sc, 0, pnlTopBar.Width - 190dip * sc, pnlTopBar.Height)
+	
+	btnMenu.Initialize("btnMenu")
+	btnMenu.Text = "⋮"
+	btnMenu.TextColor = ColorTextMain
+	btnMenu.TextSize = 20 * sc
+	btnMenu.Typeface = Typeface.DEFAULT_BOLD
+	btnMenu.Color = Colors.Transparent
+	pnlTopBar.AddView(btnMenu, pnlTopBar.Width - 40dip * sc, 0, 36dip * sc, pnlTopBar.Height)
+End Sub
+
+' Builds the Navigation Tabs Bar with dynamic indicator
+Private Sub BuildTabsBar
+	pnlTabsBar.Initialize("")
+	pnlTabsBar.Color = ColorPnlTitle
+	Dim topY As Int = pnlTopBar.Height
+	Dim barH As Int = 42dip * sc
+	root.AddView(pnlTabsBar, 0, topY, root.Width, barH)
+	
+	Dim tabW As Int = root.Width / 3
+	
+	btnTabGeom.Initialize("btnTabGeom")
+	btnTabGeom.Text = "GEOMETRY"
+	btnTabGeom.TextColor = ColorAccentCyan
+	btnTabGeom.TextSize = 11 * sc
+	btnTabGeom.Typeface = Typeface.DEFAULT_BOLD
+	btnTabGeom.Color = Colors.Transparent
+	pnlTabsBar.AddView(btnTabGeom, 0, 0, tabW, barH - 3dip)
+	
+	btnTabCond.Initialize("btnTabCond")
+	btnTabCond.Text = "CONDITIONS"
+	btnTabCond.TextColor = ColorTextDim
+	btnTabCond.TextSize = 11 * sc
+	btnTabCond.Typeface = Typeface.DEFAULT_BOLD
+	btnTabCond.Color = Colors.Transparent
+	pnlTabsBar.AddView(btnTabCond, tabW, 0, tabW, barH - 3dip)
+	
+	btnTabRes.Initialize("btnTabRes")
+	btnTabRes.Text = "RESULTS"
+	btnTabRes.TextColor = ColorTextDim
+	btnTabRes.TextSize = 11 * sc
+	btnTabRes.Typeface = Typeface.DEFAULT_BOLD
+	btnTabRes.Color = Colors.Transparent
+	pnlTabsBar.AddView(btnTabRes, tabW * 2, 0, tabW, barH - 3dip)
+	
+	pnlTabIndicator.Initialize("")
+	pnlTabIndicator.Color = ColorAccentCyan
+	pnlTabsBar.AddView(pnlTabIndicator, 0, barH - 3dip, tabW, 3dip)
+End Sub
+
+' Builds the AHViewPager containing all 3 swipeable pages
+Private Sub BuildViewPager
+	container.Initialize
+	
+	' 1. Page Geometry
+	pnlPageGeom.Initialize("")
+	pnlPageGeom.Color = ColorBg
+	BuildPageGeom(pnlPageGeom)
+	container.AddPage(pnlPageGeom, "Geometry")
+	
+	' 2. Page Conditions
+	pnlPageCond.Initialize("")
+	pnlPageCond.Color = ColorBg
+	BuildPageCond(pnlPageCond)
+	container.AddPage(pnlPageCond, "Conditions")
+	
+	' 3. Page Results
+	pnlPageRes.Initialize("")
+	pnlPageRes.Color = ColorBg
+	BuildPageRes(pnlPageRes)
+	container.AddPage(pnlPageRes, "Results")
+	
+	pager.Initialize2(container, "pager")
+	Dim pagerTop As Int = pnlTopBar.Height + pnlTabsBar.Height
+	Dim pagerHeight As Int = root.Height - pagerTop
+	root.AddView(pager, 0, pagerTop, root.Width, pagerHeight)
+End Sub
+
+' Page 0: Geometry Layout
+Private Sub BuildPageGeom(parent As Panel)
+	scvGeom.Initialize(1000dip)
+	parent.AddView(scvGeom, 0, 0, root.Width, parent.Height)
+	Dim p As Panel = scvGeom.Panel
+	p.Color = ColorBg
+	
+	Dim y As Int = 10dip
+	Dim cardW As Int = root.Width - 20dip
+	
+	' Card 1: Rotor Selector & Management
+	Dim pCardRotor As Panel = CreateCardPanel(cardW, 95dip * sc)
+	p.AddView(pCardRotor, 10dip, y, cardW, pCardRotor.Height)
+	
+	Dim lblH1 As Label = CreateSectionHeader("ROTOR / AIRCRAFT PRESET")
+	pCardRotor.AddView(lblH1, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	spnRotorSelect.Initialize("spnRotorSelect")
+	spnRotorSelect.DropdownBackgroundColor = ColorCardBg
+	spnRotorSelect.DropdownTextColor = ColorTextMain
+	pCardRotor.AddView(spnRotorSelect, 10dip, 30dip * sc, cardW - 140dip * sc, 38dip * sc)
+	RefreshRotorSpinner
+	
+	btnRotorNew.Initialize("btnRotorNew")
+	btnRotorNew.Text = "+"
+	btnRotorNew.TextColor = ColorAccentCyan
+	btnRotorNew.TextSize = 14 * sc
+	btnRotorNew.Color = ColorInputBg
+	pCardRotor.AddView(btnRotorNew, cardW - 125dip * sc, 30dip * sc, 35dip * sc, 38dip * sc)
+	
+	btnRotorDup.Initialize("btnRotorDup")
+	btnRotorDup.Text = "⧉"
+	btnRotorDup.TextColor = ColorAccentAmber
+	btnRotorDup.TextSize = 14 * sc
+	btnRotorDup.Color = ColorInputBg
+	pCardRotor.AddView(btnRotorDup, cardW - 85dip * sc, 30dip * sc, 35dip * sc, 38dip * sc)
+	
+	btnRotorDel.Initialize("btnRotorDel")
+	btnRotorDel.Text = "✕"
+	btnRotorDel.TextColor = 0xFFFF5252
+	btnRotorDel.TextSize = 14 * sc
+	btnRotorDel.Color = ColorInputBg
+	pCardRotor.AddView(btnRotorDel, cardW - 45dip * sc, 30dip * sc, 35dip * sc, 38dip * sc)
+	
+	y = y + pCardRotor.Height + 10dip
+	
+	' Card 2: Dimensions & Base Operation
+	Dim pCardDim As Panel = CreateCardPanel(cardW, 140dip * sc)
+	p.AddView(pCardDim, 10dip, y, cardW, pCardDim.Height)
+	Dim lblH2 As Label = CreateSectionHeader("DIMENSIONS & BASE ROTATION")
+	pCardDim.AddView(lblH2, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	edtRadius = AddLabeledInput(pCardDim, 10dip, 32dip * sc, (cardW - 30dip) / 2, "Radius R (m)", "5.50", "edtGeom_TextChanged")
+	edtRPM = AddLabeledInput(pCardDim, 15dip + (cardW - 30dip) / 2, 32dip * sc, (cardW - 30dip) / 2, "Base Speed (RPM)", "390.0", "edtGeom_TextChanged")
+	edtNBlades = AddLabeledInput(pCardDim, 10dip, 82dip * sc, (cardW - 30dip) / 2, "Blades Count N", "4", "edtGeom_TextChanged")
+	edtRootCutout = AddLabeledInput(pCardDim, 15dip + (cardW - 30dip) / 2, 82dip * sc, (cardW - 30dip) / 2, "Root Cutout r0/R", "0.15", "edtGeom_TextChanged")
+	
+	y = y + pCardDim.Height + 10dip
+	
+	' Card 3: Chord & Planform Distribution
+	Dim pCardChord As Panel = CreateCardPanel(cardW, 100dip * sc)
+	p.AddView(pCardChord, 10dip, y, cardW, pCardChord.Height)
+	Dim lblH3 As Label = CreateSectionHeader("CHORD & BLADE PLANFORM")
+	pCardChord.AddView(lblH3, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	edtChordRoot = AddLabeledInput(pCardChord, 10dip, 32dip * sc, (cardW - 30dip) / 2, "Root Chord (m)", "0.324", "edtGeom_TextChanged")
+	edtChordTip = AddLabeledInput(pCardChord, 15dip + (cardW - 30dip) / 2, 32dip * sc, (cardW - 30dip) / 2, "Tip Chord (m)", "0.324", "edtGeom_TextChanged")
+	
+	y = y + pCardChord.Height + 10dip
+	
+	' Card 4: Pitch & Twist Distribution
+	Dim pCardPitch As Panel = CreateCardPanel(cardW, 135dip * sc)
+	p.AddView(pCardPitch, 10dip, y, cardW, pCardPitch.Height)
+	Dim lblH4 As Label = CreateSectionHeader("PITCH & TWIST DISTRIBUTION")
+	pCardPitch.AddView(lblH4, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	btnPitchMode.Initialize("btnPitchMode")
+	btnPitchMode.Text = "Mode: Linear Twist"
+	btnPitchMode.TextColor = ColorAccentCyan
+	btnPitchMode.Color = ColorInputBg
+	btnPitchMode.TextSize = 11 * sc
+	pCardPitch.AddView(btnPitchMode, 10dip, 28dip * sc, cardW - 20dip, 32dip * sc)
+	
+	edtThetaRoot = AddLabeledInput(pCardPitch, 10dip, 68dip * sc, (cardW - 30dip) / 2, "Root Pitch θ_root (°)", "12.0", "edtGeom_TextChanged")
+	edtThetaTip = AddLabeledInput(pCardPitch, 15dip + (cardW - 30dip) / 2, 68dip * sc, (cardW - 30dip) / 2, "Tip Pitch θ_tip (°)", "4.0", "edtGeom_TextChanged")
+	
+	y = y + pCardPitch.Height + 10dip
+	
+	' Card 5: Airfoil & Advanced Aerodynamics
+	Dim pCardAero As Panel = CreateCardPanel(cardW, 175dip * sc)
+	p.AddView(pCardAero, 10dip, y, cardW, pCardAero.Height)
+	Dim lblH5 As Label = CreateSectionHeader("AIRFOIL & AERODYNAMIC CORRECTIONS")
+	pCardAero.AddView(lblH5, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	btnSelectAirfoil.Initialize("btnSelectAirfoil")
+	btnSelectAirfoil.Text = "Airfoil Library (NACA, VR-7, SC1095)..."
+	btnSelectAirfoil.TextColor = ColorAccentCyan
+	btnSelectAirfoil.Color = ColorInputBg
+	btnSelectAirfoil.TextSize = 11 * sc
+	pCardAero.AddView(btnSelectAirfoil, 10dip, 28dip * sc, cardW - 20dip, 32dip * sc)
+	
+	edtLiftSlope = AddLabeledInput(pCardAero, 10dip, 68dip * sc, (cardW - 30dip) / 2, "Lift Slope a0 (1/rad)", "5.73", "edtGeom_TextChanged")
+	edtCd0 = AddLabeledInput(pCardAero, 15dip + (cardW - 30dip) / 2, 68dip * sc, (cardW - 30dip) / 2, "Profile Drag Cd0", "0.009", "edtGeom_TextChanged")
+	
+	btnTipLoss.Initialize("btnTipLoss")
+	btnTipLoss.Text = "Tip Loss: Sissingh"
+	btnTipLoss.TextColor = ColorTextMain
+	btnTipLoss.Color = ColorInputBg
+	btnTipLoss.TextSize = 11 * sc
+	pCardAero.AddView(btnTipLoss, 10dip, 120dip * sc, (cardW - 30dip) / 2, 34dip * sc)
+	
+	btnCompressibility.Initialize("btnCompressibility")
+	btnCompressibility.Text = "Prandtl-Glauert: Yes"
+	btnCompressibility.TextColor = ColorAccentGreen
+	btnCompressibility.Color = ColorInputBg
+	btnCompressibility.TextSize = 11 * sc
+	pCardAero.AddView(btnCompressibility, 15dip + (cardW - 30dip) / 2, 120dip * sc, (cardW - 30dip) / 2, 34dip * sc)
+	
+	y = y + pCardAero.Height + 20dip
+	p.Height = y
+End Sub
+
+' Page 1: Flight Conditions Layout
+Private Sub BuildPageCond(parent As Panel)
+	scvCond.Initialize(1000dip)
+	parent.AddView(scvCond, 0, 0, root.Width, parent.Height)
+	Dim p As Panel = scvCond.Panel
+	p.Color = ColorBg
+	
+	Dim y As Int = 10dip
+	Dim cardW As Int = root.Width - 20dip
+	
+	' Card 1: Standard Atmosphere (ISA)
+	Dim pCardISA As Panel = CreateCardPanel(cardW, 140dip * sc)
+	p.AddView(pCardISA, 10dip, y, cardW, pCardISA.Height)
+	Dim lblH1 As Label = CreateSectionHeader("STANDARD ATMOSPHERE (ISA)")
+	pCardISA.AddView(lblH1, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	edtAltitude = AddLabeledInput(pCardISA, 10dip, 30dip * sc, (cardW - 30dip) / 2, "Altitude (m)", "0", "edtCond_TextChanged")
+	edtTemperature = AddLabeledInput(pCardISA, 15dip + (cardW - 30dip) / 2, 30dip * sc, (cardW - 30dip) / 2, "Temperature (°C)", "15.0", "edtCond_TextChanged")
+	
+	lblPressureDensity.Initialize("")
+	lblPressureDensity.Text = "ρ = 1.225 kg/m³  |  p = 1013.2 hPa  |  a = 340.3 m/s"
+	lblPressureDensity.TextColor = ColorAccentCyan
+	lblPressureDensity.TextSize = 11 * sc
+	lblPressureDensity.Gravity = Gravity.CENTER
+	pCardISA.AddView(lblPressureDensity, 10dip, 90dip * sc, cardW - 20dip, 35dip * sc)
+	
+	y = y + pCardISA.Height + 10dip
+	
+	' Card 2: Forward Flight Speed
+	Dim pCardSpd As Panel = CreateCardPanel(cardW, 100dip * sc)
+	p.AddView(pCardSpd, 10dip, y, cardW, pCardSpd.Height)
+	Dim lblH2 As Label = CreateSectionHeader("FORWARD FLIGHT SPEED")
+	pCardSpd.AddView(lblH2, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	edtAdvanceMu = AddLabeledInput(pCardSpd, 10dip, 32dip * sc, (cardW - 30dip) / 2, "Advance Ratio (μ)", "0.00", "edtCond_TextChanged")
+	edtSpeedKmh = AddLabeledInput(pCardSpd, 15dip + (cardW - 30dip) / 2, 32dip * sc, (cardW - 30dip) / 2, "Forward Speed V∞ (km/h)", "0.0", "edtSpeedKmh_TextChanged")
+	
+	y = y + pCardSpd.Height + 10dip
+	
+	' Card 3: Axial Flow & Disk Attitude
+	Dim pCardAxial As Panel = CreateCardPanel(cardW, 100dip * sc)
+	p.AddView(pCardAxial, 10dip, y, cardW, pCardAxial.Height)
+	Dim lblH3 As Label = CreateSectionHeader("AXIAL FLOW & DISK ATTITUDE")
+	pCardAxial.AddView(lblH3, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	edtShaftTiltAlpha = AddLabeledInput(pCardAxial, 10dip, 32dip * sc, (cardW - 30dip) / 2, "Angle of Attack α (°)", "0.0", "edtCond_TextChanged")
+	edtClimbRateW = AddLabeledInput(pCardAxial, 15dip + (cardW - 30dip) / 2, 32dip * sc, (cardW - 30dip) / 2, "Climb Velocity w (m/s)", "0.0", "edtClimbRate_TextChanged")
+	
+	y = y + pCardAxial.Height + 10dip
+	
+	' Card 4: Aerodynamic Modeling & Trim
+	Dim pCardModels As Panel = CreateCardPanel(cardW, 200dip * sc)
+	p.AddView(pCardModels, 10dip, y, cardW, pCardModels.Height)
+	Dim lblH4 As Label = CreateSectionHeader("AERODYNAMIC MODELING & TRIM")
+	pCardModels.AddView(lblH4, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	btnInflowModel.Initialize("btnInflowModel")
+	btnInflowModel.Text = "Inflow: Coleman-Feingold"
+	btnInflowModel.TextColor = ColorAccentCyan
+	btnInflowModel.Color = ColorInputBg
+	btnInflowModel.TextSize = 11 * sc
+	pCardModels.AddView(btnInflowModel, 10dip, 30dip * sc, (cardW - 30dip) / 2, 34dip * sc)
+	
+	btnProfileDragModel.Initialize("btnProfileDragModel")
+	btnProfileDragModel.Text = "Drag: Numerical Vectorial"
+	btnProfileDragModel.TextColor = ColorTextMain
+	btnProfileDragModel.Color = ColorInputBg
+	btnProfileDragModel.TextSize = 11 * sc
+	pCardModels.AddView(btnProfileDragModel, 15dip + (cardW - 30dip) / 2, 30dip * sc, (cardW - 30dip) / 2, 34dip * sc)
+	
+	btnTorqueModel.Initialize("btnTorqueModel")
+	btnTorqueModel.Text = "Torque: Energy Balance"
+	btnTorqueModel.TextColor = ColorTextMain
+	btnTorqueModel.Color = ColorInputBg
+	btnTorqueModel.TextSize = 11 * sc
+	pCardModels.AddView(btnTorqueModel, 10dip, 72dip * sc, (cardW - 30dip) / 2, 34dip * sc)
+	
+	btnHoverTrimMode.Initialize("btnHoverTrimMode")
+	btnHoverTrimMode.Text = "Trim: Collective to Target"
+	btnHoverTrimMode.TextColor = ColorAccentGreen
+	btnHoverTrimMode.Color = ColorInputBg
+	btnHoverTrimMode.TextSize = 11 * sc
+	pCardModels.AddView(btnHoverTrimMode, 15dip + (cardW - 30dip) / 2, 72dip * sc, (cardW - 30dip) / 2, 34dip * sc)
+	
+	edtTargetCT = AddLabeledInput(pCardModels, 10dip, 120dip * sc, (cardW - 30dip) / 2, "Target Hover CT (-)", "0.0065", "edtCond_TextChanged")
+	edtTargetThrust = AddLabeledInput(pCardModels, 15dip + (cardW - 30dip) / 2, 120dip * sc, (cardW - 30dip) / 2, "Target Thrust (N)", "0", "edtCond_TextChanged")
+	
+	y = y + pCardModels.Height + 20dip
+	p.Height = y
+End Sub
+
+' Page 2: Results Layout
+Private Sub BuildPageRes(parent As Panel)
+	scvRes.Initialize(1000dip)
+	parent.AddView(scvRes, 0, 0, root.Width, parent.Height)
+	Dim p As Panel = scvRes.Panel
+	p.Color = ColorBg
+	
+	Dim y As Int = 10dip
+	Dim cardW As Int = root.Width - 20dip
+	
+	' Card 1: Cockpit HUD - Thrust & Power
+	Dim pHud As Panel = CreateCardPanel(cardW, 140dip * sc)
+	pHud.Color = 0xFF17202C
+	p.AddView(pHud, 10dip, y, cardW, pHud.Height)
+	
+	' Thrust Highlights (Left)
+	Dim lblTHud As Label = CreateSubHeader("TOTAL ROTOR THRUST")
+	pHud.AddView(lblTHud, 12dip, 8dip, (cardW - 24dip) / 2, 18dip * sc)
+	
+	lblHudThrustMain.Initialize("")
+	lblHudThrustMain.Text = "--- N"
+	lblHudThrustMain.TextColor = ColorAccentGreen
+	lblHudThrustMain.TextSize = 20 * sc
+	lblHudThrustMain.Typeface = Typeface.DEFAULT_BOLD
+	pHud.AddView(lblHudThrustMain, 12dip, 28dip * sc, (cardW - 24dip) / 2, 32dip * sc)
+	
+	lblHudThrustSub.Initialize("")
+	lblHudThrustSub.Text = "--- kgf  |  --- lbf"
+	lblHudThrustSub.TextColor = ColorTextDim
+	lblHudThrustSub.TextSize = 11 * sc
+	pHud.AddView(lblHudThrustSub, 12dip, 62dip * sc, (cardW - 24dip) / 2, 20dip * sc)
+	
+	' Shaft Power Highlights (Right)
+	Dim lblPHud As Label = CreateSubHeader("ROTOR SHAFT POWER")
+	pHud.AddView(lblPHud, cardW / 2 + 6dip, 8dip, (cardW - 24dip) / 2, 18dip * sc)
+	
+	lblHudPowerMain.Initialize("")
+	lblHudPowerMain.Text = "--- kW"
+	lblHudPowerMain.TextColor = ColorAccentAmber
+	lblHudPowerMain.TextSize = 20 * sc
+	lblHudPowerMain.Typeface = Typeface.DEFAULT_BOLD
+	pHud.AddView(lblHudPowerMain, cardW / 2 + 6dip, 28dip * sc, (cardW - 24dip) / 2, 32dip * sc)
+	
+	lblHudPowerSub.Initialize("")
+	lblHudPowerSub.Text = "--- HP"
+	lblHudPowerSub.TextColor = ColorTextDim
+	lblHudPowerSub.TextSize = 11 * sc
+	pHud.AddView(lblHudPowerSub, cardW / 2 + 6dip, 62dip * sc, (cardW - 24dip) / 2, 20dip * sc)
+	
+	' Dividing Line
+	Dim pDiv As Panel : pDiv.Initialize("") : pDiv.Color = ColorCardBorder
+	pHud.AddView(pDiv, 12dip, 90dip * sc, cardW - 24dip, 1dip)
+	
+	lblHudTorqueMain.Initialize("")
+	lblHudTorqueMain.Text = "Torque: --- N·m"
+	lblHudTorqueMain.TextColor = ColorTextMain
+	lblHudTorqueMain.TextSize = 12 * sc
+	pHud.AddView(lblHudTorqueMain, 12dip, 96dip * sc, (cardW - 24dip) / 2, 30dip * sc)
+	
+	lblHudEfficiency.Initialize("")
+	lblHudEfficiency.Text = "Figure of Merit: ---"
+	lblHudEfficiency.TextColor = ColorAccentCyan
+	lblHudEfficiency.TextSize = 12 * sc
+	lblHudEfficiency.Gravity = Gravity.RIGHT + Gravity.CENTER_VERTICAL
+	pHud.AddView(lblHudEfficiency, cardW / 2, 96dip * sc, (cardW - 24dip) / 2, 30dip * sc)
+	
+	y = y + pHud.Height + 10dip
+	
+	' Card 2: Nondimensional Coefficients Table
+	Dim pCardCoef As Panel = CreateCardPanel(cardW, 195dip * sc)
+	p.AddView(pCardCoef, 10dip, y, cardW, pCardCoef.Height)
+	Dim lblH2 As Label = CreateSectionHeader("NONDIMENSIONAL COEFFICIENTS (ROTOR)")
+	pCardCoef.AddView(lblH2, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	Dim rowH As Int = 24dip * sc
+	Dim cY As Int = 30dip * sc
+	
+	lblCoefCT = AddTelemetryRow(pCardCoef, cY, "Thrust Coefficient (CT):", "---", ColorAccentGreen) : cY = cY + rowH
+	lblCoefCP = AddTelemetryRow(pCardCoef, cY, "Power Coefficient (CP):", "---", ColorAccentAmber) : cY = cY + rowH
+	lblCoefCQ = AddTelemetryRow(pCardCoef, cY, "Total Torque Coefficient (CQ):", "---", ColorTextMain) : cY = cY + rowH
+	lblCoefCQi = AddTelemetryRow(pCardCoef, cY, "  - Induced Torque (CQi):", "---", ColorTextDim) : cY = cY + rowH
+	lblCoefCQ0 = AddTelemetryRow(pCardCoef, cY, "  - Profile Drag Torque (CQ0):", "---", ColorTextDim) : cY = cY + rowH
+	lblCoefCH = AddTelemetryRow(pCardCoef, cY, "In-Plane Drag (CH = CHi + CH0):", "---", ColorTextMain) : cY = cY + rowH
+	lblCoefCY = AddTelemetryRow(pCardCoef, cY, "Side Force (CY):", "---", ColorTextMain)
+	
+	y = y + pCardCoef.Height + 10dip
+	
+	' Card 3: Inflow & Wake Telemetry
+	Dim pCardFlow As Panel = CreateCardPanel(cardW, 155dip * sc)
+	p.AddView(pCardFlow, 10dip, y, cardW, pCardFlow.Height)
+	Dim lblH3 As Label = CreateSectionHeader("FLOW KINEMATICS & INFLOW")
+	pCardFlow.AddView(lblH3, 10dip, 6dip, cardW - 20dip, 20dip * sc)
+	
+	cY = 30dip * sc
+	lblFlowLambda = AddTelemetryRow(pCardFlow, cY, "Total Inflow (λ = μz + λi):", "---", ColorAccentCyan) : cY = cY + rowH
+	lblFlowLambdaI = AddTelemetryRow(pCardFlow, cY, "Induced Inflow (λi):", "---", ColorAccentCyan) : cY = cY + rowH
+	lblFlowGradients = AddTelemetryRow(pCardFlow, cY, "Inflow Gradients (Kx / Ky):", "--- / ---", ColorTextMain) : cY = cY + rowH
+	lblFlowWakeChi = AddTelemetryRow(pCardFlow, cY, "Wake Skew Angle (χ):", "---°", ColorTextMain) : cY = cY + rowH
+	lblFlowTipMach = AddTelemetryRow(pCardFlow, cY, "Advancing Tip Mach (Mat):", "---", ColorAccentAmber)
+	
+	y = y + pCardFlow.Height + 10dip
+	
+	' Card 4: Multi-Parameter Sweep Action Button
+	btnViewPolarPlot.Initialize("btnViewPolarPlot")
+	btnViewPolarPlot.Text = "📊 OPEN MULTI-PARAMETER SWEEP (μ)"
+	btnViewPolarPlot.TextColor = ColorAccentCyan
+	btnViewPolarPlot.TextSize = 12 * sc
+	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
+	btnViewPolarPlot.Color = ColorCardBg
+	p.AddView(btnViewPolarPlot, 10dip, y, cardW, 46dip * sc)
+	
+	y = y + btnViewPolarPlot.Height + 25dip
+	p.Height = y
+End Sub
+
+' Helpers
+Private Sub CreateCardPanel(widthPx As Int, heightPx As Int) As Panel
+	Dim pnl As Panel
+	pnl.Initialize("")
+	pnl.Color = ColorCardBg
+	Return pnl
+End Sub
+
+Private Sub CreateSectionHeader(title As String) As Label
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = title
+	lbl.TextColor = ColorAccentCyan
+	lbl.TextSize = 11 * sc
+	lbl.Typeface = Typeface.DEFAULT_BOLD
+	Return lbl
+End Sub
+
+Private Sub CreateSubHeader(title As String) As Label
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = title
+	lbl.TextColor = ColorTextDim
+	lbl.TextSize = 10 * sc
+	Return lbl
+End Sub
+
+Private Sub AddLabeledInput(parent As Panel, left As Int, top As Int, width As Int, labelText As String, defaultValue As String, eventName As String) As EditText
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = labelText
+	lbl.TextColor = ColorTextDim
+	lbl.TextSize = 10 * sc
+	parent.AddView(lbl, left, top, width, 16dip * sc)
+	
+	Dim edt As EditText
+	edt.Initialize(eventName)
+	edt.Text = defaultValue
+	edt.TextColor = ColorTextMain
+	edt.Color = ColorInputBg
+	edt.TextSize = 13 * sc
+	edt.Typeface = Typeface.MONOSPACE
+	edt.InputType = edt.INPUT_TYPE_DECIMAL_NUMBERS
+	parent.AddView(edt, left, top + 16dip * sc, width, 32dip * sc)
+	Return edt
+End Sub
+
+Private Sub AddTelemetryRow(parent As Panel, top As Int, labelText As String, defaultValue As String, valColor As Int) As Label
+	Dim lblL As Label
+	lblL.Initialize("")
+	lblL.Text = labelText
+	lblL.TextColor = ColorTextDim
+	lblL.TextSize = 11 * sc
+	parent.AddView(lblL, 12dip, top, parent.Width - 120dip * sc, 22dip * sc)
+	
+	Dim lblV As Label
+	lblV.Initialize("")
+	lblV.Text = defaultValue
+	lblV.TextColor = valColor
+	lblV.TextSize = 11 * sc
+	lblV.Typeface = Typeface.DEFAULT_BOLD
+	lblV.Gravity = Gravity.RIGHT
+	parent.AddView(lblV, parent.Width - 130dip * sc, top, 118dip * sc, 22dip * sc)
+	Return lblV
+End Sub
+
+' Updates Spinner Rotor Items
+Private Sub RefreshRotorSpinner
+	spnRotorSelect.Clear
+	For i = 0 To RotorStorage.Rotors.Size - 1
+		Dim g As RotorGeometry = RotorStorage.Rotors.Get(i)
+		spnRotorSelect.Add(g.Name)
+	Next
+	If RotorStorage.ActiveIndex < spnRotorSelect.Size Then
+		spnRotorSelect.SelectedIndex = RotorStorage.ActiveIndex
+	End If
+End Sub
+
+' Populates form fields with current rotor data
+Private Sub LoadRotorDataToFields(g As RotorGeometry)
+	UpdatingUI = True
+	lblRotorNameHeader.Text = g.Name
+	edtRadius.Text = NumberFormat(g.Radius, 1, 2)
+	edtRPM.Text = NumberFormat(g.RPM, 1, 1)
+	edtNBlades.Text = g.NBlades
+	edtRootCutout.Text = NumberFormat(g.RootCutout, 1, 3)
+	edtChordRoot.Text = NumberFormat(g.ChordRoot, 1, 3)
+	edtChordTip.Text = NumberFormat(g.ChordTip, 1, 3)
+	edtThetaRoot.Text = NumberFormat(g.ThetaRoot * 180.0 / cPI, 1, 2)
+	edtThetaTip.Text = NumberFormat(g.ThetaTip * 180.0 / cPI, 1, 2)
+	edtLiftSlope.Text = NumberFormat(g.LiftSlope0, 1, 2)
+	edtCd0.Text = NumberFormat(g.Cd0, 1, 4)
+	
+	btnTipLoss.Text = "Tip Loss: " & g.TipLossMode
+	If g.UsePrandtlGlauert Then
+		btnCompressibility.Text = "Prandtl-Glauert: Yes"
+		btnCompressibility.TextColor = ColorAccentGreen
+	Else
+		btnCompressibility.Text = "Prandtl-Glauert: No"
+		btnCompressibility.TextColor = ColorTextDim
+	End If
+	
+	If g.PitchMode = "constant" Then
+		btnPitchMode.Text = "Mode: Constant Pitch"
+	Else
+		btnPitchMode.Text = "Mode: Linear Twist"
+	End If
+	UpdatingUI = False
+End Sub
+
+' Reads form fields to active rotor geometry
+Private Sub ReadFieldsToRotorData
+	If UpdatingUI Then Return
+	ActiveGeom.Radius = ParseDoubleDef(edtRadius.Text, 5.5)
+	ActiveGeom.RPM = ParseDoubleDef(edtRPM.Text, 390.0)
+	ActiveGeom.NBlades = ParseIntDef(edtNBlades.Text, 4)
+	ActiveGeom.RootCutout = ParseDoubleDef(edtRootCutout.Text, 0.15)
+	ActiveGeom.ChordRoot = ParseDoubleDef(edtChordRoot.Text, 0.324)
+	ActiveGeom.ChordTip = ParseDoubleDef(edtChordTip.Text, 0.324)
+	ActiveGeom.ThetaRoot = ParseDoubleDef(edtThetaRoot.Text, 12.0) * cPI / 180.0
+	ActiveGeom.ThetaTip = ParseDoubleDef(edtThetaTip.Text, 4.0) * cPI / 180.0
+	ActiveGeom.LiftSlope0 = ParseDoubleDef(edtLiftSlope.Text, 5.73)
+	ActiveGeom.Cd0 = ParseDoubleDef(edtCd0.Text, 0.009)
+	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
+End Sub
+
+' Reads flight conditions fields
+Private Sub ReadFieldsToFlightCond
+	If UpdatingUI Then Return
+	Dim alt As Double = ParseDoubleDef(edtAltitude.Text, 0.0)
+	Dim tempC As Double = ParseDoubleDef(edtTemperature.Text, 15.0)
+	
+	' Standard Atmosphere ISA
+	Dim pRatio As Double = Power(1.0 - 0.0065 * alt / 288.15, 5.2561)
+	Dim p_hPa As Double = 1013.25 * pRatio
+	Dim tKelvin As Double = tempC + 273.15
+	Dim rho As Double = (p_hPa * 100.0) / (287.058 * tKelvin)
+	Dim speedSound As Double = Sqrt(1.4 * 287.058 * tKelvin)
+	
+	ActiveCond.Rho = rho
+	ActiveCond.SpeedOfSound = speedSound
+	lblPressureDensity.Text = "ρ = " & NumberFormat(rho, 1, 3) & " kg/m³  |  p = " & NumberFormat(p_hPa, 1, 1) & " hPa  |  a = " & NumberFormat(speedSound, 1, 1) & " m/s"
+	
+	ActiveCond.Mu = ParseDoubleDef(edtAdvanceMu.Text, 0.0)
+	
+	Dim alphaDeg As Double = ParseDoubleDef(edtShaftTiltAlpha.Text, 0.0)
+	ActiveCond.MuZ = -ActiveCond.Mu * Tan(alphaDeg * cPI / 180.0)
+	
+	ActiveCond.TargetCT = ParseDoubleDef(edtTargetCT.Text, 0.0065)
+	ActiveCond.TargetThrustN = ParseDoubleDef(edtTargetThrust.Text, 0.0)
+End Sub
+
+' INSTANT AUTOMATIC CALCULATION & RESULTS UPDATE
+Public Sub RecalculateRotor
+	If UpdatingUI Then Return
+	ReadFieldsToRotorData
+	ReadFieldsToFlightCond
+	
+	ActiveRes = zBETEngine.Calculate(ActiveGeom, ActiveCond)
+	
+	' Cockpit HUD Highlights
+	lblHudThrustMain.Text = NumberFormat(ActiveRes.ThrustN, 1, 0) & " N"
+	lblHudThrustSub.Text = NumberFormat(ActiveRes.ThrustKgf, 1, 1) & " kgf  |  " & NumberFormat(ActiveRes.ThrustLbf, 1, 1) & " lbf"
+	
+	lblHudPowerMain.Text = NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW"
+	lblHudPowerSub.Text = NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP"
+	
+	lblHudTorqueMain.Text = "Torque: " & NumberFormat(ActiveRes.TorqueNm, 1, 1) & " N·m (" & NumberFormat(ActiveRes.TorqueLbft, 1, 1) & " lbf·ft)"
+	
+	If ActiveCond.Mu < 0.01 Then
+		lblHudEfficiency.Text = "Figure of Merit: " & NumberFormat(ActiveRes.FoM, 1, 3)
+	Else
+		lblHudEfficiency.Text = "Effective L/D: " & NumberFormat(ActiveRes.L_D_eff, 1, 2)
+	End If
+	
+	' Coefficients Table
+	lblCoefCT.Text = NumberFormat(ActiveRes.CT, 1, 5)
+	lblCoefCP.Text = NumberFormat(ActiveRes.CQ, 1, 6)
+	lblCoefCQ.Text = NumberFormat(ActiveRes.CQ, 1, 6)
+	lblCoefCQi.Text = NumberFormat(ActiveRes.CQi, 1, 6)
+	lblCoefCQ0.Text = NumberFormat(ActiveRes.CQ0, 1, 6)
+	lblCoefCH.Text = NumberFormat(ActiveRes.CH, 1, 6)
+	lblCoefCY.Text = NumberFormat(ActiveRes.CY, 1, 6)
+	
+	' Inflow Telemetry
+	lblFlowLambda.Text = NumberFormat(ActiveRes.InflowLambda, 1, 5)
+	lblFlowLambdaI.Text = NumberFormat(ActiveRes.InflowLambdaI, 1, 5)
+	lblFlowGradients.Text = NumberFormat(ActiveRes.InflowKx, 1, 3) & " / " & NumberFormat(ActiveRes.InflowKy, 1, 3)
+	lblFlowWakeChi.Text = NumberFormat(ActiveRes.WakeSkewChiDeg, 1, 1) & "°"
+	lblFlowTipMach.Text = NumberFormat(ActiveRes.AdvancingTipMach, 1, 3)
+End Sub
+
+' Navigation Events
+Sub pager_PageChanged(Position As Int)
+	CurrentPage = Position
+	Dim tabW As Int = root.Width / 3
+	pnlTabIndicator.Left = Position * tabW
+	
+	btnTabGeom.TextColor = ColorTextDim
+	btnTabCond.TextColor = ColorTextDim
+	btnTabRes.TextColor = ColorTextDim
+	
+	If Position = 0 Then
+		btnTabGeom.TextColor = ColorAccentCyan
+	Else If Position = 1 Then
+		btnTabCond.TextColor = ColorAccentCyan
+	Else
+		btnTabRes.TextColor = ColorAccentCyan
+		RecalculateRotor
+	End If
+End Sub
+
+Sub btnTabGeom_Click
+	pager.CurrentPage = 0
+End Sub
+
+Sub btnTabCond_Click
+	pager.CurrentPage = 1
+End Sub
+
+Sub btnTabRes_Click
+	pager.CurrentPage = 2
+End Sub
+
+' Geometry Page Events
+Sub spnRotorSelect_ItemClick(Position As Int, Value As Object)
+	RotorStorage.SetActiveRotor(Position)
+	ActiveGeom = RotorStorage.GetActiveRotor
+	LoadRotorDataToFields(ActiveGeom)
+	RecalculateRotor
+End Sub
+
+Sub btnRotorNew_Click
+	Dim novo As RotorGeometry = zBETEngine.CreateDefaultGeometry
+	novo.Name = "New Rotor " & (RotorStorage.Rotors.Size + 1)
+	RotorStorage.AddRotor(novo)
+	RefreshRotorSpinner
+	ActiveGeom = RotorStorage.GetActiveRotor
+	LoadRotorDataToFields(ActiveGeom)
+	RecalculateRotor
+End Sub
+
+Sub btnRotorDup_Click
+	RotorStorage.DuplicateRotor(RotorStorage.ActiveIndex)
+	RefreshRotorSpinner
+	ActiveGeom = RotorStorage.GetActiveRotor
+	LoadRotorDataToFields(ActiveGeom)
+	RecalculateRotor
+End Sub
+
+Sub btnRotorDel_Click
+	If RotorStorage.DeleteRotor(RotorStorage.ActiveIndex) Then
+		RefreshRotorSpinner
+		ActiveGeom = RotorStorage.GetActiveRotor
+		LoadRotorDataToFields(ActiveGeom)
+		RecalculateRotor
+	Else
+		ToastMessageShow("Cannot delete the only rotor in the project.", False)
+	End If
+End Sub
+
+Sub btnPitchMode_Click
+	If ActiveGeom.PitchMode = "constant" Then
+		ActiveGeom.PitchMode = "linear_twist"
+		btnPitchMode.Text = "Mode: Linear Twist"
+	Else
+		ActiveGeom.PitchMode = "constant"
+		btnPitchMode.Text = "Mode: Constant Pitch"
+	End If
+	RecalculateRotor
+End Sub
+
+Sub btnTipLoss_Click
+	If ActiveGeom.TipLossMode = "none" Then
+		ActiveGeom.TipLossMode = "fixed"
+		btnTipLoss.Text = "Tip Loss: Fixed (B=0.97)"
+	Else If ActiveGeom.TipLossMode = "fixed" Then
+		ActiveGeom.TipLossMode = "sissingh"
+		btnTipLoss.Text = "Tip Loss: Sissingh"
+	Else
+		ActiveGeom.TipLossMode = "none"
+		btnTipLoss.Text = "Tip Loss: None"
+	End If
+	RecalculateRotor
+End Sub
+
+Sub btnCompressibility_Click
+	ActiveGeom.UsePrandtlGlauert = Not(ActiveGeom.UsePrandtlGlauert)
+	If ActiveGeom.UsePrandtlGlauert Then
+		btnCompressibility.Text = "Prandtl-Glauert: Yes"
+		btnCompressibility.TextColor = ColorAccentGreen
+	Else
+		btnCompressibility.Text = "Prandtl-Glauert: No"
+		btnCompressibility.TextColor = ColorTextDim
+	End If
+	RecalculateRotor
+End Sub
+
+Sub btnSelectAirfoil_Click
+	Dim options As List
+	options.Initialize
+	For i = 0 To RotorPopups.Airfoils.Size - 1
+		Dim af As AirfoilData = RotorPopups.Airfoils.Get(i)
+		options.Add(af.Name & " (a0=" & af.A0 & ", Cd0=" & af.Cd0 & ")")
+	Next
+	
+	Dim resIndex As Int = InputList(options, "Select Airfoil Section:", -1)
+	If resIndex >= 0 Then
+		Dim selAf As AirfoilData = RotorPopups.Airfoils.Get(resIndex)
+		ActiveGeom.LiftSlope0 = selAf.A0
+		ActiveGeom.Cd0 = selAf.Cd0
+		edtLiftSlope.Text = NumberFormat(selAf.A0, 1, 2)
+		edtCd0.Text = NumberFormat(selAf.Cd0, 1, 4)
+		RecalculateRotor
+		ToastMessageShow("Airfoil " & selAf.Name & " applied!", False)
+	End If
+End Sub
+
+' Conditions Page Events
+Sub btnInflowModel_Click
+	If ActiveCond.InflowModel = "uniform" Then
+		ActiveCond.InflowModel = "coleman_simple"
+		btnInflowModel.Text = "Inflow: Coleman Simple"
+	Else If ActiveCond.InflowModel = "coleman_simple" Then
+		ActiveCond.InflowModel = "coleman_feingold"
+		btnInflowModel.Text = "Inflow: Coleman-Feingold"
+	Else If ActiveCond.InflowModel = "coleman_feingold" Then
+		ActiveCond.InflowModel = "drees"
+		btnInflowModel.Text = "Inflow: Drees"
+	Else
+		ActiveCond.InflowModel = "uniform"
+		btnInflowModel.Text = "Inflow: Uniform"
+	End If
+	RecalculateRotor
+End Sub
+
+Sub btnProfileDragModel_Click
+	If ActiveCond.ProfileDragModel = "analytical_tangential" Then
+		ActiveCond.ProfileDragModel = "analytical_vectorial"
+		btnProfileDragModel.Text = "Drag: Analytical Vectorial"
+	Else If ActiveCond.ProfileDragModel = "analytical_vectorial" Then
+		ActiveCond.ProfileDragModel = "numerical_vectorial"
+		btnProfileDragModel.Text = "Drag: Numerical Vectorial"
+	Else
+		ActiveCond.ProfileDragModel = "analytical_tangential"
+		btnProfileDragModel.Text = "Drag: Analytical Tangential"
+	End If
+	RecalculateRotor
+End Sub
+
+Sub btnTorqueModel_Click
+	If ActiveCond.InducedTorqueModel = "energy_balance" Then
+		ActiveCond.InducedTorqueModel = "analytical_bet"
+		btnTorqueModel.Text = "Torque: BET Integral"
+	Else
+		ActiveCond.InducedTorqueModel = "energy_balance"
+		btnTorqueModel.Text = "Torque: Energy Balance"
+	End If
+	RecalculateRotor
+End Sub
+
+Sub btnHoverTrimMode_Click
+	If ActiveCond.HoverTrimMode = "collective" Then
+		ActiveCond.HoverTrimMode = "rpm"
+		btnHoverTrimMode.Text = "Trim: RPM for Target Thrust"
+		btnHoverTrimMode.TextColor = ColorAccentAmber
+	Else If ActiveCond.HoverTrimMode = "rpm" Then
+		ActiveCond.HoverTrimMode = "none"
+		btnHoverTrimMode.Text = "Trim: None (Prescribed Pitch)"
+		btnHoverTrimMode.TextColor = ColorTextDim
+	Else
+		ActiveCond.HoverTrimMode = "collective"
+		btnHoverTrimMode.Text = "Trim: Collective to Target"
+		btnHoverTrimMode.TextColor = ColorAccentGreen
+	End If
+	RecalculateRotor
+End Sub
+
+Sub edtGeom_TextChanged(Old As String, New As String)
+	RecalculateRotor
+End Sub
+
+Sub edtCond_TextChanged(Old As String, New As String)
+	RecalculateRotor
+End Sub
+
+Sub edtSpeedKmh_TextChanged(Old As String, New As String)
+	If UpdatingUI Then Return
+	Dim spdKmh As Double = ParseDoubleDef(New, 0.0)
+	Dim spdMs As Double = spdKmh / 3.6
+	Dim omega As Double = ActiveGeom.RPM * 2.0 * cPI / 60.0
+	Dim vtip As Double = omega * ActiveGeom.Radius
+	If vtip > 0 Then
+		UpdatingUI = True
+		Dim mu As Double = spdMs / vtip
+		edtAdvanceMu.Text = NumberFormat(mu, 1, 3)
+		UpdatingUI = False
+		RecalculateRotor
+	End If
+End Sub
+
+Sub edtClimbRate_TextChanged(Old As String, New As String)
+	If UpdatingUI Then Return
+	Dim w As Double = ParseDoubleDef(New, 0.0)
+	Dim omega As Double = ActiveGeom.RPM * 2.0 * cPI / 60.0
+	Dim vtip As Double = omega * ActiveGeom.Radius
+	If vtip > 0 Then
+		UpdatingUI = True
+		ActiveCond.MuZ = w / vtip
+		UpdatingUI = False
+		RecalculateRotor
+	End If
+End Sub
+
+' Interactive Multi-Parameter μ-Sweep Popup
+Sub btnViewPolarPlot_Click
+	pnlSweepPopup.Initialize("pnlSweepPopup")
+	pnlSweepPopup.Color = 0xFA0D1117
+	root.AddView(pnlSweepPopup, 0, 0, root.Width, root.Height)
+	
+	Dim topBarH As Int = 46dip * sc
+	Dim pnlHeader As Panel
+	pnlHeader.Initialize("")
+	pnlHeader.Color = ColorPnlTitle
+	pnlSweepPopup.AddView(pnlHeader, 0, 0, root.Width, topBarH)
+	
+	Dim lblTitle As Label
+	lblTitle.Initialize("")
+	lblTitle.Text = "📈 PERFORMANCE SWEEP vs μ"
+	lblTitle.TextColor = ColorAccentCyan
+	lblTitle.TextSize = 13 * sc
+	lblTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblTitle.Gravity = Gravity.CENTER_VERTICAL
+	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 60dip, topBarH)
+	
+	Dim btnClose As Button
+	btnClose.Initialize("btnCloseSweepPlot")
+	btnClose.Text = "✕"
+	btnClose.TextColor = 0xFFFF5252
+	btnClose.TextSize = 18 * sc
+	btnClose.Color = Colors.Transparent
+	pnlHeader.AddView(btnClose, root.Width - 45dip, 0, 40dip, topBarH)
+	
+	' Controls Panel: Parameter Selector and Mode Toggles
+	Dim pnlControls As Panel
+	pnlControls.Initialize("")
+	pnlControls.Color = ColorCardBg
+	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 88dip * sc)
+	
+	Dim lblParamH As Label
+	lblParamH.Initialize("")
+	lblParamH.Text = "SELECT PARAMETER (Y-AXIS):"
+	lblParamH.TextColor = ColorTextDim
+	lblParamH.TextSize = 10 * sc
+	lblParamH.Typeface = Typeface.DEFAULT_BOLD
+	pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
+	
+	spnSweepParam.Initialize("spnSweepParam")
+	spnSweepParam.DropdownBackgroundColor = ColorCardBg
+	spnSweepParam.DropdownTextColor = ColorTextMain
+	pnlControls.AddView(spnSweepParam, 12dip, 20dip * sc, root.Width - 24dip, 34dip * sc)
+	
+	spnSweepParam.Clear
+	For i = 0 To RotorPopups.SweepParamLabels.Size - 1
+		spnSweepParam.Add(RotorPopups.SweepParamLabels.Get(i))
+	Next
+	
+	Dim curIdx As Int = 1
+	For i = 0 To RotorPopups.SweepParamKeys.Size - 1
+		If RotorPopups.SweepParamKeys.Get(i) = SweepParamSelectedKey Then
+			curIdx = i
+			Exit
+		End If
+	Next
+	spnSweepParam.SelectedIndex = curIdx
+	
+	btnSweepMultiModel.Initialize("btnSweepMultiModel")
+	UpdateSweepMultiButtonText
+	btnSweepMultiModel.Color = ColorInputBg
+	btnSweepMultiModel.TextSize = 10 * sc
+	pnlControls.AddView(btnSweepMultiModel, 12dip, 58dip * sc, (root.Width - 30dip) * 0.60, 26dip * sc)
+	
+	btnSweepMaxMu.Initialize("btnSweepMaxMu")
+	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
+	btnSweepMaxMu.TextColor = ColorAccentAmber
+	btnSweepMaxMu.Color = ColorInputBg
+	btnSweepMaxMu.TextSize = 10 * sc
+	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 58dip * sc, (root.Width - 30dip) * 0.40, 26dip * sc)
+	
+	' Plot Area
+	Dim plotTop As Int = topBarH + 90dip * sc
+	Dim plotW As Int = root.Width - 16dip
+	Dim plotH As Int = root.Height - plotTop - 50dip * sc
+	
+	ivSweepPlot.Initialize("")
+	pnlSweepPopup.AddView(ivSweepPlot, 8dip, plotTop, plotW, plotH)
+	
+	' Footer Bar
+	Dim pnlFooter As Panel
+	pnlFooter.Initialize("")
+	pnlFooter.Color = ColorPnlTitle
+	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - 48dip * sc, root.Width, 48dip * sc)
+	
+	lblSweepCurrentVal.Initialize("")
+	lblSweepCurrentVal.TextColor = ColorAccentAmber
+	lblSweepCurrentVal.TextSize = 11 * sc
+	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
+	lblSweepCurrentVal.Gravity = Gravity.CENTER_VERTICAL
+	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 130dip, 48dip * sc)
+	
+	Dim btnTable As Button
+	btnTable.Initialize("btnSweepTable")
+	btnTable.Text = "📋 DATA TABLE"
+	btnTable.TextColor = ColorAccentCyan
+	btnTable.Color = ColorCardBg
+	btnTable.TextSize = 11 * sc
+	btnTable.Typeface = Typeface.DEFAULT_BOLD
+	pnlFooter.AddView(btnTable, root.Width - 120dip, 6dip * sc, 110dip, 36dip * sc)
+	
+	UpdateSweepPlotView
+End Sub
+
+Sub spnSweepParam_ItemClick(Position As Int, Value As Object)
+	If Position >= 0 And Position < RotorPopups.SweepParamKeys.Size Then
+		SweepParamSelectedKey = RotorPopups.SweepParamKeys.Get(Position)
+		SweepParamSelectedLabel = RotorPopups.SweepParamLabels.Get(Position)
+		UpdateSweepPlotView
+	End If
+End Sub
+
+Private Sub UpdateSweepMultiButtonText
+	Select Case SweepMultiMode
+		Case 0
+			btnSweepMultiModel.Text = "Curves: 4 Inflow Models"
+			btnSweepMultiModel.TextColor = ColorAccentGreen
+		Case 1
+			btnSweepMultiModel.Text = "Curves: 5 Alphas (-10°..+10°)"
+			btnSweepMultiModel.TextColor = ColorAccentCyan
+		Case 2
+			btnSweepMultiModel.Text = "Curves: 5 Vz (-10..+10 m/s)"
+			btnSweepMultiModel.TextColor = ColorAccentAmber
+		Case 3
+			btnSweepMultiModel.Text = "Curves: Single Active"
+			btnSweepMultiModel.TextColor = ColorTextDim
+	End Select
+End Sub
+
+Sub btnSweepMultiModel_Click
+	SweepMultiMode = (SweepMultiMode + 1) Mod 4
+	UpdateSweepMultiButtonText
+	UpdateSweepPlotView
+End Sub
+
+Sub btnSweepMaxMu_Click
+	If SweepMaxMuVal == 0.40 Then
+		SweepMaxMuVal = 0.50
+	Else
+		SweepMaxMuVal = 0.40
+	End If
+	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
+	UpdateSweepPlotView
+End Sub
+
+Sub UpdateSweepPlotView
+	If ivSweepPlot.IsInitialized = False Then Return
+	Dim plotW As Int = ivSweepPlot.Width
+	Dim plotH As Int = ivSweepPlot.Height
+	If plotW <= 10 Then plotW = root.Width - 16dip
+	If plotH <= 10 Then plotH = 300dip
+	
+	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
+		plotW, plotH, ActiveGeom, ActiveCond, _
+		SweepParamSelectedKey, SweepParamSelectedLabel, _
+		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu _
+	)
+	ivSweepPlot.Bitmap = bmp
+	
+	Dim curVal As Double = RotorPopups.ExtractParamValue(ActiveRes, SweepParamSelectedKey)
+	lblSweepCurrentVal.Text = "Operating point (μ=" & NumberFormat(ActiveCond.Mu, 1, 2) & "): " & NumberFormat(curVal, 1, 4)
+End Sub
+
+Sub btnCloseSweepPlot_Click
+	If pnlSweepPopup.IsInitialized Then
+		pnlSweepPopup.RemoveView
+	End If
+End Sub
+
+Sub btnSweepTable_Click
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("Parameter: ").Append(SweepParamSelectedKey).Append(" vs μ:").Append(CRLF).Append(CRLF)
+	sb.Append("μ").Append(TAB).Append(TAB).Append(SweepParamSelectedKey).Append(CRLF)
+	sb.Append("----------------------------").Append(CRLF)
+	
+	Dim tempCond As FlightCondition = ActiveCond
+	For i = 0 To 10
+		Dim mu As Double = i * (SweepMaxMuVal / 10.0)
+		tempCond.Mu = mu
+		Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
+		Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
+		sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append(NumberFormat(v, 1, 5)).Append(CRLF)
+	Next
+	
+	Msgbox(sb.ToString, "Data Table: " & SweepParamSelectedKey)
+End Sub
+
+Sub btnMenu_Click
+	Dim options As List
+	options.Initialize
+	If UnitSystem = 0 Then
+		options.Add("Unit System: Metric (SI)")
+	Else
+		options.Add("Unit System: Imperial")
+	End If
+	options.Add("Reset to Factory Presets")
+	options.Add("zBET Conventions & Physical Axes")
+	options.Add("About RotorCalculator")
+	
+	Dim res As Int = InputList(options, "Settings & Tools", -1)
+	If res = 0 Then
+		UnitSystem = 1 - UnitSystem
+		If UnitSystem = 1 Then
+			ToastMessageShow("Imperial units enabled", False)
+		Else
+			ToastMessageShow("Metric (SI) units enabled", False)
+		End If
+		RecalculateRotor
+	Else If res = 1 Then
+		RotorStorage.ResetToDefaults
+		RefreshRotorSpinner
+		ActiveGeom = RotorStorage.GetActiveRotor
+		LoadRotorDataToFields(ActiveGeom)
+		RecalculateRotor
+		ToastMessageShow("Factory presets restored!", False)
+	Else If res = 2 Then
+		Msgbox("zBET Coordinate Conventions:" & CRLF & CRLF & _
+			"+x: Forward (aircraft nose)" & CRLF & _
+			"+y: Starboard (right wing)" & CRLF & _
+			"+z: Downward through rotor disk" & CRLF & CRLF & _
+			"Thrust acts upward (-z)." & CRLF & _
+			"Shaft torque Q > 0 powers CCW rotor." & CRLF & _
+			"Advance ratio: μ = V / (ΩR)" & CRLF & _
+			"Axial flow: μz = -μ·tan(α) [α > 0 tilts nose-up]" & CRLF & _
+			"Mean downwash inflow: λ = μz + λi", "zBET Conventions")
+	Else If res = 3 Then
+		Msgbox("RotorCalculator v1.00" & CRLF & CRLF & _
+			"Advanced Rotorcraft Aeromechanics & Performance Calculator for Android." & CRLF & CRLF & _
+			"Engineered on rigorous Blade Element & Momentum Theory (zBET), following Wayne Johnson & J. Gordon Leishman.", "About")
+	End If
+End Sub
+
+' Parsing Utilities
+Private Sub ParseDoubleDef(txt As String, defVal As Double) As Double
+	If txt = "" Or txt = "-" Or txt = "." Then Return defVal
+	Try
+		Return txt
+	Catch
+		Return defVal
+	End Try
+End Sub
+
+Private Sub ParseIntDef(txt As String, defVal As Int) As Int
+	If txt = "" Then Return defVal
+	Try
+		Return txt
+	Catch
+		Return defVal
+	End Try
+End Sub

@@ -1,0 +1,26 @@
+# B4A Build intermediates
+Objects/bin/
+Objects/gen/
+Objects/res/
+Objects/src/
+Objects/temp/
+Objects/extra/
+Objects/dexed/
+Objects/AndroidManifest.xml
+Objects/*.zip
+AutoBackups/
+
+# Python & Environment cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS and Editor files
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/
+*.bak
+*.tmp
