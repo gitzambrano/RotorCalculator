@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+import os
+
+html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -455,7 +457,7 @@ canvas#sweepChart {
       <img src="../../Files/icon.png" class="rotor-icon" alt="Rotor">
       <div class="header-title">RotorCalculator</div>
       <div class="preset-header-tag" id="headerPresetName">UH-60 Black Hawk</div>
-      <button class="btn-menu-dots" onclick="alert('RotorCalculator v1.0.0\nzBET Aeromechanics Engine\n(Wayne Johnson & Gordon Leishman)\nFlight Dynamicist: Gustavo Zambrano')">
+      <button class="btn-menu-dots" onclick="alert('RotorCalculator v1.0.0\\nzBET Aeromechanics Engine\\n(Wayne Johnson & Gordon Leishman)\\nFlight Dynamicist: Gustavo Zambrano')">
         <img src="../../Files/android-3-dot-menu.png" alt="Menu">
       </button>
     </div>
@@ -878,3 +880,8 @@ calc();
 </script>
 </body>
 </html>
+"""
+
+with open(r"c:\Projetos\RotorCalculator\tools\web_preview\index.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+print("web_preview/index.html updated with 10/10 AeroCalculator layout!")
