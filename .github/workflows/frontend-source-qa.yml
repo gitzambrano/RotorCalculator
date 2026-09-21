@@ -368,6 +368,7 @@ jobs:
             bash tools/ci_ui_qa.sh
 
       - name: Upload screenshots and UI hierarchy
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-source-ui-qa
