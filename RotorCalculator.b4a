@@ -356,7 +356,7 @@ Private Sub BuildUnifiedHeader
 	pnlMenuAnchor.AddView(img2, (menuW - 22dip) / 2, (HeaderTopH - 22dip) / 2, 22dip, 22dip)
 	
 	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
-	PopupMenu.AddMenuItem(0, 0, "Toggle Unit System (SI / Imperial)")
+	PopupMenu.AddMenuItem(0, 0, "Toggle Result Units (SI / Imperial)")
 	PopupMenu.AddMenuItem(1, 1, "Reset to Factory Rotor Presets")
 	PopupMenu.AddMenuItem(2, 2, "zBET Conventions & Physical Axes")
 	PopupMenu.AddMenuItem(3, 3, "About RotorCalculator")
@@ -392,6 +392,7 @@ Private Sub BuildUnifiedHeader
 	If titleW < 170dip Then titleSize = 18
 	If titleW < 145dip Then titleSize = 17
 	If titleW < 125dip Then titleSize = 15.5
+	If root.Width <= 340dip Then titleSize = 16
 	lblAppTitle.TextSize = titleSize
 	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
 	lblAppTitle.SingleLine = True
@@ -463,9 +464,9 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 		Case 0
 			UnitSystem = 1 - UnitSystem
 			If UnitSystem = 0 Then
-				ToastMessageShow("Unit System: Metric (SI)", False)
+				ToastMessageShow("Result Units: Metric (SI)", False)
 			Else
-				ToastMessageShow("Unit System: Imperial", False)
+				ToastMessageShow("Result Units: Imperial", False)
 			End If
 			RecalculateRotor
 		Case 1
@@ -712,7 +713,7 @@ Private Sub BuildPageRes
 	' 1. Top Action Button: Open Multi-Parameter μ-Sweep
 	btnViewPolarPlot.Initialize("btnViewPolarPlot")
 	btnViewPolarPlot.Text = "📈 OPEN MULTI-PARAMETER SWEEP (μ)"
-	btnViewPolarPlot.TextSize = 14 * sc
+	If root.Width <= 340dip Then btnViewPolarPlot.TextSize = 12 Else btnViewPolarPlot.TextSize = 14 * sc
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextColor = ColorAccentCyan
 	btnViewPolarPlot.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
@@ -831,7 +832,11 @@ End Sub
 
 Private Sub RotorListName(fullName As String) As String
 	If root.Width > 340dip Then Return fullName
-	Return HeaderRotorName(fullName)
+	Dim shortName As String = HeaderRotorName(fullName)
+	If fullName.ToLowerCase.Contains("(copy)") And shortName.ToLowerCase.Contains("(copy)") = False Then
+		shortName = shortName & " (Copy)"
+	End If
+	Return shortName
 End Sub
 
 Private Sub ResultDisplayLabel(fullText As String) As String
@@ -1267,7 +1272,7 @@ End Sub
 
 Sub btnUnit_Click
 	Dim b As Button = Sender
-	ToastMessageShow("Unit: " & b.Tag, False)
+	ToastMessageShow("Input unit: " & b.Tag & " (inputs use SI)", False)
 End Sub
 
 Sub edtGeom_TextChanged (Old As String, New As String)
@@ -1365,7 +1370,7 @@ Sub btnViewPolarPlot_Click
 	Dim lblTitle As Label: lblTitle.Initialize("")
 	lblTitle.Text = "📈 MULTI-PARAMETER SWEEP vs μ"
 	lblTitle.TextColor = ColorAccentCyan
-	lblTitle.TextSize = 14 * sc
+	If root.Width <= 340dip Then lblTitle.TextSize = 12 Else lblTitle.TextSize = 14 * sc
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
 	lblTitle.Gravity = Gravity.CENTER_VERTICAL
 	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 60dip, topBarH)
@@ -1375,23 +1380,23 @@ Sub btnViewPolarPlot_Click
 	btnClose.TextColor = 0xFFFF5252
 	btnClose.TextSize = 18 * sc
 	btnClose.Color = Colors.Transparent
-	pnlHeader.AddView(btnClose, root.Width - 45dip, 0, 40dip, topBarH)
+	pnlHeader.AddView(btnClose, root.Width - 48dip, 0, 44dip, topBarH)
 	
 	Dim pnlControls As Panel: pnlControls.Initialize("")
 	pnlControls.Color = ColorPnlInput2
-	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 88dip * sc)
+	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 104dip * sc)
 	
 	Dim lblParamH As Label: lblParamH.Initialize("")
 	lblParamH.Text = "SELECT PARAMETER (Y-AXIS):"
 	lblParamH.TextColor = ColorButText2
-	lblParamH.TextSize = 11 * sc
+	If root.Width <= 340dip Then lblParamH.TextSize = 10 Else lblParamH.TextSize = 11 * sc
 	lblParamH.Typeface = Typeface.DEFAULT_BOLD
 	pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
 	
 	spnSweepParam.Initialize("spnSweepParam")
 	spnSweepParam.DropdownBackgroundColor = ColorPnlTitle
 	spnSweepParam.DropdownTextColor = ColorTitleText
-	pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 34dip * sc)
+	pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 38dip * sc)
 	
 	spnSweepParam.Clear
 	For i = 0 To RotorPopups.SweepParamLabels.Size - 1
@@ -1410,17 +1415,17 @@ Sub btnViewPolarPlot_Click
 	btnSweepMultiModel.Initialize("btnSweepMultiModel")
 	UpdateSweepMultiButtonText
 	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepMultiModel.TextSize = 11 * sc
-	pnlControls.AddView(btnSweepMultiModel, 12dip, 58dip * sc, (root.Width - 30dip) * 0.60, 26dip * sc)
+	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 10 Else btnSweepMultiModel.TextSize = 11 * sc
+	pnlControls.AddView(btnSweepMultiModel, 12dip, 64dip * sc, (root.Width - 30dip) * 0.60, 36dip * sc)
 	
 	btnSweepMaxMu.Initialize("btnSweepMaxMu")
 	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
 	btnSweepMaxMu.TextColor = ColorAccentAmber
 	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepMaxMu.TextSize = 11 * sc
-	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 58dip * sc, (root.Width - 30dip) * 0.40, 26dip * sc)
+	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 10 Else btnSweepMaxMu.TextSize = 11 * sc
+	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 64dip * sc, (root.Width - 30dip) * 0.40, 36dip * sc)
 	
-	Dim plotTop As Int = topBarH + 90dip * sc
+	Dim plotTop As Int = topBarH + 106dip * sc
 	Dim plotW As Int = root.Width - 16dip
 	Dim plotH As Int = root.Height - plotTop - 52dip * sc
 	
@@ -1433,7 +1438,7 @@ Sub btnViewPolarPlot_Click
 	
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
-	lblSweepCurrentVal.TextSize = 12 * sc
+	If root.Width <= 340dip Then lblSweepCurrentVal.TextSize = 10.5 Else lblSweepCurrentVal.TextSize = 12 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Gravity.CENTER_VERTICAL
 	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 140dip, 50dip * sc)
@@ -1507,7 +1512,11 @@ Sub UpdateSweepPlotView
 	ivSweepPlot.Bitmap = bmp
 	
 	Dim curVal As Double = RotorPopups.ExtractParamValue(ActiveRes, SweepParamSelectedKey)
-	lblSweepCurrentVal.Text = "Operating μ=" & NumberFormat(ActiveCond.Mu, 1, 2) & ": " & NumberFormat(curVal, 1, 5)
+	If root.Width <= 360dip Then
+		lblSweepCurrentVal.Text = "μ=" & NumberFormat(ActiveCond.Mu, 1, 2) & ": " & NumberFormat(curVal, 1, 5)
+	Else
+		lblSweepCurrentVal.Text = "Operating μ=" & NumberFormat(ActiveCond.Mu, 1, 2) & ": " & NumberFormat(curVal, 1, 5)
+	End If
 End Sub
 
 Sub btnSweepTable_Click
