@@ -1,0 +1,168 @@
+name: Real APK UI QA
+
+on:
+  push:
+    branches:
+      - ui/frontend-5-star
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ui-qa:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: compact-320x568
+            size: 320x568
+            density: 160
+            rotation: 0
+          - name: standard-360x780
+            size: 360x780
+            density: 160
+            rotation: 0
+          - name: modern-393x873
+            size: 393x873
+            density: 160
+            rotation: 0
+          - name: large-412x915
+            size: 412x915
+            density: 160
+            rotation: 0
+          - name: tablet-768x1024
+            size: 768x1024
+            density: 160
+            rotation: 0
+          - name: landscape-915x412
+            size: 915x412
+            density: 160
+            rotation: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare helper scripts
+        shell: bash
+        run: |
+          mkdir -p qa-results/${{ matrix.name }}
+          cat > /tmp/ui_node.py <<'PY'
+          import subprocess, sys, xml.etree.ElementTree as ET, re, os, json
+          out = sys.argv[1] if len(sys.argv) > 1 else "window.xml"
+          subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
+          subprocess.run(["adb","pull","/sdcard/window.xml",out], check=True, stdout=subprocess.DEVNULL)
+          root = ET.parse(out).getroot()
+          def b(s):
+              m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",s or "")
+              return tuple(map(int,m.groups())) if m else None
+          nodes=[]
+          for n in root.iter("node"):
+              text=(n.attrib.get("text") or "").strip()
+              desc=(n.attrib.get("content-desc") or "").strip()
+              bounds=b(n.attrib.get("bounds"))
+              if text or desc:
+                  nodes.append({"text":text,"desc":desc,"bounds":bounds,"clickable":n.attrib.get("clickable")})
+          print(json.dumps(nodes,ensure_ascii=False,indent=2))
+          PY
+          cat > /tmp/tap_text.py <<'PY'
+          import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile, os
+          needle=sys.argv[1].lower()
+          xml=tempfile.NamedTemporaryFile(delete=False,suffix=".xml").name
+          subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
+          subprocess.run(["adb","pull","/sdcard/window.xml",xml], check=True, stdout=subprocess.DEVNULL)
+          root=ET.parse(xml).getroot()
+          best=None
+          for n in root.iter("node"):
+              hay=((n.attrib.get("text") or "")+" "+(n.attrib.get("content-desc") or "")).lower()
+              if needle in hay:
+                  m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib.get("bounds",""))
+                  if m:
+                      x1,y1,x2,y2=map(int,m.groups())
+                      if x2>x1 and y2>y1:
+                          best=((x1+x2)//2,(y1+y2)//2,n.attrib.get("text",""))
+                          break
+          if not best:
+              print("NOT_FOUND",sys.argv[1]); sys.exit(2)
+          print("TAP",best)
+          subprocess.run(["adb","shell","input","tap",str(best[0]),str(best[1])],check=True)
+          PY
+
+      - name: Run APK on real Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            set -e
+            adb shell wm size ${{ matrix.size }}
+            adb shell wm density ${{ matrix.density }}
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation ${{ matrix.rotation }}
+            adb install -r RotorCalculator_Signed.apk
+            adb shell am force-stop flightdyn.rotorcalculator
+            adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
+            sleep 3
+
+            OUT="qa-results/${{ matrix.name }}"
+            adb exec-out screencap -p > "$OUT/01-geometry-top.png"
+            python /tmp/ui_node.py "$OUT/01-geometry-top.xml" > "$OUT/01-geometry-top.json"
+
+            adb shell input swipe 160 500 160 160 350 || true
+            adb shell input swipe 160 500 160 160 350 || true
+            sleep 1
+            adb exec-out screencap -p > "$OUT/02-geometry-bottom.png"
+            python /tmp/ui_node.py "$OUT/02-geometry-bottom.xml" > "$OUT/02-geometry-bottom.json"
+
+            python /tmp/tap_text.py CONDITIONS
+            sleep 1
+            adb exec-out screencap -p > "$OUT/03-conditions-top.png"
+            python /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
+
+            adb shell input swipe 160 500 160 160 350 || true
+            adb shell input swipe 160 500 160 160 350 || true
+            sleep 1
+            adb exec-out screencap -p > "$OUT/04-conditions-bottom.png"
+            python /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
+
+            python /tmp/tap_text.py RESULTS
+            sleep 1
+            adb exec-out screencap -p > "$OUT/05-results-top.png"
+            python /tmp/ui_node.py "$OUT/05-results-top.xml" > "$OUT/05-results-top.json"
+
+            adb shell input swipe 160 500 160 120 350 || true
+            adb shell input swipe 160 500 160 120 350 || true
+            sleep 1
+            adb exec-out screencap -p > "$OUT/06-results-mid.png"
+            python /tmp/ui_node.py "$OUT/06-results-mid.xml" > "$OUT/06-results-mid.json"
+
+            adb shell input swipe 160 500 160 120 350 || true
+            adb shell input swipe 160 500 160 120 350 || true
+            sleep 1
+            adb exec-out screencap -p > "$OUT/07-results-bottom.png"
+            python /tmp/ui_node.py "$OUT/07-results-bottom.xml" > "$OUT/07-results-bottom.json"
+
+            python /tmp/tap_text.py "OPEN MULTI-PARAMETER" || true
+            sleep 2
+            adb exec-out screencap -p > "$OUT/08-sweep.png"
+            python /tmp/ui_node.py "$OUT/08-sweep.xml" > "$OUT/08-sweep.json" || true
+
+            adb shell dumpsys window displays > "$OUT/window-displays.txt"
+            adb shell dumpsys activity top > "$OUT/activity-top.txt"
+            adb shell wm size > "$OUT/wm-size.txt"
+            adb shell wm density > "$OUT/wm-density.txt"
+
+      - name: Upload screenshots and UI hierarchy
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-qa-${{ matrix.name }}
+          path: qa-results/${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 7
