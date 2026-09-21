@@ -304,9 +304,11 @@ End Sub
 
 Sub Activity_KeyPress (KeyCode As Int) As Boolean
 	If KeyCode = KeyCodes.KEYCODE_BACK Then
-		If pnlSweepPopup.IsInitialized And pnlSweepPopup.Parent = root Then
-			pnlSweepPopup.RemoveView
-			Return True
+		If pnlSweepPopup.IsInitialized Then
+			If pnlSweepPopup.Parent = root Then
+				pnlSweepPopup.RemoveView
+				Return True
+			End If
 		End If
 		If CurrentPage = 2 Then
 			pager.GotoPage(1, True)
