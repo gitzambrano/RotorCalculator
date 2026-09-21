@@ -201,6 +201,25 @@ functional_smoke() {
   grep -qi "(Copy)" "$OUT/06-list-with-copy.json"
   safe_screencap "$OUT/06-list-with-copy.png"
 
+  # Cold restart: the copied rotor must remain the active selection.
+  adb shell am force-stop flightdyn.rotorcalculator
+  adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
+  sleep 2
+  python /tmp/ui_node.py "$OUT/06b-list-after-cold-restart.xml" > "$OUT/06b-list-after-cold-restart.json"
+  python3 - "$OUT/06b-list-after-cold-restart.json" <<'PY'
+import json,sys
+nodes=json.load(open(sys.argv[1],encoding="utf-8"))
+copies=[n for n in nodes if "(Copy)" in n.get("text","") and n.get("bounds")]
+active=[n for n in nodes if n.get("text")=="ACTIVE" and n.get("bounds")]
+if not copies or not active:
+    raise SystemExit("copy or ACTIVE badge missing after cold restart")
+def cy(n):
+    b=n["bounds"]; return (b[1]+b[3])/2
+if min(abs(cy(c)-cy(a)) for c in copies for a in active) > 28:
+    raise SystemExit("ACTIVE badge is not on copied rotor row after cold restart")
+PY
+  safe_screencap "$OUT/06b-list-after-cold-restart.png"
+
   python /tmp/tap_text.py CONDITIONS
   sleep 1
   python /tmp/tap_text.py "Coleman-Feingold"
@@ -242,7 +261,7 @@ functional_smoke() {
   sleep 2
   python /tmp/ui_node.py "$OUT/11-sweep.xml" > "$OUT/11-sweep.json"
   grep -qi "PARAMETER SWEEP" "$OUT/11-sweep.json"
-  grep -qi "Operating μ=0.00" "$OUT/11-sweep.json"
+  grep -qi "Operating μ = 0.00" "$OUT/11-sweep.json"
   safe_screencap "$OUT/11-sweep.png"
   adb shell input keyevent 4
   sleep 1

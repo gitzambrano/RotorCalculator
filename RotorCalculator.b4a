@@ -1823,12 +1823,7 @@ Sub UpdateSweepPlotView
 		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu)
 	ivSweepPlot.Bitmap = bmp
 	
-	Dim curVal As Double = RotorPopups.ExtractParamValue(ActiveRes, SweepParamSelectedKey)
-	If root.Width <= 360dip Then
-		lblSweepCurrentVal.Text = "μ=" & NumberFormat(ActiveCond.Mu, 1, 2) & ": " & NumberFormat(curVal, 1, 5)
-	Else
-		lblSweepCurrentVal.Text = "Operating μ=" & NumberFormat(ActiveCond.Mu, 1, 2) & ": " & NumberFormat(curVal, 1, 5)
-	End If
+	lblSweepCurrentVal.Text = "Operating μ = " & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False)
 End Sub
 
 Sub btnSweepTable_Click

@@ -77,3 +77,16 @@ def test_qa_rejects_corrupt_frames_and_checks_process_liveness():
     assert "check_dark_png.py" in qa
     assert "assert_app_alive" in qa
     assert "06b-after-sweep-back" in qa
+
+
+def test_sweep_footer_is_unambiguous_and_fixed_precision():
+    main = text("RotorCalculator.b4a")
+    assert 'lblSweepCurrentVal.Text = "Operating μ = "' in main
+    assert "NumberFormat2(ActiveCond.Mu, 1, 2, 2, False)" in main
+    assert '"Operating μ="' not in main
+
+
+def test_functional_smoke_verifies_active_rotor_after_cold_restart():
+    qa = text("tools/ci_ui_qa.sh")
+    assert "06b-list-after-cold-restart" in qa
+    assert "ACTIVE badge is not on copied rotor row after cold restart" in qa
