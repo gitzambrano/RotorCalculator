@@ -34,7 +34,7 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
 - **Portabilidade**: Deve permitir execução autônoma em linha de comando (B4J ou harness de teste) sem modificações no algoritmo.
 
 ### Camada de Armazenamento (`RotorStorage.bas` / `clsRotorManager.bas`):
-- Gerenciamento autônomo das geometrias salvas no armazenamento seguro do app (`RuntimePermissions.GetSafeDirDefaultExternal("")` ou `File.DirInternal`).
+- Gerenciamento autônomo das geometrias salvas no armazenamento privado do app (`File.DirInternal`), sem permissões externas de armazenamento.
 - Suporte a presets de fábrica (UH-60, Bell 206, Bo 105, R44, DJI Drone) e criação ilimitada de rotores customizados com operações completas de CRUD (Criar, Ler, Atualizar, Duplicar, Deletar).
 
 ---
@@ -42,10 +42,10 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
 ## 3. Padrões de Interface Humana e Compatibilidade Android
 
 1. **Responsividade Universal**:
-   - Deve funcionar perfeitamente em telas compactas (320dp de largura), telas comuns (360dp a 412dp), dobráveis e tablets (600dp+).
-   - Uso consistente de `dip` (Density-Independent Pixels) e cálculo dinâmico da escala (`Main.sc`).
+   - Deve funcionar perfeitamente em telas compactas (320dp de largura), telas comuns (360dp a 412dp), landscape e tablets (600dp+), incluindo font scale de 130%.
+   - Uso consistente de `dip` (Density-Independent Pixels), alvos acionáveis de pelo menos 48dp e cálculo dinâmico da escala (`Main.sc`).
    - `android:windowSoftInputMode="stateHidden|adjustPan"` no manifesto para impedir que o teclado virtual desconfigure os painéis.
-   - Suporte estrito às áreas seguras (*edge-to-edge* e barras de sistema) via `IME.GetContentRect`.
+   - A Activity usa somente sua área útil de conteúdo; nenhum componente depende da biblioteca IME ou de permissões de runtime para layout.
 2. **Design Visual "Ultra-Premium"**:
    - Estética inspirada no AeroCalculator, porém com acabamento moderno de instrumentos aeronáuticos e estilo *high-tech* (paleta escura em grafite/titânio com destaques em ciano elétrico `#00E5FF`, verde esmeralda `#00E676`, e branco puro).
    - Tipografia técnica límpida e legível (`xenara-bold.ttf` / fontes do sistema).
@@ -59,7 +59,7 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
 1. **Diretório `Key/`**:
    - O diretório `Key/` contém a keystore oficial (`key_aero_calc.keystore`, alias `b4a`, senha `***REDACTED***`) e as credenciais de API (`play_store_service_account.json`).
    - **Confidencialidade Máxima**: Nenhum arquivo privado ou senha deve ser commitado em repositórios públicos.
-   - Para backups na nuvem, utilizar o formato codificado em Base64 (`key_aero_calc.keystore.b64.txt`).
+   - Para backups na nuvem, utilizar o formato codificado em Base64 (`key_aero_calc.keystore.b64.txt`). A build final deve usar a keystore oficial; builds de QA podem usar chave efêmera separada.
 2. **Publicação na Play Store**:
    - Sempre incrementar `#VersionCode` (inteiro estritamente crescente) e atualizar `#VersionName` antes de gerar pacotes de release.
    - Gerar pacotes assinados `.aab` (*Android App Bundle*) direcionados ao SDK 36 (Android 16), mantendo compatibilidade retroativa até Android 5.0 (API 16/21).
@@ -73,3 +73,15 @@ Antes de concluir qualquer entrega de desenvolvimento:
 2. Verificar que as tolerâncias numéricas entre o motor B4A e o zBET de referência respeitam os limites ($\Delta C_T < 10^{-6}$, $\Delta \lambda_i < 10^{-6}$, $\Delta C_Q < 10^{-5}$).
 3. Garantir compilação limpa do projeto B4A sem erros ou avisos de referência nula.
 4. Manter a documentação em `plano.md` e `docs/` rigorosamente atualizada.
+
+---
+
+## 6. Frontend Android e QA de Release
+
+- A navegação principal usa três painéis B4A nativos (`Geometry`, `Conditions`, `Results`) controlados pelas tabs do header; `AHViewPager` não faz parte do runtime atual.
+- As únicas bibliotecas B4A declaradas são `core`, `phone` e `RSPopupMenu`.
+- O manifesto suporta Android 5.0+ (`minSdkVersion=21`) e usa `targetSdkVersion=36`.
+- Labels e unidades são tipografia, não botões falsos. Superfícies elevadas ficam reservadas para controles realmente acionáveis.
+- `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.
+- Tip-loss deve representar explicitamente `none`, `fixed` e `sissingh`; presets com fator fixo não podem ser apresentados como OFF.
+- Antes de uma entrega final, o workflow deve executar os testes zBET, compilar B4A, instalar o APK gerado no emulador, capturar as nove configurações alvo e executar smoke tests de interação. Screenshots reais devem ser inspecionadas antes de substituir o APK assinado versionado no repositório.
