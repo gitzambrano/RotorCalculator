@@ -338,20 +338,46 @@ jobs:
 
           cat > /tmp/tap_text.py <<'PY'
           import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile
-          needle=sys.argv[1].lower()
+          needle=sys.argv[1].strip().lower()
           xml=tempfile.NamedTemporaryFile(delete=False,suffix=".xml").name
           subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
           subprocess.run(["adb","pull","/sdcard/window.xml",xml], check=True, stdout=subprocess.DEVNULL)
           root=ET.parse(xml).getroot()
-          for n in root.iter("node"):
-              hay=((n.attrib.get("text") or "")+" "+(n.attrib.get("content-desc") or "")).lower()
-              if needle in hay:
-                  m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib.get("bounds",""))
-                  if m:
-                      x1,y1,x2,y2=map(int,m.groups())
-                      if x2>x1 and y2>y1:
-                          subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-                          sys.exit(0)
+
+          candidates=[]
+          for order,n in enumerate(root.iter("node")):
+              text=(n.attrib.get("text") or "").strip()
+              desc=(n.attrib.get("content-desc") or "").strip()
+              values=[v for v in (text,desc) if v]
+              if not values:
+                  continue
+              m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib.get("bounds",""))
+              if not m:
+                  continue
+              x1,y1,x2,y2=map(int,m.groups())
+              if x2<=x1 or y2<=y1:
+                  continue
+              exact=any(v.lower()==needle for v in values)
+              partial=any(needle in v.lower() for v in values)
+              if not partial:
+                  continue
+              clickable=n.attrib.get("clickable","false")=="true"
+              enabled=n.attrib.get("enabled","true")!="false"
+              if not enabled:
+                  continue
+              # Exact clickable controls win. Then exact labels, clickable partials,
+              # and only finally passive substring matches.
+              priority=(0 if exact and clickable else
+                        1 if exact else
+                        2 if clickable else
+                        3)
+              candidates.append((priority,order,x1,y1,x2,y2,text,desc))
+
+          if candidates:
+              candidates.sort(key=lambda c:(c[0],c[1]))
+              _,_,x1,y1,x2,y2,_,_=candidates[0]
+              subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
+              sys.exit(0)
           print("NOT_FOUND",sys.argv[1]); sys.exit(2)
           PY
 

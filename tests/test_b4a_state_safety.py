@@ -90,3 +90,10 @@ def test_functional_smoke_verifies_active_rotor_after_cold_restart():
     qa = text("tools/ci_ui_qa.sh")
     assert "06b-list-after-cold-restart" in qa
     assert "ACTIVE badge is not on copied rotor row after cold restart" in qa
+
+
+def test_ui_tap_helper_prefers_exact_clickable_controls():
+    wf = text(".github/workflows/frontend-source-qa.yml")
+    assert "Exact clickable controls win" in wf
+    assert "priority=(0 if exact and clickable else" in wf
+    assert "candidates.sort(key=lambda c:(c[0],c[1]))" in wf
