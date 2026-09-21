@@ -252,13 +252,13 @@ Sub Activity_Create(FirstTime As Boolean)
 		sc = 1
 		HeaderTopH = 42dip
 		HeaderTabsY = 42dip
-		HeaderTabsH = 44dip
-		HeaderHeight = 87dip
+		HeaderTabsH = 48dip
+		HeaderHeight = 91dip
 	Else
 		HeaderTopH = 56dip * sc
 		HeaderTabsY = 56dip * sc
-		HeaderTabsH = 45dip * sc
-		HeaderHeight = 102dip * sc
+		HeaderTabsH = 48dip * sc
+		HeaderHeight = 105dip * sc
 	End If
 	
 	' Phone-width form on large screens: readable line lengths, no stretched controls.
@@ -377,7 +377,7 @@ Private Sub BuildUnifiedHeader
 	lblRotorNameHeader.Initialize("lblRotorNameHeader")
 	lblRotorNameHeader.Text = HeaderRotorName(ActiveGeom.Name)
 	lblRotorNameHeader.TextColor = ColorAccentCyan
-	If root.Width <= 340dip Then lblRotorNameHeader.TextSize = 10 Else lblRotorNameHeader.TextSize = 11 * sc
+	If root.Width <= 340dip Then lblRotorNameHeader.TextSize = 11 Else lblRotorNameHeader.TextSize = 11 * sc
 	lblRotorNameHeader.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 	lblRotorNameHeader.SingleLine = True
 	pnltitle.AddView(lblRotorNameHeader, presetLeft, 0, presetW, HeaderTopH)
@@ -717,9 +717,9 @@ Private Sub BuildPageRes
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextColor = ColorAccentCyan
 	btnViewPolarPlot.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW * 3 / 100, 8dip * sc, UiContentW * 94 / 100, 44dip * sc)
+	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW * 3 / 100, 8dip * sc, UiContentW * 94 / 100, 48dip * sc)
 	
-	Dim startY As Int = 58dip * sc
+	Dim startY As Int = 62dip * sc
 	
 	Dim outputLabels As List
 	outputLabels.Initialize2(Array As String( _
@@ -1380,11 +1380,11 @@ Sub btnViewPolarPlot_Click
 	btnClose.TextColor = 0xFFFF5252
 	btnClose.TextSize = 18 * sc
 	btnClose.Color = Colors.Transparent
-	pnlHeader.AddView(btnClose, root.Width - 48dip, 0, 44dip, topBarH)
+	pnlHeader.AddView(btnClose, root.Width - 52dip, 0, 48dip, topBarH)
 	
 	Dim pnlControls As Panel: pnlControls.Initialize("")
 	pnlControls.Color = ColorPnlInput2
-	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 104dip * sc)
+	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 122dip * sc)
 	
 	Dim lblParamH As Label: lblParamH.Initialize("")
 	lblParamH.Text = "SELECT PARAMETER (Y-AXIS):"
@@ -1396,7 +1396,7 @@ Sub btnViewPolarPlot_Click
 	spnSweepParam.Initialize("spnSweepParam")
 	spnSweepParam.DropdownBackgroundColor = ColorPnlTitle
 	spnSweepParam.DropdownTextColor = ColorTitleText
-	pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 38dip * sc)
+	pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 48dip * sc)
 	
 	spnSweepParam.Clear
 	For i = 0 To RotorPopups.SweepParamLabels.Size - 1
@@ -1415,33 +1415,33 @@ Sub btnViewPolarPlot_Click
 	btnSweepMultiModel.Initialize("btnSweepMultiModel")
 	UpdateSweepMultiButtonText
 	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 10 Else btnSweepMultiModel.TextSize = 11 * sc
-	pnlControls.AddView(btnSweepMultiModel, 12dip, 64dip * sc, (root.Width - 30dip) * 0.60, 36dip * sc)
+	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 11 Else btnSweepMultiModel.TextSize = 11 * sc
+	pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, (root.Width - 30dip) * 0.60, 48dip * sc)
 	
 	btnSweepMaxMu.Initialize("btnSweepMaxMu")
 	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
 	btnSweepMaxMu.TextColor = ColorAccentAmber
 	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 10 Else btnSweepMaxMu.TextSize = 11 * sc
-	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 64dip * sc, (root.Width - 30dip) * 0.40, 36dip * sc)
+	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 11 Else btnSweepMaxMu.TextSize = 11 * sc
+	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 72dip * sc, (root.Width - 30dip) * 0.40, 48dip * sc)
 	
-	Dim plotTop As Int = topBarH + 106dip * sc
+	Dim plotTop As Int = topBarH + 124dip * sc
 	Dim plotW As Int = root.Width - 16dip
-	Dim plotH As Int = root.Height - plotTop - 52dip * sc
+	Dim plotH As Int = root.Height - plotTop - 58dip * sc
 	
 	ivSweepPlot.Initialize("")
 	pnlSweepPopup.AddView(ivSweepPlot, 8dip, plotTop, plotW, plotH)
 	
 	Dim pnlFooter As Panel: pnlFooter.Initialize("")
 	pnlFooter.Color = ColorPnlTitle
-	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - 50dip * sc, root.Width, 50dip * sc)
+	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - 56dip * sc, root.Width, 56dip * sc)
 	
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
 	If root.Width <= 340dip Then lblSweepCurrentVal.TextSize = 10.5 Else lblSweepCurrentVal.TextSize = 12 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Gravity.CENTER_VERTICAL
-	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 140dip, 50dip * sc)
+	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 144dip, 56dip * sc)
 	
 	Dim btnTable As Button: btnTable.Initialize("btnSweepTable")
 	btnTable.Text = "📋 TABLE"
@@ -1449,7 +1449,7 @@ Sub btnViewPolarPlot_Click
 	btnTable.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	btnTable.TextSize = 12 * sc
 	btnTable.Typeface = Typeface.DEFAULT_BOLD
-	pnlFooter.AddView(btnTable, root.Width - 130dip, 6dip * sc, 120dip, 38dip * sc)
+	pnlFooter.AddView(btnTable, root.Width - 132dip, 4dip * sc, 120dip, 48dip * sc)
 	
 	UpdateSweepPlotView
 End Sub
