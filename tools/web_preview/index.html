@@ -163,16 +163,28 @@ body {
   overflow: hidden;
 }
 
-/* App Header */
-.app-header {
+@font-face {
+  font-family: 'Xenara';
+  src: url('xenara-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* App Unified Header (AeroCalculator Style) */
+.app-unified-header {
   background: #0E121B;
-  border-bottom: 1px solid #1A2232;
-  padding: 12px 14px;
+  border-bottom: 1px solid #1E2738;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.app-top-row {
+  padding: 8px 12px 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-shrink: 0;
-  z-index: 10;
 }
 
 .app-brand {
@@ -181,18 +193,13 @@ body {
   gap: 10px;
 }
 
-.rotor-icon-box {
-  width: 32px;
-  height: 32px;
+.app-icon-img {
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #004D61, #001E26);
-  border: 1px solid var(--cyan);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--cyan);
-  font-size: 16px;
-  box-shadow: 0 0 10px var(--cyan-glow);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+  object-fit: contain;
 }
 
 .app-titles {
@@ -201,10 +208,10 @@ body {
 }
 
 .app-title-main {
-  font-family: 'Chakra Petch', sans-serif;
+  font-family: 'Xenara', 'Chakra Petch', sans-serif;
   font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.6px;
+  font-size: 17px;
+  letter-spacing: 0.5px;
   color: #FFFFFF;
 }
 
@@ -231,13 +238,15 @@ body {
 }
 .app-menu-btn:hover { color: #FFF; background: #1B2332; }
 
-/* Tabs Bar */
+/* Tabs Bar inside Unified Header */
 .app-tabs {
   display: flex;
   background: #0C1017;
-  border-bottom: 1px solid #171E2B;
+  border-top: 1px solid #161E2C;
   position: relative;
   flex-shrink: 0;
+  z-index: 10;
+}
   z-index: 10;
 }
 
@@ -954,44 +963,46 @@ input:checked + .slider:before {
   <div class="device-frame">
     <div class="app-container">
 
-      <!-- Top Bar -->
-      <div class="app-header">
-        <div class="app-brand">
-          <div class="rotor-icon-box">✦</div>
-          <div class="app-titles">
-            <div class="app-title-main">ROTOR CALCULATOR</div>
-            <div class="app-title-sub" id="topActivePreset">UH-60 Black Hawk</div>
+      <!-- Unified Header (AeroCalculator Style: Title + Tabs together) -->
+      <div class="app-unified-header">
+        <div class="app-top-row">
+          <div class="app-brand">
+            <img src="icon.png" class="app-icon-img" alt="BEMT Rotor Icon">
+            <div class="app-titles">
+              <div class="app-title-main">RotorCalculator</div>
+              <div class="app-title-sub" id="topActivePreset">UH-60 Black Hawk</div>
+            </div>
+          </div>
+          <button class="app-menu-btn" onclick="toggleSettingsMenu()">⋮</button>
+        </div>
+
+        <!-- Settings Dropdown -->
+        <div class="settings-modal" id="settingsModal">
+          <div class="settings-item" onclick="toggleUnitSystem()">
+            <span>Unit System</span>
+            <span id="setUnitVal" style="color:var(--cyan)">SI (Metric)</span>
+          </div>
+          <div class="settings-item" onclick="cyclePrecision()">
+            <span>Precision</span>
+            <span id="setPrecisionVal" style="color:var(--cyan)">4 Digits</span>
+          </div>
+          <div class="settings-item" onclick="resetToFactoryPreset()">
+            <span>Reset to Factory</span>
+            <span style="color:var(--amber)">Default</span>
+          </div>
+          <div class="settings-item" onclick="openAboutDialog()">
+            <span>About zBET Engine</span>
+            <span style="color:var(--green)">v1.0</span>
           </div>
         </div>
-        <button class="app-menu-btn" onclick="toggleSettingsMenu()">⋮</button>
-      </div>
 
-      <!-- Settings Dropdown -->
-      <div class="settings-modal" id="settingsModal">
-        <div class="settings-item" onclick="toggleUnitSystem()">
-          <span>Unit System</span>
-          <span id="setUnitVal" style="color:var(--cyan)">SI (Metric)</span>
+        <!-- Navigation Tabs Integrated inside Header -->
+        <div class="app-tabs">
+          <button class="tab-btn active" id="tabGeom" onclick="switchTab(0)">GEOMETRY</button>
+          <button class="tab-btn" id="tabCond" onclick="switchTab(1)">CONDITIONS</button>
+          <button class="tab-btn" id="tabRes" onclick="switchTab(2)">RESULTS <span style="display:inline-block; width:6px; height:6px; background:var(--cyan); border-radius:50%; margin-left:3px; box-shadow:0 0 6px var(--cyan);"></span></button>
+          <div class="tab-indicator" id="tabIndicator" style="left: 0%; width: 33.33%;"></div>
         </div>
-        <div class="settings-item" onclick="cyclePrecision()">
-          <span>Precision</span>
-          <span id="setPrecisionVal" style="color:var(--cyan)">4 Digits</span>
-        </div>
-        <div class="settings-item" onclick="resetToFactoryPreset()">
-          <span>Reset to Factory</span>
-          <span style="color:var(--amber)">Default</span>
-        </div>
-        <div class="settings-item" onclick="openAboutDialog()">
-          <span>About zBET Engine</span>
-          <span style="color:var(--green)">v1.0</span>
-        </div>
-      </div>
-
-      <!-- Navigation Tabs -->
-      <div class="app-tabs">
-        <button class="tab-btn active" id="tabGeom" onclick="switchTab(0)">GEOMETRY</button>
-        <button class="tab-btn" id="tabCond" onclick="switchTab(1)">CONDITIONS</button>
-        <button class="tab-btn" id="tabRes" onclick="switchTab(2)">RESULTS <span style="display:inline-block; width:6px; height:6px; background:var(--cyan); border-radius:50%; margin-left:3px; box-shadow:0 0 6px var(--cyan);"></span></button>
-        <div class="tab-indicator" id="tabIndicator" style="left: 0%; width: 33.33%;"></div>
       </div>
 
       <!-- Pages Viewport -->
