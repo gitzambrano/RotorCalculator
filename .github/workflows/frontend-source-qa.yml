@@ -213,12 +213,38 @@ jobs:
             Pop-Location
           }
 
-          $apk = Get-ChildItem "$env:GITHUB_WORKSPACE\Objects" -Filter *.apk -Recurse |
-            Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if (-not $apk) { throw "No APK produced by B4A" }
-          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\ci-build" | Out-Null
-          Copy-Item $apk.FullName "$env:GITHUB_WORKSPACE\ci-build\RotorCalculator-ci.apk" -Force
-          Write-Host "Built APK: $($apk.FullName) ($($apk.Length) bytes)"
+          # B4ABuilder with -NoSign=True leaves the unsigned package as Objects\bin\temp.ap_.
+          # Align and sign it with an ephemeral CI-only key so the exact build can be installed.
+          $unsigned = Join-Path $env:GITHUB_WORKSPACE "Objects\bin\temp.ap_"
+          if (-not (Test-Path $unsigned)) { throw "Unsigned B4A package not found: $unsigned" }
+
+          $buildTools = Get-ChildItem "C:\Android\build-tools" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $buildTools) { throw "Android build-tools directory not found" }
+          $zipalign = Join-Path $buildTools.FullName "zipalign.exe"
+          $apksigner = Join-Path $buildTools.FullName "apksigner.bat"
+          if (-not (Test-Path $zipalign)) { throw "zipalign.exe not found in $($buildTools.FullName)" }
+          if (-not (Test-Path $apksigner)) { throw "apksigner.bat not found in $($buildTools.FullName)" }
+
+          $outDir = Join-Path $env:GITHUB_WORKSPACE "ci-build"
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $aligned = Join-Path $outDir "RotorCalculator-ci-aligned.apk"
+          $signed = Join-Path $outDir "RotorCalculator-ci.apk"
+          & $zipalign -f -p 4 $unsigned $aligned
+          if ($LASTEXITCODE -ne 0) { throw "zipalign failed with exit code $LASTEXITCODE" }
+
+          $ciKey = Join-Path $env:RUNNER_TEMP "rotorcalculator-ci.jks"
+          $ciPass = "rotorcalculator-ci-only"
+          $keytool = Join-Path $env:JAVA_BIN "keytool.exe"
+          & $keytool -genkeypair -noprompt -keystore $ciKey -storepass $ciPass -keypass $ciPass -alias ci -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=RotorCalculator CI,OU=QA,O=RotorCalculator,L=CI,S=CI,C=US"
+          if ($LASTEXITCODE -ne 0) { throw "keytool failed with exit code $LASTEXITCODE" }
+
+          & $apksigner sign --ks $ciKey --ks-key-alias ci --ks-pass "pass:$ciPass" --key-pass "pass:$ciPass" --out $signed $aligned
+          if ($LASTEXITCODE -ne 0) { throw "apksigner failed with exit code $LASTEXITCODE" }
+          & $apksigner verify --verbose $signed
+          if ($LASTEXITCODE -ne 0) { throw "apksigner verification failed with exit code $LASTEXITCODE" }
+
+          $apk = Get-Item $signed
+          Write-Host "Built installable QA APK: $($apk.FullName) ($($apk.Length) bytes)"
 
       - uses: actions/upload-artifact@v4
         with:
