@@ -2,7 +2,7 @@
 
 > **Projeto**: RotorCalculator  
 > **Plataforma**: Android (B4A — Basic4Android)  
-> **Alvo**: Android 5.0 (API 16) até Android 16 (API 36) — Compatibilidade Universal  
+> **Alvo**: Android 5.0 (API 21) até Android 16 (API 36) — Compatibilidade Universal  
 > **Localização**: `C:\Projetos\RotorCalculator`  
 > **Base Científica**: Teoria do Elemento de Pá e Teoria do Momentum (zBET — Wayne Johnson & Leishman)
 
@@ -31,7 +31,6 @@ C:\Projetos\RotorCalculator\
 ├── RotorCalculator.b4a           # Ponto de entrada do aplicativo no B4A
 ├── zBETEngine.bas                # Motor de cálculo aerodinâmico zBET (Módulo puro B4A)
 ├── RotorStorage.bas              # Módulo de persistência e presets de geometrias de rotores
-├── RotorEdit.bas                 # Activity / tela de edição detalhada de rotor
 ├── agente.md                     # Regras de governança de código e integridade física
 ├── plano.md                      # Este documento detalhado
 ├── Key\                          # Chaves de assinatura e APIs de publicação
@@ -41,22 +40,20 @@ C:\Projetos\RotorCalculator\
 │   ├── pepk.jar & pepk_commandline.txt
 │   └── Readme_PassKey.md         # Documentação confidencial de chaves
 ├── Libraries\                    # Bibliotecas adicionais locais B4A
-│   ├── AHViewPager.jar & .xml    # Container de abas deslizantes horizontais
-│   ├── RSPopupMenu.jar & .xml    # Menus de contexto rápidos
-│   └── RichString.jar & .xml     # Formatação de texto rica para fórmulas e símbolos
+│   └── RSPopupMenu.jar & .xml    # Única biblioteca externa usada no runtime
 ├── Files\                        # Recursos empacotados no APK/AAB
 │   ├── icon.png                  # Ícone de alta definição do aplicativo (96x96 / mipmap)
 │   ├── xenara-bold.ttf           # Fonte técnica aeronáutica
 │   └── icon_*.png                # Ícones de ação (editar, duplicar, deletar, mais, etc.)
 ├── Icons\                        # Ícones fonte do projeto (512x512, 192x192, etc.)
 ├── docs\                         # Documentação teórica e especificações
-│   ├── zBET-documentation.md     # Formulação matemática completa do zBET
-│   └── software_requirements.md  # Requisitos funcionais (FR-*) e físicos (PH-*)
+│   └── zBET-documentation.md     # Formulação matemática completa do zBET
 ├── tools\                        # Ferramentas Python de compilação, teste e publicação
 │   ├── zBET.py                   # Script de referência matemática dourada
 │   ├── process_icons.py          # Gerador e conversor de resoluções de ícones
-│   ├── verify_engine.py          # Harness de validação numérica comparativa B4A vs Python
-│   └── b4a_build.ps1             # Automação de compilação do APK e AAB assinado
+│   ├── verify_engine.py          # Harness de validação numérica
+│   ├── ci_ui_qa.sh               # Screenshots e smoke tests do APK real em emulador
+│   └── b4a_build.ps1             # Automação local de compilação B4A
 └── tests\                        # Suíte de casos de teste automatizados
 ```
 
@@ -150,91 +147,36 @@ A solução é encontrada via algoritmo de bissecção ultrarrápido (convergind
 
 ## 4. Arquitetura do Frontend e Design de Interface
 
-O layout utiliza `AHViewPager` com **3 abas principais** e um menu de ações superior responsivo.
+O frontend usa exclusivamente componentes B4A nativos. As três páginas principais — **Geometry**, **Conditions** e **Results** — são painéis independentes controlados pelas tabs fixas do header. Não há `painéis nativos`, `IME`, `RichString`, `RuntimePermissions` ou navegação baseada em bibliotecas legadas.
 
-```
-+-------------------------------------------------------------+
-| [RotorCalculator]      [Nome do Rotor Atual]      [Menu :]  |
-+-------------------------------------------------------------+
-|   [ GEOMETRIA ]     |    [ CONDIÇÕES ]    |   [ RESULTADOS ]|
-|=====================                                        |
-| (Indicador ciano animado na aba ativa)                      |
-+-------------------------------------------------------------+
-|                                                             |
-|                    CONTEÚDO DA ABA ATIVA                    |
-|                                                             |
-+-------------------------------------------------------------+
-```
+O layout é responsivo desde 320dp, possui largura máxima de conteúdo em tablets, mantém alvos acionáveis de pelo menos 48dp e possui tratamento específico para landscape. Labels e unidades são apresentadas como tipografia; superfícies elevadas são reservadas a campos e controles realmente interativos. Em telas compactas apenas os rótulos que precisam são abreviados, mantendo o significado completo por tooltip.
 
-### 4.1 Aba 1: Geometria (Rotores)
-- **Barra de Gestão de Rotores**:
-  - Seletor rápido / spinner do rotor ativo.
-  - Botão `Novo (+)`: abre tela ou diálogo de criação com valores padrão coerentes.
-  - Botão `Editar (Lápis)`: edição detalhada dos parâmetros geométricos do rotor selecionado.
-  - Botão `Duplicar`: clona o rotor atual para permitir testes rápidos de sensibilidade (ex: "UH-60 Modificado").
-  - Botão `Deletar`: exclusão segura com confirmação prévia.
-- **Lista / Cards dos Parâmetros do Rotor Ativo**:
-  - Card 1: **Dimensões Principais** — Raio $R$, Número de pás $N$, Recorte de raiz $r_0/R$, Área de disco $A$.
-  - Card 2: **Solidez e Planta da Pá** — Seletor entre $\sigma_{\mathrm{ref}}$ direta OU Cordas de Raiz $c_{\mathrm{root}}$ e Ponta $c_{\mathrm{tip}}$, com exibição instantânea das solidezes geométrica e de empuxo.
-  - Card 3: **Passo e Torção** — Modo Constante ($\theta_0$) ou Torção Linear ($\theta_{\mathrm{root}}$ e $\theta_{\mathrm{tip}}$ com indicação do $\Delta\theta_{\mathrm{twist}}$ total).
-  - Card 4: **Aerofólio de Seção** — $a_0$ ($1/\mathrm{rad}$ ou $1/^\circ$) e $C_{d0}$, com botão para abrir a **Biblioteca de Aerofólios Típicos** (NACA 0012, VR-7, SC1095, Clark Y, etc.).
-- **Presets de Fábrica Integrados**:
-  1. *Sikorsky UH-60 Black Hawk* ($R=8.18\text{ m}, N=4, c=0.53\text{ m}, \text{twist}=-18^\circ$)
-  2. *Bell 206 JetRanger* ($R=5.08\text{ m}, N=2, c=0.33\text{ m}, \text{twist}=-10^\circ$)
-  3. *Eurocopter Bo 105* ($R=4.92\text{ m}, N=4, c=0.27\text{ m}, \text{twist}=-8^\circ$)
-  4. *Robinson R44* ($R=5.03\text{ m}, N=2, c=0.25\text{ m}, \text{twist}=-6^\circ$)
-  5. *DJI Matrice 300 Drone* ($R=0.27\text{ m}, N=2, c=0.045\text{ m}, \text{twist}=-12^\circ$)
-  6. *Rotor Conceitual eVTOL* ($R=1.40\text{ m}, N=5, c=0.12\text{ m}, \text{twist}=-14^\circ$)
+### 4.1 Geometry
 
-### 4.2 Aba 2: Condições (Condições de Voo e Atmosfera)
-- **Calculador de Atmosfera ISA Integrado**:
-  - Altitude: Entrada em metros ou pés.
-  - Temperatura: Entrada em $^\circ\text{C}$ ou $^\circ\text{F}$, com alternador para $\Delta\text{ISA}$.
-  - Exibição de Telemetria Atmosférica: Pressão atmosférica $p$, densidade $\rho$ [$\text{kg/m}^3$], e velocidade do som $a_{\mathrm{som}}$ [$\text{m/s}$].
-- **Velocidade de Avanço do Rotor**:
-  - Entrada via Razão de Avanço $\mu$ (ex: 0.00 a 0.40) OU Velocidade Real $V_\infty$ (km/h, nós, m/s).
-- **Escoamento Axial e Atitude do Disco**:
-  - Modo Ângulo de Ataque $\alpha$ [$^\circ$] (inclinação do mastro para frente/trás).
-  - Modo Velocidade de Subida/Descida $w$ [m/s ou ft/min].
-  - Modo Velocidade Axial Adimensional $\mu_z$.
-- **Rotação**:
-  - RPM do rotor ou Velocidade de Ponta $V_{\mathrm{tip}} = \Omega R$ [m/s].
-- **Opções de Modelagem e Trim (Popups / Botões de Alternância)**:
-  - *Trim de Pairado*: Nenhum (passo prescrito) | Coletivo ($C_T$ ou Empuxo $T$ [N/kgf/lbf] alvo) | Trim de RPM.
-  - *Modelo de Influxo*: Uniforme | Coleman Simples | Coleman-Feingold (NDARC) | Drees.
-  - *Perda de Ponta*: Nenhuma ($B=1.0$) | Fixa ($B=0.97$) | Sissingh.
-  - *Compressibilidade*: Prandtl-Glauert Ligado/Desligado.
-  - *Arrasto de Perfil*: Analítico Tangencial | Analítico Vetorial | Numérico Vetorial.
+- Spinner do rotor ativo e ação **COPY** para criar uma configuração customizada a partir do preset atual.
+- Edição direta de raio, RPM, número de pás, root cutout, cordas, pitch/twist, lift slope e Cd0.
+- Biblioteca de aerofólios; quando os coeficientes não correspondem a uma entrada conhecida, a UI mostra **Custom Section**.
+- Tip-loss com seleção explícita entre **Off**, **Fixed B** e **Sissingh**.
+- Compressibilidade Prandtl-Glauert com estado explícito.
+- Exclusão do rotor ativo no menu superior com confirmação. Reset de presets de fábrica também exige confirmação.
+- Persistência em `File.DirInternal`, sem permissões externas.
 
-### 4.3 Aba 3: Resultados (Telemetria Instantânea e Performance)
-- **Painel de Destaque Superior (Cockpit HUD)**:
-  - **Empuxo Total $T$**: Exibido em Newtons (N) e quilogramas-força (kgf) ou libras-força (lbf).
-  - **Potência Requerida no Eixo $P_{\mathrm{shaft}}$**: Exibida em quilowatts (kW) e cavalos-vapor (HP).
-  - **Torque no Mastro $Q$**: Exibido em $\text{N}\cdot\text{m}$ e $\text{lbf}\cdot\text{ft}$.
-  - **Eficiência**: Figura de Mérito ($FoM$) em pairado ou $L/D_{\mathrm{eff}}$ em avanço.
-- **Tabela / Cards de Coeficientes Adimensionais**:
-  - $C_T$ (Empuxo), $C_P$ (Potência), $C_Q$ (Torque Total), $C_{Qi}$ (Torque Induzido), $C_{Q0}$ (Torque de Perfil)
-  - $C_H$ (Força Longitudinal Total), $C_{Hi}$ (Induzida), $C_{H0}$ (Perfil)
-  - $C_Y$ (Força Lateral)
-  - $C_{Mx}$ (Momento de Rolamento), $C_{My}$ (Momento de Arfagem)
-  - $C_{Pair}$ (Potência do Ar)
-- **Diagnóstico do Escoamento**:
-  - Influxo Médio $\lambda$ e Induzido $\lambda_i$
-  - Gradientes Harmônicos de Influxo $K_x$ e $K_y$
-  - Ângulo de Inclinação da Esteira $\chi$ [$^\circ$]
-  - Mach de Ponta na Pá Avançante $M_{\mathrm{at}}$
-- **Botão de Varredura Universal de Curvas vs μ (Multi-Sweep View)**:
-  - Abre um diálogo/popup interativo de tela cheia com gráfico vetorial de alta resolução renderizado via `Canvas` nativo do Android.
-  - **Seletor de TODOS os Parâmetros**: Um menu com mais de 24 parâmetros aerodinâmicos e de potência disponíveis para traçar curvas em função do avanço $\mu$:
-    - Coeficientes de Força e Torque: $C_T, C_P, C_Q, C_{Qi}, C_{Q0}, C_H, C_{Hi}, C_{H0}, C_Y, C_{Mx}, C_{My}, C_{Pair}$;
-    - Cinemática de Influxo e Esteira: $\lambda, \lambda_i, K_x, K_y, \chi\ [^\circ], M_{\mathrm{at}}$;
-    - Eficiência: $L/D_{\mathrm{eff}}, FoM$;
-    - Grandezas Dimensionais: Potência no Eixo [kW, HP], Empuxo Total [N, kgf], Torque no Mastro [$\text{N}\cdot\text{m}$], Arrasto Longitudinal [N].
-  - **Alternador Multi-Curvas / Comparação de Modelos**:
-    - Permite traçar simultaneamente no mesmo gráfico as curvas dos **4 Modelos de Influxo** (Uniforme em prata, Coleman Simples em laranja, Coleman-Feingold em ciano, e Drees em verde esmeralda) com legenda explicativa, permitindo analisar instantaneamente a sensibilidade aos gradientes harmônicos.
-  - **Alternador de Alcance de Avanço**: Permite alternar entre $\mu_{\max} = 0.40$ (faixa operacional típica) e $\mu_{\max} = 0.50$ (alto avanço / regimes extremos).
-  - **Tabela de Dados**: Botão para exibir a tabela numérica com valores tabulados ponto a ponto de $\mu=0$ até $\mu_{\max}$.
-  - **Destaque do Ponto Operacional Atual**: Ponto operacional de voo ativo assinalado no gráfico com mira pulsante em âmbar.
+### 4.2 Conditions
+
+- Altitude [m], temperatura [°C], advance ratio μ, velocidade [km/h], shaft tilt α [deg] e climb rate [m/s].
+- μ e velocidade são sincronizados com o raio e RPM atuais; μz é atualizado junto com shaft tilt e climb rate.
+- Modelos de inflow: Uniform, Coleman Simple, Coleman-Feingold e Drees.
+- Modelos de profile drag: Analytical Tangential, Analytical Vectorial e Numerical Vectorial.
+- Trim manual ou coletivo. **Target Thrust** e **Target CT** são mutuamente exclusivos e o botão de trim identifica qual alvo governa o cálculo.
+- Geometry e Conditions permanecem coerentes durante recriação/rotação da Activity.
+
+### 4.3 Results
+
+Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. O menu alterna somente as unidades de saída entre SI e Imperial.
+
+### 4.4 Parameter Sweep
+
+O Sweep usa `Canvas` nativo e permite selecionar a grandeza do eixo Y, comparar modelos de inflow, α, Vz ou a condição ativa e alternar μ máximo. Portrait usa controles empilhados; landscape usa uma única faixa horizontal de controles para preservar altura útil do gráfico. O botão Back fecha o Sweep antes de navegar entre tabs.
 
 ---
 
@@ -265,17 +207,23 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 
 ## 6. Compatibilidade Universal Android e Especificações Técnicas
 
-1. **Faixa de Suporte do Sistema Operacional**:
-   - `android:minSdkVersion="16"` (compatível com Android 4.1+)
-   - `android:targetSdkVersion="36"` (compatível com Android 16 e exigências da Google Play 2025/2026).
-2. **Adaptação Responsiva**:
-   - Suporte completo a todas as densidades (`smallScreens`, `normalScreens`, `largeScreens`, `xlargeScreens`, `anyDensity="true"`).
-   - Uso de `dip` para todas as dimensões de interface e escala dinâmica proporcional baseada na largura da tela.
-   - `android:windowSoftInputMode="stateHidden|adjustPan"` no Manifesto para garantir que o teclado não cubra os campos de edição ou distorça o layout.
-   - Ajuste automático de áreas seguras (*edge-to-edge* / insets de barras de sistema) através de `imeInsets.GetContentRect`.
-3. **Armazenamento Seguro de Dados**:
-   - Uso de `RuntimePermissions.GetSafeDirDefaultExternal("")` com fallback transparente para `File.DirInternal`.
-   - Assegura funcionamento perfeito sem requerer permissões perigosas ou obsoletas de armazenamento no Android 11+.
+1. **Sistema operacional**:
+   - `android:minSdkVersion="21"` (Android 5.0+).
+   - `android:targetSdkVersion="36"`.
+2. **Runtime B4A**:
+   - Bibliotecas declaradas: `core`, `phone`, `RSPopupMenu`.
+   - `#MultiDex: False`.
+   - Navegação por três painéis nativos, sem ViewPager.
+3. **Responsividade**:
+   - Gate visual em 320×568, 320×568 com font scale 1.3, 360×780, 393×873, 412×915, 600×960, 768×1024, 915×412 e 1024×600.
+   - Uso de `dip`, ScrollViews nativas, largura máxima em tablets e layout próprio do Sweep em landscape.
+   - `android:windowSoftInputMode="stateHidden|adjustPan"`.
+4. **Armazenamento**:
+   - Presets são gravados em `File.DirInternal`; nenhuma permissão de armazenamento é necessária.
+5. **Validação de release**:
+   - `tools/verify_engine.py` e `tests/test_rotor_engine.py`.
+   - Build B4A real, APK instalável, execução em emulador, dumps de hierarquia, bounds e screenshots reais.
+   - Smoke tests cobrem presets/cópia, tip-loss, compressibilidade, airfoil, modelos, trim, rotação, SI/Imperial, Sweep e delete.
 
 ---
 
@@ -297,7 +245,7 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 - Criação do script de verificação `tools/verify_engine.py` comparando B4A com `tools/zBET.py` em uma matriz de 100 casos com tolerância estrita $< 10^{-6}$.
 
 ### Fase 3: Desenvolvimento do Frontend (UI/UX Premium)
-- Montagem do container `AHViewPager` com 3 abas interativas.
+- Montagem das 3 páginas nativas (`Geometry`, `Conditions`, `Results`) com tabs responsivas no header.
 - Aba 1: Lista e detalhes dos rotores.
 - Aba 2: Controles de condições atmosféricas (ISA), velocidade de avanço e atitude do disco.
 - Aba 3: Cockpit de telemetria com cartões de empuxo, potência, torque, eficiência e coeficientes adimensionais.
