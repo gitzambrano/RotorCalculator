@@ -10,7 +10,6 @@ Version=13
 Sub Process_Globals
 	
 	Private Const FILENAME As String = "rotors_db.txt"
-	Private rp As RuntimePermissions
 	Public Rotors As List
 	Public ActiveIndex As Int = 0
 	
@@ -18,16 +17,11 @@ End Sub
 
 ' Retorna o diretório de dados seguro do app
 Private Sub GetDataDir As String
-	Dim dirPath As String = rp.GetSafeDirDefaultExternal("")
-	If dirPath = "" Or Not(File.Exists(dirPath, "")) Then
-		dirPath = File.DirInternal
-	End If
-	Return dirPath
+	Return File.DirInternal
 End Sub
 
 ' Inicializa o sistema de armazenamento e carrega a lista de rotores
-Public Sub Initialize(runtimePerm As RuntimePermissions)
-	rp = runtimePerm
+Public Sub Initialize
 	If Rotors.IsInitialized = False Then
 		Rotors.Initialize
 	End If
