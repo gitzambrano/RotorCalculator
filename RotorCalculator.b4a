@@ -423,7 +423,9 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 		Case 1
 			Dim resetAnswer As Int = Msgbox2("Restore all factory rotor presets? Custom copies and edits will be removed.", "Reset Rotor Presets", "RESET", "Cancel", "", Null)
 			If resetAnswer = DialogResponse.POSITIVE Then
-				If pnlGeomPopup.IsInitialized And pnlGeomPopup.Parent = root Then CloseGeometryPopup
+				If pnlGeomPopup.IsInitialized Then
+					If pnlGeomPopup.Parent = root Then CloseGeometryPopup
+				End If
 				RotorStorage.ResetToDefaults
 				ActiveGeom = RotorStorage.GetActiveRotor
 				RefreshRotorList
@@ -491,7 +493,7 @@ Private Sub RefreshRotorList
 	For i = 0 To RotorStorage.Rotors.Size - 1
 		Dim g As RotorGeometry = RotorStorage.Rotors.Get(i)
 		Dim row As Panel
-		row.Initialize("pnlRotorRow")
+		row.Initialize("")
 		row.Tag = i
 		If i = RotorStorage.ActiveIndex Then
 			row.Color = ColorPnlInput1
@@ -545,6 +547,13 @@ Private Sub RefreshRotorList
 		lblArrow.Gravity = Gravity.CENTER
 		row.AddView(lblArrow, listW - 36dip, 10dip, 28dip, 48dip)
 		
+		' Dedicated touch surface keeps the whole row clickable, including labels.
+		Dim tap As Panel
+		tap.Initialize("pnlRotorTap")
+		tap.Tag = i
+		tap.Color = Colors.Transparent
+		row.AddView(tap, 0, 0, listW, rowH)
+		
 		Dim sep As Panel
 		sep.Initialize("")
 		sep.Color = ColorPnlLine3
@@ -555,7 +564,7 @@ Private Sub RefreshRotorList
 	scvGeom.Panel.Height = y + 16dip
 End Sub
 
-Sub pnlRotorRow_Click
+Sub pnlRotorTap_Click
 	Dim row As Panel = Sender
 	Dim idx As Int = row.Tag
 	If idx < 0 Or idx >= RotorStorage.Rotors.Size Then Return
@@ -611,9 +620,34 @@ Private Sub OpenGeometryPopup
 	btnClose.Color = Colors.Transparent
 	titleBar.AddView(btnClose, popupW - 52dip, 2dip, 48dip, 48dip)
 	
+	Dim footerH As Int = 64dip
 	scvGeomEditor.Initialize(1800)
-	card.AddView(scvGeomEditor, 0, titleH, popupW, popupH - titleH)
+	card.AddView(scvGeomEditor, 0, titleH, popupW, popupH - titleH - footerH)
 	BuildGeometryEditor(popupW)
+	
+	Dim footer As Panel
+	footer.Initialize("")
+	footer.Color = ColorPnlTitle
+	card.AddView(footer, 0, popupH - footerH, popupW, footerH)
+	
+	Dim gap As Int = 8dip
+	Dim actionW As Int = (popupW - 32dip - gap) / 2
+	Dim btnCopy As Button
+	btnCopy.Initialize("btnGeomCopy")
+	btnCopy.Text = "COPY ROTOR"
+	btnCopy.TextColor = ColorAccentCyan
+	btnCopy.Typeface = Typeface.DEFAULT_BOLD
+	btnCopy.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	footer.AddView(btnCopy, 16dip, 8dip, actionW, 48dip)
+	
+	Dim btnDelete As Button
+	btnDelete.Initialize("btnGeomDelete")
+	btnDelete.Text = "DELETE"
+	btnDelete.TextColor = 0xFFFF6B6B
+	btnDelete.Typeface = Typeface.DEFAULT_BOLD
+	btnDelete.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	footer.AddView(btnDelete, 16dip + actionW + gap, 8dip, actionW, 48dip)
+	
 	LoadRotorDataToFields(ActiveGeom)
 End Sub
 
@@ -685,28 +719,7 @@ Private Sub BuildGeometryEditor(editorW As Int)
 		End Select
 	Next
 	
-	Dim actionsY As Int = rowCount * (rowH + 1dip) + 12dip
-	Dim actionH As Int = 48dip
-	Dim gap As Int = 8dip
-	Dim actionW As Int = (editorW - 32dip - gap) / 2
-	
-	Dim btnCopy As Button
-	btnCopy.Initialize("btnGeomCopy")
-	btnCopy.Text = "COPY ROTOR"
-	btnCopy.TextColor = ColorAccentCyan
-	btnCopy.Typeface = Typeface.DEFAULT_BOLD
-	btnCopy.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	scvGeomEditor.Panel.AddView(btnCopy, 16dip, actionsY, actionW, actionH)
-	
-	Dim btnDelete As Button
-	btnDelete.Initialize("btnGeomDelete")
-	btnDelete.Text = "DELETE"
-	btnDelete.TextColor = 0xFFFF6B6B
-	btnDelete.Typeface = Typeface.DEFAULT_BOLD
-	btnDelete.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	scvGeomEditor.Panel.AddView(btnDelete, 16dip + actionW + gap, actionsY, actionW, actionH)
-	
-	scvGeomEditor.Panel.Height = actionsY + actionH + 16dip
+	scvGeomEditor.Panel.Height = rowCount * (rowH + 1dip) + 12dip
 End Sub
 
 Sub btnCloseGeometryPopup_Click
