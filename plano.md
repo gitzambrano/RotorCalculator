@@ -153,7 +153,7 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 
 ### 4.1 Geometry
 
-- Spinner do rotor ativo e ação **COPY** para criar uma configuração customizada a partir do preset atual.
+- A aba Geometry mostra uma **lista de rotores** no padrão do Aerospace Calculator. O header não exibe o rotor ativo. Tocar em qualquer rotor o torna ativo e abre um popup de geometria; COPY e DELETE ficam dentro desse contexto.
 - Edição direta de raio, RPM, número de pás, root cutout, cordas, pitch/twist, lift slope e Cd0.
 - Biblioteca de aerofólios; quando os coeficientes não correspondem a uma entrada conhecida, a UI mostra **Custom Section**.
 - Tip-loss com seleção explícita entre **Off**, **Fixed B** e **Sissingh**.
