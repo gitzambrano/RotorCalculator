@@ -108,10 +108,14 @@ capture_screen() {
   safe_screencap "$OUT/02-geometry-popup-top.png"
   python /tmp/ui_node.py "$OUT/02-geometry-popup-top.xml" > "$OUT/02-geometry-popup-top.json"
 
-  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
-  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
+  for _ in 1 2 3 4 5; do
+    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
+    sleep 0.2
+  done
   safe_screencap "$OUT/03-geometry-popup-bottom.png"
   python /tmp/ui_node.py "$OUT/03-geometry-popup-bottom.xml" > "$OUT/03-geometry-popup-bottom.json"
+  grep -qi "Compressibility" "$OUT/03-geometry-popup-bottom.json"
+  grep -qi "Prandtl-Glauert" "$OUT/03-geometry-popup-bottom.json"
 
   adb shell input keyevent 4
   sleep 1
@@ -255,6 +259,10 @@ PY
   python /tmp/ui_node.py "$OUT/10-results-imperial.xml" > "$OUT/10-results-imperial.json"
   grep -qi "lbf" "$OUT/10-results-imperial.json"
   grep -qi "HP" "$OUT/10-results-imperial.json"
+  if grep -Eq '"text": "-0([°"]|$)' "$OUT/10-results-imperial.json"; then
+    echo "Display-only negative zero found in Results" >&2
+    exit 1
+  fi
   safe_screencap "$OUT/10-results-imperial.png"
 
   python /tmp/tap_text.py "OPEN PARAMETER SWEEP"

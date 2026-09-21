@@ -108,3 +108,19 @@ def test_release_promotion_uses_same_run_artifact():
     assert "createOrUpdateFileContents" in wf
     assert "contents: write" in wf
     assert "'RotorCalculator_Signed.apk'" in wf
+
+
+def test_results_normalize_display_only_negative_zero():
+    main = text("RotorCalculator.b4a")
+    assert "Private Sub FormatResultValue(Value As Double, FractionDigits As Int) As String" in main
+    assert "If Abs(Value) < (0.5 / scale) Then Value = 0" in main
+    assert "lblResults(10).Text = FormatResultValue(ActiveRes.CY, 6)" in main
+    assert "lblResults(12).Text = FormatResultValue(ActiveRes.CMx, 6)" in main
+    assert "lblResults(18).Text = FormatResultValue(ActiveRes.InflowKy, 3)" in main
+
+
+def test_geometry_matrix_captures_true_bottom_controls():
+    qa = text("tools/ci_ui_qa.sh")
+    assert 'grep -qi "Compressibility" "$OUT/03-geometry-popup-bottom.json"' in qa
+    assert 'grep -qi "Prandtl-Glauert" "$OUT/03-geometry-popup-bottom.json"' in qa
+    assert "for _ in 1 2 3 4 5; do" in qa

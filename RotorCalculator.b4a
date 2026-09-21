@@ -1229,22 +1229,22 @@ Public Sub RecalculateRotor
 		lblResults(8).Text = NumberFormat(ActiveRes.DragHN * 0.224808943, 1, 1) & " lbf"
 	End If
 	
-	lblResults(1).Text = NumberFormat(ActiveRes.CT, 1, 5)
-	lblResults(3).Text = NumberFormat(ActiveRes.CPair, 1, 6)
-	lblResults(5).Text = NumberFormat(ActiveRes.CQ, 1, 6)
-	lblResults(6).Text = NumberFormat(ActiveRes.CQi, 1, 6)
-	lblResults(7).Text = NumberFormat(ActiveRes.CQ0, 1, 6)
-	lblResults(9).Text = NumberFormat(ActiveRes.CH, 1, 6)
-	lblResults(10).Text = NumberFormat(ActiveRes.CY, 1, 6)
-	lblResults(11).Text = NumberFormat(ActiveRes.CMy, 1, 6)
-	lblResults(12).Text = NumberFormat(ActiveRes.CMx, 1, 6)
-	lblResults(13).Text = NumberFormat(ActiveRes.FoM, 1, 4)
-	lblResults(14).Text = NumberFormat(ActiveRes.L_D_eff, 1, 2)
-	lblResults(15).Text = NumberFormat(ActiveRes.InflowLambda, 1, 5)
-	lblResults(16).Text = NumberFormat(ActiveRes.InflowLambdaI, 1, 5)
-	lblResults(17).Text = NumberFormat(ActiveRes.InflowKx, 1, 3)
-	lblResults(18).Text = NumberFormat(ActiveRes.InflowKy, 1, 3)
-	lblResults(19).Text = NumberFormat(ActiveRes.WakeSkewChiDeg, 1, 1) & "°"
+	lblResults(1).Text = FormatResultValue(ActiveRes.CT, 5)
+	lblResults(3).Text = FormatResultValue(ActiveRes.CPair, 6)
+	lblResults(5).Text = FormatResultValue(ActiveRes.CQ, 6)
+	lblResults(6).Text = FormatResultValue(ActiveRes.CQi, 6)
+	lblResults(7).Text = FormatResultValue(ActiveRes.CQ0, 6)
+	lblResults(9).Text = FormatResultValue(ActiveRes.CH, 6)
+	lblResults(10).Text = FormatResultValue(ActiveRes.CY, 6)
+	lblResults(11).Text = FormatResultValue(ActiveRes.CMy, 6)
+	lblResults(12).Text = FormatResultValue(ActiveRes.CMx, 6)
+	lblResults(13).Text = FormatResultValue(ActiveRes.FoM, 4)
+	lblResults(14).Text = FormatResultValue(ActiveRes.L_D_eff, 2)
+	lblResults(15).Text = FormatResultValue(ActiveRes.InflowLambda, 5)
+	lblResults(16).Text = FormatResultValue(ActiveRes.InflowLambdaI, 5)
+	lblResults(17).Text = FormatResultValue(ActiveRes.InflowKx, 3)
+	lblResults(18).Text = FormatResultValue(ActiveRes.InflowKy, 3)
+	lblResults(19).Text = FormatResultValue(ActiveRes.WakeSkewChiDeg, 1) & "°"
 	lblResults(20).Text = NumberFormat(tipMachHover, 1, 3)
 	lblResults(21).Text = NumberFormat(ActiveRes.AdvancingTipMach, 1, 3)
 	If UnitSystem = 0 Then
@@ -1256,6 +1256,15 @@ Public Sub RecalculateRotor
 		lblResults(23).Text = NumberFormat(AmbientPressureHPa * 0.0295299831, 1, 2) & " inHg"
 		lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound * 3.280839895, 1, 0) & " ft/s"
 	End If
+End Sub
+
+Private Sub FormatResultValue(Value As Double, FractionDigits As Int) As String
+	Dim scale As Double = 1
+	For i = 1 To FractionDigits
+		scale = scale * 10
+	Next
+	If Abs(Value) < (0.5 / scale) Then Value = 0
+	Return NumberFormat(Value, 1, FractionDigits)
 End Sub
 
 Public Sub LoadRotorDataToFields(geom As RotorGeometry)
