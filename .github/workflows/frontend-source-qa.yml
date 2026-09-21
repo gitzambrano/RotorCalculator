@@ -12,10 +12,31 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
+  cleanup-stale-qa:
+    name: cancel-stale-experimental-qa
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Cancel stale experimental workflow runs
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Cancelling stale ui/frontend-5-star workflow runs..."
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?branch=ui/frontend-5-star&per_page=100"             --jq '.workflow_runs[] | select(.status == "queued" or .status == "in_progress" or .status == "pending") | .id'           | while read -r id; do
+              [ -z "$id" ] && continue
+              echo "Cancel run $id"
+              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/cancel" >/dev/null 2>&1 || true
+              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/force-cancel" >/dev/null 2>&1 || true
+            done
+
   build-b4a:
     name: build-b4a-source
+    needs: cleanup-stale-qa
     runs-on: windows-2025
     timeout-minutes: 30
     steps:
