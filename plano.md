@@ -223,7 +223,7 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 5. **Validação de release**:
    - `tools/verify_engine.py` e `tests/test_rotor_engine.py`.
    - Build B4A real, APK instalável, execução em emulador, dumps de hierarquia, bounds e screenshots reais.
-   - Smoke tests cobrem presets/cópia, tip-loss, compressibilidade, airfoil, modelos, trim, rotação, SI/Imperial, Sweep e delete.
+   - Smoke tests cobrem lista de rotores, persistência do ativo após cold restart, cópia/delete, tip-loss, compressibilidade, airfoil, modelos, trim, rotação, SI/Imperial, Sweep e Back sem crash. A matriz responsiva também prova que o último controle de cada conteúdo rolável é alcançável.
 
 ---
 

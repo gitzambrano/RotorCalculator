@@ -103,6 +103,17 @@ capture_screen() {
   safe_screencap "$OUT/01-rotor-list.png"
   python /tmp/ui_node.py "$OUT/01-rotor-list.xml" > "$OUT/01-rotor-list.json"
 
+  # Prove that the rotor list itself remains scrollable on the shortest landscape/phone layouts.
+  for _ in 1 2 3 4 5; do
+    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 220 || true
+  done
+  python /tmp/ui_node.py "$OUT/01b-rotor-list-bottom.xml" > "$OUT/01b-rotor-list-bottom.json"
+  grep -qi "eVTOL Conceptual Rotor" "$OUT/01b-rotor-list-bottom.json"
+  for _ in 1 2 3 4 5; do
+    adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*3/5)) 220 || true
+  done
+  sleep 0.5
+
   python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
   sleep 1
   safe_screencap "$OUT/02-geometry-popup-top.png"
@@ -124,10 +135,13 @@ capture_screen() {
   safe_screencap "$OUT/04-conditions-top.png"
   python /tmp/ui_node.py "$OUT/04-conditions-top.xml" > "$OUT/04-conditions-top.json"
 
-  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
-  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
+  for _ in 1 2 3 4 5; do
+    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
+    sleep 0.2
+  done
   safe_screencap "$OUT/05-conditions-bottom.png"
   python /tmp/ui_node.py "$OUT/05-conditions-bottom.xml" > "$OUT/05-conditions-bottom.json"
+  grep -qi "Target CT" "$OUT/05-conditions-bottom.json"
 
   python /tmp/tap_text.py RESULTS
   sleep 1
@@ -153,6 +167,7 @@ capture_screen() {
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
   safe_screencap "$OUT/08-results-bottom.png"
   python /tmp/ui_node.py "$OUT/08-results-bottom.xml" > "$OUT/08-results-bottom.json"
+  grep -qi "Sound Speed" "$OUT/08-results-bottom.json"
 
   python /tmp/check_bounds.py "$OUT/01-rotor-list.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator

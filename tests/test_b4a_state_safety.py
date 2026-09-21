@@ -124,3 +124,10 @@ def test_geometry_matrix_captures_true_bottom_controls():
     assert 'grep -qi "Compressibility" "$OUT/03-geometry-popup-bottom.json"' in qa
     assert 'grep -qi "Prandtl-Glauert" "$OUT/03-geometry-popup-bottom.json"' in qa
     assert "for _ in 1 2 3 4 5; do" in qa
+
+
+def test_responsive_matrix_proves_scrollable_content_reaches_true_bottom():
+    qa = text("tools/ci_ui_qa.sh")
+    assert 'grep -qi "eVTOL Conceptual Rotor" "$OUT/01b-rotor-list-bottom.json"' in qa
+    assert 'grep -qi "Target CT" "$OUT/05-conditions-bottom.json"' in qa
+    assert 'grep -qi "Sound Speed" "$OUT/08-results-bottom.json"' in qa
