@@ -327,9 +327,10 @@ Private Sub BuildUnifiedHeader
 	
 	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
 	PopupMenu.AddMenuItem(0, 0, "Toggle Result Units (SI / Imperial)")
-	PopupMenu.AddMenuItem(1, 1, "Reset to Factory Rotor Presets")
-	PopupMenu.AddMenuItem(2, 2, "zBET Conventions & Physical Axes")
-	PopupMenu.AddMenuItem(3, 3, "About RotorCalculator")
+	PopupMenu.AddMenuItem(1, 1, "Delete Active Rotor")
+	PopupMenu.AddMenuItem(2, 2, "Reset to Factory Rotor Presets")
+	PopupMenu.AddMenuItem(3, 3, "zBET Conventions & Physical Axes")
+	PopupMenu.AddMenuItem(4, 4, "About RotorCalculator")
 	
 	' 3. Active rotor preset. Compact phones use only the model identifier;
 	' tapping it shows the complete stored name.
@@ -362,7 +363,7 @@ Private Sub BuildUnifiedHeader
 	If titleW < 170dip Then titleSize = 18
 	If titleW < 145dip Then titleSize = 17
 	If titleW < 125dip Then titleSize = 15.5
-	If root.Width <= 340dip Then titleSize = 16
+	If root.Width <= 340dip Then titleSize = 14
 	lblAppTitle.TextSize = titleSize
 	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
 	lblAppTitle.SingleLine = True
@@ -440,13 +441,34 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 			End If
 			RecalculateRotor
 		Case 1
-			RotorStorage.ResetToDefaults
-			RefreshRotorSpinner
-			ActiveGeom = RotorStorage.GetActiveRotor
-			LoadRotorDataToFields(ActiveGeom)
-			RecalculateRotor
-			ToastMessageShow("Factory presets restored!", False)
+			If RotorStorage.Rotors.Size <= 1 Then
+				ToastMessageShow("At least one rotor preset must remain.", False)
+			Else
+				Dim deleteAnswer As Int = Msgbox2("Delete the active rotor preset '" & ActiveGeom.Name & "'?", "Delete Rotor", "DELETE", "Cancel", "", Null)
+				If deleteAnswer = DialogResponse.POSITIVE Then
+					Dim deletedName As String = ActiveGeom.Name
+					If RotorStorage.DeleteRotor(RotorStorage.ActiveIndex) Then
+						ActiveGeom = RotorStorage.GetActiveRotor
+						RefreshRotorSpinner
+						LoadRotorDataToFields(ActiveGeom)
+						RefreshDerivedCondition(True)
+						RecalculateRotor
+						ToastMessageShow("Deleted: " & deletedName, False)
+					End If
+				End If
+			End If
 		Case 2
+			Dim resetAnswer As Int = Msgbox2("Restore all factory rotor presets? Custom copies and edits will be removed.", "Reset Rotor Presets", "RESET", "Cancel", "", Null)
+			If resetAnswer = DialogResponse.POSITIVE Then
+				RotorStorage.ResetToDefaults
+				RefreshRotorSpinner
+				ActiveGeom = RotorStorage.GetActiveRotor
+				LoadRotorDataToFields(ActiveGeom)
+				RefreshDerivedCondition(True)
+				RecalculateRotor
+				ToastMessageShow("Factory presets restored.", False)
+			End If
+		Case 3
 			Msgbox("zBET Coordinate Conventions:" & CRLF & CRLF & _
 				"+x: Forward (aircraft nose)" & CRLF & _
 				"+y: Starboard (right wing)" & CRLF & _
@@ -456,7 +478,7 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 				"Advance ratio: μ = V / (ΩR)" & CRLF & _
 				"Axial flow: μz = -μ·tan(α) + Vz/(ΩR)" & CRLF & _
 				"Mean downwash inflow: λ = μz + λi", "zBET Conventions")
-		Case 3
+		Case 4
 			Dim pm As PackageManager
 			Dim ver As String = "1.0.0"
 			Try
@@ -506,9 +528,8 @@ Private Sub BuildPageGeom
 		Select j
 			Case 0
 				' Row 0: Preset Selector
-				Dim btnP As Button = CreateRowButton("Rotor Preset", "btnRowTip_Click")
-				btnP.Tag = "Rotor Preset"
-				pnlInput.AddView(btnP, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblPreset As Label = CreateRowLabel("Rotor Preset", "lblRowTip_Click")
+				pnlInput.AddView(lblPreset, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				
 				Dim pnlSpn As Panel: pnlSpn.Initialize("")
 				pnlSpn.Background = ButtonGradient(Array As Int(ColorEdt, ColorEdt), Array As Int(ColorBut1, ColorPnlTitle))
@@ -544,9 +565,8 @@ Private Sub BuildPageGeom
 			Case 10
 				edtCd0 = AddFullInputRow(pnlInput, ib, tb, "Profile Cd0", "0.0090", "coef", "edtGeom_TextChanged")
 			Case 11
-				Dim btnAfLbl As Button = CreateRowButton("Airfoil", "btnRowTip_Click")
-				btnAfLbl.Tag = "Airfoil"
-				pnlInput.AddView(btnAfLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblAf As Label = CreateRowLabel("Airfoil", "lblRowTip_Click")
+				pnlInput.AddView(lblAf, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnSelectAirfoil.Initialize("btnSelectAirfoil")
 				btnSelectAirfoil.Text = "NACA 0012 (Library...)"
 				btnSelectAirfoil.TextSize = 13 * sc
@@ -555,9 +575,8 @@ Private Sub BuildPageGeom
 				btnSelectAirfoil.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnSelectAirfoil, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 12
-				Dim btnTLbl As Button = CreateRowButton("Tip Loss", "btnRowTip_Click")
-				btnTLbl.Tag = "Tip Loss"
-				pnlInput.AddView(btnTLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblTipLoss As Label = CreateRowLabel("Tip Loss", "lblRowTip_Click")
+				pnlInput.AddView(lblTipLoss, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnTipLoss.Initialize("btnTipLoss")
 				btnTipLoss.Text = "Sissingh: ON"
 				btnTipLoss.TextSize = 13 * sc
@@ -566,9 +585,8 @@ Private Sub BuildPageGeom
 				btnTipLoss.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnTipLoss, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 13
-				Dim btnCLbl As Button = CreateRowButton("Compress.", "btnRowTip_Click")
-				btnCLbl.Tag = "Compressibility"
-				pnlInput.AddView(btnCLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblCompress As Label = CreateRowLabel("Compressibility", "lblRowTip_Click")
+				pnlInput.AddView(lblCompress, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnCompressibility.Initialize("btnCompressibility")
 				btnCompressibility.Text = "Prandtl-Glauert: ON"
 				btnCompressibility.TextSize = 13 * sc
@@ -627,9 +645,8 @@ Private Sub BuildPageCond
 			Case 5
 				edtClimbRateW = AddFullInputRow(pnlInput, ib, tb, "Climb Rate", "0.0", "m/s", "edtClimbRate_TextChanged")
 			Case 6
-				Dim btnInflowLbl As Button = CreateRowButton("Inflow Model", "btnRowTip_Click")
-				btnInflowLbl.Tag = "Inflow Model"
-				pnlInput.AddView(btnInflowLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblInflow As Label = CreateRowLabel("Inflow Model", "lblRowTip_Click")
+				pnlInput.AddView(lblInflow, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnInflowModel.Initialize("btnInflowModel")
 				btnInflowModel.Text = "Coleman-Feingold"
 				btnInflowModel.TextSize = 13 * sc
@@ -638,9 +655,8 @@ Private Sub BuildPageCond
 				btnInflowModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnInflowModel, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 7
-				Dim btnDragLbl As Button = CreateRowButton("Profile Drag", "btnRowTip_Click")
-				btnDragLbl.Tag = "Profile Drag"
-				pnlInput.AddView(btnDragLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblDrag As Label = CreateRowLabel("Profile Drag", "lblRowTip_Click")
+				pnlInput.AddView(lblDrag, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnProfileDragModel.Initialize("btnProfileDragModel")
 				btnProfileDragModel.Text = "Numerical Vectorial"
 				btnProfileDragModel.TextSize = 13 * sc
@@ -649,9 +665,8 @@ Private Sub BuildPageCond
 				btnProfileDragModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnProfileDragModel, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 8
-				Dim btnTrimLbl As Button = CreateRowButton("Hover Trim", "btnRowTip_Click")
-				btnTrimLbl.Tag = "Hover Trim"
-				pnlInput.AddView(btnTrimLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
+				Dim lblTrim As Label = CreateRowLabel("Hover Trim", "lblRowTip_Click")
+				pnlInput.AddView(lblTrim, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnHoverTrimMode.Initialize("btnHoverTrimMode")
 				btnHoverTrimMode.Text = "Collective to Target"
 				btnHoverTrimMode.TextSize = 13 * sc
@@ -678,11 +693,11 @@ Private Sub BuildPageRes
 	scvRes.Initialize(2500)
 	pnlBack2.AddView(scvRes, 0, 0, root.Width, root.Height - HeaderHeight)
 	
-	Dim PanelHeight1 As Int = 40dip * sc
+	Dim PanelHeight1 As Int = 48dip * sc
 	
 	' 1. Top Action Button: Open Multi-Parameter μ-Sweep
 	btnViewPolarPlot.Initialize("btnViewPolarPlot")
-	btnViewPolarPlot.Text = "📈 OPEN MULTI-PARAMETER SWEEP (μ)"
+	btnViewPolarPlot.Text = "OPEN PARAMETER SWEEP (μ)"
 	If root.Width <= 340dip Then btnViewPolarPlot.TextSize = 12 Else btnViewPolarPlot.TextSize = 14 * sc
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextColor = ColorAccentCyan
@@ -721,13 +736,33 @@ Private Sub BuildPageRes
 	))
 	
 	Dim i As Int
+	Dim sectionH As Int = 24dip * sc
+	Dim curY As Int = startY
 	For i = 0 To outputLabels.Size - 1
+		Dim sectionTitle As String = ""
+		Select i
+			Case 0: sectionTitle = "PERFORMANCE"
+			Case 8: sectionTitle = "FORCES & MOMENTS"
+			Case 15: sectionTitle = "INFLOW & WAKE"
+			Case 20: sectionTitle = "MACH & ATMOSPHERE"
+		End Select
+		If sectionTitle <> "" Then
+			Dim lblSection As Label
+			lblSection.Initialize("")
+			lblSection.Text = sectionTitle
+			lblSection.TextColor = ColorAccentGreen
+			lblSection.TextSize = 10 * sc
+			lblSection.Typeface = Typeface.DEFAULT_BOLD
+			lblSection.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+			scvRes.Panel.AddView(lblSection, UiContentLeft + UiContentW * 4 / 100, curY, UiContentW * 92 / 100, sectionH)
+			curY = curY + sectionH
+		End If
+		
 		Dim pnltest As Panel
 		Dim pnlline As Panel
 		pnltest.Initialize("")
 		pnlline.Initialize("")
 		
-		Dim curY As Int = startY + i * PanelHeight1
 		scvRes.Panel.AddView(pnltest, UiContentLeft, curY, UiContentW, PanelHeight1)
 		scvRes.Panel.AddView(pnlline, UiContentLeft, curY + PanelHeight1 - 1dip, UiContentW, 1dip * sc)
 		pnlline.Color = ColorPnlLine3
@@ -758,9 +793,10 @@ Private Sub BuildPageRes
 		lblResults(i).TextColor = ColorAccentCyan
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 		lblResults(i).SingleLine = True
+		curY = curY + PanelHeight1
 	Next
 	
-	scvRes.Panel.Height = startY + (outputLabels.Size * PanelHeight1) + 20dip * sc
+	scvRes.Panel.Height = curY + 20dip * sc
 End Sub
 
 ' Compact labels are used only when the available width requires them.
@@ -865,12 +901,12 @@ End Sub
 
 ' Helper to create 30%x | 36%x | 20%x standard input rows
 Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVal As String, unitText As String, evtName As String) As EditText
-	Dim btn As Button = CreateRowButton(lblText, "btnRowTip_Click")
-	btn.Tag = lblText
-	pnl.AddView(btn, pnl.Width * 3 / 100, ib * sc, pnl.Width * 30 / 100, tb * sc)
+	Dim lbl As Label = CreateRowLabel(lblText, "lblRowTip_Click")
+	pnl.AddView(lbl, pnl.Width * 3 / 100, ib * sc, pnl.Width * 30 / 100, tb * sc)
 	
 	Dim edt As EditText
 	edt.Initialize(evtName)
+	edt.Tag = lblText
 	edt.Text = defVal
 	edt.TextSize = 13 * sc
 	edt.TextColor = ColorEdtText
@@ -883,12 +919,29 @@ Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	
 	pnl.AddView(edt, pnl.Width * 37 / 100, ib * sc, pnl.Width * 36 / 100, tb * sc)
 	
-	Dim btnUnit As Button = CreateRowButton(unitText, "btnUnit_Click")
-	btnUnit.Tag = unitText
-	btnUnit.TextColor = ColorButText1
-	pnl.AddView(btnUnit, pnl.Width * 77 / 100, ib * sc, pnl.Width * 20 / 100, tb * sc)
+	Dim lblUnit As Label
+	lblUnit.Initialize("")
+	lblUnit.Text = unitText
+	If root.Width <= 340dip Then lblUnit.TextSize = 11 Else lblUnit.TextSize = 12 * sc
+	lblUnit.TextColor = ColorButText2
+	lblUnit.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+	lblUnit.SingleLine = True
+	pnl.AddView(lblUnit, pnl.Width * 77 / 100, ib * sc, pnl.Width * 17 / 100, tb * sc)
 	
 	Return edt
+End Sub
+
+Private Sub CreateRowLabel(txt As String, evt As String) As Label
+	Dim lbl As Label
+	lbl.Initialize(evt)
+	lbl.Text = InputDisplayLabel(txt)
+	If root.Width <= 340dip Then lbl.TextSize = 12 Else lbl.TextSize = 13 * sc
+	lbl.Typeface = Typeface.DEFAULT_BOLD
+	lbl.TextColor = ColorButText1
+	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	lbl.SingleLine = True
+	lbl.Tag = txt
+	Return lbl
 End Sub
 
 Private Sub CreateRowButton(txt As String, evt As String) As Button
@@ -1095,6 +1148,7 @@ Private Sub AirfoilDisplayName(geom As RotorGeometry) As String
 End Sub
 
 Private Sub LoadConditionDataToFields
+	If ActiveCond.TargetThrustN > 0 And ActiveCond.TargetCT > 0 Then ActiveCond.TargetCT = 0
 	UpdatingUI = True
 	edtAltitude.Text = NumberFormat(ConditionAltitudeM, 1, 0)
 	edtTemperature.Text = NumberFormat(ConditionTemperatureC, 1, 1)
@@ -1115,15 +1169,27 @@ Private Sub LoadConditionDataToFields
 		Case "analytical_vectorial": btnProfileDragModel.Text = "Analytical Vectorial"
 		Case Else: btnProfileDragModel.Text = "Numerical Vectorial"
 	End Select
+	RefreshTrimControls
+	UpdatingUI = False
+	RefreshDerivedCondition(True)
+End Sub
+
+Private Sub RefreshTrimControls
 	If ActiveCond.HoverTrimMode = "none" Then
 		btnHoverTrimMode.Text = "Manual Pitch"
 		btnHoverTrimMode.TextColor = ColorButText2
+		edtTargetThrust.Enabled = False
+		edtTargetCT.Enabled = False
 	Else
-		btnHoverTrimMode.Text = "Collective to Target"
+		If ActiveCond.TargetThrustN > 0 Then
+			btnHoverTrimMode.Text = "Collective to Thrust"
+		Else
+			btnHoverTrimMode.Text = "Collective to CT"
+		End If
 		btnHoverTrimMode.TextColor = ColorAccentGreen
+		edtTargetThrust.Enabled = True
+		edtTargetCT.Enabled = True
 	End If
-	UpdatingUI = False
-	RefreshDerivedCondition(True)
 End Sub
 
 Private Sub RefreshDerivedCondition(updateSpeedField As Boolean)
@@ -1254,18 +1320,15 @@ End Sub
 Sub btnHoverTrimMode_Click
 	If ActiveCond.HoverTrimMode = "none" Then
 		ActiveCond.HoverTrimMode = "collective"
-		btnHoverTrimMode.Text = "Collective to Target"
-		btnHoverTrimMode.TextColor = ColorAccentGreen
 	Else
 		ActiveCond.HoverTrimMode = "none"
-		btnHoverTrimMode.Text = "Manual Pitch"
-		btnHoverTrimMode.TextColor = ColorButText2
 	End If
+	RefreshTrimControls
 	RecalculateRotor
 End Sub
 
-Sub btnRowTip_Click
-	Dim b As Button = Sender
+Sub lblRowTip_Click
+	Dim b As Label = Sender
 	Dim tipMsg As String = ""
 	Select b.Tag
 		Case "Radius R"
@@ -1343,6 +1406,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	ActiveGeom.LiftSlope0 = ParseDoubleDef(edtLiftSlope.Text, ActiveGeom.LiftSlope0)
 	ActiveGeom.Cd0 = ParseDoubleDef(edtCd0.Text, ActiveGeom.Cd0)
 	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+	btnSelectAirfoil.Text = AirfoilDisplayName(ActiveGeom)
 	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RefreshDerivedCondition(True)
 	RecalculateRotor
@@ -1368,6 +1432,25 @@ Sub edtCond_TextChanged (Old As String, New As String)
 	
 	ActiveCond.TargetThrustN = ParseDoubleDef(edtTargetThrust.Text, ActiveCond.TargetThrustN)
 	ActiveCond.TargetCT = ParseDoubleDef(edtTargetCT.Text, ActiveCond.TargetCT)
+	
+	Dim changedField As String = ""
+	Try
+		Dim changedEdit As EditText = Sender
+		changedField = changedEdit.Tag
+	Catch
+	End Try
+	If changedField = "Target Thrust" And ActiveCond.TargetThrustN > 0 Then
+		ActiveCond.TargetCT = 0
+		UpdatingUI = True
+		edtTargetCT.Text = "0"
+		UpdatingUI = False
+	Else If changedField = "Target CT" And ActiveCond.TargetCT > 0 Then
+		ActiveCond.TargetThrustN = 0
+		UpdatingUI = True
+		edtTargetThrust.Text = "0"
+		UpdatingUI = False
+	End If
+	If changedField = "Target Thrust" Or changedField = "Target CT" Then RefreshTrimControls
 	
 	RecalculateRotor
 End Sub
@@ -1402,13 +1485,17 @@ Sub btnViewPolarPlot_Click
 	root.AddView(pnlSweepPopup, 0, 0, root.Width, root.Height)
 	pnlSweepPopup.BringToFront
 	
-	Dim topBarH As Int = 48dip * sc
+	Dim topBarH As Int
+	If ld = 1 Then topBarH = 42dip Else topBarH = 48dip * sc
+	Dim footerH As Int
+	If ld = 1 Then footerH = 50dip Else footerH = 56dip * sc
+	
 	Dim pnlHeader As Panel: pnlHeader.Initialize("")
 	pnlHeader.Color = ColorPnlTitle
 	pnlSweepPopup.AddView(pnlHeader, 0, 0, root.Width, topBarH)
 	
 	Dim lblTitle As Label: lblTitle.Initialize("")
-	lblTitle.Text = "📈 MULTI-PARAMETER SWEEP vs μ"
+	lblTitle.Text = "PARAMETER SWEEP vs μ"
 	lblTitle.TextColor = ColorAccentCyan
 	If root.Width <= 340dip Then lblTitle.TextSize = 12 Else lblTitle.TextSize = 14 * sc
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
@@ -1416,27 +1503,55 @@ Sub btnViewPolarPlot_Click
 	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 60dip, topBarH)
 	
 	Dim btnClose As Button: btnClose.Initialize("btnCloseSweepPlot")
-	btnClose.Text = "✕"
+	btnClose.Text = "×"
 	btnClose.TextColor = 0xFFFF5252
-	btnClose.TextSize = 18 * sc
+	btnClose.TextSize = 20
 	btnClose.Color = Colors.Transparent
 	pnlHeader.AddView(btnClose, root.Width - 52dip, 0, 48dip, topBarH)
 	
 	Dim pnlControls As Panel: pnlControls.Initialize("")
 	pnlControls.Color = ColorPnlInput2
-	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 122dip * sc)
-	
-	Dim lblParamH As Label: lblParamH.Initialize("")
-	lblParamH.Text = "SELECT PARAMETER (Y-AXIS):"
-	lblParamH.TextColor = ColorButText2
-	If root.Width <= 340dip Then lblParamH.TextSize = 10 Else lblParamH.TextSize = 11 * sc
-	lblParamH.Typeface = Typeface.DEFAULT_BOLD
-	pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
+	Dim controlsH As Int
+	If ld = 1 Then controlsH = 58dip Else controlsH = 122dip * sc
+	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, controlsH)
 	
 	spnSweepParam.Initialize("spnSweepParam")
 	spnSweepParam.DropdownBackgroundColor = ColorPnlTitle
 	spnSweepParam.DropdownTextColor = ColorTitleText
-	pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 48dip * sc)
+	
+	btnSweepMultiModel.Initialize("btnSweepMultiModel")
+	UpdateSweepMultiButtonText
+	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 10.5 Else btnSweepMultiModel.TextSize = 11 * sc
+	
+	btnSweepMaxMu.Initialize("btnSweepMaxMu")
+	btnSweepMaxMu.Text = "μ max " & NumberFormat(SweepMaxMuVal, 1, 2)
+	btnSweepMaxMu.TextColor = ColorAccentAmber
+	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 10.5 Else btnSweepMaxMu.TextSize = 11 * sc
+	
+	If ld = 1 Then
+		' Landscape: one compact control row maximizes useful plot height.
+		Dim gap As Int = 8dip
+		Dim usableW As Int = root.Width - 24dip
+		Dim paramW As Int = usableW * 0.37
+		Dim modeW As Int = usableW * 0.39
+		Dim maxW As Int = usableW - paramW - modeW - 2 * gap
+		pnlControls.AddView(spnSweepParam, 12dip, 5dip, paramW, 48dip)
+		pnlControls.AddView(btnSweepMultiModel, 12dip + paramW + gap, 5dip, modeW, 48dip)
+		pnlControls.AddView(btnSweepMaxMu, 12dip + paramW + gap + modeW + gap, 5dip, maxW, 48dip)
+	Else
+		Dim lblParamH As Label: lblParamH.Initialize("")
+		lblParamH.Text = "Y-AXIS PARAMETER"
+		lblParamH.TextColor = ColorButText2
+		If root.Width <= 340dip Then lblParamH.TextSize = 10 Else lblParamH.TextSize = 11 * sc
+		lblParamH.Typeface = Typeface.DEFAULT_BOLD
+		pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
+		
+		pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 48dip * sc)
+		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, (root.Width - 30dip) * 0.60, 48dip * sc)
+		pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 72dip * sc, (root.Width - 30dip) * 0.40, 48dip * sc)
+	End If
 	
 	spnSweepParam.Clear
 	For i = 0 To RotorPopups.SweepParamLabels.Size - 1
@@ -1452,44 +1567,32 @@ Sub btnViewPolarPlot_Click
 	Next
 	spnSweepParam.SelectedIndex = curIdx
 	
-	btnSweepMultiModel.Initialize("btnSweepMultiModel")
-	UpdateSweepMultiButtonText
-	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 11 Else btnSweepMultiModel.TextSize = 11 * sc
-	pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, (root.Width - 30dip) * 0.60, 48dip * sc)
-	
-	btnSweepMaxMu.Initialize("btnSweepMaxMu")
-	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
-	btnSweepMaxMu.TextColor = ColorAccentAmber
-	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 11 Else btnSweepMaxMu.TextSize = 11 * sc
-	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 72dip * sc, (root.Width - 30dip) * 0.40, 48dip * sc)
-	
-	Dim plotTop As Int = topBarH + 124dip * sc
+	Dim plotTop As Int = topBarH + controlsH + 2dip
 	Dim plotW As Int = root.Width - 16dip
-	Dim plotH As Int = root.Height - plotTop - 58dip * sc
+	Dim plotH As Int = root.Height - plotTop - footerH - 2dip
+	If plotH < 120dip Then plotH = 120dip
 	
 	ivSweepPlot.Initialize("")
 	pnlSweepPopup.AddView(ivSweepPlot, 8dip, plotTop, plotW, plotH)
 	
 	Dim pnlFooter As Panel: pnlFooter.Initialize("")
 	pnlFooter.Color = ColorPnlTitle
-	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - 56dip * sc, root.Width, 56dip * sc)
+	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - footerH, root.Width, footerH)
 	
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
 	If root.Width <= 340dip Then lblSweepCurrentVal.TextSize = 10.5 Else lblSweepCurrentVal.TextSize = 12 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Gravity.CENTER_VERTICAL
-	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 144dip, 56dip * sc)
+	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 144dip, footerH)
 	
 	Dim btnTable As Button: btnTable.Initialize("btnSweepTable")
-	btnTable.Text = "📋 TABLE"
+	btnTable.Text = "TABLE"
 	btnTable.TextColor = ColorAccentCyan
 	btnTable.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	btnTable.TextSize = 12 * sc
 	btnTable.Typeface = Typeface.DEFAULT_BOLD
-	pnlFooter.AddView(btnTable, root.Width - 132dip, 4dip * sc, 120dip, 48dip * sc)
+	pnlFooter.AddView(btnTable, root.Width - 132dip, (footerH - 48dip) / 2, 120dip, 48dip)
 	
 	UpdateSweepPlotView
 End Sub
@@ -1511,16 +1614,16 @@ End Sub
 Private Sub UpdateSweepMultiButtonText
 	Select SweepMultiMode
 		Case 0
-			btnSweepMultiModel.Text = "Curves: 4 Inflow Models"
+			btnSweepMultiModel.Text = "4 Inflow Models"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 1
-			btnSweepMultiModel.Text = "Curves: 5 Alphas (-10°..+10°)"
+			btnSweepMultiModel.Text = "5 α (-10°..+10°)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 2
-			btnSweepMultiModel.Text = "Curves: 5 Vz (-10..+10 m/s)"
+			btnSweepMultiModel.Text = "5 Vz (-10..+10 m/s)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 3
-			btnSweepMultiModel.Text = "Curves: Single Active"
+			btnSweepMultiModel.Text = "Single Active"
 			btnSweepMultiModel.TextColor = ColorButText2
 	End Select
 End Sub
@@ -1531,7 +1634,7 @@ Sub btnSweepMaxMu_Click
 	Else
 		SweepMaxMuVal = 0.40
 	End If
-	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
+	btnSweepMaxMu.Text = "μ max " & NumberFormat(SweepMaxMuVal, 1, 2)
 	UpdateSweepPlotView
 End Sub
 
