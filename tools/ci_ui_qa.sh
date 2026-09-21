@@ -5,17 +5,80 @@ APK="ci-apk/RotorCalculator-ci.apk"
 test -f "$APK"
 adb install -r "$APK"
 
+cat > /tmp/check_dark_png.py <<'PY'
+import sys,struct,zlib,math
+p=sys.argv[1]
+d=open(p,'rb').read()
+if d[:8] != b"\x89PNG\r\n\x1a\n":
+    raise SystemExit(2)
+pos=8; w=h=ctype=None; ids=[]
+while pos < len(d):
+    n=struct.unpack(">I",d[pos:pos+4])[0]; typ=d[pos+4:pos+8]; payload=d[pos+8:pos+8+n]; pos += 12+n
+    if typ==b'IHDR':
+        w,h,depth,ctype,comp,filt,inter=struct.unpack(">IIBBBBB",payload)
+        if depth!=8 or inter!=0 or ctype not in (2,6): raise SystemExit(2)
+    elif typ==b'IDAT': ids.append(payload)
+    elif typ==b'IEND': break
+bpp=4 if ctype==6 else 3
+raw=zlib.decompress(b''.join(ids)); stride=w*bpp
+prev=bytearray(stride); vals=[]; off=0
+def paeth(a,b,c):
+    p=a+b-c; pa=abs(p-a); pb=abs(p-b); pc=abs(p-c)
+    return a if pa<=pb and pa<=pc else (b if pb<=pc else c)
+for y in range(h):
+    f=raw[off]; off+=1; row=bytearray(raw[off:off+stride]); off+=stride
+    for i in range(stride):
+        a=row[i-bpp] if i>=bpp else 0; b=prev[i]; c=prev[i-bpp] if i>=bpp else 0
+        if f==1: row[i]=(row[i]+a)&255
+        elif f==2: row[i]=(row[i]+b)&255
+        elif f==3: row[i]=(row[i]+((a+b)//2))&255
+        elif f==4: row[i]=(row[i]+paeth(a,b,c))&255
+    if y % max(1,h//40)==0:
+        for x in range(0,w,max(1,w//60)):
+            i=x*bpp
+            vals.append((row[i]+row[i+1]+row[i+2])/3)
+    prev=row
+mean=sum(vals)/len(vals)
+var=sum((v-mean)**2 for v in vals)/len(vals)
+std=math.sqrt(var)
+print(f"frame mean={mean:.1f} std={std:.1f}")
+if mean < 5 or mean > 160 or std < 8:
+    raise SystemExit(1)
+PY
+
 safe_screencap() {
   local OUTFILE="$1"
   local attempt size
   for attempt in 1 2 3; do
     adb exec-out screencap -p > "$OUTFILE"
     size=$(stat -c%s "$OUTFILE")
-    if [ "$size" -gt 8000 ]; then return 0; fi
+    if [ "$size" -gt 8000 ] && python3 /tmp/check_dark_png.py "$OUTFILE"; then return 0; fi
     echo "Suspicious screenshot ($size bytes), retrying: $OUTFILE" >&2
     sleep 1
   done
-  echo "Invalid/black screenshot after retries: $OUTFILE" >&2
+  echo "Invalid/corrupted screenshot after retries: $OUTFILE" >&2
+  return 1
+}
+
+assert_app_alive() {
+  if ! adb shell pidof flightdyn.rotorcalculator >/dev/null; then
+    echo "RotorCalculator process is not alive" >&2
+    adb logcat -d -t 250 | grep -E "FATAL EXCEPTION|flightdyn.rotorcalculator|AndroidRuntime" | tail -120 >&2 || true
+    return 1
+  fi
+}
+
+tap_text_scrolling() {
+  local TEXT="$1"
+  local H="$2"
+  local W="$3"
+  local attempt
+  for attempt in 1 2 3 4; do
+    if python /tmp/tap_text.py "$TEXT"; then return 0; fi
+    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 250 || true
+    sleep 1
+  done
+  echo "Could not find text after scrolling: $TEXT" >&2
   return 1
 }
 
@@ -45,8 +108,8 @@ capture_screen() {
   safe_screencap "$OUT/02-geometry-popup-top.png"
   python /tmp/ui_node.py "$OUT/02-geometry-popup-top.xml" > "$OUT/02-geometry-popup-top.json"
 
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
+  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
+  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
   safe_screencap "$OUT/03-geometry-popup-bottom.png"
   python /tmp/ui_node.py "$OUT/03-geometry-popup-bottom.xml" > "$OUT/03-geometry-popup-bottom.json"
 
@@ -57,8 +120,8 @@ capture_screen() {
   safe_screencap "$OUT/04-conditions-top.png"
   python /tmp/ui_node.py "$OUT/04-conditions-top.xml" > "$OUT/04-conditions-top.json"
 
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
+  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
+  adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
   safe_screencap "$OUT/05-conditions-bottom.png"
   python /tmp/ui_node.py "$OUT/05-conditions-bottom.xml" > "$OUT/05-conditions-bottom.json"
 
@@ -73,6 +136,9 @@ capture_screen() {
   python /tmp/ui_node.py "$OUT/09-sweep.xml" > "$OUT/09-sweep.json"
   adb shell input keyevent 4
   sleep 1
+  assert_app_alive
+  python /tmp/ui_node.py "$OUT/06b-after-sweep-back.xml" > "$OUT/06b-after-sweep-back.json"
+  grep -qi "RESULTS" "$OUT/06b-after-sweep-back.json"
 
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
@@ -116,14 +182,12 @@ functional_smoke() {
   python /tmp/ui_node.py "$OUT/03-fixed-tip-loss.xml" > "$OUT/03-fixed-tip-loss.json"
   grep -qi "Fixed B=0.97" "$OUT/03-fixed-tip-loss.json"
 
-  adb shell input swipe 196 760 196 430 250
-  sleep 1
-  python /tmp/tap_text.py "Prandtl-Glauert: ON"
+  tap_text_scrolling "Prandtl-Glauert: ON" 873 393
   sleep 1
   python /tmp/ui_node.py "$OUT/04-compress-off.xml" > "$OUT/04-compress-off.json"
   grep -qi "Prandtl-Glauert: OFF" "$OUT/04-compress-off.json"
 
-  python /tmp/tap_text.py "Custom Section"
+  tap_text_scrolling "Custom Section" 873 393
   sleep 1
   python /tmp/tap_text.py "NACA 0012"
   sleep 1
@@ -182,6 +246,9 @@ functional_smoke() {
   safe_screencap "$OUT/11-sweep.png"
   adb shell input keyevent 4
   sleep 1
+  assert_app_alive
+  python /tmp/ui_node.py "$OUT/11b-after-sweep-back.xml" > "$OUT/11b-after-sweep-back.json"
+  grep -qi "RESULTS" "$OUT/11b-after-sweep-back.json"
 
   python /tmp/tap_text.py GEOMETRY
   sleep 1

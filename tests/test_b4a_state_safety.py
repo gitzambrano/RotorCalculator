@@ -52,3 +52,28 @@ def test_qa_checks_state_purity_and_real_geometry_popup():
     assert "09-geometry-after-rotation" in qa
     assert "02-geometry-popup-top.png" in qa
     assert "safe_screencap" in qa
+
+
+def test_popup_back_navigation_uses_explicit_state_flags():
+    main = text("RotorCalculator.b4a")
+    assert "Private GeometryPopupOpen As Boolean = False" in main
+    assert "Private SweepPopupOpen As Boolean = False" in main
+    assert "If GeometryPopupOpen Then" in main
+    assert "If SweepPopupOpen Then" in main
+    assert ".Parent = root" not in main
+
+
+def test_active_rotor_selection_is_persisted():
+    storage = text("RotorStorage.bas")
+    assert 'ACTIVE_INDEX_FILENAME As String = "active_rotor.txt"' in storage
+    assert "Private Sub LoadActiveIndex" in storage
+    assert "Private Sub SaveActiveIndex" in storage
+    assert "SetActiveRotor(index As Int)" in storage
+    assert "SaveActiveIndex" in storage
+
+
+def test_qa_rejects_corrupt_frames_and_checks_process_liveness():
+    qa = text("tools/ci_ui_qa.sh")
+    assert "check_dark_png.py" in qa
+    assert "assert_app_alive" in qa
+    assert "06b-after-sweep-back" in qa

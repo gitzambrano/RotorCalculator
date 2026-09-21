@@ -153,12 +153,12 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 
 ### 4.1 Geometry
 
-- A aba Geometry mostra uma **lista de rotores** no padrão do Aerospace Calculator. O header não exibe o rotor ativo. Tocar em qualquer rotor o torna ativo e abre um popup de geometria; COPY e DELETE ficam dentro desse contexto.
+- A aba Geometry mostra uma **lista de rotores** no padrão do Aerospace Calculator. O header não exibe o rotor ativo. Tocar em qualquer rotor o torna ativo e abre um popup de geometria; COPY e DELETE ficam dentro desse contexto. A seleção ativa é persistida e restaurada após cold restart.
 - Edição direta de raio, RPM, número de pás, root cutout, cordas, pitch/twist, lift slope e Cd0.
 - Biblioteca de aerofólios; quando os coeficientes não correspondem a uma entrada conhecida, a UI mostra **Custom Section**.
 - Tip-loss com seleção explícita entre **Off**, **Fixed B** e **Sissingh**.
 - Compressibilidade Prandtl-Glauert com estado explícito.
-- Exclusão do rotor ativo no menu superior com confirmação. Reset de presets de fábrica também exige confirmação.
+- COPY e DELETE ficam no popup do rotor selecionado; DELETE exige confirmação. O menu superior contém apenas ações globais, como unidades, reset de presets, convenções e About.
 - Persistência em `File.DirInternal`, sem permissões externas.
 
 ### 4.2 Conditions

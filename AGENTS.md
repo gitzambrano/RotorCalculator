@@ -86,3 +86,12 @@ Antes de concluir qualquer entrega de desenvolvimento:
 - `RotorGeometry` e `FlightCondition` são custom `Type` B4A e portanto objetos por referência. Qualquer rotina temporária de cálculo, trim, sweep ou duplicação deve usar `zBETEngine.CloneGeometry` / `CloneCondition` antes de modificar campos; cálculos não podem alterar silenciosamente o estado do chamador.
 - Tip-loss deve representar explicitamente `none`, `fixed` e `sissingh`; presets com fator fixo não podem ser apresentados como OFF.
 - Antes de uma entrega final, o workflow deve executar os testes zBET, compilar B4A, instalar o APK gerado no emulador, capturar as nove configurações alvo e executar smoke tests de interação. Screenshots reais devem ser inspecionadas antes de substituir o APK assinado versionado no repositório.
+
+
+## 7. Gestão de Rotores na UI
+
+- O header global não deve exibir o nome do rotor ativo.
+- A página `Geometry` é uma lista de rotores. Tocar em uma linha seleciona o rotor e abre seu popup de geometria.
+- COPY e DELETE são ações contextuais do popup do rotor; não pertencem ao menu global.
+- A seleção do rotor ativo deve persistir entre cold restarts.
+- Popups devem usar estado explícito para Back/close; não consultar `.Parent` de views já removidas.

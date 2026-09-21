@@ -10,6 +10,7 @@ Version=13
 Sub Process_Globals
 	
 	Private Const FILENAME As String = "rotors_db.txt"
+	Private Const ACTIVE_INDEX_FILENAME As String = "active_rotor.txt"
 	Public Rotors As List
 	Public ActiveIndex As Int = 0
 	
@@ -26,6 +27,23 @@ Public Sub Initialize
 		Rotors.Initialize
 	End If
 	LoadRotors
+	LoadActiveIndex
+End Sub
+
+Private Sub LoadActiveIndex
+	Dim targetDir As String = GetDataDir
+	If File.Exists(targetDir, ACTIVE_INDEX_FILENAME) Then
+		Try
+			ActiveIndex = File.ReadString(targetDir, ACTIVE_INDEX_FILENAME).Trim
+		Catch
+			ActiveIndex = 0
+		End Try
+	End If
+	If ActiveIndex < 0 Or ActiveIndex >= Rotors.Size Then ActiveIndex = 0
+End Sub
+
+Private Sub SaveActiveIndex
+	File.WriteString(GetDataDir, ACTIVE_INDEX_FILENAME, ActiveIndex)
 End Sub
 
 ' Cria a lista de presets de fábrica
@@ -284,6 +302,7 @@ End Sub
 Public Sub SetActiveRotor(index As Int)
 	If index >= 0 And index < Rotors.Size Then
 		ActiveIndex = index
+		SaveActiveIndex
 	End If
 End Sub
 
@@ -293,6 +312,7 @@ Public Sub AddRotor(g As RotorGeometry) As Int
 	Rotors.Add(g)
 	SaveRotors
 	ActiveIndex = Rotors.Size - 1
+	SaveActiveIndex
 	Return ActiveIndex
 End Sub
 
@@ -336,6 +356,7 @@ Public Sub DuplicateRotor(index As Int) As Int
 		Rotors.Add(clone)
 		SaveRotors
 		ActiveIndex = Rotors.Size - 1
+		SaveActiveIndex
 		Return ActiveIndex
 	End If
 	Return ActiveIndex
@@ -353,6 +374,7 @@ Public Sub DeleteRotor(index As Int) As Boolean
 			ActiveIndex = Rotors.Size - 1
 		End If
 		SaveRotors
+		SaveActiveIndex
 		Return True
 	End If
 	Return False
@@ -363,4 +385,5 @@ Public Sub ResetToDefaults
 	Rotors = CreateDefaultPresets
 	ActiveIndex = 0
 	SaveRotors
+	SaveActiveIndex
 End Sub
