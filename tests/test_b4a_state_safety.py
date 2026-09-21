@@ -97,3 +97,14 @@ def test_ui_tap_helper_prefers_exact_clickable_controls():
     assert "Exact clickable controls win" in wf
     assert "priority=(0 if exact and clickable else" in wf
     assert "candidates.sort(key=lambda c:(c[0],c[1]))" in wf
+
+
+def test_release_promotion_uses_same_run_artifact():
+    wf = text(".github/workflows/frontend-source-qa.yml")
+    assert "promote-release:" in wf
+    assert "needs: [build-b4a, ui-qa]" in wf
+    assert "RotorCalculator-b4a-build" in wf
+    assert "verified-build/RotorCalculator_Signed.apk" in wf
+    assert "createOrUpdateFileContents" in wf
+    assert "contents: write" in wf
+    assert "'RotorCalculator_Signed.apk'" in wf
