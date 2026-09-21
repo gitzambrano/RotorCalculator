@@ -111,11 +111,7 @@ End Sub
 
 Sub Globals
 	
-	' Edge-to-Edge Safe Container & Soft Keyboard
-	Private root As Panel
-	Private imeInsets As IME
-	
-	' Top Action Bar & Tabs
+	' Top Action Bar & Tabs (Unified Cockpit Header)
 	Private pnlTopBar As Panel
 	Private lblAppTitle As Label
 	Private lblRotorNameHeader As Label
@@ -232,23 +228,17 @@ Sub Activity_Create(FirstTime As Boolean)
 		ActiveCond = zBETEngine.CreateDefaultCondition
 	End If
 	
-	' Edge-to-Edge Safe Insets Setup
-	imeInsets.Initialize("imeInsets")
-	root.Initialize("")
-	Dim ContentRect As Rect = imeInsets.GetContentRect
-	Activity.AddView(root, ContentRect.Left, ContentRect.Top, ContentRect.Width, ContentRect.Height)
-	imeInsets.UpdatePercentageReference(root.Width, root.Height)
-	
-	Activity.Color = ColorPnlTitle
-	root.Color = ColorBg
+	Activity.Color = ColorBg
 	
 	' Adaptive Scaling Factor
-	sc = Max(0.85, Min(1.35, root.Width / 360dip))
+	sc = Max(0.85, Min(1.35, 100%x / 360dip))
+	
+	Dim headerH As Int = 102dip * sc
+	Dim pagerH As Int = 100%y - headerH
 	
 	' Build Application Layout
-	BuildTopBar
-	BuildTabsBar
-	BuildViewPager
+	BuildUnifiedHeader(headerH)
+	BuildViewPager(headerH, pagerH)
 	
 	' Populate UI & Execute Initial Calculation
 	LoadRotorDataToFields(ActiveGeom)
@@ -256,112 +246,135 @@ Sub Activity_Create(FirstTime As Boolean)
 	
 End Sub
 
-' Builds the Top Action Bar
-Private Sub BuildTopBar
-	pnlTopBar.Initialize("")
+' Builds Unified Cockpit Header (Icon + Xenara Font Title + 3-Dot Menu + Integrated Tabs)
+Private Sub BuildUnifiedHeader(headerH As Int)
+	pnlTopBar.Initialize("pnlTopBar")
 	pnlTopBar.Color = ColorPnlTitle
-	root.AddView(pnlTopBar, 0, 0, root.Width, 48dip * sc)
+	Activity.AddView(pnlTopBar, 0, 0, 100%x, headerH)
 	
+	' 1. Left Stylized BEMT Rotor Icon
+	Dim imgIcon As ImageView
+	Dim bmpIcon As Bitmap
+	bmpIcon.Initialize(File.DirAssets, "icon.png")
+	imgIcon.Initialize("")
+	imgIcon.Bitmap = bmpIcon
+	imgIcon.Gravity = Gravity.FILL
+	pnlTopBar.AddView(imgIcon, 4%x, 9dip * sc, 38dip * sc, 38dip * sc)
+	
+	' 2. App Title with Xenara-Bold Aviation Typography
 	lblAppTitle.Initialize("")
 	lblAppTitle.Text = "RotorCalculator"
-	lblAppTitle.TextColor = ColorAccentCyan
-	lblAppTitle.TextSize = 15 * sc
-	lblAppTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblAppTitle.TextColor = Colors.White
+	lblAppTitle.TextSize = 20 * sc
 	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
-	pnlTopBar.AddView(lblAppTitle, 12dip, 0, 140dip * sc, pnlTopBar.Height)
+	Try
+		lblAppTitle.Typeface = Typeface.LoadFromAssets("xenara-bold.ttf")
+	Catch
+		lblAppTitle.Typeface = Typeface.DEFAULT_BOLD
+	End Try
+	pnlTopBar.AddView(lblAppTitle, 4%x + 44dip * sc, 7dip * sc, 55%x, 42dip * sc)
 	
+	' 3. 3-dot Menu on Far Right
+	Dim pnlMenuBtn As Panel
+	pnlMenuBtn.Initialize("btnMenu")
+	pnlMenuBtn.Color = Colors.Transparent
+	pnlTopBar.AddView(pnlMenuBtn, 100%x - 45dip * sc, 0, 45dip * sc, 52dip * sc)
+	
+	Dim imgMenu As ImageView
+	Dim bmpMenu As Bitmap
+	bmpMenu.Initialize(File.DirAssets, "android-3-dot-menu.png")
+	imgMenu.Initialize("btnMenu")
+	imgMenu.Bitmap = bmpMenu
+	imgMenu.Gravity = Gravity.FILL
+	pnlMenuBtn.AddView(imgMenu, (pnlMenuBtn.Width - 22dip * sc) / 2, 14dip * sc, 22dip * sc, 22dip * sc)
+	
+	' 4. Active Preset Sub-Header Label
 	lblRotorNameHeader.Initialize("")
 	lblRotorNameHeader.Text = ActiveGeom.Name
-	lblRotorNameHeader.TextColor = ColorTextDim
-	lblRotorNameHeader.TextSize = 11 * sc
+	lblRotorNameHeader.TextColor = ColorAccentCyan
+	lblRotorNameHeader.TextSize = 10 * sc
 	lblRotorNameHeader.Gravity = Gravity.CENTER_VERTICAL + Gravity.RIGHT
-	pnlTopBar.AddView(lblRotorNameHeader, 145dip * sc, 0, pnlTopBar.Width - 190dip * sc, pnlTopBar.Height)
+	pnlTopBar.AddView(lblRotorNameHeader, 100%x - 180dip * sc, 10dip * sc, 130dip * sc, 34dip * sc)
 	
-	btnMenu.Initialize("btnMenu")
-	btnMenu.Text = "⋮"
-	btnMenu.TextColor = ColorTextMain
-	btnMenu.TextSize = 20 * sc
-	btnMenu.Typeface = Typeface.DEFAULT_BOLD
-	btnMenu.Color = Colors.Transparent
-	pnlTopBar.AddView(btnMenu, pnlTopBar.Width - 40dip * sc, 0, 36dip * sc, pnlTopBar.Height)
-End Sub
-
-' Builds the Navigation Tabs Bar with dynamic indicator
-Private Sub BuildTabsBar
-	pnlTabsBar.Initialize("")
-	pnlTabsBar.Color = ColorPnlTitle
-	Dim topY As Int = pnlTopBar.Height
-	Dim barH As Int = 42dip * sc
-	root.AddView(pnlTabsBar, 0, topY, root.Width, barH)
-	
-	Dim tabW As Int = root.Width / 3
+	' 5. Three Tabs directly inside pnlTopBar!
+	Dim tabY As Int = 57dip * sc
+	Dim tabH As Int = 45dip * sc
+	Dim tabW As Int = 100%x / 3
 	
 	btnTabGeom.Initialize("btnTabGeom")
 	btnTabGeom.Text = "GEOMETRY"
 	btnTabGeom.TextColor = ColorAccentCyan
-	btnTabGeom.TextSize = 11 * sc
+	btnTabGeom.TextSize = 12 * sc
 	btnTabGeom.Typeface = Typeface.DEFAULT_BOLD
 	btnTabGeom.Color = Colors.Transparent
-	pnlTabsBar.AddView(btnTabGeom, 0, 0, tabW, barH - 3dip)
+	btnTabGeom.Gravity = Gravity.CENTER
+	pnlTopBar.AddView(btnTabGeom, 0, tabY, tabW, tabH)
 	
 	btnTabCond.Initialize("btnTabCond")
 	btnTabCond.Text = "CONDITIONS"
 	btnTabCond.TextColor = ColorTextDim
-	btnTabCond.TextSize = 11 * sc
+	btnTabCond.TextSize = 12 * sc
 	btnTabCond.Typeface = Typeface.DEFAULT_BOLD
 	btnTabCond.Color = Colors.Transparent
-	pnlTabsBar.AddView(btnTabCond, tabW, 0, tabW, barH - 3dip)
+	btnTabCond.Gravity = Gravity.CENTER
+	pnlTopBar.AddView(btnTabCond, tabW, tabY, tabW, tabH)
 	
 	btnTabRes.Initialize("btnTabRes")
 	btnTabRes.Text = "RESULTS"
 	btnTabRes.TextColor = ColorTextDim
-	btnTabRes.TextSize = 11 * sc
+	btnTabRes.TextSize = 12 * sc
 	btnTabRes.Typeface = Typeface.DEFAULT_BOLD
 	btnTabRes.Color = Colors.Transparent
-	pnlTabsBar.AddView(btnTabRes, tabW * 2, 0, tabW, barH - 3dip)
+	btnTabRes.Gravity = Gravity.CENTER
+	pnlTopBar.AddView(btnTabRes, tabW * 2, tabY, 100%x - tabW * 2, tabH)
 	
+	' 6. Hairline divider between title and pager
+	Dim line2 As Panel
+	line2.Initialize("")
+	line2.Color = 0xFF1E2738
+	pnlTopBar.AddView(line2, 0, (102dip - 1dip) * sc, 100%x, 1dip * sc)
+	
+	' 7. Sliding Cyan Indicator Line
 	pnlTabIndicator.Initialize("")
 	pnlTabIndicator.Color = ColorAccentCyan
-	pnlTabsBar.AddView(pnlTabIndicator, 0, barH - 3dip, tabW, 3dip)
+	pnlTopBar.AddView(pnlTabIndicator, 0, (101dip - 4dip) * sc, tabW, 4dip * sc)
 End Sub
 
 ' Builds the AHViewPager containing all 3 swipeable pages
-Private Sub BuildViewPager
+Private Sub BuildViewPager(headerH As Int, pagerHeight As Int)
 	container.Initialize
 	
 	' 1. Page Geometry
 	pnlPageGeom.Initialize("")
 	pnlPageGeom.Color = ColorBg
-	BuildPageGeom(pnlPageGeom)
+	BuildPageGeom(pnlPageGeom, pagerHeight)
 	container.AddPage(pnlPageGeom, "Geometry")
 	
 	' 2. Page Conditions
 	pnlPageCond.Initialize("")
 	pnlPageCond.Color = ColorBg
-	BuildPageCond(pnlPageCond)
+	BuildPageCond(pnlPageCond, pagerHeight)
 	container.AddPage(pnlPageCond, "Conditions")
 	
 	' 3. Page Results
 	pnlPageRes.Initialize("")
 	pnlPageRes.Color = ColorBg
-	BuildPageRes(pnlPageRes)
+	BuildPageRes(pnlPageRes, pagerHeight)
 	container.AddPage(pnlPageRes, "Results")
 	
 	pager.Initialize2(container, "pager")
-	Dim pagerTop As Int = pnlTopBar.Height + pnlTabsBar.Height
-	Dim pagerHeight As Int = root.Height - pagerTop
-	root.AddView(pager, 0, pagerTop, root.Width, pagerHeight)
+	Activity.AddView(pager, 0, headerH, 100%x, pagerHeight)
 End Sub
 
 ' Page 0: Geometry Layout
-Private Sub BuildPageGeom(parent As Panel)
+Private Sub BuildPageGeom(parent As Panel, pageHeight As Int)
 	scvGeom.Initialize(1000dip)
-	parent.AddView(scvGeom, 0, 0, root.Width, parent.Height)
+	parent.AddView(scvGeom, 0, 0, 100%x, pageHeight)
 	Dim p As Panel = scvGeom.Panel
 	p.Color = ColorBg
 	
 	Dim y As Int = 10dip
-	Dim cardW As Int = root.Width - 20dip
+	Dim cardW As Int = 100%x - 20dip
 	
 	' Card 1: Rotor Selector & Management
 	Dim pCardRotor As Panel = CreateCardPanel(cardW, 95dip * sc)
@@ -476,14 +489,14 @@ Private Sub BuildPageGeom(parent As Panel)
 End Sub
 
 ' Page 1: Flight Conditions Layout
-Private Sub BuildPageCond(parent As Panel)
+Private Sub BuildPageCond(parent As Panel, pageHeight As Int)
 	scvCond.Initialize(1000dip)
-	parent.AddView(scvCond, 0, 0, root.Width, parent.Height)
+	parent.AddView(scvCond, 0, 0, 100%x, pageHeight)
 	Dim p As Panel = scvCond.Panel
 	p.Color = ColorBg
 	
 	Dim y As Int = 10dip
-	Dim cardW As Int = root.Width - 20dip
+	Dim cardW As Int = 100%x - 20dip
 	
 	' Card 1: Standard Atmosphere (ISA)
 	Dim pCardISA As Panel = CreateCardPanel(cardW, 140dip * sc)
@@ -567,14 +580,14 @@ Private Sub BuildPageCond(parent As Panel)
 End Sub
 
 ' Page 2: Results Layout
-Private Sub BuildPageRes(parent As Panel)
+Private Sub BuildPageRes(parent As Panel, pageHeight As Int)
 	scvRes.Initialize(1000dip)
-	parent.AddView(scvRes, 0, 0, root.Width, parent.Height)
+	parent.AddView(scvRes, 0, 0, 100%x, pageHeight)
 	Dim p As Panel = scvRes.Panel
 	p.Color = ColorBg
 	
 	Dim y As Int = 10dip
-	Dim cardW As Int = root.Width - 20dip
+	Dim cardW As Int = 100%x - 20dip
 	
 	' Card 1: Cockpit HUD - Thrust & Power
 	Dim pHud As Panel = CreateCardPanel(cardW, 140dip * sc)
@@ -877,8 +890,8 @@ End Sub
 ' Navigation Events
 Sub pager_PageChanged(Position As Int)
 	CurrentPage = Position
-	Dim tabW As Int = root.Width / 3
-	pnlTabIndicator.Left = Position * tabW
+	Dim tabW As Int = 100%x / 3
+	pnlTabIndicator.SetLayoutAnimated(150, Position * tabW, (101dip - 4dip) * sc, tabW, 4dip * sc)
 	
 	btnTabGeom.TextColor = ColorTextDim
 	btnTabCond.TextColor = ColorTextDim
@@ -1100,13 +1113,14 @@ End Sub
 Sub btnViewPolarPlot_Click
 	pnlSweepPopup.Initialize("pnlSweepPopup")
 	pnlSweepPopup.Color = 0xFA0D1117
-	root.AddView(pnlSweepPopup, 0, 0, root.Width, root.Height)
+	Activity.AddView(pnlSweepPopup, 0, 0, 100%x, 100%y)
+	pnlSweepPopup.BringToFront
 	
 	Dim topBarH As Int = 46dip * sc
 	Dim pnlHeader As Panel
 	pnlHeader.Initialize("")
 	pnlHeader.Color = ColorPnlTitle
-	pnlSweepPopup.AddView(pnlHeader, 0, 0, root.Width, topBarH)
+	pnlSweepPopup.AddView(pnlHeader, 0, 0, 100%x, topBarH)
 	
 	Dim lblTitle As Label
 	lblTitle.Initialize("")
@@ -1115,7 +1129,7 @@ Sub btnViewPolarPlot_Click
 	lblTitle.TextSize = 13 * sc
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
 	lblTitle.Gravity = Gravity.CENTER_VERTICAL
-	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 60dip, topBarH)
+	pnlHeader.AddView(lblTitle, 12dip, 0, 100%x - 60dip, topBarH)
 	
 	Dim btnClose As Button
 	btnClose.Initialize("btnCloseSweepPlot")
@@ -1123,13 +1137,13 @@ Sub btnViewPolarPlot_Click
 	btnClose.TextColor = 0xFFFF5252
 	btnClose.TextSize = 18 * sc
 	btnClose.Color = Colors.Transparent
-	pnlHeader.AddView(btnClose, root.Width - 45dip, 0, 40dip, topBarH)
+	pnlHeader.AddView(btnClose, 100%x - 45dip, 0, 40dip, topBarH)
 	
 	' Controls Panel: Parameter Selector and Mode Toggles
 	Dim pnlControls As Panel
 	pnlControls.Initialize("")
 	pnlControls.Color = ColorCardBg
-	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, 88dip * sc)
+	pnlSweepPopup.AddView(pnlControls, 0, topBarH, 100%x, 88dip * sc)
 	
 	Dim lblParamH As Label
 	lblParamH.Initialize("")
@@ -1137,12 +1151,12 @@ Sub btnViewPolarPlot_Click
 	lblParamH.TextColor = ColorTextDim
 	lblParamH.TextSize = 10 * sc
 	lblParamH.Typeface = Typeface.DEFAULT_BOLD
-	pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
+	pnlControls.AddView(lblParamH, 12dip, 4dip, 100%x - 24dip, 16dip * sc)
 	
 	spnSweepParam.Initialize("spnSweepParam")
 	spnSweepParam.DropdownBackgroundColor = ColorCardBg
 	spnSweepParam.DropdownTextColor = ColorTextMain
-	pnlControls.AddView(spnSweepParam, 12dip, 20dip * sc, root.Width - 24dip, 34dip * sc)
+	pnlControls.AddView(spnSweepParam, 12dip, 20dip * sc, 100%x - 24dip, 34dip * sc)
 	
 	spnSweepParam.Clear
 	For i = 0 To RotorPopups.SweepParamLabels.Size - 1
@@ -1162,19 +1176,19 @@ Sub btnViewPolarPlot_Click
 	UpdateSweepMultiButtonText
 	btnSweepMultiModel.Color = ColorInputBg
 	btnSweepMultiModel.TextSize = 10 * sc
-	pnlControls.AddView(btnSweepMultiModel, 12dip, 58dip * sc, (root.Width - 30dip) * 0.60, 26dip * sc)
+	pnlControls.AddView(btnSweepMultiModel, 12dip, 58dip * sc, (100%x - 30dip) * 0.60, 26dip * sc)
 	
 	btnSweepMaxMu.Initialize("btnSweepMaxMu")
 	btnSweepMaxMu.Text = "μ max: " & NumberFormat(SweepMaxMuVal, 1, 2)
 	btnSweepMaxMu.TextColor = ColorAccentAmber
 	btnSweepMaxMu.Color = ColorInputBg
 	btnSweepMaxMu.TextSize = 10 * sc
-	pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 58dip * sc, (root.Width - 30dip) * 0.40, 26dip * sc)
+	pnlControls.AddView(btnSweepMaxMu, 18dip + (100%x - 30dip) * 0.60, 58dip * sc, (100%x - 30dip) * 0.40, 26dip * sc)
 	
 	' Plot Area
 	Dim plotTop As Int = topBarH + 90dip * sc
-	Dim plotW As Int = root.Width - 16dip
-	Dim plotH As Int = root.Height - plotTop - 50dip * sc
+	Dim plotW As Int = 100%x - 16dip
+	Dim plotH As Int = 100%y - plotTop - 50dip * sc
 	
 	ivSweepPlot.Initialize("")
 	pnlSweepPopup.AddView(ivSweepPlot, 8dip, plotTop, plotW, plotH)
@@ -1183,14 +1197,14 @@ Sub btnViewPolarPlot_Click
 	Dim pnlFooter As Panel
 	pnlFooter.Initialize("")
 	pnlFooter.Color = ColorPnlTitle
-	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - 48dip * sc, root.Width, 48dip * sc)
+	pnlSweepPopup.AddView(pnlFooter, 0, 100%y - 48dip * sc, 100%x, 48dip * sc)
 	
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
 	lblSweepCurrentVal.TextSize = 11 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Gravity.CENTER_VERTICAL
-	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 130dip, 48dip * sc)
+	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, 100%x - 130dip, 48dip * sc)
 	
 	Dim btnTable As Button
 	btnTable.Initialize("btnSweepTable")
@@ -1199,7 +1213,7 @@ Sub btnViewPolarPlot_Click
 	btnTable.Color = ColorCardBg
 	btnTable.TextSize = 11 * sc
 	btnTable.Typeface = Typeface.DEFAULT_BOLD
-	pnlFooter.AddView(btnTable, root.Width - 120dip, 6dip * sc, 110dip, 36dip * sc)
+	pnlFooter.AddView(btnTable, 100%x - 120dip, 6dip * sc, 110dip, 36dip * sc)
 	
 	UpdateSweepPlotView
 End Sub
@@ -1249,7 +1263,7 @@ Sub UpdateSweepPlotView
 	If ivSweepPlot.IsInitialized = False Then Return
 	Dim plotW As Int = ivSweepPlot.Width
 	Dim plotH As Int = ivSweepPlot.Height
-	If plotW <= 10 Then plotW = root.Width - 16dip
+	If plotW <= 10 Then plotW = 100%x - 16dip
 	If plotH <= 10 Then plotH = 300dip
 	
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
