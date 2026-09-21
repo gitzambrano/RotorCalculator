@@ -1,86 +1,25 @@
-Build1=Default,flightdyn.rotorcalculator
-File1=android-3-dot-menu.png
-File10=icon_flat_green_white.png
-File11=icon_flat_transp_green.png
-File12=icon_flat_transp_white.png
-File13=icon_flat_white_green.png
-File14=icon_minus.png
-File15=icon_plus.png
-File16=icon_plus_white.png
-File17=icon_question.png
-File18=icon_right_arrow.png
-File19=icon_warning.png
-File2=ic_action_accept.png
-File20=xenara-bold.ttf
-File21=icon.png
-File22=icon_bezel_green_white.png
-File3=ic_action_cancel.png
-File4=icon_bezel_transp_green.png
-File5=icon_bezel_transp_white.png
-File6=icon_delete.png
-File7=icon_duplicate.png
-File8=icon_edit.png
-File9=icon_error.png
-FileGroup1=Default Group
-FileGroup10=Default Group
-FileGroup11=Default Group
-FileGroup12=Default Group
-FileGroup13=Default Group
-FileGroup14=Default Group
-FileGroup15=Default Group
-FileGroup16=Default Group
-FileGroup17=Default Group
-FileGroup18=Default Group
-FileGroup19=Default Group
-FileGroup2=Default Group
-FileGroup20=Default Group
-FileGroup21=Default Group
-FileGroup22=Default Group
-FileGroup3=Default Group
-FileGroup4=Default Group
-FileGroup5=Default Group
-FileGroup6=Default Group
-FileGroup7=Default Group
-FileGroup8=Default Group
-FileGroup9=Default Group
-Group=Default Group
-Library1=ahviewpager
-Library2=animation
-Library3=core
-Library4=ime
-Library5=phone
-Library6=reflection
-Library7=richstring
-Library8=rspopupmenu
-Library9=runtimepermissions
-ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
-Module1=RotorPopups
-Module2=RotorStorage
-Module3=zBETEngine
-NumberOfFiles=22
-NumberOfLibraries=9
-NumberOfModules=3
-Version=13
-@EndOfDesignText@
-#Region  Project Attributes 
-	#ApplicationLabel: RotorCalculator
-	#VersionCode: 1
-	#VersionName: 1.00
-	#SupportedOrientations: unspecified
-	#CanInstallToExternalStorage: True
-#End Region
+import os
 
+def create_aerocalculator_style_b4a():
+    b4a_content = """﻿Type=Activity
+Version=13.7
+@EndOfDesignText@
 #Region  Activity Attributes 
 	#FullScreen: False
 	#IncludeTitle: False
 #End Region
 
-#Region  Module Attributes 
-	#IgnoreWarnings: 1, 2, 3, 4, 5, 6
+#Region  Project Attributes 
+	#ApplicationLabel: RotorCalculator
+	#VersionCode: 1
+	#VersionName: 1.0.0
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: True
 #End Region
+
 Sub Process_Globals
 	
-	' Runtime permissions
+	' Production Signing & Permissions
 	Private rp As RuntimePermissions
 	
 	' Theme Colors (AeroCalculator Cockpit Stealth Palette)
@@ -112,7 +51,6 @@ Sub Process_Globals
 	Public ActiveGeom As RotorGeometry
 	Public ActiveCond As FlightCondition
 	Public ActiveRes As RotorResults
-	Public AmbientPressureHPa As Double = 1013.25
 	
 	' Navigation & Scaling
 	Public sc As Double = 1.0
@@ -138,8 +76,6 @@ Sub Globals
 	Private line As Panel
 	Private lblAppTitle As Label
 	Private lblRotorNameHeader As Label
-	Private PopupMenu As RSPopupMenu
-	Private pnlMenuAnchor As Panel
 	
 	' Page 0: Geometry Views
 	Private pnlBack0 As Panel
@@ -266,23 +202,6 @@ End Sub
 Sub Activity_Pause (UserClosed As Boolean)
 End Sub
 
-Sub Activity_KeyPress (KeyCode As Int) As Boolean
-	If KeyCode = KeyCodes.KEYCODE_BACK Then
-		If pnlSweepPopup.IsInitialized And pnlSweepPopup.Parent = Activity Then
-			pnlSweepPopup.RemoveView
-			Return True
-		End If
-		If CurrentPage = 2 Then
-			pager.GotoPage(1, True)
-			Return True
-		Else If CurrentPage = 1 Then
-			pager.GotoPage(0, True)
-			Return True
-		End If
-	End If
-	Return False
-End Sub
-
 ' ====================================================================
 ' UNIFIED HEADER (AeroCalculator Style)
 ' ====================================================================
@@ -298,29 +217,24 @@ Private Sub BuildUnifiedHeader
 	img1.Initialize("")
 	img1.Bitmap = bmpImage1
 	img1.Gravity = Gravity.FILL
-	pnltitle.AddView(img1, 4%x, 9dip * sc, 38dip * sc, 38dip * sc)
+	pnltitle.AddView(img1, 3%x, 8dip * sc, 38dip * sc, 38dip * sc)
 	
 	' 2. 3-Dot Menu Button
-	pnlMenuAnchor.Initialize("pnlMenuAnchor")
-	pnlMenuAnchor.Color = Colors.Transparent
-	pnltitle.AddView(pnlMenuAnchor, root.Width - 3%x - (34dip * sc), 0, 3%x + (34dip * sc), 55dip * sc)
+	Dim pnlTransparent As Panel
+	pnlTransparent.Initialize("btnMenu")
+	pnlTransparent.Color = Colors.Transparent
+	pnltitle.AddView(pnlTransparent, root.Width - 45dip * sc, 0, 45dip * sc, 52dip * sc)
 	Dim img2 As ImageView
 	Dim bmpImage2 As Bitmap
 	bmpImage2.Initialize(File.DirAssets, "android-3-dot-menu.png")
-	img2.Initialize("pnlMenuAnchor")
+	img2.Initialize("btnMenu")
 	img2.Bitmap = bmpImage2
 	img2.Gravity = Gravity.FILL
-	pnlMenuAnchor.AddView(img2, (pnlMenuAnchor.Width - 22dip * sc) / 2, 14dip * sc, 22dip * sc, 22dip * sc)
-	
-	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
-	PopupMenu.AddMenuItem(0, 0, "Toggle Unit System (SI / Imperial)")
-	PopupMenu.AddMenuItem(1, 1, "Reset to Factory Rotor Presets")
-	PopupMenu.AddMenuItem(2, 2, "zBET Conventions & Physical Axes")
-	PopupMenu.AddMenuItem(3, 3, "About RotorCalculator")
+	pnlTransparent.AddView(img2, (pnlTransparent.Width - 22dip * sc) / 2, 14dip * sc, 22dip * sc, 22dip * sc)
 	
 	' 3. App Title in Xenara-Bold.ttf
 	lblAppTitle.Initialize("")
-	lblAppTitle.TextSize = 21 * sc
+	lblAppTitle.TextSize = 20 * sc
 	If sc > 1.2 Then lblAppTitle.TextSize = 22 * sc
 	lblAppTitle.TextColor = ColorTitleText
 	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
@@ -330,7 +244,7 @@ Private Sub BuildUnifiedHeader
 	Catch
 		lblAppTitle.Typeface = Typeface.DEFAULT_BOLD
 	End Try
-	pnltitle.AddView(lblAppTitle, 5%x + 37dip * sc, 8dip * sc, root.Width - 160dip * sc, 43dip * sc)
+	pnltitle.AddView(lblAppTitle, 3%x + 44dip * sc, 6dip * sc, root.Width - 180dip * sc, 42dip * sc)
 	
 	' 4. Sub-Label with Active Rotor Preset Name
 	lblRotorNameHeader.Initialize("")
@@ -338,7 +252,7 @@ Private Sub BuildUnifiedHeader
 	lblRotorNameHeader.TextColor = ColorAccentCyan
 	lblRotorNameHeader.TextSize = 11 * sc
 	lblRotorNameHeader.Gravity = Gravity.CENTER_VERTICAL + Gravity.RIGHT
-	pnltitle.AddView(lblRotorNameHeader, root.Width - 170dip * sc, 8dip * sc, 120dip * sc, 43dip * sc)
+	pnltitle.AddView(lblRotorNameHeader, root.Width - 180dip * sc, 8dip * sc, 130dip * sc, 38dip * sc)
 	
 	' 5. Tab Buttons directly inside pnltitle
 	Dim tabW As Int = root.Width / 3
@@ -385,53 +299,6 @@ Private Sub BuildUnifiedHeader
 	pnltitle.AddView(line, 0, (101dip - 4dip) * sc, tabW, 4dip * sc)
 	line.Color = ColorPnlLine
 	line.Elevation = 5dip
-End Sub
-
-Sub pnlMenuAnchor_Click
-	PopupMenu.Show
-End Sub
-
-Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
-	Select ItemId
-		Case 0
-			UnitSystem = 1 - UnitSystem
-			If UnitSystem = 0 Then
-				ToastMessageShow("Unit System: Metric (SI)", False)
-			Else
-				ToastMessageShow("Unit System: Imperial", False)
-			End If
-			RecalculateRotor
-		Case 1
-			RotorStorage.ResetToDefaults
-			RefreshRotorSpinner
-			ActiveGeom = RotorStorage.GetActiveRotor
-			LoadRotorDataToFields(ActiveGeom)
-			RecalculateRotor
-			ToastMessageShow("Factory presets restored!", False)
-		Case 2
-			Msgbox("zBET Coordinate Conventions:" & CRLF & CRLF & _
-				"+x: Forward (aircraft nose)" & CRLF & _
-				"+y: Starboard (right wing)" & CRLF & _
-				"+z: Downward through rotor disk" & CRLF & CRLF & _
-				"Thrust acts upward (-z)." & CRLF & _
-				"Shaft torque Q > 0 powers CCW rotor." & CRLF & _
-				"Advance ratio: μ = V / (ΩR)" & CRLF & _
-				"Axial flow: μz = -μ·tan(α) + Vz/(ΩR)" & CRLF & _
-				"Mean downwash inflow: λ = μz + λi", "zBET Conventions")
-		Case 3
-			Dim pm As PackageManager
-			Dim ver As String = "1.0.0"
-			Try
-				ver = pm.GetVersionName("flightdyn.rotorcalculator")
-			Catch
-			End Try
-			Msgbox("RotorCalculator v" & ver & CRLF & CRLF & _
-				"High-Fidelity Helicopter & Rotorcraft Aeromechanics Calculator." & CRLF & CRLF & _
-				"Engineered on analytical Blade Element Momentum Theory (zBET - Johnson & Leishman)." & CRLF & CRLF & _
-				"Flight Dynamicist: Gustavo Zambrano" & CRLF & _
-				"flightdyn@gmail.com", "About RotorCalculator")
-	End Select
-	Return False
 End Sub
 
 ' ====================================================================
@@ -534,7 +401,7 @@ Private Sub BuildPageGeom
 		End Select
 	Next
 	
-	scvGeom.Panel.Height = (PanelNb * (ib * 2 + tb) + PanelNb * 1dip + 20dip) * sc
+	scvGeom.Panel.Height = PanelNb * (rowH + 1dip) + 20dip
 End Sub
 
 ' ====================================================================
@@ -615,7 +482,7 @@ Private Sub BuildPageCond
 		End Select
 	Next
 	
-	scvCond.Panel.Height = (PanelNb * (ib * 2 + tb) + PanelNb * 1dip + 20dip) * sc
+	scvCond.Panel.Height = PanelNb * (rowH + 1dip) + 20dip
 End Sub
 
 ' ====================================================================
@@ -627,7 +494,8 @@ Private Sub BuildPageRes
 	scvRes.Initialize(2500)
 	pnlBack2.AddView(scvRes, 0, 0, root.Width, root.Height - 102dip * sc)
 	
-	Dim PanelHeight1 As Int = 40dip * sc
+	Dim PanelNb1 As Int = 26 ' 1 Action button + 25 Telemetry rows
+	Dim PanelHeight1 As Int = 42dip * sc
 	
 	' 1. Top Action Button: Open Multi-Parameter μ-Sweep
 	btnViewPolarPlot.Initialize("btnViewPolarPlot")
@@ -636,9 +504,9 @@ Private Sub BuildPageRes
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextColor = ColorAccentCyan
 	btnViewPolarPlot.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	scvRes.Panel.AddView(btnViewPolarPlot, 3%x, 8dip * sc, 94%x, 44dip * sc)
+	scvRes.Panel.AddView(btnViewPolarPlot, 3%x, 8dip * sc, 94%x, 46dip * sc)
 	
-	Dim startY As Int = 58dip * sc
+	Dim startY As Int = 60dip * sc
 	
 	Dim outputLabels As List
 	outputLabels.Initialize2(Array As String( _
@@ -716,7 +584,7 @@ Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	Dim edt As EditText
 	edt.Initialize(evtName)
 	edt.Text = defVal
-	edt.TextSize = 13 * sc
+	edt.TextSize = 14 * sc
 	edt.TextColor = ColorEdtText
 	edt.Color = ColorEdt
 	edt.HintColor = ColorEdtHint
@@ -726,7 +594,7 @@ Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	pnl.AddView(edt, 37%x, ib * sc, 36%x, tb * sc)
 	
 	Dim btnUnit As Button = CreateRowButton(unitText, "")
-	btnUnit.TextColor = ColorButText1
+	btnUnit.TextColor = ColorButText2
 	pnl.AddView(btnUnit, 77%x, ib * sc, 20%x, tb * sc)
 	
 	Return edt
@@ -808,15 +676,15 @@ Sub pager_PageChanged (Position As Int)
 End Sub
 
 Sub btnTabGeom_Click
-	pager.GotoPage(0, True)
+	pager.CurrentPage = 0
 End Sub
 
 Sub btnTabCond_Click
-	pager.GotoPage(1, True)
+	pager.CurrentPage = 1
 End Sub
 
 Sub btnTabRes_Click
-	pager.GotoPage(2, True)
+	pager.CurrentPage = 2
 End Sub
 
 ' ====================================================================
@@ -827,31 +695,16 @@ Public Sub RecalculateRotor
 	
 	ActiveRes = zBETEngine.Calculate(ActiveGeom, ActiveCond)
 	
-	Dim tipMachHover As Double = 0
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Dim vtip As Double = omega * ActiveGeom.Radius
-	If ActiveCond.SpeedOfSound > 0 Then
-		tipMachHover = vtip / ActiveCond.SpeedOfSound
-	End If
-	
-	' Populate 25 Results Rows (UnitSystem: 0=SI, 1=Imperial)
-	If UnitSystem = 0 Then
-		lblResults(0).Text = NumberFormat(ActiveRes.ThrustN, 1, 0) & " N (" & NumberFormat(ActiveRes.ThrustKgf, 1, 0) & " kgf)"
-		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW (" & NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP)"
-		lblResults(4).Text = NumberFormat(ActiveRes.TorqueNm, 1, 1) & " N·m"
-		lblResults(8).Text = NumberFormat(ActiveRes.DragHN, 1, 1) & " N"
-	Else
-		lblResults(0).Text = NumberFormat(ActiveRes.ThrustLbf, 1, 0) & " lbf"
-		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP (" & NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW)"
-		lblResults(4).Text = NumberFormat(ActiveRes.TorqueLbft, 1, 1) & " lb·ft"
-		lblResults(8).Text = NumberFormat(ActiveRes.DragHN * 0.224809, 1, 1) & " lbf"
-	End If
-	
+	' Populate 25 Results Rows
+	lblResults(0).Text = NumberFormat(ActiveRes.ThrustN, 1, 0) & " N (" & NumberFormat(ActiveRes.ThrustKgf, 1, 0) & " kgf)"
 	lblResults(1).Text = NumberFormat(ActiveRes.CT, 1, 5)
+	lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW (" & NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP)"
 	lblResults(3).Text = NumberFormat(ActiveRes.CQ, 1, 6)
+	lblResults(4).Text = NumberFormat(ActiveRes.TorqueNm, 1, 1) & " N·m"
 	lblResults(5).Text = NumberFormat(ActiveRes.CQ, 1, 6)
 	lblResults(6).Text = NumberFormat(ActiveRes.CQi, 1, 6)
 	lblResults(7).Text = NumberFormat(ActiveRes.CQ0, 1, 6)
+	lblResults(8).Text = NumberFormat(ActiveRes.HForceN, 1, 1) & " N"
 	lblResults(9).Text = NumberFormat(ActiveRes.CH, 1, 6)
 	lblResults(10).Text = NumberFormat(ActiveRes.CY, 1, 6)
 	lblResults(11).Text = NumberFormat(ActiveRes.CMy, 1, 6)
@@ -863,10 +716,10 @@ Public Sub RecalculateRotor
 	lblResults(17).Text = NumberFormat(ActiveRes.InflowKx, 1, 3)
 	lblResults(18).Text = NumberFormat(ActiveRes.InflowKy, 1, 3)
 	lblResults(19).Text = NumberFormat(ActiveRes.WakeSkewChiDeg, 1, 1) & "°"
-	lblResults(20).Text = NumberFormat(tipMachHover, 1, 3)
+	lblResults(20).Text = NumberFormat(ActiveRes.TipMachHover, 1, 3)
 	lblResults(21).Text = NumberFormat(ActiveRes.AdvancingTipMach, 1, 3)
 	lblResults(22).Text = NumberFormat(ActiveCond.Rho, 1, 4) & " kg/m³"
-	lblResults(23).Text = NumberFormat(AmbientPressureHPa, 1, 1) & " hPa"
+	lblResults(23).Text = NumberFormat(ActiveCond.PressureHPa, 1, 1) & " hPa"
 	lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound, 1, 1) & " m/s"
 End Sub
 
@@ -878,8 +731,8 @@ Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	edtRootCutout.Text = NumberFormat(geom.RootCutout, 1, 3)
 	edtChordRoot.Text = NumberFormat(geom.ChordRoot, 1, 4)
 	edtChordTip.Text = NumberFormat(geom.ChordTip, 1, 4)
-	edtThetaRoot.Text = NumberFormat(geom.ThetaRoot * 180.0 / cPI, 1, 2)
-	edtThetaTip.Text = NumberFormat(geom.ThetaTip * 180.0 / cPI, 1, 2)
+	edtThetaRoot.Text = NumberFormat(geom.ThetaRootDeg, 1, 2)
+	edtThetaTip.Text = NumberFormat(geom.ThetaTipDeg, 1, 2)
 	edtLiftSlope.Text = NumberFormat(geom.LiftSlope0, 1, 2)
 	edtCd0.Text = NumberFormat(geom.Cd0, 1, 4)
 	lblRotorNameHeader.Text = geom.Name
@@ -888,31 +741,29 @@ End Sub
 
 Private Sub RefreshRotorSpinner
 	spnRotorSelect.Clear
-	For i = 0 To RotorStorage.Rotors.Size - 1
-		Dim g As RotorGeometry = RotorStorage.Rotors.Get(i)
-		spnRotorSelect.Add(g.Name)
+	For i = 0 To RotorStorage.PresetKeys.Size - 1
+		spnRotorSelect.Add(RotorStorage.PresetNames.Get(i))
 	Next
-	If RotorStorage.ActiveIndex >= 0 And RotorStorage.ActiveIndex < RotorStorage.Rotors.Size Then
-		spnRotorSelect.SelectedIndex = RotorStorage.ActiveIndex
-	End If
 End Sub
 
 Sub spnRotorSelect_ItemClick(Position As Int, Value As Object)
-	If Position >= 0 And Position < RotorStorage.Rotors.Size Then
-		RotorStorage.SetActiveRotor(Position)
-		ActiveGeom = RotorStorage.GetActiveRotor
+	If Position >= 0 And Position < RotorStorage.PresetKeys.Size Then
+		Dim key As String = RotorStorage.PresetKeys.Get(Position)
+		ActiveGeom = RotorStorage.GetPreset(key)
 		LoadRotorDataToFields(ActiveGeom)
 		RecalculateRotor
 	End If
 End Sub
 
 Sub btnRotorDup_Click
-	Dim copyG As RotorGeometry = ActiveGeom
-	copyG.Name = ActiveGeom.Name & " (Copy)"
-	Dim newIdx As Int = RotorStorage.AddRotor(copyG)
-	RefreshRotorSpinner
-	spnRotorSelect.SelectedIndex = newIdx
-	ToastMessageShow("Preset duplicated: " & copyG.Name, False)
+	Dim newName As String = InputBox("Enter duplicate rotor preset name:", "Duplicate Preset", ActiveGeom.Name & " Copy")
+	If newName <> "" Then
+		Dim key As String = "custom_" & DateTime.Now
+		ActiveGeom.Name = newName
+		RotorStorage.SavePreset(key, ActiveGeom)
+		RefreshRotorSpinner
+		ToastMessageShow("Preset duplicated!", False)
+	End If
 End Sub
 
 Sub btnSelectAirfoil_Click
@@ -934,21 +785,20 @@ Sub btnSelectAirfoil_Click
 End Sub
 
 Sub btnTipLoss_Click
-	If ActiveGeom.TipLossMode = "none" Then
-		ActiveGeom.TipLossMode = "sissingh"
+	ActiveGeom.TipLossEnabled = Not(ActiveGeom.TipLossEnabled)
+	If ActiveGeom.TipLossEnabled Then
 		btnTipLoss.Text = "Sissingh: ON"
 		btnTipLoss.TextColor = ColorAccentGreen
 	Else
-		ActiveGeom.TipLossMode = "none"
-		btnTipLoss.Text = "Tip Loss: OFF"
+		btnTipLoss.Text = "Sissingh: OFF"
 		btnTipLoss.TextColor = ColorButText2
 	End If
 	RecalculateRotor
 End Sub
 
 Sub btnCompressibility_Click
-	ActiveGeom.UsePrandtlGlauert = Not(ActiveGeom.UsePrandtlGlauert)
-	If ActiveGeom.UsePrandtlGlauert Then
+	ActiveGeom.CompressibilityEnabled = Not(ActiveGeom.CompressibilityEnabled)
+	If ActiveGeom.CompressibilityEnabled Then
 		btnCompressibility.Text = "Prandtl-Glauert: ON"
 		btnCompressibility.TextColor = ColorAccentGreen
 	Else
@@ -991,7 +841,7 @@ End Sub
 
 Sub btnHoverTrimMode_Click
 	If ActiveCond.HoverTrimMode = "none" Then
-		ActiveCond.HoverTrimMode = "collective"
+		ActiveCond.HoverTrimMode = "collective_pitch"
 		btnHoverTrimMode.Text = "Collective to Target"
 		btnHoverTrimMode.TextColor = ColorAccentGreen
 	Else
@@ -1010,52 +860,31 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	ActiveGeom.RootCutout = ParseDoubleDef(edtRootCutout.Text, ActiveGeom.RootCutout)
 	ActiveGeom.ChordRoot = ParseDoubleDef(edtChordRoot.Text, ActiveGeom.ChordRoot)
 	ActiveGeom.ChordTip = ParseDoubleDef(edtChordTip.Text, ActiveGeom.ChordTip)
-	
-	Dim thRootDeg As Double = ParseDoubleDef(edtThetaRoot.Text, 12.0)
-	Dim thTipDeg As Double = ParseDoubleDef(edtThetaTip.Text, 4.0)
-	ActiveGeom.ThetaRoot = thRootDeg * cPI / 180.0
-	ActiveGeom.ThetaTip = thTipDeg * cPI / 180.0
-	ActiveGeom.PitchMode = "linear_twist"
-	
+	ActiveGeom.ThetaRootDeg = ParseDoubleDef(edtThetaRoot.Text, ActiveGeom.ThetaRootDeg)
+	ActiveGeom.ThetaTipDeg = ParseDoubleDef(edtThetaTip.Text, ActiveGeom.ThetaTipDeg)
 	ActiveGeom.LiftSlope0 = ParseDoubleDef(edtLiftSlope.Text, ActiveGeom.LiftSlope0)
 	ActiveGeom.Cd0 = ParseDoubleDef(edtCd0.Text, ActiveGeom.Cd0)
-	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
 	RecalculateRotor
 End Sub
 
 Sub edtCond_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	
-	Dim alt As Double = ParseDoubleDef(edtAltitude.Text, 0.0)
-	Dim tempC As Double = ParseDoubleDef(edtTemperature.Text, 15.0)
-	
-	' Standard Atmosphere ISA
-	Dim pRatio As Double = Power(1.0 - 0.0065 * alt / 288.15, 5.2561)
-	AmbientPressureHPa = 1013.25 * pRatio
-	Dim tKelvin As Double = tempC + 273.15
-	ActiveCond.Rho = (AmbientPressureHPa * 100.0) / (287.058 * tKelvin)
-	ActiveCond.SpeedOfSound = Sqrt(1.4 * 287.058 * tKelvin)
-	
+	ActiveCond.AltitudeM = ParseDoubleDef(edtAltitude.Text, ActiveCond.AltitudeM)
+	ActiveCond.TemperatureC = ParseDoubleDef(edtTemperature.Text, ActiveCond.TemperatureC)
 	ActiveCond.Mu = ParseDoubleDef(edtAdvanceMu.Text, ActiveCond.Mu)
+	ActiveCond.ShaftTiltDeg = ParseDoubleDef(edtShaftTiltAlpha.Text, ActiveCond.ShaftTiltDeg)
+	ActiveCond.TargetThrustN = ParseDoubleDef(edtTargetThrust.Text, ActiveCond.TargetThrustN)
+	ActiveCond.TargetCT = ParseDoubleDef(edtTargetCT.Text, ActiveCond.TargetCT)
 	
-	Dim alphaDeg As Double = ParseDoubleDef(edtShaftTiltAlpha.Text, 0.0)
-	Dim alphaRad As Double = alphaDeg * cPI / 180.0
-	Dim w As Double = ParseDoubleDef(edtClimbRateW.Text, 0.0)
+	' Sync forward flight speed in km/h
 	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
 	Dim vtip As Double = omega * ActiveGeom.Radius
 	If vtip > 0 Then
-		ActiveCond.MuZ = -ActiveCond.Mu * Tan(alphaRad) + (w / vtip)
 		Dim vKmh As Double = ActiveCond.Mu * vtip * 3.6
 		UpdatingUI = True
 		edtSpeedKmh.Text = NumberFormat(vKmh, 1, 1)
 		UpdatingUI = False
-	Else
-		ActiveCond.MuZ = 0.0
 	End If
-	
-	ActiveCond.TargetThrustN = ParseDoubleDef(edtTargetThrust.Text, ActiveCond.TargetThrustN)
-	ActiveCond.TargetCT = ParseDoubleDef(edtTargetCT.Text, ActiveCond.TargetCT)
-	
 	RecalculateRotor
 End Sub
 
@@ -1070,13 +899,21 @@ Sub edtSpeedKmh_TextChanged (Old As String, New As String)
 		ActiveCond.Mu = vMs / vtip
 		edtAdvanceMu.Text = NumberFormat(ActiveCond.Mu, 1, 3)
 		UpdatingUI = False
-		edtCond_TextChanged("", "")
+		RecalculateRotor
 	End If
 End Sub
 
 Sub edtClimbRate_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	edtCond_TextChanged("", "")
+	Dim w As Double = ParseDoubleDef(edtClimbRateW.Text, 0)
+	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
+	Dim vtip As Double = omega * ActiveGeom.Radius
+	If vtip > 0 Then
+		UpdatingUI = True
+		ActiveCond.MuZ = w / vtip
+		UpdatingUI = False
+		RecalculateRotor
+	End If
 End Sub
 
 ' ====================================================================
@@ -1233,8 +1070,8 @@ Sub UpdateSweepPlotView
 	If plotH <= 10 Then plotH = 300dip
 	
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
-		plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepParamSelectedLabel, _
-		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu)
+		ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepParamSelectedLabel, _
+		plotW, plotH, SweepMaxMuVal, SweepMultiMode)
 	ivSweepPlot.Bitmap = bmp
 	
 	Dim curVal As Double = RotorPopups.ExtractParamValue(ActiveRes, SweepParamSelectedKey)
@@ -1258,6 +1095,46 @@ Sub btnSweepTable_Click
 	Msgbox(sb.ToString, "Data Table: " & SweepParamSelectedKey)
 End Sub
 
+Sub btnMenu_Click
+	Dim options As List: options.Initialize
+	If UnitSystem = 0 Then
+		options.Add("Unit System: Metric (SI)")
+	Else
+		options.Add("Unit System: Imperial")
+	End If
+	options.Add("Reset to Factory Presets")
+	options.Add("zBET Conventions & Physical Axes")
+	options.Add("About RotorCalculator")
+	
+	Dim res As Int = InputList(options, "Settings & Tools", -1)
+	If res = 0 Then
+		UnitSystem = 1 - UnitSystem
+		ToastMessageShow("Unit toggled!", False)
+		RecalculateRotor
+	Else If res = 1 Then
+		RotorStorage.ResetToDefaults
+		RefreshRotorSpinner
+		ActiveGeom = RotorStorage.GetActiveRotor
+		LoadRotorDataToFields(ActiveGeom)
+		RecalculateRotor
+		ToastMessageShow("Factory presets restored!", False)
+	Else If res = 2 Then
+		Msgbox("zBET Coordinate Conventions:" & CRLF & CRLF & _
+			"+x: Forward (aircraft nose)" & CRLF & _
+			"+y: Starboard (right wing)" & CRLF & _
+			"+z: Downward through rotor disk" & CRLF & CRLF & _
+			"Thrust acts upward (-z)." & CRLF & _
+			"Shaft torque Q > 0 powers CCW rotor." & CRLF & _
+			"Advance ratio: μ = V / (ΩR)" & CRLF & _
+			"Axial flow: μz = -μ·tan(α)" & CRLF & _
+			"Mean downwash inflow: λ = μz + λi", "zBET Conventions")
+	Else If res = 3 Then
+		Msgbox("RotorCalculator v1.0.0" & CRLF & CRLF & _
+			"High-Fidelity Helicopter & Rotorcraft Aeromechanics Calculator for Android." & CRLF & CRLF & _
+			"Engineered on rigorous Blade Element & Momentum Theory (zBET), following Wayne Johnson & J. Gordon Leishman.", "About")
+	End If
+End Sub
+
 ' Parsing Utilities
 Private Sub ParseDoubleDef(txt As String, defVal As Double) As Double
 	If txt = "" Or txt = "-" Or txt = "." Then Return defVal
@@ -1276,3 +1153,10 @@ Private Sub ParseIntDef(txt As String, defVal As Int) As Int
 		Return defVal
 	End Try
 End Sub
+"""
+    with open(r"C:\Projetos\RotorCalculator\RotorCalculator.b4a", "w", encoding="utf-8") as f:
+        f.write(b4a_content)
+    print("RotorCalculator.b4a written with authentic AeroCalculator architecture!")
+
+if __name__ == "__main__":
+    create_aerocalculator_style_b4a()

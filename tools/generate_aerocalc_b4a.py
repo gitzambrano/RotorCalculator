@@ -1,4 +1,7 @@
-Build1=Default,flightdyn.rotorcalculator
+import os
+
+def generate():
+    header = """Build1=Default,flightdyn.rotorcalculator
 File1=android-3-dot-menu.png
 File10=icon_flat_green_white.png
 File11=icon_flat_transp_green.png
@@ -53,7 +56,7 @@ Library6=reflection
 Library7=richstring
 Library8=rspopupmenu
 Library9=runtimepermissions
-ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
+ManifestCode='This code will be applied to the manifest file during compilation.~\\n~'You do not need to modify it in most cases.~\\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\\n~AddManifestText(~\\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="36"/>~\\n~<supports-screens android:largeScreens="true" ~\\n~    android:normalScreens="true" ~\\n~    android:smallScreens="true" ~\\n~    android:anyDensity="true"/>)~\\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\\n~SetApplicationAttribute(android:label, "$LABEL$")~\\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\\n~AddManifestText(<uses-permission~\\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\\n~android:maxSdkVersion="18" />)~\\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\\n~'End of default text.~\\n~~\\n~
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
@@ -78,6 +81,9 @@ Version=13
 #Region  Module Attributes 
 	#IgnoreWarnings: 1, 2, 3, 4, 5, 6
 #End Region
+"""
+
+    code = """
 Sub Process_Globals
 	
 	' Runtime permissions
@@ -1276,3 +1282,11 @@ Private Sub ParseIntDef(txt As String, defVal As Int) As Int
 		Return defVal
 	End Try
 End Sub
+"""
+    full_content = header.strip() + "\n" + code.strip() + "\n"
+    with open(r"C:\Projetos\RotorCalculator\RotorCalculator.b4a", "w", encoding="utf-8") as f:
+        f.write(full_content)
+    print("RotorCalculator.b4a generated successfully with intact B4A project header and authentic AeroCalculator architecture!")
+
+if __name__ == "__main__":
+    generate()
