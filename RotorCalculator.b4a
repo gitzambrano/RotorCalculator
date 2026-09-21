@@ -236,8 +236,8 @@ Sub Activity_Create(FirstTime As Boolean)
 	' Responsive scaling: both width and height constrain growth.
 	' This prevents tall/narrow phones from enlarging the header until it clips.
 	Dim hh As Double
-	Dim ib As Int = 6dip
-	Dim tb As Int = 40dip
+	Dim ib As Int = 4dip
+	Dim tb As Int = 48dip
 	Dim PanelNb As Int = 14
 	hh = 99dip + PanelNb * (ib * 2 + tb) + PanelNb * 1dip + 1dip
 	If root.Width > root.Height Then ld = 1 Else ld = 0
@@ -510,8 +510,8 @@ Private Sub BuildPageGeom
 	scvGeom.Initialize(2500)
 	pnlBack0.AddView(scvGeom, 0, 0, root.Width, root.Height - 102dip * sc)
 	
-	Dim ib As Int = 6dip
-	Dim tb As Int = 40dip
+	Dim ib As Int = 4dip
+	Dim tb As Int = 48dip
 	Dim rowH As Int = (ib * 2 + tb) * sc
 	Dim PanelNb As Int = 14
 	
@@ -535,7 +535,8 @@ Private Sub BuildPageGeom
 		Select j
 			Case 0
 				' Row 0: Preset Selector
-				Dim btnP As Button = CreateRowButton("Rotor Preset", "btnPresetClick")
+				Dim btnP As Button = CreateRowButton("Rotor Preset", "btnRowTip_Click")
+				btnP.Tag = "Rotor Preset"
 				pnlInput.AddView(btnP, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				
 				Dim pnlSpn As Panel: pnlSpn.Initialize("")
@@ -572,7 +573,8 @@ Private Sub BuildPageGeom
 			Case 10
 				edtCd0 = AddFullInputRow(pnlInput, ib, tb, "Profile Cd0", "0.0090", "coef", "edtGeom_TextChanged")
 			Case 11
-				Dim btnAfLbl As Button = CreateRowButton("Airfoil", "btnAirfoilLbl")
+				Dim btnAfLbl As Button = CreateRowButton("Airfoil", "btnRowTip_Click")
+				btnAfLbl.Tag = "Airfoil"
 				pnlInput.AddView(btnAfLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnSelectAirfoil.Initialize("btnSelectAirfoil")
 				btnSelectAirfoil.Text = "NACA 0012 (Library...)"
@@ -582,7 +584,8 @@ Private Sub BuildPageGeom
 				btnSelectAirfoil.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnSelectAirfoil, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 12
-				Dim btnTLbl As Button = CreateRowButton("Tip Loss", "btnTLbl")
+				Dim btnTLbl As Button = CreateRowButton("Tip Loss", "btnRowTip_Click")
+				btnTLbl.Tag = "Tip Loss"
 				pnlInput.AddView(btnTLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnTipLoss.Initialize("btnTipLoss")
 				btnTipLoss.Text = "Sissingh: ON"
@@ -592,7 +595,8 @@ Private Sub BuildPageGeom
 				btnTipLoss.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnTipLoss, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 13
-				Dim btnCLbl As Button = CreateRowButton("Compress.", "btnCLbl")
+				Dim btnCLbl As Button = CreateRowButton("Compress.", "btnRowTip_Click")
+				btnCLbl.Tag = "Compressibility"
 				pnlInput.AddView(btnCLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnCompressibility.Initialize("btnCompressibility")
 				btnCompressibility.Text = "Prandtl-Glauert: ON"
@@ -616,8 +620,8 @@ Private Sub BuildPageCond
 	scvCond.Initialize(2500)
 	pnlBack1.AddView(scvCond, 0, 0, root.Width, root.Height - 102dip * sc)
 	
-	Dim ib As Int = 6dip
-	Dim tb As Int = 40dip
+	Dim ib As Int = 4dip
+	Dim tb As Int = 48dip
 	Dim rowH As Int = (ib * 2 + tb) * sc
 	Dim PanelNb As Int = 11
 	
@@ -652,7 +656,8 @@ Private Sub BuildPageCond
 			Case 5
 				edtClimbRateW = AddFullInputRow(pnlInput, ib, tb, "Climb Rate", "0.0", "m/s", "edtClimbRate_TextChanged")
 			Case 6
-				Dim btnInflowLbl As Button = CreateRowButton("Inflow Model", "btnInflowLbl")
+				Dim btnInflowLbl As Button = CreateRowButton("Inflow Model", "btnRowTip_Click")
+				btnInflowLbl.Tag = "Inflow Model"
 				pnlInput.AddView(btnInflowLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnInflowModel.Initialize("btnInflowModel")
 				btnInflowModel.Text = "Coleman-Feingold"
@@ -662,7 +667,8 @@ Private Sub BuildPageCond
 				btnInflowModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnInflowModel, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 7
-				Dim btnDragLbl As Button = CreateRowButton("Profile Drag", "btnDragLbl")
+				Dim btnDragLbl As Button = CreateRowButton("Profile Drag", "btnRowTip_Click")
+				btnDragLbl.Tag = "Profile Drag"
 				pnlInput.AddView(btnDragLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnProfileDragModel.Initialize("btnProfileDragModel")
 				btnProfileDragModel.Text = "Numerical Vectorial"
@@ -672,7 +678,8 @@ Private Sub BuildPageCond
 				btnProfileDragModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnProfileDragModel, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 8
-				Dim btnTrimLbl As Button = CreateRowButton("Hover Trim", "btnTrimLbl")
+				Dim btnTrimLbl As Button = CreateRowButton("Hover Trim", "btnRowTip_Click")
+				btnTrimLbl.Tag = "Hover Trim"
 				pnlInput.AddView(btnTrimLbl, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnHoverTrimMode.Initialize("btnHoverTrimMode")
 				btnHoverTrimMode.Text = "Collective to Target"
@@ -828,7 +835,7 @@ Private Sub RotorListName(fullName As String) As String
 End Sub
 
 Private Sub ResultDisplayLabel(fullText As String) As String
-	If root.Width > 340dip Then Return fullText
+	If root.Width > 380dip Then Return fullText
 	Select fullText
 		Case "Profile Drag Torque (CQ0)": Return "Profile Torque (CQ0)"
 		Case "Pitch Moment Coef (CMy)": Return "Pitch Moment (CMy)"
@@ -1238,6 +1245,20 @@ Sub btnRowTip_Click
 			tipMsg = "Desired total thrust T in Newtons for hover/forward trim."
 		Case "Target CT"
 			tipMsg = "Desired thrust coefficient CT = T / (ρ·A·(ΩR)²)."
+		Case "Rotor Preset"
+			tipMsg = "Stored rotor geometry preset. Select a factory rotor or a duplicated custom configuration."
+		Case "Airfoil"
+			tipMsg = "Blade section aerodynamic model. Selecting an airfoil updates the sectional lift slope and profile drag data."
+		Case "Tip Loss"
+			tipMsg = "Finite-blade tip-loss correction. Sissingh reduces the ideal loading near the blade tip."
+		Case "Compressibility"
+			tipMsg = "Compressibility correction applied to sectional aerodynamics as local Mach number increases."
+		Case "Inflow Model"
+			tipMsg = "Model used to distribute induced velocity across the rotor disk in forward flight."
+		Case "Profile Drag"
+			tipMsg = "Method used to evaluate blade profile-drag forces and their torque / in-plane-force contributions."
+		Case "Hover Trim"
+			tipMsg = "Trim mode. Collective-to-target adjusts blade collective to achieve the selected thrust or CT target."
 		Case Else
 			tipMsg = b.Tag
 	End Select
