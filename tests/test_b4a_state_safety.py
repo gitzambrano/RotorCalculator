@@ -48,7 +48,7 @@ def test_sweep_spinner_selected_text_is_legible():
 
 def test_qa_checks_state_purity_and_real_geometry_popup():
     qa = text("tools/ci_ui_qa.sh")
-    assert 'grep -qi "Operating μ=0.00"' in qa
+    assert 'grep -qi "Operating μ = 0.00"' in qa
     assert "09-geometry-after-rotation" in qa
     assert "02-geometry-popup-top.png" in qa
     assert "safe_screencap" in qa
