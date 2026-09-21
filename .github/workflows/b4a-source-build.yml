@@ -1,4 +1,4 @@
-name: B4A Source Build Smoke
+name: Frontend Source QA
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: rotor-b4a-build-${{ github.event.pull_request.number || github.ref }}
+  group: rotor-frontend-source-qa-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   build-b4a:
+    name: build-b4a-source
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -34,7 +35,7 @@ jobs:
           $builder = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $builder) { throw "B4ABuilder.exe not found after install" }
           "B4A_BUILDER=$builder" | Out-File -FilePath $env:GITHUB_ENV -Append
-          & $builder 2>&1 | Select-Object -First 20
+          Write-Host "B4A builder: $builder"
 
       - name: Install B4X OpenJDK 19
         shell: powershell
@@ -45,9 +46,7 @@ jobs:
           Expand-Archive "$env:RUNNER_TEMP\jdk.zip" -DestinationPath "C:\java" -Force
           $javac = Get-ChildItem "C:\java" -Filter javac.exe -Recurse | Select-Object -First 1
           if (-not $javac) { throw "javac.exe not found" }
-          $javaBin = $javac.Directory.FullName
-          "JAVA_BIN=$javaBin" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "JavaBin=$javaBin"
+          "JAVA_BIN=$($javac.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Install B4A Android SDK resources
         shell: powershell
@@ -56,14 +55,14 @@ jobs:
           Invoke-WebRequest "https://github.com/AnywhereSoftware/B4A/releases/download/7_25/resources_7_25.zip" -OutFile "$env:RUNNER_TEMP\android-resources.zip"
           New-Item -ItemType Directory -Force -Path "C:\Android" | Out-Null
           Expand-Archive "$env:RUNNER_TEMP\android-resources.zip" -DestinationPath "C:\Android" -Force
-          $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse | Where-Object { $_.FullName -match "android-36" } | Select-Object -First 1
+          $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse |
+            Where-Object { $_.FullName -match "android-36" } | Select-Object -First 1
           if (-not $androidJar) {
-            $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse | Sort-Object FullName -Descending | Select-Object -First 1
+            $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse |
+              Sort-Object FullName -Descending | Select-Object -First 1
           }
           if (-not $androidJar) { throw "android.jar not found in B4A resources" }
-          $platform = $androidJar.Directory.FullName
-          "PLATFORM_FOLDER=$platform" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "PlatformFolder=$platform"
+          "PLATFORM_FOLDER=$($androidJar.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Configure B4A and compile source
         shell: powershell
@@ -93,18 +92,187 @@ jobs:
             Pop-Location
           }
 
-          Get-ChildItem $env:GITHUB_WORKSPACE -Filter *.apk -Recurse | ForEach-Object { Write-Host $_.FullName }
-          $apk = Get-ChildItem $env:GITHUB_WORKSPACE -Filter *.apk -Recurse |
-            Where-Object { $_.FullName -match "\\Objects\\" } |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 1
-          if (-not $apk) { throw "No newly built APK found" }
+          $apk = Get-ChildItem "$env:GITHUB_WORKSPACE\Objects" -Filter *.apk -Recurse |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $apk) { throw "No APK produced by B4A" }
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\ci-build" | Out-Null
           Copy-Item $apk.FullName "$env:GITHUB_WORKSPACE\ci-build\RotorCalculator-ci.apk" -Force
+          Write-Host "Built APK: $($apk.FullName) ($($apk.Length) bytes)"
 
       - uses: actions/upload-artifact@v4
         with:
           name: RotorCalculator-b4a-build
           path: ci-build/RotorCalculator-ci.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  ui-qa:
+    name: real-apk-all-screens
+    needs: build-b4a
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: RotorCalculator-b4a-build
+          path: ci-apk
+
+      - name: Prepare QA helpers
+        shell: bash
+        run: |
+          mkdir -p qa-results
+          cat > /tmp/ui_node.py <<'PY'
+          import subprocess, sys, xml.etree.ElementTree as ET, re, json
+          out = sys.argv[1]
+          subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
+          subprocess.run(["adb","pull","/sdcard/window.xml",out], check=True, stdout=subprocess.DEVNULL)
+          root = ET.parse(out).getroot()
+          def bounds(s):
+              m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",s or "")
+              return tuple(map(int,m.groups())) if m else None
+          nodes=[]
+          for n in root.iter("node"):
+              text=(n.attrib.get("text") or "").strip()
+              desc=(n.attrib.get("content-desc") or "").strip()
+              if text or desc:
+                  nodes.append({
+                    "text":text, "desc":desc, "bounds":bounds(n.attrib.get("bounds")),
+                    "clickable":n.attrib.get("clickable"), "enabled":n.attrib.get("enabled")
+                  })
+          print(json.dumps(nodes,ensure_ascii=False,indent=2))
+          PY
+
+          cat > /tmp/tap_text.py <<'PY'
+          import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile
+          needle=sys.argv[1].lower()
+          xml=tempfile.NamedTemporaryFile(delete=False,suffix=".xml").name
+          subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
+          subprocess.run(["adb","pull","/sdcard/window.xml",xml], check=True, stdout=subprocess.DEVNULL)
+          root=ET.parse(xml).getroot()
+          for n in root.iter("node"):
+              hay=((n.attrib.get("text") or "")+" "+(n.attrib.get("content-desc") or "")).lower()
+              if needle in hay:
+                  m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib.get("bounds",""))
+                  if m:
+                      x1,y1,x2,y2=map(int,m.groups())
+                      if x2>x1 and y2>y1:
+                          subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
+                          sys.exit(0)
+          print("NOT_FOUND",sys.argv[1]); sys.exit(2)
+          PY
+
+          cat > /tmp/check_bounds.py <<'PY'
+          import sys, json, glob, os
+          w,h=map(int,sys.argv[1].split("x"))
+          issues=[]
+          for jf in glob.glob(os.path.join(sys.argv[2],"*.json")):
+              for n in json.load(open(jf,encoding="utf-8")):
+                  b=n.get("bounds")
+                  if not b: continue
+                  x1,y1,x2,y2=b
+                  if x1<0 or y1<0 or x2>w or y2>h or x2<=x1 or y2<=y1:
+                      issues.append({"file":os.path.basename(jf),"text":n.get("text"),"bounds":b})
+          json.dump(issues,open(os.path.join(sys.argv[2],"bounds-issues.json"),"w"),ensure_ascii=False,indent=2)
+          print("bounds issues:",len(issues))
+          if issues:
+              print(json.dumps(issues[:30],ensure_ascii=False))
+              sys.exit(1)
+          PY
+
+      - name: Run freshly built APK through target screens
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: |
+            set -e
+            adb install -r ci-apk/RotorCalculator-ci.apk
+
+            capture_screen() {
+              NAME="$1"; SIZE="$2"; ROT="$3"; FONT="$4"
+              OUT="qa-results/$NAME"; mkdir -p "$OUT"
+              W="${SIZE%x*}"; H="${SIZE#*x}"
+
+              adb shell wm size "$SIZE"
+              adb shell wm density 160
+              adb shell settings put system font_scale "$FONT"
+              adb shell settings put system accelerometer_rotation 0
+              adb shell settings put system user_rotation "$ROT"
+              adb shell am force-stop flightdyn.rotorcalculator
+              adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
+              sleep 2
+              adb shell pidof flightdyn.rotorcalculator > "$OUT/pid.txt"
+              test -s "$OUT/pid.txt"
+
+              adb exec-out screencap -p > "$OUT/01-geometry-top.png"
+              python /tmp/ui_node.py "$OUT/01-geometry-top.xml" > "$OUT/01-geometry-top.json"
+
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
+              adb exec-out screencap -p > "$OUT/02-geometry-bottom.png"
+              python /tmp/ui_node.py "$OUT/02-geometry-bottom.xml" > "$OUT/02-geometry-bottom.json"
+
+              python /tmp/tap_text.py CONDITIONS
+              sleep 1
+              adb exec-out screencap -p > "$OUT/03-conditions-top.png"
+              python /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
+
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/3)) 300 || true
+              adb exec-out screencap -p > "$OUT/04-conditions-bottom.png"
+              python /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
+
+              python /tmp/tap_text.py RESULTS
+              sleep 1
+              adb exec-out screencap -p > "$OUT/05-results-top.png"
+              python /tmp/ui_node.py "$OUT/05-results-top.xml" > "$OUT/05-results-top.json"
+
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
+              adb exec-out screencap -p > "$OUT/06-results-mid.png"
+              python /tmp/ui_node.py "$OUT/06-results-mid.xml" > "$OUT/06-results-mid.json"
+
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
+              adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
+              adb exec-out screencap -p > "$OUT/07-results-bottom.png"
+              python /tmp/ui_node.py "$OUT/07-results-bottom.xml" > "$OUT/07-results-bottom.json"
+
+              adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*9/10)) 250 || true
+              adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*9/10)) 250 || true
+              adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*9/10)) 250 || true
+              python /tmp/tap_text.py "OPEN MULTI-PARAMETER"
+              sleep 1
+              adb exec-out screencap -p > "$OUT/08-sweep.png"
+              python /tmp/ui_node.py "$OUT/08-sweep.xml" > "$OUT/08-sweep.json"
+
+              python /tmp/check_bounds.py "$SIZE" "$OUT"
+              adb shell am force-stop flightdyn.rotorcalculator
+            }
+
+            capture_screen compact-320x568 320x568 0 1.0
+            capture_screen compact-font130-320x568 320x568 0 1.3
+            capture_screen standard-360x780 360x780 0 1.0
+            capture_screen modern-393x873 393x873 0 1.0
+            capture_screen large-412x915 412x915 0 1.0
+            capture_screen tablet-small-600x960 600x960 0 1.0
+            capture_screen tablet-768x1024 768x1024 0 1.0
+            capture_screen landscape-phone-915x412 915x412 1 1.0
+            capture_screen landscape-tablet-1024x600 1024x600 1 1.0
+
+            adb shell settings put system font_scale 1.0
+            adb shell wm size reset
+            adb shell wm density reset
+
+      - name: Upload screenshots and UI hierarchy
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-source-ui-qa
+          path: qa-results
           if-no-files-found: error
           retention-days: 7
