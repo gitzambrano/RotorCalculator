@@ -44,21 +44,16 @@ FileGroup7=Default Group
 FileGroup8=Default Group
 FileGroup9=Default Group
 Group=Default Group
-Library1=ahviewpager
-Library2=animation
-Library3=core
-Library4=ime
-Library5=phone
-Library6=reflection
-Library7=richstring
-Library8=rspopupmenu
-Library9=runtimepermissions
-ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="16" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
+Library1=core
+Library2=phone
+Library3=rspopupmenu
+Library4=runtimepermissions
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
 NumberOfFiles=22
-NumberOfLibraries=9
+NumberOfLibraries=4
 NumberOfModules=3
 Version=13
 @EndOfDesignText@
@@ -119,16 +114,17 @@ Sub Process_Globals
 	Public ld As Int = 0
 	Public CurrentPage As Int = 0
 	Public UnitSystem As Int = 0 ' 0=Metric (SI), 1=Imperial
+	Public ConditionAltitudeM As Double = 0.0
+	Public ConditionTemperatureC As Double = 15.0
+	Public ConditionShaftTiltDeg As Double = 0.0
+	Public ConditionClimbRateMs As Double = 0.0
 
 End Sub
 
 Sub Globals
 	
-	' Safe Insets Root & ViewPager
+	' Activity content root. B4A activity content already excludes standard system bars.
 	Private root As Panel
-	Private imeInsets As IME
-	Private container As AHPageContainer
-	Private pager As AHViewPager
 	
 	' Unified Header (Title + Tabs)
 	Private pnltitle As Panel
@@ -214,24 +210,9 @@ Sub Activity_Create(FirstTime As Boolean)
 		ActiveCond = zBETEngine.CreateDefaultCondition
 	End If
 	
-	' Safe area root
-	imeInsets.Initialize("imeInsets")
+	' B4A's Activity content area is the layout viewport. Keep all UI inside it.
 	root.Initialize("")
-	Dim Content As Rect = imeInsets.GetContentRect
-	Dim rL As Int = Content.Left
-	Dim rT As Int = Content.Top
-	Dim rW As Int = Content.Width
-	Dim rH As Int = Content.Height
-	If rW <= 0 Then 
-		rL = 0
-		rW = 100%x
-	End If
-	If rH <= 0 Then 
-		rT = 0
-		rH = 100%y
-	End If
-	Activity.AddView(root, rL, rT, rW, rH)
-	imeInsets.UpdatePercentageReference(root.Width, root.Height)
+	Activity.AddView(root, 0, 0, 100%x, 100%y)
 	
 	' Responsive scaling: both width and height constrain growth.
 	' This prevents tall/narrow phones from enlarging the header until it clips.
@@ -266,37 +247,27 @@ Sub Activity_Create(FirstTime As Boolean)
 	If UiContentW > 620dip Then UiContentW = 620dip
 	UiContentLeft = (root.Width - UiContentW) / 2
 	
-	' Initialize Pager Container
-	container.Initialize
-	
-	' Build Pages
+	' Build three native pages. Custom header tabs control visibility.
 	BuildPageGeom
-	container.AddPage(pnlBack0, "Geometry")
-	
 	BuildPageCond
-	container.AddPage(pnlBack1, "Conditions")
-	
 	BuildPageRes
-	container.AddPage(pnlBack2, "Results")
+	root.AddView(pnlBack0, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
+	root.AddView(pnlBack1, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
+	root.AddView(pnlBack2, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
 	
-	' Add Pager to Root
-	pager.Initialize2(container, "pager")
-	root.AddView(pager, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
-	
-	' Build Unified Header
+	' Header stays above page content.
 	BuildUnifiedHeader
 	
-	' Populate UI & Run Initial Calculation
+	' Restore state into all controls and calculate the first frame.
 	LoadRotorDataToFields(ActiveGeom)
+	LoadConditionDataToFields
 	RecalculateRotor
-	
-	' Set initial page
-	pager.GotoPage(0, False)
+	ShowPage(CurrentPage, False)
 	
 End Sub
 
 Sub Activity_Resume
-	pager.GotoPage(CurrentPage, False)
+	ShowPage(CurrentPage, False)
 End Sub
 
 Sub Activity_Pause (UserClosed As Boolean)
@@ -311,10 +282,10 @@ Sub Activity_KeyPress (KeyCode As Int) As Boolean
 			End If
 		End If
 		If CurrentPage = 2 Then
-			pager.GotoPage(1, True)
+			ShowPage(1, True)
 			Return True
 		Else If CurrentPage = 1 Then
-			pager.GotoPage(0, True)
+			ShowPage(0, True)
 			Return True
 		End If
 	End If
@@ -692,7 +663,7 @@ Private Sub BuildPageCond
 				btnHoverTrimMode.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnHoverTrimMode, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
 			Case 9
-				edtTargetThrust = AddFullInputRow(pnlInput, ib, tb, "Target Thrust", "25000", "N", "edtCond_TextChanged")
+				edtTargetThrust = AddFullInputRow(pnlInput, ib, tb, "Target Thrust", "0", "N", "edtCond_TextChanged")
 			Case 10
 				edtTargetCT = AddFullInputRow(pnlInput, ib, tb, "Target CT", "0.00650", "coef", "edtCond_TextChanged")
 		End Select
@@ -728,7 +699,7 @@ Private Sub BuildPageRes
 		"Total Thrust (T)", _
 		"Thrust Coef (CT)", _
 		"Shaft Power (P)", _
-		"Power Coef (CP)", _
+		"Air Power Coef (CPair)", _
 		"Total Torque (Q)", _
 		"Torque Coef (CQ)", _
 		"Induced Torque (CQi)", _
@@ -844,6 +815,7 @@ End Sub
 Private Sub ResultDisplayLabel(fullText As String) As String
 	If root.Width > 380dip Then Return fullText
 	Select fullText
+		Case "Air Power Coef (CPair)": Return "Air Power (CPair)"
 		Case "Profile Drag Torque (CQ0)": Return "Profile Torque (CQ0)"
 		Case "Pitch Moment Coef (CMy)": Return "Pitch Moment (CMy)"
 		Case "Roll Moment Coef (CMx)": Return "Roll Moment (CMx)"
@@ -868,7 +840,7 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "Total Thrust (T)": Return "Total rotor thrust T, dimensional force normal to the rotor disk reference."
 		Case "Thrust Coef (CT)": Return "Thrust coefficient CT = T / [ρ A (ΩR)²]."
 		Case "Shaft Power (P)": Return "Mechanical shaft power required by the rotor at the current operating point."
-		Case "Power Coef (CP)": Return "Power coefficient CP = P / [ρ A (ΩR)³]."
+		Case "Air Power Coef (CPair)": Return "Air power coefficient from the rotor energy balance, including induced, climb, profile-drag and translational terms."
 		Case "Total Torque (Q)": Return "Total aerodynamic rotor torque about the shaft."
 		Case "Torque Coef (CQ)": Return "Torque coefficient CQ = Q / [ρ A (ΩR)² R]."
 		Case "Induced Torque (CQi)": Return "Induced component of rotor torque associated with induced power."
@@ -908,12 +880,9 @@ Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	edt.Color = ColorEdt
 	edt.HintColor = ColorEdtHint
 	edt.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.CENTER_HORIZONTAL)
-	edt.InputType = edt.INPUT_TYPE_DECIMAL_NUMBERS
+	edt.InputType = Bit.Or(edt.INPUT_TYPE_DECIMAL_NUMBERS, 4096)
 	edt.ForceDoneButton = True
 	edt.SingleLine = True
-	
-	Dim filter As IME: filter.Initialize("")
-	filter.SetCustomFilter(edt, edt.INPUT_TYPE_DECIMAL_NUMBERS, "0123456789.-")
 	
 	pnl.AddView(edt, pnl.Width * 37 / 100, ib * sc, pnl.Width * 36 / 100, tb * sc)
 	
@@ -978,12 +947,19 @@ Sub ButtonGradient2(ColorList() As Int) As StateListDrawable
 End Sub
 
 ' ====================================================================
-' NAVIGATION & PAGER EVENTS
+' NATIVE PAGE NAVIGATION
 ' ====================================================================
-Sub pager_PageChanged (Position As Int)
+Private Sub ShowPage(Position As Int, Animated As Boolean)
+	If Position < 0 Or Position > 2 Then Position = 0
 	CurrentPage = Position
+	pnlBack0.Visible = (Position = 0)
+	pnlBack1.Visible = (Position = 1)
+	pnlBack2.Visible = (Position = 2)
+	
 	Dim tabW As Int = root.Width / 3
-	line.SetLayoutAnimated(150, Position * tabW, HeaderHeight - 5dip, tabW, 4dip)
+	Dim duration As Int = 0
+	If Animated Then duration = 150
+	line.SetLayoutAnimated(duration, Position * tabW, HeaderHeight - 5dip, tabW, 4dip)
 	
 	btnTabGeom.TextColor = ColorButText2
 	btnTabCond.TextColor = ColorButText2
@@ -996,21 +972,22 @@ Sub pager_PageChanged (Position As Int)
 			btnTabCond.TextColor = ColorButText3
 		Case 2
 			btnTabRes.TextColor = ColorButText3
-			Dim HideK As IME: HideK.Initialize(""): HideK.HideKeyboard
+			Dim p As Phone
+			p.HideKeyboard(Activity)
 			RecalculateRotor
 	End Select
 End Sub
 
 Sub btnTabGeom_Click
-	pager.GotoPage(0, True)
+	ShowPage(0, True)
 End Sub
 
 Sub btnTabCond_Click
-	pager.GotoPage(1, True)
+	ShowPage(1, True)
 End Sub
 
 Sub btnTabRes_Click
-	pager.GotoPage(2, True)
+	ShowPage(2, True)
 End Sub
 
 ' ====================================================================
@@ -1038,11 +1015,11 @@ Public Sub RecalculateRotor
 		lblResults(0).Text = NumberFormat(ActiveRes.ThrustLbf, 1, 0) & " lbf"
 		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP"
 		lblResults(4).Text = NumberFormat(ActiveRes.TorqueLbft, 1, 1) & " lb·ft"
-		lblResults(8).Text = NumberFormat(ActiveRes.DragHN * 0.224809, 1, 1) & " lbf"
+		lblResults(8).Text = NumberFormat(ActiveRes.DragHN * 0.224808943, 1, 1) & " lbf"
 	End If
 	
 	lblResults(1).Text = NumberFormat(ActiveRes.CT, 1, 5)
-	lblResults(3).Text = NumberFormat(ActiveRes.CQ, 1, 6)
+	lblResults(3).Text = NumberFormat(ActiveRes.CPair, 1, 6)
 	lblResults(5).Text = NumberFormat(ActiveRes.CQ, 1, 6)
 	lblResults(6).Text = NumberFormat(ActiveRes.CQi, 1, 6)
 	lblResults(7).Text = NumberFormat(ActiveRes.CQ0, 1, 6)
@@ -1059,9 +1036,15 @@ Public Sub RecalculateRotor
 	lblResults(19).Text = NumberFormat(ActiveRes.WakeSkewChiDeg, 1, 1) & "°"
 	lblResults(20).Text = NumberFormat(tipMachHover, 1, 3)
 	lblResults(21).Text = NumberFormat(ActiveRes.AdvancingTipMach, 1, 3)
-	lblResults(22).Text = NumberFormat(ActiveCond.Rho, 1, 4) & " kg/m³"
-	lblResults(23).Text = NumberFormat(AmbientPressureHPa, 1, 1) & " hPa"
-	lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound, 1, 1) & " m/s"
+	If UnitSystem = 0 Then
+		lblResults(22).Text = NumberFormat(ActiveCond.Rho, 1, 4) & " kg/m³"
+		lblResults(23).Text = NumberFormat(AmbientPressureHPa, 1, 1) & " hPa"
+		lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound, 1, 1) & " m/s"
+	Else
+		lblResults(22).Text = NumberFormat(ActiveCond.Rho * 0.0019403203, 1, 5) & " slug/ft³"
+		lblResults(23).Text = NumberFormat(AmbientPressureHPa * 0.0295299831, 1, 2) & " inHg"
+		lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound * 3.280839895, 1, 0) & " ft/s"
+	End If
 End Sub
 
 Public Sub LoadRotorDataToFields(geom As RotorGeometry)
@@ -1078,13 +1061,8 @@ Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	edtCd0.Text = NumberFormat(geom.Cd0, 1, 4)
 	lblRotorNameHeader.Text = HeaderRotorName(geom.Name)
 	
-	If geom.TipLossMode = "sissingh" Then
-		btnTipLoss.Text = "Sissingh: ON"
-		btnTipLoss.TextColor = ColorAccentGreen
-	Else
-		btnTipLoss.Text = "Tip Loss: OFF"
-		btnTipLoss.TextColor = ColorButText2
-	End If
+	RefreshTipLossButton(geom)
+	btnSelectAirfoil.Text = AirfoilDisplayName(geom)
 	
 	If geom.UsePrandtlGlauert Then
 		btnCompressibility.Text = "Prandtl-Glauert: ON"
@@ -1095,6 +1073,77 @@ Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	End If
 	
 	UpdatingUI = False
+End Sub
+
+Private Sub RefreshTipLossButton(geom As RotorGeometry)
+	Select geom.TipLossMode
+		Case "sissingh"
+			btnTipLoss.Text = "Sissingh: ON"
+			btnTipLoss.TextColor = ColorAccentGreen
+		Case "fixed"
+			btnTipLoss.Text = "Fixed B=" & NumberFormat(geom.TipLossB, 1, 2)
+			btnTipLoss.TextColor = ColorAccentCyan
+		Case Else
+			btnTipLoss.Text = "Tip Loss: OFF"
+			btnTipLoss.TextColor = ColorButText2
+	End Select
+End Sub
+
+Private Sub AirfoilDisplayName(geom As RotorGeometry) As String
+	For i = 0 To RotorPopups.Airfoils.Size - 1
+		Dim af As AirfoilData = RotorPopups.Airfoils.Get(i)
+		If Abs(geom.LiftSlope0 - af.A0) < 0.001 And Abs(geom.Cd0 - af.Cd0) < 0.00001 Then Return af.Name
+	Next
+	Return "Custom Section"
+End Sub
+
+Private Sub LoadConditionDataToFields
+	UpdatingUI = True
+	edtAltitude.Text = NumberFormat(ConditionAltitudeM, 1, 0)
+	edtTemperature.Text = NumberFormat(ConditionTemperatureC, 1, 1)
+	edtAdvanceMu.Text = NumberFormat(ActiveCond.Mu, 1, 3)
+	edtShaftTiltAlpha.Text = NumberFormat(ConditionShaftTiltDeg, 1, 1)
+	edtClimbRateW.Text = NumberFormat(ConditionClimbRateMs, 1, 1)
+	edtTargetThrust.Text = NumberFormat(ActiveCond.TargetThrustN, 1, 0)
+	edtTargetCT.Text = NumberFormat(ActiveCond.TargetCT, 1, 5)
+	
+	Select ActiveCond.InflowModel
+		Case "uniform": btnInflowModel.Text = "Uniform Benchmark"
+		Case "coleman_simple": btnInflowModel.Text = "Coleman Simple"
+		Case "drees": btnInflowModel.Text = "Drees Linear"
+		Case Else: btnInflowModel.Text = "Coleman-Feingold"
+	End Select
+	Select ActiveCond.ProfileDragModel
+		Case "analytical_tangential": btnProfileDragModel.Text = "Analytical Tangential"
+		Case "analytical_vectorial": btnProfileDragModel.Text = "Analytical Vectorial"
+		Case Else: btnProfileDragModel.Text = "Numerical Vectorial"
+	End Select
+	If ActiveCond.HoverTrimMode = "none" Then
+		btnHoverTrimMode.Text = "Manual Pitch"
+		btnHoverTrimMode.TextColor = ColorButText2
+	Else
+		btnHoverTrimMode.Text = "Collective to Target"
+		btnHoverTrimMode.TextColor = ColorAccentGreen
+	End If
+	UpdatingUI = False
+	RefreshDerivedCondition(True)
+End Sub
+
+Private Sub RefreshDerivedCondition(updateSpeedField As Boolean)
+	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
+	Dim vtip As Double = omega * ActiveGeom.Radius
+	If vtip > 0 Then
+		Dim alphaRad As Double = ConditionShaftTiltDeg * cPI / 180.0
+		ActiveCond.MuZ = -ActiveCond.Mu * Tan(alphaRad) + (ConditionClimbRateMs / vtip)
+		If updateSpeedField And edtSpeedKmh.IsInitialized Then
+			Dim wasUpdating As Boolean = UpdatingUI
+			UpdatingUI = True
+			edtSpeedKmh.Text = NumberFormat(ActiveCond.Mu * vtip * 3.6, 1, 1)
+			UpdatingUI = wasUpdating
+		End If
+	Else
+		ActiveCond.MuZ = 0.0
+	End If
 End Sub
 
 Private Sub RefreshRotorSpinner
@@ -1113,6 +1162,7 @@ Sub spnRotorSelect_ItemClick(Position As Int, Value As Object)
 		RotorStorage.SetActiveRotor(Position)
 		ActiveGeom = RotorStorage.GetActiveRotor
 		LoadRotorDataToFields(ActiveGeom)
+		RefreshDerivedCondition(True)
 		RecalculateRotor
 	End If
 End Sub
@@ -1121,8 +1171,12 @@ Sub btnRotorDup_Click
 	Dim copyG As RotorGeometry = ActiveGeom
 	copyG.Name = ActiveGeom.Name & " (Copy)"
 	Dim newIdx As Int = RotorStorage.AddRotor(copyG)
+	ActiveGeom = RotorStorage.GetActiveRotor
 	RefreshRotorSpinner
 	spnRotorSelect.SelectedIndex = newIdx
+	LoadRotorDataToFields(ActiveGeom)
+	RefreshDerivedCondition(True)
+	RecalculateRotor
 	ToastMessageShow("Preset duplicated: " & copyG.Name, False)
 End Sub
 
@@ -1148,13 +1202,10 @@ End Sub
 Sub btnTipLoss_Click
 	If ActiveGeom.TipLossMode = "none" Then
 		ActiveGeom.TipLossMode = "sissingh"
-		btnTipLoss.Text = "Sissingh: ON"
-		btnTipLoss.TextColor = ColorAccentGreen
 	Else
 		ActiveGeom.TipLossMode = "none"
-		btnTipLoss.Text = "Tip Loss: OFF"
-		btnTipLoss.TextColor = ColorButText2
 	End If
+	RefreshTipLossButton(ActiveGeom)
 	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RecalculateRotor
 End Sub
@@ -1296,38 +1347,27 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	ActiveGeom.Cd0 = ParseDoubleDef(edtCd0.Text, ActiveGeom.Cd0)
 	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
 	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
+	RefreshDerivedCondition(True)
 	RecalculateRotor
 End Sub
 
 Sub edtCond_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
 	
-	Dim alt As Double = ParseDoubleDef(edtAltitude.Text, 0.0)
-	Dim tempC As Double = ParseDoubleDef(edtTemperature.Text, 15.0)
+	ConditionAltitudeM = ParseDoubleDef(edtAltitude.Text, ConditionAltitudeM)
+	ConditionTemperatureC = ParseDoubleDef(edtTemperature.Text, ConditionTemperatureC)
+	ConditionShaftTiltDeg = ParseDoubleDef(edtShaftTiltAlpha.Text, ConditionShaftTiltDeg)
+	ConditionClimbRateMs = ParseDoubleDef(edtClimbRateW.Text, ConditionClimbRateMs)
 	
 	' Standard Atmosphere ISA
-	Dim pRatio As Double = Power(1.0 - 0.0065 * alt / 288.15, 5.2561)
+	Dim pRatio As Double = Power(1.0 - 0.0065 * ConditionAltitudeM / 288.15, 5.2561)
 	AmbientPressureHPa = 1013.25 * pRatio
-	Dim tKelvin As Double = tempC + 273.15
+	Dim tKelvin As Double = ConditionTemperatureC + 273.15
 	ActiveCond.Rho = (AmbientPressureHPa * 100.0) / (287.058 * tKelvin)
 	ActiveCond.SpeedOfSound = Sqrt(1.4 * 287.058 * tKelvin)
 	
 	ActiveCond.Mu = ParseDoubleDef(edtAdvanceMu.Text, ActiveCond.Mu)
-	
-	Dim alphaDeg As Double = ParseDoubleDef(edtShaftTiltAlpha.Text, 0.0)
-	Dim alphaRad As Double = alphaDeg * cPI / 180.0
-	Dim w As Double = ParseDoubleDef(edtClimbRateW.Text, 0.0)
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Dim vtip As Double = omega * ActiveGeom.Radius
-	If vtip > 0 Then
-		ActiveCond.MuZ = -ActiveCond.Mu * Tan(alphaRad) + (w / vtip)
-		Dim vKmh As Double = ActiveCond.Mu * vtip * 3.6
-		UpdatingUI = True
-		edtSpeedKmh.Text = NumberFormat(vKmh, 1, 1)
-		UpdatingUI = False
-	Else
-		ActiveCond.MuZ = 0.0
-	End If
+	RefreshDerivedCondition(True)
 	
 	ActiveCond.TargetThrustN = ParseDoubleDef(edtTargetThrust.Text, ActiveCond.TargetThrustN)
 	ActiveCond.TargetCT = ParseDoubleDef(edtTargetCT.Text, ActiveCond.TargetCT)
@@ -1346,7 +1386,8 @@ Sub edtSpeedKmh_TextChanged (Old As String, New As String)
 		ActiveCond.Mu = vMs / vtip
 		edtAdvanceMu.Text = NumberFormat(ActiveCond.Mu, 1, 3)
 		UpdatingUI = False
-		edtCond_TextChanged("", "")
+		RefreshDerivedCondition(False)
+		RecalculateRotor
 	End If
 End Sub
 
