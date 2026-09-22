@@ -42,7 +42,8 @@ C:\Projetos\RotorCalculator\
 ├── Files\                        # Recursos empacotados no APK/AAB
 │   ├── icon.png                  # Ícone de alta definição do aplicativo (96x96 / mipmap)
 │   ├── xenara-bold.ttf           # Fonte técnica aeronáutica
-│   ├── physics_help.html          # Manual offline de física, equações e convenções
+│   ├── physics_help.html          # Manual offline — tema Dark
+│   ├── physics_help_light.html    # Manual offline — tema Light
 │   └── icon_*.png                # Ícones de ação (editar, duplicar, deletar, mais, etc.)
 ├── Icons\                        # Ícones fonte do projeto (512x512, 192x192, etc.)
 ├── docs\                         # Documentação teórica e especificações
