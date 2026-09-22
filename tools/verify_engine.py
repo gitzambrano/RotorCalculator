@@ -29,6 +29,8 @@ def verify_b4a_source_contract() -> None:
         "Dim trimmedGeom As RotorGeometry = CloneGeometry(geom)",
         "Public Sub SanitizeCondition",
         "Public Sub ResolveMuZ",
+        "Public Sub ResolveOperatingGeometry",
+        "res.TrimmedRPM = g.RPM",
         'Case "alpha"',
         'Case "vz"',
         'Case "muz"',
