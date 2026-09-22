@@ -648,14 +648,11 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	res.CompressibilityWarning = False
 	res.StatusMessage = "VALID"
 	
-	' Defensive copies preserve caller state and enforce the mathematical domain.
-	Dim baseGeom As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	' Defensive condition copy plus one authoritative post-trim geometry path.
 	Dim c As FlightCondition = SanitizeCondition(cond)
 	
-	' 1. Realiza Trim de Hover se especificado
-	Dim trimObj() As Object = PerformHoverTrim(baseGeom, c)
-	Dim g As RotorGeometry = trimObj(0)
-	g = ResolveSolidity(g)
+	' 1. Resolve the exact geometry used by the operating point.
+	Dim g As RotorGeometry = ResolveOperatingGeometry(geom, c)
 	
 	' 2. Parâmetros Cinemáticos Globais
 	Dim diskArea As Double = cPI * g.Radius * g.Radius
