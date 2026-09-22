@@ -2056,7 +2056,7 @@ Sub btnViewPolarPlot_Click
 	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 144dip, footerH)
 	
 	Dim btnTable As Button: btnTable.Initialize("btnSweepTable")
-	btnTable.Text = "TABLE"
+	btnTable.Text = "ACTIVE TABLE"
 	btnTable.TextColor = ColorAccentCyan
 	btnTable.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	btnTable.TextSize = 12 * sc
@@ -2147,11 +2147,15 @@ Sub btnSweepTable_Click
 		If vtip < 1.0 Then vtip = 1.0
 		tempCond.MuZ = -mu * Tan(ConditionShaftTiltDeg * cPI / 180.0) + (ConditionClimbRateMs / vtip)
 		Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
-		Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
-		sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append(NumberFormat(v, 1, 5)).Append(CRLF)
+		If res.SolutionValid Then
+			Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
+			sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append(NumberFormat(v, 1, 5)).Append(CRLF)
+		Else
+			sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append("INVALID").Append(CRLF)
+		End If
 	Next
 	
-	Msgbox(sb.ToString, "Data Table: " & SweepParamSelectedKey)
+	Msgbox(sb.ToString, "Active Data Table: " & SweepParamSelectedKey)
 End Sub
 
 ' Parsing Utilities
