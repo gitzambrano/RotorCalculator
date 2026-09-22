@@ -24,7 +24,7 @@ O sistema oferece um cálculo instantâneo e rigoroso do desempenho aerodinâmic
 
 ## 2. Estrutura do Diretório e Arquivos Portados
 
-Todo o código, ferramentas, documentação, bibliotecas e certificados residem estritamente dentro de `C:\Projetos\RotorCalculator`:
+Todo o código, ferramentas, documentação e bibliotecas residem em `C:\Projetos\RotorCalculator`. Credenciais de assinatura e publicação ficam deliberadamente fora do Git:
 
 ```text
 C:\Projetos\RotorCalculator\
@@ -33,12 +33,10 @@ C:\Projetos\RotorCalculator\
 ├── RotorStorage.bas              # Módulo de persistência e presets de geometrias de rotores
 ├── agente.md                     # Regras de governança de código e integridade física
 ├── plano.md                      # Este documento detalhado
-├── Key\                          # Chaves de assinatura e APIs de publicação
-│   ├── key_aero_calc.keystore    # Keystore JKS oficial (alias: b4a, senha: ***REDACTED***)
-│   ├── key_aero_calc.keystore.b64.txt
-│   ├── play_store_service_account.json  # Credencial Google Play Android Developer API
-│   ├── pepk.jar & pepk_commandline.txt
-│   └── Readme_PassKey.md         # Documentação confidencial de chaves
+├── Key\                          # Apenas material público/não secreto
+│   ├── README.md                  # Política de chaves externas ao Git
+│   ├── encryption_public_key.pem  # Chave pública
+│   └── pepk.jar                   # Ferramenta PEPK; sem credenciais
 ├── Libraries\                    # Bibliotecas adicionais locais B4A
 │   └── RSPopupMenu.jar & .xml    # Única biblioteca externa usada no runtime
 ├── Files\                        # Recursos empacotados no APK/AAB
@@ -153,12 +151,12 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 
 ### 4.1 Geometry
 
-- A aba Geometry mostra uma **lista de rotores** no padrão do Aerospace Calculator. O header não exibe o rotor ativo. Tocar em qualquer rotor o torna ativo e abre um popup de geometria; COPY e DELETE ficam dentro desse contexto. A seleção ativa é persistida e restaurada após cold restart.
-- Edição direta de raio, RPM, número de pás, root cutout, cordas, pitch/twist, lift slope e Cd0.
+- A aba Geometry mostra uma **lista de rotores** no padrão do Aerospace Calculator. O header não exibe o rotor ativo. Tocar em qualquer rotor o torna ativo e abre um popup de geometria; NEW, COPY, rename e DELETE formam um CRUD completo. A seleção ativa é persistida e restaurada após cold restart.
+- Edição direta de nome, raio, RPM, número de pás, root cutout, cordas, pitch/twist, lift slope e Cd0. Entradas são limitadas ao domínio matemático antes do recálculo e normalizadas visualmente ao sair do campo.
 - Biblioteca de aerofólios; quando os coeficientes não correspondem a uma entrada conhecida, a UI mostra **Custom Section**.
 - Tip-loss com seleção explícita entre **Off**, **Fixed B** e **Sissingh**.
 - Compressibilidade Prandtl-Glauert com estado explícito.
-- COPY e DELETE ficam no popup do rotor selecionado; DELETE exige confirmação. O menu superior contém apenas ações globais, como unidades, reset de presets, convenções e About.
+- COPY e DELETE ficam no popup do rotor selecionado; DELETE exige confirmação. NEW ROTOR fica no topo da lista. O menu superior contém apenas ações globais, como unidades de resultados, conversor, reset de presets, convenções e About.
 - Persistência em `File.DirInternal`, sem permissões externas.
 
 ### 4.2 Conditions
@@ -167,16 +165,16 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 - μ e velocidade são sincronizados com o raio e RPM atuais; μz é atualizado junto com shaft tilt e climb rate.
 - Modelos de inflow: Uniform, Coleman Simple, Coleman-Feingold e Drees.
 - Modelos de profile drag: Analytical Tangential, Analytical Vectorial e Numerical Vectorial.
-- Trim manual ou coletivo. **Target Thrust** e **Target CT** são mutuamente exclusivos e o botão de trim identifica qual alvo governa o cálculo.
+- Três modos de trim: **Collective to Target**, **RPM to Thrust** e **Manual Pitch**. No trim coletivo, **Target Thrust** e **Target CT** são mutuamente exclusivos; o trim por RPM usa Target Thrust e mantém Target CT desabilitado.
 - Geometry e Conditions permanecem coerentes durante recriação/rotação da Activity.
 
 ### 4.3 Results
 
-Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. O menu alterna somente as unidades de saída entre SI e Imperial.
+Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. Um status explícito sinaliza solução inválida ou uso da correção Prandtl-Glauert fora de sua faixa recomendada, evitando que um número aparentemente válido esconda uma condição fora do modelo. O menu alterna somente as unidades de saída entre SI e Imperial.
 
 ### 4.4 Parameter Sweep
 
-O Sweep trabalha sobre uma cópia independente da condição ativa: abrir uma varredura ou tabela nunca altera μ, μz ou o estado de trim do ponto de operação. O Sweep usa `Canvas` nativo e permite selecionar a grandeza do eixo Y, comparar modelos de inflow, α, Vz ou a condição ativa e alternar μ máximo. Portrait usa controles empilhados; landscape usa uma única faixa horizontal de controles para preservar altura útil do gráfico. O botão Back fecha o Sweep antes de navegar entre tabs.
+O Sweep trabalha sobre uma cópia independente da condição ativa: abrir uma varredura ou tabela nunca altera μ, μz ou o estado de trim do ponto de operação. Ao variar μ, o Sweep recompõe μz em cada ponto a partir do shaft tilt e do climb rate físicos ativos; as comparações de α e Vz variam somente a grandeza pretendida. O Sweep usa `Canvas` nativo e permite selecionar a grandeza do eixo Y, comparar modelos de inflow, α, Vz ou a condição ativa e alternar μ máximo. Portrait usa controles empilhados; landscape usa uma única faixa horizontal de controles para preservar altura útil do gráfico. O botão Back fecha o Sweep antes de navegar entre tabs.
 
 ---
 
@@ -193,7 +191,7 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
      - Clark Y ($a_0 = 5.65\text{ rad}^{-1}, C_{d0} = 0.0100$)
    - Ao selecionar, preenche automaticamente os campos de sustentação e arrasto do rotor.
 2. **Popup Conversor Rápido de Unidades**:
-   - Conversor interativo entre unidades aeronáuticas (kW $\leftrightarrow$ HP, N $\leftrightarrow$ kgf $\leftrightarrow$ lbf, nós $\leftrightarrow$ km/h $\leftrightarrow$ m/s, m $\leftrightarrow$ ft, mm $\leftrightarrow$ pol).
+   - Conversor interativo no menu global entre unidades aeronáuticas (kW $\leftrightarrow$ hp, N $\leftrightarrow$ kgf, N $\leftrightarrow$ lbf, kt $\leftrightarrow$ km/h, km/h $\leftrightarrow$ m/s, m $\leftrightarrow$ ft, mm $\leftrightarrow$ in).
 3. **Popup Explicativo de Modelos de Influxo**:
    - Breve cartão explicativo indicando quando usar cada modelo:
      - *Uniforme*: Estimativas preliminares rápidas.
@@ -221,9 +219,9 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 4. **Armazenamento**:
    - Presets são gravados em `File.DirInternal`; nenhuma permissão de armazenamento é necessária.
 5. **Validação de release**:
-   - `tools/verify_engine.py` e `tests/test_rotor_engine.py`.
-   - Build B4A real, APK instalável, execução em emulador, dumps de hierarquia, bounds e screenshots reais.
-   - Smoke tests cobrem lista de rotores, persistência do ativo após cold restart, cópia/delete, tip-loss, compressibilidade, airfoil, modelos, trim, rotação, SI/Imperial, Sweep e Back sem crash. A matriz responsiva também prova que o último controle de cada conteúdo rolável é alcançável.
+   - `tools/verify_engine.py` executa uma matriz determinística de 100 casos na implementação Python de referência, verifica fechamento de momentum e audita o contrato das equações críticas no fonte B4A; `tests/test_rotor_engine.py` e `tests/test_b4a_state_safety.py` cobrem regressões físicas e de estado.
+   - A validação de integração exige **build B4A local real**, APK instalável, execução em emulador/dispositivo, dumps de hierarquia, bounds e screenshots reais. O workflow do GitHub é apenas manual e não é autoridade de release.
+   - Smoke tests cobrem NEW/rename/cópia/delete, persistência do ativo após cold restart, tip-loss, compressibilidade, airfoil, quatro modelos de inflow, três modelos de trim, rotação, SI/Imperial, conversor, Sweep e Back sem crash. A matriz responsiva também prova que o último controle de cada conteúdo rolável é alcançável.
 
 ---
 
@@ -242,7 +240,7 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
   - Correção de compressibilidade e perda de ponta (Sissingh).
   - Arrasto de perfil analítico e quadratura vetorial.
   - Modos de trim de hover (Coletivo, RPM, Nenhum).
-- Criação do script de verificação `tools/verify_engine.py` comparando B4A com `tools/zBET.py` em uma matriz de 100 casos com tolerância estrita $< 10^{-6}$.
+- Criação do script de verificação `tools/verify_engine.py` com 100 casos determinísticos na referência Python, fechamento de momentum e contrato explícito das equações críticas do fonte B4A. Equivalência numérica **compilada** B4A↔Python só pode ser declarada quando o B4A real for executado; o plano não confunde inspeção de fonte com execução binária.
 
 ### Fase 3: Desenvolvimento do Frontend (UI/UX Premium)
 - Montagem das 3 páginas nativas (`Geometry`, `Conditions`, `Results`) com tabs responsivas no header.
@@ -256,6 +254,6 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 - Desenvolvimento do visualizador gráfico em `Canvas` para varreduras rápidas de potência e empuxo vs $\mu$.
 
 ### Fase 5: Empacotamento, Testes Finais e Release
-- Testes em emulador e múltiplos fatores de forma.
-- Verificação da assinatura digital com `Key\key_aero_calc.keystore` (alias: `b4a`).
-- Geração do `.aab` de lançamento para a Google Play Store.
+- Testes locais em emulador/dispositivo e múltiplos fatores de forma.
+- Assinatura somente com credenciais externas ao repositório, fornecidas por `B4A_KEY_FILE`, `B4A_KEY_PASSWORD` e `B4A_KEY_ALIAS`.
+- Geração local do APK/AAB de lançamento para a Google Play Store; nenhum binário é promovido automaticamente por GitHub Actions.
