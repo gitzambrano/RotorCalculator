@@ -500,9 +500,9 @@ Private Sub LoadUiSettings
 	If File.Exists(File.DirInternal, "ui_settings.txt") = False Then Return
 	Try
 		Dim m As Map = File.ReadMap(File.DirInternal, "ui_settings.txt")
-		ThemeMode = Max(0, Min(1, m.GetDefault("theme", 0)))
-		UnitSystem = Max(0, Min(1, m.GetDefault("units", 0)))
-		ExtraPrecision = Max(0, Min(1, m.GetDefault("precision", 0)))
+		ThemeMode = Max(0, Min(1, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
+		UnitSystem = Max(0, Min(1, ParseIntDef("" & m.GetDefault("units", 0), 0)))
+		ExtraPrecision = Max(0, Min(1, ParseIntDef("" & m.GetDefault("precision", 0), 0)))
 	Catch
 		ThemeMode = 0
 		UnitSystem = 0
@@ -1546,7 +1546,7 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "Total Thrust (T)": Return "Total rotor thrust T, dimensional force normal to the rotor disk reference."
 		Case "Thrust Coef (CT)": Return "Thrust coefficient CT = T / [ρ A (ΩR)²]."
 		Case "Shaft Power (P)": Return "Mechanical shaft power required by the rotor at the current operating point."
-		Case "Air Power Coef (CPair)": Return "Air power coefficient from the rotor energy balance, including induced, climb, profile-drag and translational terms."
+		Case "Air Power Coef (CPair)": Return "Air-power coefficient from the zBET energy balance: induced power, imposed axial-flow work, profile drag and translational profile work."
 		Case "Total Torque (Q)": Return "Total aerodynamic rotor torque about the shaft."
 		Case "Torque Coef (CQ)": Return "Torque coefficient CQ = Q / [ρ A (ΩR)² R]."
 		Case "Induced Torque (CQi)": Return "Induced component of rotor torque associated with induced power."
@@ -1557,7 +1557,7 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "Pitch Moment Coef (CMy)": Return "Non-dimensional rotor pitching-moment coefficient about the y axis."
 		Case "Roll Moment Coef (CMx)": Return "Non-dimensional rotor rolling-moment coefficient about the x axis."
 		Case "Figure of Merit (FoM)": Return "Hover efficiency metric: ideal induced power divided by actual rotor power."
-		Case "Effective L/D Ratio": Return "Effective rotor lift-to-drag ratio derived from resultant aerodynamic forces."
+		Case "Effective L/D Ratio": Return "Power-based effective rotor L/D: (L/D)eff = μ·CT / CPair = T·Vx / Pair in forward flight."
 		Case "Total Inflow Ratio (λ)": Return "Total non-dimensional axial inflow ratio through the rotor disk."
 		Case "Induced Inflow Ratio (λi)": Return "Induced portion of the non-dimensional inflow ratio."
 		Case "Longitudinal Inflow (Kx)": Return "Longitudinal first-harmonic inflow gradient coefficient Kx."
@@ -2701,7 +2701,11 @@ Sub btnSweepExportCsv_Click
 	File.WriteString(File.DirInternal, tempName, csv)
 	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
 	Wait For (SaveAs(input, "text/csv", SweepExportBaseName & ".csv")) Complete (Success As Boolean)
-	If Success Then ToastMessageShow("CSV exported.", False)
+	If Success Then
+		ToastMessageShow("CSV exported.", False)
+	Else
+		ToastMessageShow("CSV export canceled or failed.", False)
+	End If
 End Sub
 
 Sub btnSweepExportPng_Click
@@ -2714,7 +2718,11 @@ Sub btnSweepExportPng_Click
 	out.Close
 	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
 	Wait For (SaveAs(input, "image/png", SweepExportBaseName & ".png")) Complete (Success As Boolean)
-	If Success Then ToastMessageShow("PNG exported.", False)
+	If Success Then
+		ToastMessageShow("PNG exported.", False)
+	Else
+		ToastMessageShow("PNG export canceled or failed.", False)
+	End If
 End Sub
 
 Private Sub SweepExportBaseName As String
@@ -2811,20 +2819,28 @@ Private Sub SaveAs(Source As InputStream, MimeType As String, Title As String) A
 	intent.AddCategory("android.intent.category.OPENABLE")
 	intent.PutExtra("android.intent.extra.TITLE", Title)
 	intent.SetType(MimeType)
-	StartActivityForResult(intent)
-	Wait For ion_Event (MethodName As String, Args() As Object)
-	If -1 = Args(0) Then
-		Dim result As Intent = Args(1)
-		Dim jo As JavaObject = result
-		Dim ctxt As JavaObject
-		Dim resolver As JavaObject = ctxt.InitializeContext.RunMethodJO("getContentResolver", Null)
-		Dim target As OutputStream = resolver.RunMethod("openOutputStream", Array(jo.RunMethod("getData", Null), "wt"))
-		File.Copy2(Source, target)
-		target.Close
-		Source.Close
-		Return True
-	End If
-	Source.Close
+	Try
+		StartActivityForResult(intent)
+		Wait For ion_Event (MethodName As String, Args() As Object)
+		If Args.Length > 1 And -1 = Args(0) Then
+			Dim result As Intent = Args(1)
+			Dim jo As JavaObject = result
+			Dim ctxt As JavaObject
+			Dim resolver As JavaObject = ctxt.InitializeContext.RunMethodJO("getContentResolver", Null)
+			Dim target As OutputStream = resolver.RunMethod("openOutputStream", Array(jo.RunMethod("getData", Null), "wt"))
+			If target.IsInitialized = False Then
+				Source.Close
+				Return False
+			End If
+			File.Copy2(Source, target)
+			target.Close
+			Source.Close
+			Return True
+		End If
+	Catch
+		Log("Export failed: " & LastException.Message)
+	End Try
+	If Source.IsInitialized Then Source.Close
 	Return False
 End Sub
 
