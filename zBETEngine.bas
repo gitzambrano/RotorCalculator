@@ -83,7 +83,10 @@ Sub Process_Globals
 		BFactor As Double, _
 		EffectiveLiftSlope As Double, _
 		TrimmedRPM As Double, _
-		TrimmedTheta0Deg As Double _
+		TrimmedTheta0Deg As Double, _
+		SolutionValid As Boolean, _
+		CompressibilityWarning As Boolean, _
+		StatusMessage As String _
 	)
 
 	' Nós e pesos de quadratura de Gauss-Legendre (16 nós radiais, 24 nós azimutais)
@@ -218,11 +221,44 @@ Public Sub CloneCondition(src As FlightCondition) As FlightCondition
 	Return dst
 End Sub
 
+' Returns a safe condition copy without mutating caller state.
+Public Sub SanitizeCondition(src As FlightCondition) As FlightCondition
+	Dim c As FlightCondition = CloneCondition(src)
+	c.Rho = Max(0.01, Min(5.0, c.Rho))
+	c.SpeedOfSound = Max(100.0, Min(500.0, c.SpeedOfSound))
+	c.Mu = Max(-0.60, Min(0.60, c.Mu))
+	c.MuZ = Max(-0.50, Min(0.50, c.MuZ))
+	c.TargetThrustN = Max(0.0, Min(1.0e8, c.TargetThrustN))
+	c.TargetCT = Max(0.0, Min(0.20, c.TargetCT))
+	c.KInd = Max(1.0, Min(3.0, c.KInd))
+	c.FxColeman = Max(-5.0, Min(5.0, c.FxColeman))
+	c.FyColeman = Max(-5.0, Min(5.0, c.FyColeman))
+	If c.InflowModel <> "uniform" And c.InflowModel <> "coleman_simple" And c.InflowModel <> "coleman_feingold" And c.InflowModel <> "drees" Then c.InflowModel = "coleman_feingold"
+	If c.ProfileDragModel <> "analytical_tangential" And c.ProfileDragModel <> "analytical_vectorial" And c.ProfileDragModel <> "numerical_vectorial" Then c.ProfileDragModel = "numerical_vectorial"
+	If c.InducedTorqueModel <> "energy_balance" And c.InducedTorqueModel <> "analytical_bet" Then c.InducedTorqueModel = "energy_balance"
+	If c.HoverTrimMode <> "collective" And c.HoverTrimMode <> "rpm" And c.HoverTrimMode <> "none" Then c.HoverTrimMode = "collective"
+	Return c
+End Sub
+
 ' Resolve e unifica as três definições de solidez
 Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
+	' Defensive domain guards. UI validates too, but the engine must remain safe when called directly.
+	geom.Radius = Max(0.02, Min(50.0, geom.Radius))
+	geom.RPM = Max(1.0, Min(30000.0, geom.RPM))
+	geom.NBlades = Max(1, Min(16, geom.NBlades))
+	geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))
+	geom.ChordRoot = Max(0.0001, Min(2.0 * geom.Radius, geom.ChordRoot))
+	geom.ChordTip = Max(0.0001, Min(2.0 * geom.Radius, geom.ChordTip))
+	geom.LiftSlope0 = Max(0.1, Min(10.0, geom.LiftSlope0))
+	geom.Cd0 = Max(0.0, Min(0.5, geom.Cd0))
+	If geom.TipLossB <= geom.RootCutout Or geom.TipLossB > 1.0 Then geom.TipLossB = 0.97
+	If geom.TipLossB <= geom.RootCutout Then geom.TipLossB = Min(1.0, geom.RootCutout + 0.01)
+	If geom.SolidityMode <> "chords" And geom.SolidityMode <> "sigma_geom" And geom.SolidityMode <> "sigma_ref" Then geom.SolidityMode = "chords"
+	If geom.PitchMode <> "constant" And geom.PitchMode <> "linear_twist" Then geom.PitchMode = "linear_twist"
+	If geom.TipLossMode <> "none" And geom.TipLossMode <> "fixed" And geom.TipLossMode <> "sissingh" Then geom.TipLossMode = "none"
 	Dim x0 As Double = geom.RootCutout
-	Dim nb As Int = Max(1, geom.NBlades)
-	Dim rad As Double = Max(0.001, geom.Radius)
+	Dim nb As Int = geom.NBlades
+	Dim rad As Double = geom.Radius
 	
 	If geom.SolidityMode = "chords" Then
 		Dim sig_root As Double = nb * geom.ChordRoot / (cPI * rad)
@@ -297,10 +333,12 @@ End Sub
 ' Inclinação da curva de sustentação com correção de compressibilidade Prandtl-Glauert
 Public Sub GetLiftSlope(geom As RotorGeometry, mu As Double, speedOfSound As Double) As Double
 	If Not(geom.UsePrandtlGlauert) Then Return geom.LiftSlope0
+	If speedOfSound <= 1.0 Then Return geom.LiftSlope0
 	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0
 	Dim vtip As Double = omega * geom.Radius
-	Dim mat As Double = vtip * (1.0 + mu) / speedOfSound
-	If mat >= 0.98 Then mat = 0.98
+	Dim mat As Double = Abs(vtip * (1.0 + mu) / speedOfSound)
+	' Keep the algebra finite. Calculate exposes a warning when the real Mat exceeds 0.80.
+	If mat >= 0.95 Then mat = 0.95
 	Return geom.LiftSlope0 / Sqrt(1.0 - mat * mat)
 End Sub
 
@@ -399,6 +437,7 @@ Public Sub SolveInflow(mu As Double, mu_z As Double, geom As RotorGeometry, cond
 		If f_hi <= 0.0 Or hi >= 100.0 Then Exit
 		hi = hi * 2.0
 	Next
+	If f_hi > 0.0 Then Return -1.0
 	
 	' Bissecção
 	For iter_bisect = 1 To 150
@@ -550,9 +589,16 @@ End Sub
 Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorResults
 	Dim res As RotorResults
 	res.Initialize
+	res.SolutionValid = True
+	res.CompressibilityWarning = False
+	res.StatusMessage = "VALID"
+	
+	' Defensive copies preserve caller state and enforce the mathematical domain.
+	Dim baseGeom As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	Dim c As FlightCondition = SanitizeCondition(cond)
 	
 	' 1. Realiza Trim de Hover se especificado
-	Dim trimObj() As Object = PerformHoverTrim(geom, cond)
+	Dim trimObj() As Object = PerformHoverTrim(baseGeom, c)
 	Dim g As RotorGeometry = trimObj(0)
 	g = ResolveSolidity(g)
 	
@@ -560,7 +606,7 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	Dim diskArea As Double = cPI * g.Radius * g.Radius
 	Dim omega As Double = g.RPM * 2.0 * cPI / 60.0
 	Dim vtip As Double = omega * g.Radius
-	Dim dynP As Double = cond.Rho * diskArea * (vtip * vtip)
+	Dim dynP As Double = c.Rho * diskArea * (vtip * vtip)
 	
 	res.TipSpeed = vtip
 	res.TrimmedRPM = g.RPM
@@ -571,8 +617,12 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	End If
 	
 	' Mach da pá avançante
-	res.AdvancingTipMach = vtip * (1.0 + cond.Mu) / cond.SpeedOfSound
-	res.EffectiveLiftSlope = GetLiftSlope(g, cond.Mu, cond.SpeedOfSound)
+	res.AdvancingTipMach = vtip * (1.0 + c.Mu) / c.SpeedOfSound
+	res.EffectiveLiftSlope = GetLiftSlope(g, c.Mu, c.SpeedOfSound)
+	If g.UsePrandtlGlauert And res.AdvancingTipMach >= 0.80 Then
+		res.CompressibilityWarning = True
+		res.StatusMessage = "CAUTION: Prandtl-Glauert outside recommended Mat < 0.80 range"
+	End If
 	
 	' 3. Determina fator de perda de ponta B iterativo
 	Dim b_val As Double = 1.0
@@ -584,11 +634,16 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	End If
 	
 	' 4. Resolve velocidade induzida lambda_i
-	Dim lambda_i As Double = SolveInflow(cond.Mu, cond.MuZ, g, cond, b_val)
-	Dim lambda_total As Double = cond.MuZ + lambda_i
+	Dim lambda_i As Double = SolveInflow(c.Mu, c.MuZ, g, c, b_val)
+	If lambda_i < 0 Then
+		res.SolutionValid = False
+		res.StatusMessage = "INVALID: no physical inflow root was bracketed"
+		Return res
+	End If
+	Dim lambda_total As Double = c.MuZ + lambda_i
 	
 	' 5. Gradientes de Influxo
-	Dim grads() As Double = InflowGradients(cond.Mu, lambda_total, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+	Dim grads() As Double = InflowGradients(c.Mu, lambda_total, c.InflowModel, c.FxColeman, c.FyColeman)
 	Dim kx As Double = grads(0)
 	Dim ky As Double = grads(1)
 	Dim lambda_1c As Double = kx * lambda_i
@@ -600,9 +655,9 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	res.InflowKy = ky
 	
 	' Ângulo de inclinação da esteira chi
-	Dim denom_chi As Double = Sqrt(cond.Mu * cond.Mu + lambda_total * lambda_total) + Abs(lambda_total)
+	Dim denom_chi As Double = Sqrt(c.Mu * c.Mu + lambda_total * lambda_total) + Abs(lambda_total)
 	If denom_chi > 1e-15 Then
-		res.WakeSkewChiDeg = 2.0 * ATan(cond.Mu / denom_chi) * 180.0 / cPI
+		res.WakeSkewChiDeg = 2.0 * ATan(c.Mu / denom_chi) * 180.0 / cPI
 	Else
 		res.WakeSkewChiDeg = 0.0
 	End If
@@ -612,15 +667,20 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	Dim i_mom() As Double = moments(1)
 	Dim t_mom() As Double = moments(2)
 	
-	Dim ct_val As Double = CT_BET(cond.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
+	Dim ct_val As Double = CT_BET(c.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
 	res.CT = ct_val
 	
 	' Se modo sissingh, refina B e CT com 1 iteração
 	If g.TipLossMode = "sissingh" And ct_val > 0 Then
 		b_val = GetBFactor(g, ct_val)
-		lambda_i = SolveInflow(cond.Mu, cond.MuZ, g, cond, b_val)
-		lambda_total = cond.MuZ + lambda_i
-		grads = InflowGradients(cond.Mu, lambda_total, cond.InflowModel, cond.FxColeman, cond.FyColeman)
+		lambda_i = SolveInflow(c.Mu, c.MuZ, g, c, b_val)
+		If lambda_i < 0 Then
+			res.SolutionValid = False
+			res.StatusMessage = "INVALID: no physical inflow root after tip-loss update"
+			Return res
+		End If
+		lambda_total = c.MuZ + lambda_i
+		grads = InflowGradients(c.Mu, lambda_total, c.InflowModel, c.FxColeman, c.FyColeman)
 		kx = grads(0)
 		ky = grads(1)
 		lambda_1c = kx * lambda_i
@@ -632,45 +692,45 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 		moments = RadialMoments(g, b_val)
 		i_mom = moments(1)
 		t_mom = moments(2)
-		ct_val = CT_BET(cond.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
+		ct_val = CT_BET(c.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
 		res.CT = ct_val
 	End If
 	res.BFactor = b_val
 	
 	' Força longitudinal induzida CHi
 	res.CHi = (res.EffectiveLiftSlope / 4.0) * ( _
-		lambda_total * cond.Mu * t_mom(0) + lambda_1s * (t_mom(2) - 2.0 * lambda_total * i_mom(1)) _
+		lambda_total * c.Mu * t_mom(0) + lambda_1s * (t_mom(2) - 2.0 * lambda_total * i_mom(1)) _
 	)
 	
 	' Força lateral CY
 	res.CY = -(res.EffectiveLiftSlope * lambda_1c / 4.0) * (t_mom(2) - 2.0 * lambda_total * i_mom(1))
 	
 	' Momentos de rolamento e arfagem
-	res.CMx = -(res.EffectiveLiftSlope * cond.Mu / 2.0) * (t_mom(2) - 0.5 * lambda_total * i_mom(1)) + _
+	res.CMx = -(res.EffectiveLiftSlope * c.Mu / 2.0) * (t_mom(2) - 0.5 * lambda_total * i_mom(1)) + _
 		(res.EffectiveLiftSlope * lambda_1s / 4.0) * i_mom(3)
 	res.CMy = (res.EffectiveLiftSlope * lambda_1c / 4.0) * i_mom(3)
 	
 	' 7. Arrasto de Perfil (CH0, CQ0)
-	Dim profDrag() As Double = ProfileDrag(cond.Mu, cond.MuZ, g, cond.ProfileDragModel)
+	Dim profDrag() As Double = ProfileDrag(c.Mu, c.MuZ, g, c.ProfileDragModel)
 	res.CH0 = profDrag(0)
 	res.CQ0 = profDrag(1)
 	res.CH = res.CHi + res.CH0
 	
 	' 8. Torque Induzido e Potência
-	If cond.InducedTorqueModel = "analytical_bet" Then
-		res.CQi = InducedTorqueBET(cond.Mu, lambda_total, lambda_1c, lambda_1s, g, b_val, res.EffectiveLiftSlope)
+	If c.InducedTorqueModel = "analytical_bet" Then
+		res.CQi = InducedTorqueBET(c.Mu, lambda_total, lambda_1c, lambda_1s, g, b_val, res.EffectiveLiftSlope)
 	Else ' energy_balance padrão
-		res.CQi = cond.KInd * lambda_i * ct_val + cond.MuZ * ct_val - cond.Mu * res.CHi
+		res.CQi = c.KInd * lambda_i * ct_val + c.MuZ * ct_val - c.Mu * res.CHi
 	End If
 	
 	res.CQ = res.CQi + res.CQ0
 	
 	' Potência do Ar (CPair) via balanço de energia
-	res.CPair = cond.KInd * lambda_i * ct_val + cond.MuZ * ct_val + res.CQ0 + cond.Mu * res.CH0
+	res.CPair = c.KInd * lambda_i * ct_val + c.MuZ * ct_val + res.CQ0 + c.Mu * res.CH0
 	
 	' Eficiência L/D efetiva e Figura de Mérito
 	If res.CPair > 1e-9 Then
-		res.L_D_eff = ct_val * cond.Mu / res.CPair
+		res.L_D_eff = ct_val * c.Mu / res.CPair
 	Else
 		res.L_D_eff = 0.0
 	End If
