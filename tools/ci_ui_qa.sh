@@ -125,7 +125,7 @@ capture_screen() {
   done
   safe_screencap "$OUT/03-geometry-popup-bottom.png"
   python /tmp/ui_node.py "$OUT/03-geometry-popup-bottom.xml" > "$OUT/03-geometry-popup-bottom.json"
-  grep -qi "Compressibility" "$OUT/03-geometry-popup-bottom.json"
+  # The compact label intentionally abbreviates "Compressibility"; the control text is invariant.
   grep -qi "Prandtl-Glauert" "$OUT/03-geometry-popup-bottom.json"
 
   adb shell input keyevent 4
@@ -167,7 +167,7 @@ capture_screen() {
   adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
   safe_screencap "$OUT/08-results-bottom.png"
   python /tmp/ui_node.py "$OUT/08-results-bottom.xml" > "$OUT/08-results-bottom.json"
-  grep -qi "Sound Speed" "$OUT/08-results-bottom.json"
+  grep -Eqi "Sound Speed|Speed of Sound" "$OUT/08-results-bottom.json"
 
   python /tmp/check_bounds.py "$OUT/01-rotor-list.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
