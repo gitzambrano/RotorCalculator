@@ -1030,12 +1030,13 @@ Private Sub BuildPageRes
 	btnViewPolarPlot.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW * 3 / 100, 8dip * sc, UiContentW * 94 / 100, 48dip * sc)
 	
-	lblResultStatus.Initialize("")
+	lblResultStatus.Initialize("lblResultStatus")
 	lblResultStatus.Text = "MODEL STATUS · VALID"
 	lblResultStatus.TextColor = ColorAccentGreen
 	lblResultStatus.Typeface = Typeface.DEFAULT_BOLD
 	If root.Width <= 340dip Then lblResultStatus.TextSize = 9.5 Else lblResultStatus.TextSize = 10.5 * sc
 	lblResultStatus.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	lblResultStatus.SingleLine = True
 	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + UiContentW * 4 / 100, 58dip * sc, UiContentW * 92 / 100, 30dip * sc)
 	
 	Dim startY As Int = 94dip * sc
@@ -1199,6 +1200,16 @@ Private Sub ResultDisplayLabel(fullText As String) As String
 		Case "Speed of Sound (a)": Return "Sound Speed (a)"
 		Case Else: Return fullText
 	End Select
+End Sub
+
+Sub lblResultStatus_Click
+	If ActiveRes.SolutionValid = False Then
+		Msgbox(ActiveRes.StatusMessage & CRLF & CRLF & "Adjust geometry or operating condition before using the reported performance.", "Model Status")
+	Else If ActiveRes.CompressibilityWarning Then
+		Msgbox("Advancing-tip Mach is at or above 0.80 while Prandtl-Glauert is enabled." & CRLF & CRLF & "The calculation is kept finite for continuity, but this linear compressibility correction is outside its recommended subsonic range.", "Compressibility Caution")
+	Else
+		ToastMessageShow("Model status: valid operating point.", False)
+	End If
 End Sub
 
 Sub lblResultTip_Click
@@ -1406,14 +1417,14 @@ Public Sub RecalculateRotor
 	
 	If lblResultStatus.IsInitialized Then
 		If ActiveRes.SolutionValid = False Then
-			lblResultStatus.Text = "MODEL STATUS · " & ActiveRes.StatusMessage
+			lblResultStatus.Text = "MODEL STATUS · INVALID OPERATING POINT"
 			lblResultStatus.TextColor = 0xFFFF6B6B
 			For i = 0 To 24
 				If lblResults(i).IsInitialized Then lblResults(i).Text = "---"
 			Next
 			Return
 		Else If ActiveRes.CompressibilityWarning Then
-			lblResultStatus.Text = "MODEL STATUS · " & ActiveRes.StatusMessage
+			lblResultStatus.Text = "MODEL STATUS · PG CAUTION (Mat ≥ 0.80)"
 			lblResultStatus.TextColor = ColorAccentAmber
 		Else
 			lblResultStatus.Text = "MODEL STATUS · VALID"
