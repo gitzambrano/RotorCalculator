@@ -2627,23 +2627,29 @@ End Sub
 
 Sub btnSweepTable_Click
 	Dim sb As StringBuilder: sb.Initialize
-	sb.Append("Advance Ratio (μ)").Append(TAB).Append(SweepParamSelectedKey).Append(CRLF)
+	Dim xLabel As String = "μ"
+	If SweepXAxisMode = 1 Then xLabel = "Vx [m/s]"
+	sb.Append(xLabel).Append(TAB).Append(SweepParamSelectedKey).Append(CRLF)
 	sb.Append("----------------------------------------").Append(CRLF)
 	
 	Dim tempCond As FlightCondition = zBETEngine.CloneCondition(ActiveCond)
+	Dim vtip As Double = RotorTipSpeed
+	If vtip < 1.0 Then vtip = 1.0
+	Dim digits As Int = RotorPopups.SweepParamDigits(SweepParamSelectedKey) + ExtraPrecision
 	For i = 0 To 10
 		Dim mu As Double = i * (SweepMaxMuVal / 10.0)
 		tempCond.Mu = mu
-		Dim omega As Double = ActiveGeom.RPM * (2.0 * cPI / 60.0)
-		Dim vtip As Double = omega * ActiveGeom.Radius
-		If vtip < 1.0 Then vtip = 1.0
 		tempCond.MuZ = zBETEngine.ResolveMuZ(mu, AxialInputMode, ConditionAxialValue, vtip)
 		Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
+		Dim xVal As Double = mu
+		If SweepXAxisMode = 1 Then xVal = mu * vtip
+		Dim xDigits As Int = 2
+		If SweepXAxisMode = 1 Then xDigits = 1
 		If res.SolutionValid Then
 			Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
-			sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append(NumberFormat(v, 1, 5)).Append(CRLF)
+			sb.Append(FormatResultValue(xVal, xDigits)).Append(TAB).Append(TAB).Append(FormatResultValue(v, digits)).Append(CRLF)
 		Else
-			sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append("INVALID").Append(CRLF)
+			sb.Append(FormatResultValue(xVal, xDigits)).Append(TAB).Append(TAB).Append("INVALID").Append(CRLF)
 		End If
 	Next
 	
@@ -2677,7 +2683,7 @@ End Sub
 
 Private Sub SweepExportBaseName As String
 	Dim n As String = ActiveGeom.Name.Trim.ToLowerCase
-	n = n.Replace(" ", "_").Replace("/", "_").Replace("\\", "_").Replace(":", "_").Replace("|", "_")
+	n = n.Replace(" ", "_").Replace("/", "_").Replace(Chr(92), "_").Replace(":", "_").Replace("|", "_")
 	If n = "" Then n = "rotor"
 	Return n & "_" & SweepParamSelectedKey.ToLowerCase & "_sweep"
 End Sub
@@ -2736,15 +2742,15 @@ Private Sub BuildSweepCsv As String
 			Dim xName As String = "mu"
 			If SweepXAxisMode = 1 Then xName = "Vx_m_s"
 			sb.Append(CsvQ(curveLabel)).Append(",").Append(xName).Append(",")
-			sb.Append(NumberFormat2(xVal, 1, 6, 6, False)).Append(",")
-			sb.Append(NumberFormat2(mu, 1, 8, 8, False)).Append(",")
-			sb.Append(NumberFormat2(vx, 1, 6, 6, False)).Append(",")
+			sb.Append(CsvNum(xVal, 6)).Append(",")
+			sb.Append(CsvNum(mu, 8)).Append(",")
+			sb.Append(CsvNum(vx, 6)).Append(",")
 			sb.Append(curveAxialMode).Append(",")
-			sb.Append(NumberFormat2(curveAxialValue, 1, 8, 8, False)).Append(",")
-			sb.Append(NumberFormat2(tempCond.MuZ, 1, 8, 8, False)).Append(",")
+			sb.Append(CsvNum(curveAxialValue, 8)).Append(",")
+			sb.Append(CsvNum(tempCond.MuZ, 8)).Append(",")
 			sb.Append(tempCond.InflowModel).Append(",").Append(SweepParamSelectedKey).Append(",")
 			If res.SolutionValid Then
-				sb.Append(NumberFormat2(RotorPopups.ExtractParamValue(res, SweepParamSelectedKey), 1, 10, 10, False)).Append(",VALID")
+				sb.Append(CsvNum(RotorPopups.ExtractParamValue(res, SweepParamSelectedKey), 10)).Append(",VALID")
 			Else
 				sb.Append(",INVALID")
 			End If
@@ -2756,6 +2762,11 @@ End Sub
 
 Private Sub CsvQ(value As String) As String
 	Return Chr(34) & value.Replace(Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End Sub
+
+Private Sub CsvNum(value As Double, digits As Int) As String
+	' CSV always uses a period as decimal separator, independent of device locale.
+	Return NumberFormat2(value, 1, digits, digits, False).Replace(",", ".")
 End Sub
 
 Private Sub SaveAs(Source As InputStream, MimeType As String, Title As String) As ResumableSub
