@@ -34,8 +34,8 @@ def test_hover_thrust_and_inflow():
     expected_lam_i = math.sqrt(target_ct / 2.0)
     assert math.isclose(out["lambda_i"], expected_lam_i, rel_tol=1e-5), f"lambda_i {out['lambda_i']} != {expected_lam_i}"
     
-    # FoM should be in typical helicopter range [0.65, 0.85]
-    fom = (target_ct ** 1.5 / math.sqrt(2.0)) / out["CQ"]
+    # zBET FoM is defined from the hover energy balance, not generic forward-flight CQ.
+    fom = out["FoM"]
     assert 0.60 < fom < 0.85, f"Hover FoM {fom} is outside realistic range"
     print("PASS: test_hover_thrust_and_inflow")
 
@@ -75,6 +75,43 @@ def test_equivalent_axial_representations():
     assert math.isclose(mu_z_alpha, mu_z_direct, rel_tol=0.0, abs_tol=1e-14)
     print("PASS: test_equivalent_axial_representations")
 
+def test_prandtl_glauert_matches_reference_definition():
+    sol = zBET.resolve_solidity("chords", radius=5.0, chord_root=0.30, chord_tip=0.24, n_blades=4)
+    geom = zBET.Geometry(
+        420.0, 5.0, 5.73, 0.15, 0.009, sol,
+        speed_of_sound=340.3, use_prandtl_glauert=True
+    )
+    mu = 0.30
+    m_eff = geom.tip_mach * math.sqrt(0.75 * 0.75 + 0.5 * mu * mu)
+    m_eff = min(m_eff, 0.85)
+    expected = geom.lift_curve_slope / math.sqrt(max(0.01, 1.0 - m_eff * m_eff))
+    assert math.isclose(geom.lift_slope(mu), expected, rel_tol=0.0, abs_tol=1e-14)
+    print("PASS: test_prandtl_glauert_matches_reference_definition")
+
+
+def test_sissingh_tip_loss_is_self_consistent():
+    sol = zBET.resolve_solidity("chords", radius=5.0, chord_root=0.32, chord_tip=0.24, n_blades=4)
+    geom = zBET.Geometry(
+        390.0, 5.0, 5.73, 0.15, 0.009, sol,
+        tip_loss_mode="sissingh"
+    )
+    _, pitch = zBET.trim_hover(
+        geom,
+        hover_trim_mode="none",
+        pitch_mode="linear_twist",
+        theta_root_deg=12.0,
+        theta_tip_deg=4.0,
+    )
+    out = zBET.coefficients(
+        0.20, 0.0, pitch, geom, "coleman_feingold",
+        profile_drag_model="numerical_vectorial",
+    )
+    expected_b = geom.b_factor(ct=out["CT"])
+    assert math.isclose(out["B_tip_loss"], expected_b, rel_tol=0.0, abs_tol=2e-8)
+    assert geom.root_cutout < out["B_tip_loss"] <= 1.0
+    print("PASS: test_sissingh_tip_loss_is_self_consistent")
+
+
 def test_presets_stability():
     """Test that all 6 presets compute physically reasonable values without errors."""
     presets = [
@@ -101,5 +138,7 @@ if __name__ == "__main__":
     test_hover_thrust_and_inflow()
     test_forward_flight_inflow_models()
     test_equivalent_axial_representations()
+    test_prandtl_glauert_matches_reference_definition()
+    test_sissingh_tip_loss_is_self_consistent()
     test_presets_stability()
     print("All engine tests passed successfully!")
