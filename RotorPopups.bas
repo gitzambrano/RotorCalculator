@@ -490,14 +490,27 @@ Public Sub DrawSweepPlot( _
 	' Curve legends — reserved above plot rectangle so labels never cover data.
 	Dim legendY As Float = 39dip
 	If multiCurveMode == 0 Then
-		Dim labels4() As String = Array As String("Uniform", "Coleman S.", "Coleman-FG", "Drees")
+		Dim labels4() As String = Array As String("Uniform", "Coleman Simple", "Coleman-FG", "Drees")
 		Dim cols4() As Int = Array As Int(colUniform, colColemanSimple, colColemanFG, colDrees)
-		Dim itemW4 As Float = plotW / 4.0
-		For k = 0 To 3
-			Dim lx4 As Float = mLeft + k * itemW4
-			cvs.DrawLine(lx4, legendY, lx4 + 10dip, legendY, cols4(k), 2.5dip)
-			cvs.DrawText(labels4(k), lx4 + 13dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 8, cols4(k), "LEFT")
-		Next
+		If plotW < 330dip Then
+			' Two rows on narrow phones keep model names readable without overlap.
+			Dim colW4 As Float = plotW / 2.0
+			For k = 0 To 3
+				Dim row4 As Int = Floor(k / 2)
+				Dim col4 As Int = k Mod 2
+				Dim lx4 As Float = mLeft + col4 * colW4
+				Dim ly4 As Float = 33dip + row4 * 13dip
+				cvs.DrawLine(lx4, ly4, lx4 + 9dip, ly4, cols4(k), 2.5dip)
+				cvs.DrawText(labels4(k), lx4 + 12dip, ly4 + 4dip, Typeface.DEFAULT_BOLD, 7, cols4(k), "LEFT")
+			Next
+		Else
+			Dim itemW4 As Float = plotW / 4.0
+			For k = 0 To 3
+				Dim lx4 As Float = mLeft + k * itemW4
+				cvs.DrawLine(lx4, legendY, lx4 + 10dip, legendY, cols4(k), 2.5dip)
+				cvs.DrawText(labels4(k), lx4 + 13dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 8, cols4(k), "LEFT")
+			Next
+		End If
 	Else If multiCurveMode == 1 Then
 		Dim aLabels() As String = Array As String("-10°", "-5°", "0°", "+5°", "+10°")
 		Dim aCols() As Int = Array As Int(colC1, colC2, colC3, colC4, colC5)
