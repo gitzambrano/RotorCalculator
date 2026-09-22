@@ -14,7 +14,7 @@ Este documento define os princípios fundamentais, padrões de código, governan
 2. **Precedência de Decisões Numéricas**:
    - (1) Literatura aerodinâmica formal revisada;
    - (2) Implementação de referência em Python (`tools/zBET.py`);
-   - (3) Requisitos de software em `docs/software_requirements.md`;
+   - (3) Requisitos de software e plano em `plano.md`;
    - (4) Casos de validação numérica dourada em `tests/`.
 3. **Nenhuma Alteração Física sem Justificativa**:
    - Qualquer modificação em equações de influxo, momentos radiais, coeficientes de arrasto ou fatores de correção (Prandtl-Glauert, Sissingh, Drees, Coleman) deve vir acompanhada da respectiva fundamentação e tolerância numérica explícita.
@@ -47,7 +47,7 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
    - `android:windowSoftInputMode="stateHidden|adjustPan"` no manifesto para impedir que o teclado virtual desconfigure os painéis.
    - A Activity usa somente sua área útil de conteúdo; nenhum componente depende da biblioteca IME ou de permissões de runtime para layout.
 2. **Design Visual "Ultra-Premium"**:
-   - Estética inspirada no AeroCalculator, porém com acabamento moderno de instrumentos aeronáuticos e estilo *high-tech* (paleta escura em grafite/titânio com destaques em ciano elétrico `#00E5FF`, verde esmeralda `#00E676`, e branco puro).
+   - Estética inspirada no AeroCalculator, com temas Light/Dark equivalentes em hierarquia, legibilidade e contraste; mudança de tema deve preservar estado e funcionalidade.
    - Tipografia técnica límpida e legível (`xenara-bold.ttf` / fontes do sistema).
    - Feedback tátil e visual instantâneo a cada alteração de parâmetro.
    - Popups contextuais elegantes e intuitivos para esclarecer parâmetros complexos (ex: modelos de influxo, correção de ponta, perfis aerodinâmicos).
@@ -71,7 +71,7 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
 
 Antes de concluir qualquer entrega de desenvolvimento:
 1. Executar o script de teste de consistência física (`python tools/verify_engine.py`).
-2. Verificar que as tolerâncias numéricas entre o motor B4A e o zBET de referência respeitam os limites ($\Delta C_T < 10^{-6}$, $\Delta \lambda_i < 10^{-6}$, $\Delta C_Q < 10^{-5}$).
+2. Executar a matriz Python de referência e os contratos de fonte B4A. Equivalência numérica B4A↔Python só pode ser declarada após executar o motor B4A compilado; inspeção de fonte não substitui esse gate.
 3. Garantir compilação limpa do projeto B4A sem erros ou avisos de referência nula.
 4. Manter a documentação em `plano.md` e `docs/` rigorosamente atualizada.
 
@@ -80,10 +80,12 @@ Antes de concluir qualquer entrega de desenvolvimento:
 ## 6. Frontend Android e QA de Release
 
 - A navegação principal usa três painéis B4A nativos (`Geometry`, `Conditions`, `Results`) controlados pelas tabs do header; `AHViewPager` não faz parte do runtime atual.
-- As únicas bibliotecas B4A declaradas são `core`, `phone` e `RSPopupMenu`.
+- As bibliotecas B4A declaradas são `core`, `phone`, `RSPopupMenu` e `JavaObject`; JavaObject é restrito à integração Android necessária para exportação SAF.
 - O manifesto suporta Android 5.0+ (`minSdkVersion=21`) e usa `targetSdkVersion=36`.
 - Labels e unidades são tipografia, não botões falsos. Superfícies elevadas ficam reservadas para controles realmente acionáveis.
 - `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.
+- Horizontal Flow deve oferecer μ/Vx como representações alternativas. Axial Flow deve oferecer α/Vz/μz como representações alternativas; é proibido somá-las. A convenção é +Vz/+μz para baixo e α>0 para escoamento chegando de baixo.
+- Settings Light/Dark, SI/Imperial e +1 Decimal devem persistir. Sweep deve oferecer eixo μ/Vx, legendas fora da área de dados e export CSV/PNG via Storage Access Framework sem permissão ampla de armazenamento.
 - `RotorGeometry` e `FlightCondition` são custom `Type` B4A e portanto objetos por referência. Qualquer rotina temporária de cálculo, trim, sweep ou duplicação deve usar `zBETEngine.CloneGeometry` / `CloneCondition` antes de modificar campos; cálculos não podem alterar silenciosamente o estado do chamador.
 - Tip-loss deve representar explicitamente `none`, `fixed` e `sissingh`; presets com fator fixo não podem ser apresentados como OFF.
 - Antes de uma entrega final, a validação deve ser executada localmente: testes zBET, compilação B4A real, instalação do APK em emulador/dispositivo, nove configurações alvo, smoke tests de interação e inspeção das screenshots reais. O workflow GitHub é manual e auxiliar; não promove binários nem substitui a validação local.
