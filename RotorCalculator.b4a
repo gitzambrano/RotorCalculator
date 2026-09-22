@@ -132,6 +132,11 @@ Sub Globals
 	Private lblAppTitle As Label
 	Private PopupMenu As RSPopupMenu
 	Private pnlMenuAnchor As Panel
+	Private pnlUnitPopup As Panel
+	Private UnitPopupOpen As Boolean = False
+	Private spnUnitMode As Spinner
+	Private edtUnitValue As EditText
+	Private lblUnitResult As Label
 	
 	' Page 0: Geometry Views
 	Private pnlBack0 As Panel
@@ -276,6 +281,10 @@ End Sub
 
 Sub Activity_KeyPress (KeyCode As Int) As Boolean
 	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If UnitPopupOpen Then
+			CloseUnitConverter
+			Return True
+		End If
 		If GeometryPopupOpen Then
 			CloseGeometryPopup
 			Return True
@@ -336,6 +345,7 @@ Private Sub BuildUnifiedHeader
 	PopupMenu.AddMenuItem(1, 1, "Reset to Factory Rotor Presets")
 	PopupMenu.AddMenuItem(2, 2, "zBET Conventions & Physical Axes")
 	PopupMenu.AddMenuItem(3, 3, "About RotorCalculator")
+	PopupMenu.AddMenuItem(4, 4, "Quick Unit Converter")
 	
 	' 3. App title uses the whole header between app icon and menu.
 	Dim titleLeft As Int = edge + iconSize + 8dip
@@ -453,10 +463,144 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 				"Engineered on analytical Blade Element Momentum Theory (zBET - Johnson & Leishman)." & CRLF & CRLF & _
 				"Flight Dynamicist: Gustavo Zambrano" & CRLF & _
 				"flightdyn@gmail.com", "About RotorCalculator")
+		Case 4
+			OpenUnitConverter
 	End Select
 	Return False
 End Sub
 
+
+' ====================================================================
+' QUICK UNIT CONVERTER
+' ====================================================================
+Private Sub OpenUnitConverter
+	If UnitPopupOpen Then CloseUnitConverter
+	pnlUnitPopup.Initialize("pnlUnitPopup")
+	pnlUnitPopup.Color = 0xF20A0E15
+	root.AddView(pnlUnitPopup, 0, 0, root.Width, root.Height)
+	UnitPopupOpen = True
+	pnlUnitPopup.BringToFront
+	
+	Dim cardW As Int = root.Width - 24dip
+	If cardW > 520dip Then cardW = 520dip
+	Dim cardH As Int = 294dip
+	If cardH > root.Height - 24dip Then cardH = root.Height - 24dip
+	Dim cardLeft As Int = (root.Width - cardW) / 2
+	Dim cardTop As Int = (root.Height - cardH) / 2
+	
+	Dim card As Panel
+	card.Initialize("")
+	card.Color = ColorPnlInput5
+	pnlUnitPopup.AddView(card, cardLeft, cardTop, cardW, cardH)
+	
+	Dim titleBar As Panel
+	titleBar.Initialize("")
+	titleBar.Color = ColorPnlTitle
+	card.AddView(titleBar, 0, 0, cardW, 52dip)
+	
+	Dim lblTitle As Label
+	lblTitle.Initialize("")
+	lblTitle.Text = "QUICK UNIT CONVERTER"
+	lblTitle.TextColor = ColorAccentCyan
+	lblTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblTitle.TextSize = 13
+	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	titleBar.AddView(lblTitle, 16dip, 0, cardW - 72dip, 52dip)
+	
+	Dim btnClose As Button
+	btnClose.Initialize("btnCloseUnitConverter")
+	btnClose.Text = "×"
+	btnClose.TextColor = ColorButText1
+	btnClose.TextSize = 20
+	btnClose.Color = Colors.Transparent
+	titleBar.AddView(btnClose, cardW - 52dip, 2dip, 48dip, 48dip)
+	
+	spnUnitMode.Initialize("spnUnitMode")
+	spnUnitMode.DropdownBackgroundColor = ColorPnlTitle
+	spnUnitMode.DropdownTextColor = ColorTitleText
+	spnUnitMode.TextColor = ColorTitleText
+	spnUnitMode.TextSize = 12
+	Dim modes() As String = Array As String("kW → hp", "hp → kW", "N → kgf", "kgf → N", "N → lbf", "lbf → N", "km/h → kt", "kt → km/h", "km/h → m/s", "m/s → km/h", "m → ft", "ft → m", "mm → in", "in → mm")
+	For Each mode As String In modes
+		spnUnitMode.Add(mode)
+	Next
+	card.AddView(spnUnitMode, 16dip, 68dip, cardW - 32dip, 48dip)
+	
+	edtUnitValue.Initialize("edtUnitValue")
+	edtUnitValue.Text = "1"
+	edtUnitValue.TextSize = 16
+	edtUnitValue.TextColor = ColorEdtText
+	edtUnitValue.Color = ColorEdt
+	edtUnitValue.Gravity = Gravity.CENTER
+	edtUnitValue.InputType = Bit.Or(edtUnitValue.INPUT_TYPE_DECIMAL_NUMBERS, 4096)
+	edtUnitValue.SingleLine = True
+	card.AddView(edtUnitValue, 16dip, 128dip, cardW - 32dip, 48dip)
+	
+	lblUnitResult.Initialize("")
+	lblUnitResult.TextColor = ColorAccentGreen
+	lblUnitResult.Typeface = Typeface.DEFAULT_BOLD
+	lblUnitResult.TextSize = 19
+	lblUnitResult.Gravity = Gravity.CENTER
+	card.AddView(lblUnitResult, 16dip, 190dip, cardW - 32dip, 72dip)
+	UpdateUnitConversion
+End Sub
+
+Private Sub CloseUnitConverter
+	If UnitPopupOpen Then
+		pnlUnitPopup.RemoveView
+		UnitPopupOpen = False
+	End If
+End Sub
+
+Sub btnCloseUnitConverter_Click
+	CloseUnitConverter
+End Sub
+
+Sub spnUnitMode_ItemClick(Position As Int, Value As Object)
+	UpdateUnitConversion
+End Sub
+
+Sub edtUnitValue_TextChanged (Old As String, New As String)
+	If UnitPopupOpen Then UpdateUnitConversion
+End Sub
+
+Private Sub UpdateUnitConversion
+	If spnUnitMode.IsInitialized = False Or edtUnitValue.IsInitialized = False Or lblUnitResult.IsInitialized = False Then Return
+	Dim x As Double = ParseDoubleDef(edtUnitValue.Text, 0)
+	Dim y As Double
+	Dim unitText As String
+	Select spnUnitMode.SelectedIndex
+		Case 0
+			y = x * 1.34102209 : unitText = "hp"
+		Case 1
+			y = x / 1.34102209 : unitText = "kW"
+		Case 2
+			y = x / 9.80665 : unitText = "kgf"
+		Case 3
+			y = x * 9.80665 : unitText = "N"
+		Case 4
+			y = x * 0.224808943 : unitText = "lbf"
+		Case 5
+			y = x / 0.224808943 : unitText = "N"
+		Case 6
+			y = x / 1.852 : unitText = "kt"
+		Case 7
+			y = x * 1.852 : unitText = "km/h"
+		Case 8
+			y = x / 3.6 : unitText = "m/s"
+		Case 9
+			y = x * 3.6 : unitText = "km/h"
+		Case 10
+			y = x * 3.280839895 : unitText = "ft"
+		Case 11
+			y = x / 3.280839895 : unitText = "m"
+		Case 12
+			y = x / 25.4 : unitText = "in"
+		Case Else
+			y = x * 25.4 : unitText = "mm"
+	End Select
+	lblUnitResult.Text = NumberFormat2(y, 1, 4, 4, False) & " " & unitText
+End Sub
 
 ' ====================================================================
 ' PAGE 0: GEOMETRY (AeroCalculator Row-by-Row Layout)
@@ -1413,6 +1557,26 @@ Private Sub LoadConditionDataToFields
 End Sub
 
 Private Sub RefreshTrimControls
+	If ActiveCond.HoverTrimMode = "rpm" Then
+		If ActiveCond.TargetThrustN <= 0 Then
+			Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
+			Dim vtip As Double = omega * ActiveGeom.Radius
+			Dim diskArea As Double = cPI * ActiveGeom.Radius * ActiveGeom.Radius
+			ActiveCond.TargetThrustN = 0.0065 * ActiveCond.Rho * diskArea * vtip * vtip
+		End If
+		ActiveCond.TargetCT = 0
+		Dim wasUpdatingRpm As Boolean = UpdatingUI
+		UpdatingUI = True
+		If edtTargetThrust.IsInitialized Then edtTargetThrust.Text = NumberFormat(ActiveCond.TargetThrustN, 1, 0)
+		If edtTargetCT.IsInitialized Then edtTargetCT.Text = "0"
+		UpdatingUI = wasUpdatingRpm
+		btnHoverTrimMode.Text = "RPM to Thrust"
+		btnHoverTrimMode.TextColor = ColorAccentAmber
+		edtTargetThrust.Enabled = True
+		edtTargetCT.Enabled = False
+		Return
+	End If
+	
 	If ActiveCond.HoverTrimMode <> "none" And ActiveCond.TargetThrustN <= 0 And ActiveCond.TargetCT <= 0 Then
 		ActiveCond.TargetCT = 0.0065
 		If edtTargetCT.IsInitialized Then
@@ -1553,11 +1717,14 @@ Sub btnProfileDragModel_Click
 End Sub
 
 Sub btnHoverTrimMode_Click
-	If ActiveCond.HoverTrimMode = "none" Then
-		ActiveCond.HoverTrimMode = "collective"
-	Else
-		ActiveCond.HoverTrimMode = "none"
-	End If
+	Select ActiveCond.HoverTrimMode
+		Case "collective"
+			ActiveCond.HoverTrimMode = "rpm"
+		Case "rpm"
+			ActiveCond.HoverTrimMode = "none"
+		Case Else
+			ActiveCond.HoverTrimMode = "collective"
+	End Select
 	RefreshTrimControls
 	RecalculateRotor
 End Sub
@@ -1609,11 +1776,15 @@ Sub lblRowTip_Click
 		Case "Compressibility"
 			tipMsg = "Compressibility correction applied to sectional aerodynamics as local Mach number increases."
 		Case "Inflow Model"
-			tipMsg = "Model used to distribute induced velocity across the rotor disk in forward flight."
+			Msgbox("Uniform: uniform induced velocity; useful as the baseline model." & CRLF & CRLF & _
+				"Coleman Simple: adds a longitudinal first-harmonic inflow gradient from wake skew." & CRLF & CRLF & _
+				"Coleman-Feingold (NDARC): longitudinal plus lateral harmonic gradients; appropriate for broad forward-flight trade studies." & CRLF & CRLF & _
+				"Drees: classical longitudinal and lateral gradients with explicit μ dependence.", "Inflow Models")
+			Return
 		Case "Profile Drag"
 			tipMsg = "Method used to evaluate blade profile-drag forces and their torque / in-plane-force contributions."
 		Case "Hover Trim"
-			tipMsg = "Trim mode. Collective-to-target adjusts blade collective to achieve the selected thrust or CT target."
+			tipMsg = "Cycles Collective to target, RPM to thrust, and Manual Pitch. RPM trim requires a thrust target."
 		Case Else
 			tipMsg = b.Tag
 	End Select
