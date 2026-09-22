@@ -425,7 +425,7 @@ Public Sub SolveInflow(mu As Double, mu_z As Double, geom As RotorGeometry, cond
 	Dim mom_lo As Double = 2.0 * (b_val * b_val) * lo * Sqrt(mu * mu + lam_lo * lam_lo)
 	Dim f_lo As Double = bet_lo - mom_lo
 	
-	If f_lo < 0.0 Then Return 0.0
+	If f_lo < 0.0 Then Return -1.0
 	If Abs(f_lo) < 1e-14 Then Return 0.0
 	
 	Dim hi As Double = 0.1
