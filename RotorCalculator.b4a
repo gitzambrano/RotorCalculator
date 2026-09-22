@@ -113,8 +113,9 @@ Sub Process_Globals
 	Public UnitSystem As Int = 0 ' 0=Metric (SI), 1=Imperial
 	Public ConditionAltitudeM As Double = 0.0
 	Public ConditionTemperatureC As Double = 15.0
-	Public ConditionShaftTiltDeg As Double = 0.0
-	Public ConditionClimbRateMs As Double = 0.0
+	Public HorizontalInputMode As String = "mu"   ' mu | vx
+	Public AxialInputMode As String = "alpha"     ' alpha | vz | muz
+	Public ConditionAxialValue As Double = 0.0
 
 End Sub
 
@@ -165,10 +166,12 @@ Sub Globals
 	Private scvCond As ScrollView
 	Private edtAltitude As EditText
 	Private edtTemperature As EditText
-	Private edtAdvanceMu As EditText
-	Private edtSpeedKmh As EditText
-	Private edtShaftTiltAlpha As EditText
-	Private edtClimbRateW As EditText
+	Private btnHorizontalInput As Button
+	Private edtHorizontalValue As EditText
+	Private lblHorizontalUnit As Label
+	Private btnAxialInput As Button
+	Private edtAxialValue As EditText
+	Private lblAxialUnit As Label
 	Private btnInflowModel As Button
 	Private btnProfileDragModel As Button
 	Private btnHoverTrimMode As Button
@@ -938,24 +941,17 @@ Private Sub BuildPageCond
 	Dim ib As Int = 4dip
 	Dim tb As Int = 48dip
 	Dim rowH As Int = (ib * 2 + tb) * sc
-	Dim PanelNb As Int = 11
+	Dim PanelNb As Int = 9
 	
-	Dim j As Int
 	For j = 0 To PanelNb - 1
 		Dim pnlInput As Panel
 		Dim pnlline As Panel
 		pnlInput.Initialize("pnlInput")
 		pnlline.Initialize("pnlline")
-		
 		scvCond.Panel.AddView(pnlInput, UiContentLeft, (j * (ib * 2 + tb) + j * 1dip) * sc, UiContentW, rowH)
 		scvCond.Panel.AddView(pnlline, UiContentLeft, (j * (ib * 2 + tb) + j * 1dip - 1dip) * sc, UiContentW, 1dip * sc)
 		pnlline.Color = ColorPnlLine3
-		
-		If (j Mod 2) = 1 Then
-			pnlInput.Color = ColorPnlInput1
-		Else
-			pnlInput.Color = ColorPnlInput2
-		End If
+		If (j Mod 2) = 1 Then pnlInput.Color = ColorPnlInput1 Else pnlInput.Color = ColorPnlInput2
 		
 		Select j
 			Case 0
@@ -963,14 +959,56 @@ Private Sub BuildPageCond
 			Case 1
 				edtTemperature = AddFullInputRow(pnlInput, ib, tb, "Temperature", "15.0", "°C", "edtCond_TextChanged")
 			Case 2
-				edtAdvanceMu = AddFullInputRow(pnlInput, ib, tb, "Advance (μ)", "0.00", "—", "edtCond_TextChanged")
+				Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow", "lblRowTip_Click")
+				pnlInput.AddView(lblHorizontal, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 28 / 100, tb * sc)
+				btnHorizontalInput.Initialize("btnHorizontalInput")
+				btnHorizontalInput.Typeface = Typeface.DEFAULT_BOLD
+				btnHorizontalInput.TextColor = ColorAccentCyan
+				btnHorizontalInput.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+				If root.Width <= 340dip Then btnHorizontalInput.TextSize = 11 Else btnHorizontalInput.TextSize = 12 * sc
+				pnlInput.AddView(btnHorizontalInput, pnlInput.Width * 32 / 100, ib * sc, pnlInput.Width * 22 / 100, tb * sc)
+				edtHorizontalValue.Initialize("edtHorizontalValue")
+				edtHorizontalValue.Tag = "Horizontal Flow"
+				edtHorizontalValue.TextColor = ColorEdtText
+				edtHorizontalValue.Color = ColorEdt
+				edtHorizontalValue.Gravity = Gravity.CENTER
+				edtHorizontalValue.InputType = Bit.Or(edtHorizontalValue.INPUT_TYPE_DECIMAL_NUMBERS, 4096)
+				edtHorizontalValue.ForceDoneButton = True
+				edtHorizontalValue.SingleLine = True
+				edtHorizontalValue.TextSize = 13 * sc
+				pnlInput.AddView(edtHorizontalValue, pnlInput.Width * 56 / 100, ib * sc, pnlInput.Width * 25 / 100, tb * sc)
+				lblHorizontalUnit.Initialize("")
+				lblHorizontalUnit.TextColor = ColorButText2
+				lblHorizontalUnit.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+				lblHorizontalUnit.SingleLine = True
+				If root.Width <= 340dip Then lblHorizontalUnit.TextSize = 10 Else lblHorizontalUnit.TextSize = 11 * sc
+				pnlInput.AddView(lblHorizontalUnit, pnlInput.Width * 83 / 100, ib * sc, pnlInput.Width * 14 / 100, tb * sc)
 			Case 3
-				edtSpeedKmh = AddFullInputRow(pnlInput, ib, tb, "Flight Speed", "0.0", "km/h", "edtSpeedKmh_TextChanged")
+				Dim lblAxial As Label = CreateRowLabel("Axial Flow", "lblRowTip_Click")
+				pnlInput.AddView(lblAxial, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 28 / 100, tb * sc)
+				btnAxialInput.Initialize("btnAxialInput")
+				btnAxialInput.Typeface = Typeface.DEFAULT_BOLD
+				btnAxialInput.TextColor = ColorAccentCyan
+				btnAxialInput.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+				If root.Width <= 340dip Then btnAxialInput.TextSize = 11 Else btnAxialInput.TextSize = 12 * sc
+				pnlInput.AddView(btnAxialInput, pnlInput.Width * 32 / 100, ib * sc, pnlInput.Width * 22 / 100, tb * sc)
+				edtAxialValue.Initialize("edtAxialValue")
+				edtAxialValue.Tag = "Axial Flow"
+				edtAxialValue.TextColor = ColorEdtText
+				edtAxialValue.Color = ColorEdt
+				edtAxialValue.Gravity = Gravity.CENTER
+				edtAxialValue.InputType = Bit.Or(edtAxialValue.INPUT_TYPE_DECIMAL_NUMBERS, 4096)
+				edtAxialValue.ForceDoneButton = True
+				edtAxialValue.SingleLine = True
+				edtAxialValue.TextSize = 13 * sc
+				pnlInput.AddView(edtAxialValue, pnlInput.Width * 56 / 100, ib * sc, pnlInput.Width * 25 / 100, tb * sc)
+				lblAxialUnit.Initialize("")
+				lblAxialUnit.TextColor = ColorButText2
+				lblAxialUnit.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+				lblAxialUnit.SingleLine = True
+				If root.Width <= 340dip Then lblAxialUnit.TextSize = 10 Else lblAxialUnit.TextSize = 11 * sc
+				pnlInput.AddView(lblAxialUnit, pnlInput.Width * 83 / 100, ib * sc, pnlInput.Width * 14 / 100, tb * sc)
 			Case 4
-				edtShaftTiltAlpha = AddFullInputRow(pnlInput, ib, tb, "Shaft Tilt (α)", "0.0", "°", "edtCond_TextChanged")
-			Case 5
-				edtClimbRateW = AddFullInputRow(pnlInput, ib, tb, "Climb Rate", "0.0", "m/s", "edtClimbRate_TextChanged")
-			Case 6
 				Dim lblInflow As Label = CreateRowLabel("Inflow Model", "lblRowTip_Click")
 				pnlInput.AddView(lblInflow, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnInflowModel.Initialize("btnInflowModel")
@@ -980,7 +1018,7 @@ Private Sub BuildPageCond
 				btnInflowModel.TextColor = ColorAccentCyan
 				btnInflowModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnInflowModel, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 7
+			Case 5
 				Dim lblDrag As Label = CreateRowLabel("Profile Drag", "lblRowTip_Click")
 				pnlInput.AddView(lblDrag, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnProfileDragModel.Initialize("btnProfileDragModel")
@@ -990,7 +1028,7 @@ Private Sub BuildPageCond
 				btnProfileDragModel.TextColor = ColorTitleText
 				btnProfileDragModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnProfileDragModel, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 8
+			Case 6
 				Dim lblTrim As Label = CreateRowLabel("Hover Trim", "lblRowTip_Click")
 				pnlInput.AddView(lblTrim, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnHoverTrimMode.Initialize("btnHoverTrimMode")
@@ -1000,10 +1038,10 @@ Private Sub BuildPageCond
 				btnHoverTrimMode.TextColor = ColorAccentGreen
 				btnHoverTrimMode.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnHoverTrimMode, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 9
+			Case 7
 				edtTargetThrust = AddFullInputRow(pnlInput, ib, tb, "Target Thrust", "0", "N", "edtCond_TextChanged")
-			Case 10
-				edtTargetCT = AddFullInputRow(pnlInput, ib, tb, "Target CT", "0.00650", "—", "edtCond_TextChanged")
+			Case 8
+				edtTargetCT = AddFullInputRow(pnlInput, ib, tb, "Target CT", "0.00650", "[-]", "edtCond_TextChanged")
 		End Select
 	Next
 	
@@ -1151,10 +1189,8 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Case "Lift Slope a0": Return "Lift a0"
 		Case "Profile Cd0": Return "Cd0"
 		Case "Temperature": Return "Temp."
-		Case "Advance (μ)": Return "Advance μ"
-		Case "Flight Speed": Return "Speed"
-		Case "Shaft Tilt (α)": Return "Shaft α"
-		Case "Climb Rate": Return "Climb"
+		Case "Horizontal Flow": Return "Horizontal"
+		Case "Axial Flow": Return "Axial"
 		Case "Inflow Model": Return "Inflow"
 		Case "Compressibility": Return "Compress."
 		Case "Target Thrust": Return "Target T"
@@ -1546,9 +1582,8 @@ Private Sub LoadConditionDataToFields
 	UpdatingUI = True
 	edtAltitude.Text = NumberFormat(ConditionAltitudeM, 1, 0)
 	edtTemperature.Text = NumberFormat(ConditionTemperatureC, 1, 1)
-	edtAdvanceMu.Text = NumberFormat(ActiveCond.Mu, 1, 3)
-	edtShaftTiltAlpha.Text = NumberFormat(ConditionShaftTiltDeg, 1, 1)
-	edtClimbRateW.Text = NumberFormat(ConditionClimbRateMs, 1, 1)
+	RefreshHorizontalInputDisplay
+	RefreshAxialInputDisplay
 	edtTargetThrust.Text = NumberFormat(ActiveCond.TargetThrustN, 1, 0)
 	edtTargetCT.Text = NumberFormat(ActiveCond.TargetCT, 1, 5)
 	
@@ -1565,14 +1600,51 @@ Private Sub LoadConditionDataToFields
 	End Select
 	RefreshTrimControls
 	UpdatingUI = False
-	RefreshDerivedCondition(True)
+	RefreshDerivedCondition(False)
+End Sub
+
+Private Sub RefreshHorizontalInputDisplay
+	If btnHorizontalInput.IsInitialized = False Then Return
+	Dim vtip As Double = RotorTipSpeed
+	If HorizontalInputMode = "vx" Then
+		btnHorizontalInput.Text = "Vx"
+		lblHorizontalUnit.Text = "m/s"
+		edtHorizontalValue.Text = NumberFormat2(ActiveCond.Mu * vtip, 1, 1, 1, False)
+	Else
+		HorizontalInputMode = "mu"
+		btnHorizontalInput.Text = "μ"
+		lblHorizontalUnit.Text = "[-]"
+		edtHorizontalValue.Text = NumberFormat2(ActiveCond.Mu, 1, 3, 3, False)
+	End If
+End Sub
+
+Private Sub RefreshAxialInputDisplay
+	If btnAxialInput.IsInitialized = False Then Return
+	Select AxialInputMode
+		Case "vz"
+			btnAxialInput.Text = "Vz"
+			lblAxialUnit.Text = "m/s"
+			edtAxialValue.Text = NumberFormat2(ConditionAxialValue, 1, 2, 2, False)
+		Case "muz"
+			btnAxialInput.Text = "μz"
+			lblAxialUnit.Text = "[-]"
+			edtAxialValue.Text = NumberFormat2(ConditionAxialValue, 1, 4, 4, False)
+		Case Else
+			AxialInputMode = "alpha"
+			btnAxialInput.Text = "α"
+			lblAxialUnit.Text = "deg"
+			edtAxialValue.Text = NumberFormat2(ConditionAxialValue, 1, 2, 2, False)
+	End Select
+End Sub
+
+Private Sub RotorTipSpeed As Double
+	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
+	Return omega * ActiveGeom.Radius
 End Sub
 
 Private Sub RefreshTrimControls
 	If ActiveCond.HoverTrimMode = "rpm" Then
-		If ActiveCond.TargetThrustN <= 0 Then
-			ActiveCond.TargetThrustN = DefaultRPMTargetThrust
-		End If
+		If ActiveCond.TargetThrustN <= 0 Then ActiveCond.TargetThrustN = DefaultRPMTargetThrust
 		ActiveCond.TargetCT = 0
 		Dim wasUpdatingRpm As Boolean = UpdatingUI
 		UpdatingUI = True
@@ -1585,7 +1657,6 @@ Private Sub RefreshTrimControls
 		edtTargetCT.Enabled = False
 		Return
 	End If
-	
 	If ActiveCond.HoverTrimMode <> "none" And ActiveCond.TargetThrustN <= 0 And ActiveCond.TargetCT <= 0 Then
 		ActiveCond.TargetCT = 0.0065
 		If edtTargetCT.IsInitialized Then
@@ -1613,9 +1684,6 @@ Private Sub RefreshTrimControls
 End Sub
 
 Private Sub DefaultRPMTargetThrust As Double
-	' A neutral RPM-trim default should reproduce the thrust generated by the
-	' stored pitch at the current RPM, not force an arbitrary CT that may demand
-	' an unrealistic rotor speed.
 	Dim tempCond As FlightCondition = zBETEngine.CloneCondition(ActiveCond)
 	tempCond.HoverTrimMode = "none"
 	tempCond.Mu = 0
@@ -1624,26 +1692,24 @@ Private Sub DefaultRPMTargetThrust As Double
 	tempCond.TargetCT = 0
 	Dim natural As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
 	If natural.SolutionValid And natural.ThrustN > 0 Then Return natural.ThrustN
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Dim vtip As Double = omega * ActiveGeom.Radius
+	Dim vtip As Double = RotorTipSpeed
 	Dim diskArea As Double = cPI * ActiveGeom.Radius * ActiveGeom.Radius
 	Return 0.0065 * ActiveCond.Rho * diskArea * vtip * vtip
 End Sub
 
-Private Sub RefreshDerivedCondition(updateSpeedField As Boolean)
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Dim vtip As Double = omega * ActiveGeom.Radius
+Private Sub RefreshDerivedCondition(updateDisplayedValues As Boolean)
+	Dim vtip As Double = RotorTipSpeed
 	If vtip > 0 Then
-		Dim alphaRad As Double = ConditionShaftTiltDeg * cPI / 180.0
-		ActiveCond.MuZ = -ActiveCond.Mu * Tan(alphaRad) + (ConditionClimbRateMs / vtip)
-		If updateSpeedField And edtSpeedKmh.IsInitialized Then
-			Dim wasUpdating As Boolean = UpdatingUI
-			UpdatingUI = True
-			edtSpeedKmh.Text = NumberFormat(ActiveCond.Mu * vtip * 3.6, 1, 1)
-			UpdatingUI = wasUpdating
-		End If
+		ActiveCond.MuZ = zBETEngine.ResolveMuZ(ActiveCond.Mu, AxialInputMode, ConditionAxialValue, vtip)
 	Else
 		ActiveCond.MuZ = 0.0
+	End If
+	If updateDisplayedValues Then
+		Dim wasUpdating As Boolean = UpdatingUI
+		UpdatingUI = True
+		RefreshHorizontalInputDisplay
+		RefreshAxialInputDisplay
+		UpdatingUI = wasUpdating
 	End If
 End Sub
 
@@ -1785,14 +1851,20 @@ Sub lblRowTip_Click
 			tipMsg = "Pressure altitude above mean sea level according to standard ISA."
 		Case "Temperature"
 			tipMsg = "Ambient air temperature in degrees Celsius (ISA default 15°C)."
-		Case "Advance (μ)"
-			tipMsg = "Advance ratio μ = V / (Ω·R), ratio of forward speed to tip speed."
-		Case "Flight Speed"
-			tipMsg = "True forward flight speed V in km/h, synchronized with μ."
-		Case "Shaft Tilt (α)"
-			tipMsg = "Shaft tilt angle α in degrees (forward tilt positive)."
-		Case "Climb Rate"
-			tipMsg = "Vertical climb (+) or descent (-) velocity Vz in m/s."
+		Case "Horizontal Flow"
+			Msgbox("Choose one equivalent horizontal-flow representation:" & CRLF & CRLF & _
+				"μ = Vx/(ΩR), dimensionless advance ratio." & CRLF & _
+				"Vx > 0 is forward in-plane free-stream velocity." & CRLF & CRLF & _
+				"The selected representation is authoritative; the other is derived from the current rotor tip speed ΩR.", "Horizontal Flow Convention")
+			Return
+		Case "Axial Flow"
+			Msgbox("zBET / zBEMT axial convention:" & CRLF & CRLF & _
+				"+z and +Vz are downward through the rotor disk." & CRLF & _
+				"μz = Vz/(ΩR), so μz > 0 is also downward." & CRLF & _
+				"Rotor angle of attack α is positive when the stream arrives from below." & CRLF & _
+				"Therefore μz = -μ·tan(α)." & CRLF & CRLF & _
+				"At Vx = 0, use Vz or μz for nonzero axial flow.", "Axial Flow Convention")
+			Return
 		Case "Target Thrust"
 			tipMsg = "Desired total thrust T in Newtons for hover/forward trim."
 		Case "Target CT"
@@ -1867,21 +1939,14 @@ End Sub
 
 Sub edtCond_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	
 	ConditionAltitudeM = ClampD(ParseDoubleDef(edtAltitude.Text, ConditionAltitudeM), -500.0, 11000.0)
 	ConditionTemperatureC = ClampD(ParseDoubleDef(edtTemperature.Text, ConditionTemperatureC), -80.0, 60.0)
-	ConditionShaftTiltDeg = ClampD(ParseDoubleDef(edtShaftTiltAlpha.Text, ConditionShaftTiltDeg), -30.0, 30.0)
-	ConditionClimbRateMs = ClampD(ParseDoubleDef(edtClimbRateW.Text, ConditionClimbRateMs), -50.0, 50.0)
 	
-	' Standard Atmosphere ISA
 	Dim pRatio As Double = Power(1.0 - 0.0065 * ConditionAltitudeM / 288.15, 5.2561)
 	AmbientPressureHPa = 1013.25 * pRatio
 	Dim tKelvin As Double = ConditionTemperatureC + 273.15
 	ActiveCond.Rho = (AmbientPressureHPa * 100.0) / (287.058 * tKelvin)
 	ActiveCond.SpeedOfSound = Sqrt(1.4 * 287.058 * tKelvin)
-	
-	ActiveCond.Mu = ClampD(ParseDoubleDef(edtAdvanceMu.Text, ActiveCond.Mu), 0.0, 0.60)
-	RefreshDerivedCondition(True)
 	
 	ActiveCond.TargetThrustN = ClampD(ParseDoubleDef(edtTargetThrust.Text, ActiveCond.TargetThrustN), 0.0, 1.0e8)
 	ActiveCond.TargetCT = ClampD(ParseDoubleDef(edtTargetCT.Text, ActiveCond.TargetCT), 0.0, 0.20)
@@ -1904,40 +1969,102 @@ Sub edtCond_TextChanged (Old As String, New As String)
 		UpdatingUI = False
 	End If
 	If changedField = "Target Thrust" Or changedField = "Target CT" Then RefreshTrimControls
-	
 	RecalculateRotor
 End Sub
 
-Sub edtSpeedKmh_TextChanged (Old As String, New As String)
+Sub edtHorizontalValue_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	Dim vKmh As Double = Max(0.0, ParseDoubleDef(edtSpeedKmh.Text, 0))
-	Dim vMs As Double = vKmh / 3.6
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Dim vtip As Double = omega * ActiveGeom.Radius
-	If vtip > 0 Then
-		UpdatingUI = True
-		ActiveCond.Mu = ClampD(vMs / vtip, 0.0, 0.60)
-		edtAdvanceMu.Text = NumberFormat(ActiveCond.Mu, 1, 3)
-		UpdatingUI = False
-		RefreshDerivedCondition(False)
-		RecalculateRotor
+	Dim raw As Double = ParseDoubleDef(edtHorizontalValue.Text, 0.0)
+	If HorizontalInputMode = "vx" Then
+		Dim vtip As Double = RotorTipSpeed
+		If vtip > 0 Then ActiveCond.Mu = ClampD(raw / vtip, 0.0, 0.60)
+	Else
+		ActiveCond.Mu = ClampD(raw, 0.0, 0.60)
 	End If
+	RefreshDerivedCondition(False)
+	RecalculateRotor
 End Sub
 
-Sub edtClimbRate_TextChanged (Old As String, New As String)
+Sub edtAxialValue_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	edtCond_TextChanged("", "")
+	Dim raw As Double = ParseDoubleDef(edtAxialValue.Text, ConditionAxialValue)
+	Select AxialInputMode
+		Case "alpha": ConditionAxialValue = ClampD(raw, -30.0, 30.0)
+		Case "vz": ConditionAxialValue = ClampD(raw, -80.0, 80.0)
+		Case "muz": ConditionAxialValue = ClampD(raw, -0.50, 0.50)
+	End Select
+	RefreshDerivedCondition(False)
+	RecalculateRotor
+End Sub
+
+Sub btnHorizontalInput_Click
+	Dim options As List
+	options.Initialize
+	options.Add("μ — advance ratio = Vx/(ΩR)")
+	options.Add("Vx — forward in-plane speed [m/s]")
+	Dim selected As Int = 0
+	If HorizontalInputMode = "vx" Then selected = 1
+	Dim idx As Int = InputList(options, "Horizontal Flow · zBET convention", selected)
+	If idx < 0 Then Return
+	If idx = 0 Then HorizontalInputMode = "mu" Else HorizontalInputMode = "vx"
+	UpdatingUI = True
+	RefreshHorizontalInputDisplay
+	UpdatingUI = False
+	ToastMessageShow("Horizontal flow: +Vx is forward; μ = Vx/(ΩR).", False)
+End Sub
+
+Sub btnAxialInput_Click
+	Dim options As List
+	options.Initialize
+	options.Add("α — rotor angle of attack [+ stream from below]")
+	options.Add("Vz — axial flow [+ downward through disk] [m/s]")
+	options.Add("μz — axial ratio [+ downward through disk]")
+	Dim selected As Int = 0
+	If AxialInputMode = "vz" Then selected = 1
+	If AxialInputMode = "muz" Then selected = 2
+	Dim idx As Int = InputList(options, "Axial Flow · zBET / zBEMT convention", selected)
+	If idx < 0 Then Return
+	Dim oldMuZ As Double = ActiveCond.MuZ
+	Dim vtip As Double = RotorTipSpeed
+	If idx = 0 Then
+		If Abs(ActiveCond.Mu) < 1e-8 And Abs(oldMuZ) > 1e-10 Then
+			ToastMessageShow("α is undefined at Vx = 0 for nonzero axial flow. Use Vz or μz.", True)
+			Return
+		End If
+		AxialInputMode = "alpha"
+		ConditionAxialValue = zBETEngine.AlphaFromMuZ(ActiveCond.Mu, oldMuZ)
+	Else If idx = 1 Then
+		AxialInputMode = "vz"
+		ConditionAxialValue = zBETEngine.VzFromMuZ(oldMuZ, vtip)
+	Else
+		AxialInputMode = "muz"
+		ConditionAxialValue = oldMuZ
+	End If
+	UpdatingUI = True
+	RefreshAxialInputDisplay
+	UpdatingUI = False
+	RefreshDerivedCondition(False)
+	RecalculateRotor
+	ShowAxialConventionHint
+End Sub
+
+Private Sub ShowAxialConventionHint
+	Select AxialInputMode
+		Case "alpha": ToastMessageShow("α > 0: stream arrives from below; μz = -μ·tan(α).", True)
+		Case "vz": ToastMessageShow("Vz > 0 is downward through the disk; μz = Vz/(ΩR).", True)
+		Case Else: ToastMessageShow("μz > 0 is imposed flow downward through the disk.", True)
+	End Select
 End Sub
 
 Sub edtCond_FocusChanged (HasFocus As Boolean)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
-Sub edtSpeedKmh_FocusChanged (HasFocus As Boolean)
+Sub edtHorizontalValue_FocusChanged (HasFocus As Boolean)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
-Sub edtClimbRate_FocusChanged (HasFocus As Boolean)
+Sub edtAxialValue_FocusChanged (HasFocus As Boolean)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
@@ -2127,10 +2254,11 @@ Sub UpdateSweepPlotView
 	
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
 		plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepParamSelectedLabel, _
-		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu, ConditionShaftTiltDeg, ConditionClimbRateMs)
+		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu, AxialInputMode, ConditionAxialValue)
 	ivSweepPlot.Bitmap = bmp
 	
-	lblSweepCurrentVal.Text = "Operating μ = " & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False)
+	Dim vx As Double = ActiveCond.Mu * RotorTipSpeed
+	lblSweepCurrentVal.Text = "Operating μ=" & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False) & " · Vx=" & NumberFormat2(vx, 1, 1, 1, False) & " m/s"
 End Sub
 
 Sub btnSweepTable_Click
@@ -2145,7 +2273,7 @@ Sub btnSweepTable_Click
 		Dim omega As Double = ActiveGeom.RPM * (2.0 * cPI / 60.0)
 		Dim vtip As Double = omega * ActiveGeom.Radius
 		If vtip < 1.0 Then vtip = 1.0
-		tempCond.MuZ = -mu * Tan(ConditionShaftTiltDeg * cPI / 180.0) + (ConditionClimbRateMs / vtip)
+		tempCond.MuZ = zBETEngine.ResolveMuZ(mu, AxialInputMode, ConditionAxialValue, vtip)
 		Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
 		If res.SolutionValid Then
 			Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
