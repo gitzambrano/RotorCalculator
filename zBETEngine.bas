@@ -603,11 +603,22 @@ Public Sub PerformHoverTrim(geom As RotorGeometry, cond As FlightCondition) As O
 		End If
 		
 	Else If cond.HoverTrimMode = "rpm" And cond.TargetThrustN > 0 Then
-		' Com passo fixo, resolve hover CT e acha RPM requerido
+		' Fixed pitch: solve hover CT, including Sissingh B<->CT coupling, then required RPM.
 		Dim b_val As Double = GetBFactor(geom, 0.0)
 		Dim lam_hover As Double = SolveInflow(0.0, 0.0, geom, cond, b_val)
 		If lam_hover < 0 Then Return Array(trimmedGeom)
 		Dim ct_hover As Double = 2.0 * (b_val * b_val) * (lam_hover * lam_hover)
+		If geom.TipLossMode = "sissingh" And ct_hover > 0 Then
+			For iter_trim_tip = 1 To 8
+				Dim nextBTrim As Double = GetBFactor(geom, ct_hover)
+				Dim deltaBTrim As Double = Abs(nextBTrim - b_val)
+				b_val = nextBTrim
+				lam_hover = SolveInflow(0.0, 0.0, geom, cond, b_val)
+				If lam_hover < 0 Then Return Array(trimmedGeom)
+				ct_hover = 2.0 * (b_val * b_val) * (lam_hover * lam_hover)
+				If deltaBTrim < 1e-8 Then Exit
+			Next
+		End If
 		If ct_hover > 1e-6 Then
 			Dim vtip_req As Double = Sqrt(cond.TargetThrustN / (cond.Rho * diskArea * ct_hover))
 			Dim omega_req As Double = vtip_req / geom.Radius
@@ -707,10 +718,7 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	If g.TipLossMode = "sissingh" And ct_val > 0 Then
 		For iter_tip = 1 To 8
 			Dim nextB As Double = GetBFactor(g, ct_val)
-			If Abs(nextB - b_val) < 1e-8 Then
-				b_val = nextB
-				Exit
-			End If
+			Dim deltaB As Double = Abs(nextB - b_val)
 			b_val = nextB
 			lambda_i = SolveInflow(c.Mu, c.MuZ, g, c, b_val)
 			If lambda_i < 0 Then
@@ -729,6 +737,7 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 			t_mom = moments(2)
 			ct_val = CT_BET(c.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
 			res.CT = ct_val
+			If deltaB < 1e-8 Then Exit
 		Next
 		res.InflowLambda = lambda_total
 		res.InflowLambdaI = lambda_i
