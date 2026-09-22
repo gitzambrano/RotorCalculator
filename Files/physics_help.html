@@ -61,8 +61,9 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--acce
 <div class="eq">B = 1 − √(2CT) / N</div>
 <p>RotorCalculator iterates the coupling between <code>B</code>, inflow and <code>CT</code> to convergence. This is an engineering effective-radius approximation.</p>
 <h3>Prandtl–Glauert</h3>
-<div class="eq">a(M) = a0 / √(1 − M²)</div>
-<p>The app flags a caution when advancing-tip Mach reaches 0.80 while the correction is enabled. The linear correction should not be interpreted as a transonic airfoil model.</p>
+<div class="eq">Meff = (ΩR / asound) √(0.75² + 0.5 μ²)</div>
+<div class="eq">a(Meff) = a0 / √max(0.01, 1 − Meff²), with Meff ≤ 0.85</div>
+<p>The lift-slope correction uses this 75%-radius representative Mach, exactly as in the zBET reference. Separately, the app reports advancing-tip Mach Mat = ΩR(1+μ)/asound and flags a caution from Mat = 0.80. Neither approximation is a transonic airfoil model.</p>
 
 <h2>6. Torque and power</h2>
 <div class="eq">CQ = CQi + CQ0</div>
