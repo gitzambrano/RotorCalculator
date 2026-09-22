@@ -309,6 +309,14 @@ End Sub
 ' Cria uma geometria customizada nova sem alterar presets existentes.
 Public Sub CreateNewRotor As Int
 	Dim g As RotorGeometry = zBETEngine.CreateDefaultGeometry
+	' The Geometry editor exposes chord and root/tip pitch directly, so a new
+	' custom rotor must use those same parameterizations from its first frame.
+	g.SolidityMode = "chords"
+	g.PitchMode = "linear_twist"
+	g.ThetaRoot = 12.0 * cPI / 180.0
+	g.ThetaTip = 4.0 * cPI / 180.0
+	g.Theta0 = 8.0 * cPI / 180.0
+	g = zBETEngine.ResolveSolidity(g)
 	Dim baseName As String = "Custom Rotor"
 	Dim candidate As String = baseName
 	Dim suffix As Int = 2
