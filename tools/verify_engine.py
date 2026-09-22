@@ -29,6 +29,7 @@ def verify_b4a_source_contract() -> None:
         "Dim trimmedGeom As RotorGeometry = CloneGeometry(geom)",
         "Public Sub SanitizeCondition",
         "geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))",
+        "If f_lo < 0.0 Then Return -1.0",
         "If f_hi > 0.0 Then Return -1.0",
         "res.SolutionValid = True",
         "res.CompressibilityWarning = False",
