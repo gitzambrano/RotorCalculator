@@ -333,7 +333,7 @@ def test_sweep_exports_exact_plot_family_to_csv_and_png_without_storage_permissi
     assert "Private Sub BuildSweepCsv As String" in main
     assert 'sb.Append("curve,x_axis,x_value,mu,Vx_m_s,axial_mode,axial_input,mu_z,inflow_model,parameter,value,status")' in main
     assert "Dim nPoints As Int = 25" in main
-    assert "bmp.WriteToStream(out, 100, \"PNG\")" in main
+    assert 'bmp.WriteToStream(out, 100, "PNG")' in main
     assert 'Return NumberFormat2(value, 1, digits, digits, False).Replace(",", ".")' in main
     assert "Library4=javaobject" in main
 
