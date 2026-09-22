@@ -294,9 +294,11 @@ def test_physics_help_is_offline_theme_aware_and_packaged():
     main = text("RotorCalculator.b4a")
     html = text("Files/physics_help.html")
     assert "File23=physics_help.html" in main
-    assert "NumberOfFiles=23" in main
+    assert "File24=physics_help_light.html" in main
+    assert "NumberOfFiles=24" in main
     assert "Private wvHelp As WebView" in main
-    assert 'wvHelp.LoadUrl("file:///android_asset/physics_help.html?theme="' in main
+    assert 'helpAsset = "physics_help_light.html"' in main
+    assert 'wvHelp.LoadUrl("file:///android_asset/" & helpAsset)' in main
     assert "μz = −μ tan(α)" in html
     assert "α, Vz and μz are three equivalent ways" in html
     assert "No dynamic stall" in html
