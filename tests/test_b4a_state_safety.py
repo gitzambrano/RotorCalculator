@@ -370,3 +370,23 @@ def test_export_handles_cancel_and_provider_failure_without_crashing():
     assert 'Log("Export failed: " & LastException.Message)' in main
     assert 'ToastMessageShow("CSV export canceled or failed."' in main
     assert 'ToastMessageShow("PNG export canceled or failed."' in main
+
+
+def test_b4a_pg_and_fom_match_python_reference_definitions():
+    engine = text("zBETEngine.bas")
+    assert "Sqrt(0.75 * 0.75 + 0.5 * mu * mu)" in engine
+    assert "If mEff > 0.85 Then mEff = 0.85" in engine
+    assert "Sqrt(Max(0.01, 1.0 - mEff * mEff))" in engine
+    assert "Dim cpFoM As Double = c.KInd * idealHoverPower + res.CQ0" in engine
+    assert "res.FoM = idealHoverPower / cpFoM" in engine
+
+
+def test_sissingh_is_iterated_in_performance_and_rpm_trim():
+    engine = text("zBETEngine.bas")
+    reference = text("tools/zBET.py")
+    assert "For iter_tip = 1 To 8" in engine
+    assert "For iter_trim_tip = 1 To 8" in engine
+    assert 'geometry.tip_loss_mode == "sissingh"' in reference
+    assert "def solve_at_b(b_current):" in reference
+    assert "b_override=b_val" in reference
+    assert '"B_tip_loss": b_val' in reference
