@@ -306,6 +306,28 @@ Public Sub SetActiveRotor(index As Int)
 	End If
 End Sub
 
+' Cria uma geometria customizada nova sem alterar presets existentes.
+Public Sub CreateNewRotor As Int
+	Dim g As RotorGeometry = zBETEngine.CreateDefaultGeometry
+	Dim baseName As String = "Custom Rotor"
+	Dim candidate As String = baseName
+	Dim suffix As Int = 2
+	Do While RotorNameExists(candidate)
+		candidate = baseName & " " & suffix
+		suffix = suffix + 1
+	Loop
+	g.Name = candidate
+	Return AddRotor(g)
+End Sub
+
+Private Sub RotorNameExists(candidate As String) As Boolean
+	For i = 0 To Rotors.Size - 1
+		Dim g As RotorGeometry = Rotors.Get(i)
+		If g.Name.Trim.ToLowerCase = candidate.Trim.ToLowerCase Then Return True
+	Next
+	Return False
+End Sub
+
 ' Adiciona um novo rotor e o seleciona
 Public Sub AddRotor(g As RotorGeometry) As Int
 	g = zBETEngine.ResolveSolidity(g)
