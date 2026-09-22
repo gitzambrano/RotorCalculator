@@ -320,12 +320,14 @@ End Sub
 
 ' Fator de perda de ponta B de Prandtl/Sissingh
 Public Sub GetBFactor(geom As RotorGeometry, ct As Double) As Double
+	Dim x0 As Double = Max(0.0, Min(0.95, geom.RootCutout))
 	If geom.TipLossMode = "none" Then Return 1.0
-	If geom.TipLossMode = "fixed" Then Return geom.TipLossB
+	If geom.TipLossMode = "fixed" Then Return Max(x0 + 0.01, Min(1.0, geom.TipLossB))
 	If geom.TipLossMode = "sissingh" Then
 		If ct <= 0 Then Return 1.0
-		Dim b As Double = 1.0 - Sqrt(2.0 * ct) / geom.NBlades
-		Return Max(geom.RootCutout + 0.01, Min(1.0, b))
+		Dim nb As Int = Max(1, geom.NBlades)
+		Dim b As Double = 1.0 - Sqrt(2.0 * ct) / nb
+		Return Max(x0 + 0.01, Min(1.0, b))
 	End If
 	Return 1.0
 End Sub
@@ -574,6 +576,7 @@ Public Sub PerformHoverTrim(geom As RotorGeometry, cond As FlightCondition) As O
 		' Com passo fixo, resolve hover CT e acha RPM requerido
 		Dim b_val As Double = GetBFactor(geom, 0.0)
 		Dim lam_hover As Double = SolveInflow(0.0, 0.0, geom, cond, b_val)
+		If lam_hover < 0 Then Return Array(trimmedGeom)
 		Dim ct_hover As Double = 2.0 * (b_val * b_val) * (lam_hover * lam_hover)
 		If ct_hover > 1e-6 Then
 			Dim vtip_req As Double = Sqrt(cond.TargetThrustN / (cond.Rho * diskArea * ct_hover))
