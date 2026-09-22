@@ -121,6 +121,7 @@ Sub Process_Globals
 	Public HorizontalInputMode As String = "mu"   ' mu | vx
 	Public AxialInputMode As String = "alpha"     ' alpha | vz | muz
 	Public ConditionAxialValue As Double = 0.0
+	Private ion As Object ' Storage Access Framework activity-result callback
 
 End Sub
 
@@ -2647,6 +2648,155 @@ Sub btnSweepTable_Click
 	Next
 	
 	Msgbox(sb.ToString, "Active Data Table: " & SweepParamSelectedKey)
+End Sub
+
+' ====================================================================
+' SWEEP EXPORT — Android Storage Access Framework, no storage permission
+' ====================================================================
+Sub btnSweepExportCsv_Click
+	Dim csv As String = BuildSweepCsv
+	Dim tempName As String = "rotor_sweep_export.csv"
+	File.WriteString(File.DirInternal, tempName, csv)
+	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
+	Wait For (SaveAs(input, "text/csv", SweepExportBaseName & ".csv")) Complete (Success As Boolean)
+	If Success Then ToastMessageShow("CSV exported.", False)
+End Sub
+
+Sub btnSweepExportPng_Click
+	If ivSweepPlot.IsInitialized = False Then Return
+	Dim bmp As Bitmap = ivSweepPlot.Bitmap
+	If bmp.IsInitialized = False Then Return
+	Dim tempName As String = "rotor_sweep_export.png"
+	Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
+	bmp.WriteToStream(out, 100, "PNG")
+	out.Close
+	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
+	Wait For (SaveAs(input, "image/png", SweepExportBaseName & ".png")) Complete (Success As Boolean)
+	If Success Then ToastMessageShow("PNG exported.", False)
+End Sub
+
+Private Sub SweepExportBaseName As String
+	Dim n As String = ActiveGeom.Name.Trim.ToLowerCase
+	n = n.Replace(" ", "_").Replace("/", "_").Replace("\\", "_").Replace(":", "_").Replace("|", "_")
+	If n = "" Then n = "rotor"
+	Return n & "_" & SweepParamSelectedKey.ToLowerCase & "_sweep"
+End Sub
+
+Private Sub BuildSweepCsv As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("curve,x_axis,x_value,mu,Vx_m_s,axial_mode,axial_input,mu_z,inflow_model,parameter,value,status").Append(CRLF)
+	Dim vtip As Double = RotorTipSpeed
+	If vtip < 1.0 Then vtip = 1.0
+	Dim nPoints As Int = 25
+	Dim nCurves As Int = 1
+	Select SweepMultiMode
+		Case 0: nCurves = 4
+		Case 1, 2, 3: nCurves = 5
+	End Select
+	
+	For cIdx = 0 To nCurves - 1
+		Dim tempCond As FlightCondition = zBETEngine.CloneCondition(ActiveCond)
+		Dim curveAxialMode As String = AxialInputMode
+		Dim curveAxialValue As Double = ConditionAxialValue
+		Dim curveLabel As String = "Active"
+		Select SweepMultiMode
+			Case 0
+				Select cIdx
+					Case 0: tempCond.InflowModel = "uniform": curveLabel = "Uniform"
+					Case 1: tempCond.InflowModel = "coleman_simple": curveLabel = "Coleman Simple"
+					Case 2: tempCond.InflowModel = "coleman_feingold": curveLabel = "Coleman-Feingold"
+					Case 3: tempCond.InflowModel = "drees": curveLabel = "Drees"
+				End Select
+			Case 1
+				curveAxialMode = "alpha"
+				Dim valsA() As Double = Array As Double(-10, -5, 0, 5, 10)
+				curveAxialValue = valsA(cIdx)
+				curveLabel = "alpha=" & NumberFormat2(curveAxialValue, 1, 0, 0, False) & " deg"
+			Case 2
+				curveAxialMode = "vz"
+				Dim valsV() As Double = Array As Double(-10, -5, 0, 5, 10)
+				curveAxialValue = valsV(cIdx)
+				curveLabel = "Vz=" & NumberFormat2(curveAxialValue, 1, 0, 0, False) & " m/s"
+			Case 3
+				curveAxialMode = "muz"
+				Dim valsM() As Double = Array As Double(-0.05, -0.025, 0, 0.025, 0.05)
+				curveAxialValue = valsM(cIdx)
+				curveLabel = "mu_z=" & NumberFormat2(curveAxialValue, 1, 3, 3, False)
+		End Select
+		
+		For i = 0 To nPoints - 1
+			Dim mu As Double = i * SweepMaxMuVal / (nPoints - 1)
+			Dim vx As Double = mu * vtip
+			tempCond.Mu = mu
+			tempCond.MuZ = zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, vtip)
+			Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
+			Dim xVal As Double = mu
+			If SweepXAxisMode = 1 Then xVal = vx
+			Dim xName As String = "mu"
+			If SweepXAxisMode = 1 Then xName = "Vx_m_s"
+			sb.Append(CsvQ(curveLabel)).Append(",").Append(xName).Append(",")
+			sb.Append(NumberFormat2(xVal, 1, 6, 6, False)).Append(",")
+			sb.Append(NumberFormat2(mu, 1, 8, 8, False)).Append(",")
+			sb.Append(NumberFormat2(vx, 1, 6, 6, False)).Append(",")
+			sb.Append(curveAxialMode).Append(",")
+			sb.Append(NumberFormat2(curveAxialValue, 1, 8, 8, False)).Append(",")
+			sb.Append(NumberFormat2(tempCond.MuZ, 1, 8, 8, False)).Append(",")
+			sb.Append(tempCond.InflowModel).Append(",").Append(SweepParamSelectedKey).Append(",")
+			If res.SolutionValid Then
+				sb.Append(NumberFormat2(RotorPopups.ExtractParamValue(res, SweepParamSelectedKey), 1, 10, 10, False)).Append(",VALID")
+			Else
+				sb.Append(",INVALID")
+			End If
+			sb.Append(CRLF)
+		Next
+	Next
+	Return sb.ToString
+End Sub
+
+Private Sub CsvQ(value As String) As String
+	Return Chr(34) & value.Replace(Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End Sub
+
+Private Sub SaveAs(Source As InputStream, MimeType As String, Title As String) As ResumableSub
+	Dim intent As Intent
+	intent.Initialize("android.intent.action.CREATE_DOCUMENT", "")
+	intent.AddCategory("android.intent.category.OPENABLE")
+	intent.PutExtra("android.intent.extra.TITLE", Title)
+	intent.SetType(MimeType)
+	StartActivityForResult(intent)
+	Wait For ion_Event (MethodName As String, Args() As Object)
+	If -1 = Args(0) Then
+		Dim result As Intent = Args(1)
+		Dim jo As JavaObject = result
+		Dim ctxt As JavaObject
+		Dim resolver As JavaObject = ctxt.InitializeContext.RunMethodJO("getContentResolver", Null)
+		Dim target As OutputStream = resolver.RunMethod("openOutputStream", Array(jo.RunMethod("getData", Null), "wt"))
+		File.Copy2(Source, target)
+		target.Close
+		Source.Close
+		Return True
+	End If
+	Source.Close
+	Return False
+End Sub
+
+Private Sub StartActivityForResult(i As Intent)
+	Dim jo As JavaObject = GetBA
+	ion = jo.CreateEvent("anywheresoftware.b4a.IOnActivityResult", "ion", Null)
+	jo.RunMethod("startActivityForResult", Array(ion, i))
+End Sub
+
+Private Sub GetBA As Object
+	Dim jo As JavaObject
+	Dim cls As String = Me
+	cls = cls.SubString("class ".Length)
+	jo.InitializeStatic(cls)
+	Return jo.GetField("processBA")
+End Sub
+
+Sub ion_Event (MethodName As String, Args() As Object) As Object
+	Return Null
 End Sub
 
 ' Parsing Utilities
