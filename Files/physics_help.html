@@ -87,11 +87,15 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--acce
 <tr><td>RPM to Thrust</td><td>Pitch is fixed; RPM is solved to meet a dimensional thrust target.</td></tr>
 </table>
 
-<h2>9. Parameter sweeps</h2>
+<h2>9. Operating geometry after trim</h2>
+<p>RotorCalculator always distinguishes the saved geometry from the geometry actually used by the solver. Results shows the effective RPM and mean collective after trim.</p>
+<div class="note good">With RPM to Thrust, Vx↔μ, Vz↔μz, Mach numbers and the Sweep Vx axis all use the solved tip speed ΩtrimR. A physical speed therefore remains physically consistent with the trimmed rotor.</div>
+
+<h2>10. Parameter sweeps</h2>
 <p>The sweep changes horizontal flight state while cloning the active condition; it never changes the live operating point. The x-axis may be displayed as <code>μ</code> or <code>Vx</code>. Multi-curve comparisons can use inflow model, α, Vz or μz families.</p>
 <div class="note good">When α is selected as the axial representation, varying μ changes μz according to μz = −μ tanα. When Vz or μz is selected, the corresponding physical quantity is held fixed across the sweep.</div>
 
-<h2>10. Result coefficients</h2>
+<h2>11. Result coefficients</h2>
 <table>
 <tr><th>Output</th><th>Definition</th></tr>
 <tr><td>CT</td><td>T / [ρ A (ΩR)²]</td></tr>
@@ -104,7 +108,7 @@ code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--acce
 <tr><td>Kx, Ky</td><td>First-harmonic inflow-gradient factors.</td></tr>
 </table>
 
-<h2>11. Model scope</h2>
+<h2>12. Model scope</h2>
 <ul>
 <li>Linear section lift curve and constant baseline Cd0.</li>
 <li>No dynamic stall, cyclic trim, blade structural dynamics or free wake.</li>
