@@ -48,7 +48,7 @@ def test_sweep_spinner_selected_text_is_legible():
 
 def test_qa_checks_state_purity_and_real_geometry_popup():
     qa = text("tools/ci_ui_qa.sh")
-    assert 'grep -qi "Operating μ = 0.00"' in qa
+    assert 'grep -qi "ACTIVE" "$OUT/11-sweep.json"' in qa
     assert "09-geometry-after-rotation" in qa
     assert "02-geometry-popup-top.png" in qa
     assert "safe_screencap" in qa
@@ -79,11 +79,14 @@ def test_qa_rejects_corrupt_frames_and_checks_process_liveness():
     assert "06b-after-sweep-back" in qa
 
 
-def test_sweep_footer_is_unambiguous_and_fixed_precision():
+def test_sweep_footer_is_compact_and_explicit():
     main = text("RotorCalculator.b4a")
-    assert 'lblSweepCurrentVal.Text = "Operating μ = "' in main
-    assert "NumberFormat2(ActiveCond.Mu, 1, 2, 2, False)" in main
-    assert '"Operating μ="' not in main
+    assert 'lblSweepCurrentVal.Text = "ACTIVE · μ="' in main
+    assert '" · Vx="' in main
+    assert '" m/s · μz="' in main
+    assert 'btnTable.Text = "TABLE"' in main
+    assert 'btnCsv.Text = "CSV"' in main
+    assert 'btnPng.Text = "PNG"' in main
 
 
 def test_functional_smoke_verifies_active_rotor_after_cold_restart():
@@ -109,13 +112,14 @@ def test_github_qa_is_manual_only_and_never_handles_release_keys():
     assert "ci-build/RotorCalculator-ci.apk" in wf
 
 
-def test_results_normalize_display_only_negative_zero():
+def test_results_use_variable_specific_precision_and_normalize_negative_zero():
     main = text("RotorCalculator.b4a")
-    assert "Private Sub FormatResultValue(Value As Double, FractionDigits As Int) As String" in main
+    assert "Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String" in main
+    assert "BaseDigits + ExtraPrecision" in main
     assert "If Abs(Value) < (0.5 / scale) Then Value = 0" in main
-    assert "lblResults(10).Text = FormatResultValue(ActiveRes.CY, 6)" in main
-    assert "lblResults(12).Text = FormatResultValue(ActiveRes.CMx, 6)" in main
-    assert "lblResults(18).Text = FormatResultValue(ActiveRes.InflowKy, 3)" in main
+    assert "lblResults(10).Text = FormatOutputValue(ActiveRes.CY, 6)" in main
+    assert "lblResults(14).Text = FormatOutputValue(ActiveRes.L_D_eff, 2)" in main
+    assert "lblResults(21).Text = FormatOutputValue(ActiveRes.AdvancingTipMach, 3)" in main
 
 
 def test_geometry_matrix_captures_true_bottom_controls():
@@ -170,7 +174,7 @@ def test_sweep_uses_one_canonical_axial_representation_per_curve():
     engine = text("zBETEngine.bas")
     assert "activeAxialMode As String" in popup
     assert "activeAxialValue As Double" in popup
-    assert "zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, vtip)" in popup
+    assert "zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, plotVtip)" in popup
     assert "zBETEngine.ResolveMuZ(mu, AxialInputMode, ConditionAxialValue, vtip)" in main
     assert 'Case "alpha"' in engine
     assert 'Case "vz"' in engine
@@ -272,3 +276,60 @@ def test_sweep_can_compare_alpha_vz_and_muz_families():
     assert 'curveAxialMode = "vz"' in popup
     assert 'curveAxialMode = "muz"' in popup
     assert 'Array As String("-0.050", "-0.025", "0", "+0.025", "+0.050")' in popup
+
+
+def test_settings_persist_theme_units_and_aerocalculator_precision():
+    main = text("RotorCalculator.b4a")
+    assert 'Public ThemeMode As Int = 0' in main
+    assert 'Public ExtraPrecision As Int = 0' in main
+    assert 'File.WriteMap(File.DirInternal, "ui_settings.txt", m)' in main
+    assert 'btnSettingTheme.Text = "LIGHT"' in main
+    assert 'btnSettingTheme.Text = "DARK"' in main
+    assert 'btnSettingPrecision.Text = "+1 DECIMAL"' in main
+    assert 'btnSettingPrecision.Text = "STANDARD"' in main
+    assert 'Private Sub RebuildApplicationUI' in main
+
+
+def test_physics_help_is_offline_theme_aware_and_packaged():
+    main = text("RotorCalculator.b4a")
+    html = text("Files/physics_help.html")
+    assert "File23=physics_help.html" in main
+    assert "NumberOfFiles=23" in main
+    assert "Private wvHelp As WebView" in main
+    assert 'wvHelp.LoadUrl("file:///android_asset/physics_help.html?theme="' in main
+    assert "μz = −μ tan(α)" in html
+    assert "α, Vz and μz are three equivalent ways" in html
+    assert "No dynamic stall" in html
+
+
+def test_sweep_axis_selector_and_legends_are_nonintrusive():
+    main = text("RotorCalculator.b4a")
+    popup = text("RotorPopups.bas")
+    assert "Private SweepXAxisMode As Int = 0" in main
+    assert 'btnSweepXAxis.Text = "X: μ"' in main
+    assert 'btnSweepXAxis.Text = "X: Vx"' in main
+    assert 'xAxisTitle = "Forward Speed Vx (m/s)"' in popup
+    assert "Dim mTop As Float = 72dip" in popup
+    assert "Curve legends — reserved above plot rectangle" in popup
+    assert "Dim legendY As Float = 46dip" in popup
+    assert "If lightTheme Then" in popup
+
+
+def test_sweep_exports_exact_plot_family_to_csv_and_png_without_storage_permission():
+    main = text("RotorCalculator.b4a")
+    assert 'Wait For (SaveAs(input, "text/csv"' in main
+    assert 'Wait For (SaveAs(input, "image/png"' in main
+    assert 'intent.Initialize("android.intent.action.CREATE_DOCUMENT", "")' in main
+    assert "Private Sub BuildSweepCsv As String" in main
+    assert 'sb.Append("curve,x_axis,x_value,mu,Vx_m_s,axial_mode,axial_input,mu_z,inflow_model,parameter,value,status")' in main
+    assert "Dim nPoints As Int = 25" in main
+    assert "bmp.WriteToStream(out, 100, \"PNG\")" in main
+    assert 'Return NumberFormat2(value, 1, digits, digits, False).Replace(",", ".")' in main
+    assert "Library4=javaobject" in main
+
+
+def test_sweep_table_precision_tracks_variable_and_global_precision_setting():
+    main = text("RotorCalculator.b4a")
+    popup = text("RotorPopups.bas")
+    assert "Public Sub SweepParamDigits(paramKey As String) As Int" in popup
+    assert "RotorPopups.SweepParamDigits(SweepParamSelectedKey) + ExtraPrecision" in main
