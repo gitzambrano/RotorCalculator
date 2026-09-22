@@ -367,13 +367,15 @@ Private Sub BuildUnifiedHeader
 	pnlMenuAnchor.Color = Colors.Transparent
 	pnltitle.AddView(pnlMenuAnchor, root.Width - menuW - edge, 0, menuW, HeaderTopH)
 	
-	Dim img2 As ImageView
-	Dim bmpImage2 As Bitmap
-	bmpImage2.Initialize(File.DirAssets, "android-3-dot-menu.png")
-	img2.Initialize("pnlMenuAnchor")
-	img2.Bitmap = bmpImage2
-	img2.Gravity = Gravity.FILL
-	pnlMenuAnchor.AddView(img2, (menuW - 22dip) / 2, (HeaderTopH - 22dip) / 2, 22dip, 22dip)
+	' Theme-aware overflow glyph. The old white PNG vanished on the Light header.
+	Dim lblMenuDots As Label
+	lblMenuDots.Initialize("pnlMenuAnchor")
+	lblMenuDots.Text = "⋮"
+	lblMenuDots.TextColor = ColorButText1
+	lblMenuDots.TextSize = 28
+	lblMenuDots.Gravity = Gravity.CENTER
+	lblMenuDots.Typeface = Typeface.DEFAULT_BOLD
+	pnlMenuAnchor.AddView(lblMenuDots, 0, 0, menuW, HeaderTopH)
 	
 	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
 	PopupMenu.AddMenuItem(0, 0, "Settings")
