@@ -111,6 +111,8 @@ Sub Process_Globals
 	Public ld As Int = 0
 	Public CurrentPage As Int = 0
 	Public UnitSystem As Int = 0 ' 0=Metric (SI), 1=Imperial
+	Public ThemeMode As Int = 0 ' 0=Dark, 1=Light
+	Public ExtraPrecision As Int = 0 ' AeroCalculator-compatible +1 decimal
 	Public ConditionAltitudeM As Double = 0.0
 	Public ConditionTemperatureC As Double = 15.0
 	Public HorizontalInputMode As String = "mu"   ' mu | vx
@@ -135,6 +137,11 @@ Sub Globals
 	Private pnlMenuAnchor As Panel
 	Private pnlUnitPopup As Panel
 	Private UnitPopupOpen As Boolean = False
+	Private pnlSettingsPopup As Panel
+	Private SettingsPopupOpen As Boolean = False
+	Private btnSettingTheme As Button
+	Private btnSettingUnits As Button
+	Private btnSettingPrecision As Button
 	Private spnUnitMode As Spinner
 	Private edtUnitValue As EditText
 	Private lblUnitResult As Label
@@ -218,10 +225,14 @@ Sub Activity_Create(FirstTime As Boolean)
 		RotorPopups.Initialize
 		ActiveGeom = RotorStorage.GetActiveRotor
 		ActiveCond = zBETEngine.CreateDefaultCondition
+		LoadUiSettings
 	End If
+	ApplyThemePalette
 	
 	' B4A's Activity content area is the layout viewport. Keep all UI inside it.
 	root.Initialize("")
+	Activity.Color = ColorPnlInput5
+	root.Color = ColorPnlInput5
 	Activity.AddView(root, 0, 0, 100%x, 100%y)
 	
 	' Responsive scaling: both width and height constrain growth.
@@ -284,6 +295,10 @@ End Sub
 
 Sub Activity_KeyPress (KeyCode As Int) As Boolean
 	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If SettingsPopupOpen Then
+			CloseSettingsPopup
+			Return True
+		End If
 		If UnitPopupOpen Then
 			CloseUnitConverter
 			Return True
@@ -344,11 +359,12 @@ Private Sub BuildUnifiedHeader
 	pnlMenuAnchor.AddView(img2, (menuW - 22dip) / 2, (HeaderTopH - 22dip) / 2, 22dip, 22dip)
 	
 	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
-	PopupMenu.AddMenuItem(0, 0, "Toggle Result Units (SI / Imperial)")
-	PopupMenu.AddMenuItem(1, 1, "Reset to Factory Rotor Presets")
-	PopupMenu.AddMenuItem(2, 2, "zBET Conventions & Physical Axes")
-	PopupMenu.AddMenuItem(3, 3, "About RotorCalculator")
-	PopupMenu.AddMenuItem(4, 4, "Quick Unit Converter")
+	PopupMenu.AddMenuItem(0, 0, "Settings")
+	PopupMenu.AddMenuItem(1, 1, "Quick Unit Converter")
+	PopupMenu.AddMenuItem(2, 2, "Physics & Equations")
+	PopupMenu.AddMenuItem(3, 3, "zBET Conventions & Physical Axes")
+	PopupMenu.AddMenuItem(4, 4, "Reset to Factory Rotor Presets")
+	PopupMenu.AddMenuItem(5, 5, "About RotorCalculator")
 	
 	' 3. App title uses the whole header between app icon and menu.
 	Dim titleLeft As Int = edge + iconSize + 8dip
@@ -426,14 +442,14 @@ End Sub
 Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 	Select ItemId
 		Case 0
-			UnitSystem = 1 - UnitSystem
-			If UnitSystem = 0 Then
-				ToastMessageShow("Result Units: Metric (SI)", False)
-			Else
-				ToastMessageShow("Result Units: Imperial", False)
-			End If
-			RecalculateRotor
+			OpenSettingsPopup
 		Case 1
+			OpenUnitConverter
+		Case 2
+			OpenPhysicsHelp
+		Case 3
+			ShowConventionDialog
+		Case 4
 			Dim resetAnswer As Int = Msgbox2("Restore all factory rotor presets? Custom copies and edits will be removed.", "Reset Rotor Presets", "RESET", "Cancel", "", Null)
 			If resetAnswer = DialogResponse.POSITIVE Then
 				If GeometryPopupOpen Then CloseGeometryPopup
@@ -444,17 +460,7 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 				RecalculateRotor
 				ToastMessageShow("Factory presets restored.", False)
 			End If
-		Case 2
-			Msgbox("zBET Coordinate Conventions:" & CRLF & CRLF & _
-				"+x: Forward (aircraft nose)" & CRLF & _
-				"+y: Starboard (right wing)" & CRLF & _
-				"+z: Downward through rotor disk" & CRLF & CRLF & _
-				"Thrust acts upward (-z)." & CRLF & _
-				"Shaft torque Q > 0 powers CCW rotor." & CRLF & _
-				"Advance ratio: μ = V / (ΩR)" & CRLF & _
-				"Axial flow: μz = -μ·tan(α) + Vz/(ΩR)" & CRLF & _
-				"Mean downwash inflow: λ = μz + λi", "zBET Conventions")
-		Case 3
+		Case 5
 			Dim pm As PackageManager
 			Dim ver As String = "1.0.0"
 			Try
@@ -462,16 +468,238 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 			Catch
 			End Try
 			Msgbox("RotorCalculator v" & ver & CRLF & CRLF & _
-				"High-Fidelity Helicopter & Rotorcraft Aeromechanics Calculator." & CRLF & CRLF & _
-				"Engineered on analytical Blade Element Momentum Theory (zBET - Johnson & Leishman)." & CRLF & CRLF & _
-				"Flight Dynamicist: Gustavo Zambrano" & CRLF & _
-				"flightdyn@gmail.com", "About RotorCalculator")
-		Case 4
-			OpenUnitConverter
+				"Rotor performance calculator using the zBET analytical model." & CRLF & _
+				"Conventions aligned with zBET and zBEMT." & CRLF & CRLF & _
+				"Developed by Gustavo Zambrano", "About RotorCalculator")
 	End Select
 	Return False
 End Sub
 
+
+' ====================================================================
+' SETTINGS / THEME / OUTPUT FORMAT
+' ====================================================================
+Private Sub LoadUiSettings
+	If File.Exists(File.DirInternal, "ui_settings.txt") = False Then Return
+	Try
+		Dim m As Map = File.ReadMap(File.DirInternal, "ui_settings.txt")
+		ThemeMode = Max(0, Min(1, m.GetDefault("theme", 0)))
+		UnitSystem = Max(0, Min(1, m.GetDefault("units", 0)))
+		ExtraPrecision = Max(0, Min(1, m.GetDefault("precision", 0)))
+	Catch
+		ThemeMode = 0
+		UnitSystem = 0
+		ExtraPrecision = 0
+	End Try
+End Sub
+
+Private Sub SaveUiSettings
+	Dim m As Map
+	m.Initialize
+	m.Put("theme", ThemeMode)
+	m.Put("units", UnitSystem)
+	m.Put("precision", ExtraPrecision)
+	File.WriteMap(File.DirInternal, "ui_settings.txt", m)
+End Sub
+
+Private Sub ApplyThemePalette
+	If ThemeMode = 1 Then
+		ColorPnlTitle = 0xFFFFFFFF
+		ColorTitleText = 0xFF0B1220
+		ColorPnlLine = 0xFF007F95
+		ColorPnlLine2 = 0xFFD5DCE6
+		ColorPnlLine3 = 0xFFE3E8EF
+		ColorBut3 = Colors.Transparent
+		ColorBut4 = Colors.Transparent
+		ColorButText2 = 0xFF667085
+		ColorButText3 = 0xFF007F95
+		ColorBut1 = 0xFFF8FAFC
+		ColorBut2 = 0xFFE9EEF4
+		ColorButText1 = 0xFF172033
+		ColorEdt = 0xFFFFFFFF
+		ColorEdtText = 0xFF006B7D
+		ColorEdtHint = 0xFF78879A
+		ColorPnlInput1 = 0xFFF7F9FC
+		ColorPnlInput2 = 0xFFFFFFFF
+		ColorPnlInput3 = 0xFFF7F9FC
+		ColorPnlInput4 = 0xFFFFFFFF
+		ColorPnlInput5 = 0xFFF1F4F8
+		ColorAccentCyan = 0xFF007F95
+		ColorAccentGreen = 0xFF007A52
+		ColorAccentAmber = 0xFFAA5A00
+	Else
+		ColorPnlTitle = 0xFF0D121B
+		ColorTitleText = 0xFFFFFFFF
+		ColorPnlLine = 0xFF00E5FF
+		ColorPnlLine2 = 0xFF1E2738
+		ColorPnlLine3 = 0xFF171E2B
+		ColorBut3 = Colors.Transparent
+		ColorBut4 = Colors.Transparent
+		ColorButText2 = 0xFF94A3B8
+		ColorButText3 = 0xFF00E5FF
+		ColorBut1 = 0xFF1A2332
+		ColorBut2 = 0xFF121925
+		ColorButText1 = 0xFFF1F5F9
+		ColorEdt = 0xFF0F141E
+		ColorEdtText = 0xFF00E5FF
+		ColorEdtHint = 0xFF64748B
+		ColorPnlInput1 = 0xFF0A0E15
+		ColorPnlInput2 = 0xFF0E131C
+		ColorPnlInput3 = 0xFF0A0E15
+		ColorPnlInput4 = 0xFF0E131C
+		ColorPnlInput5 = 0xFF07090E
+		ColorAccentCyan = 0xFF00E5FF
+		ColorAccentGreen = 0xFF00E676
+		ColorAccentAmber = 0xFFFFB300
+	End If
+End Sub
+
+Private Sub OpenSettingsPopup
+	If SettingsPopupOpen Then CloseSettingsPopup
+	pnlSettingsPopup.Initialize("pnlSettingsPopup")
+	pnlSettingsPopup.Color = 0x99000000
+	root.AddView(pnlSettingsPopup, 0, 0, root.Width, root.Height)
+	SettingsPopupOpen = True
+	pnlSettingsPopup.BringToFront
+	
+	Dim cardW As Int = root.Width - 24dip
+	If cardW > 540dip Then cardW = 540dip
+	Dim cardH As Int = 360dip
+	If cardH > root.Height - 24dip Then cardH = root.Height - 24dip
+	Dim cardLeft As Int = (root.Width - cardW) / 2
+	Dim cardTop As Int = (root.Height - cardH) / 2
+	Dim card As Panel
+	card.Initialize("")
+	card.Color = ColorPnlInput5
+	pnlSettingsPopup.AddView(card, cardLeft, cardTop, cardW, cardH)
+	
+	Dim titleBar As Panel
+	titleBar.Initialize("")
+	titleBar.Color = ColorPnlTitle
+	card.AddView(titleBar, 0, 0, cardW, 52dip)
+	Dim lblTitle As Label
+	lblTitle.Initialize("")
+	lblTitle.Text = "SETTINGS"
+	lblTitle.TextColor = ColorAccentCyan
+	lblTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblTitle.TextSize = 14
+	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	titleBar.AddView(lblTitle, 16dip, 0, cardW - 72dip, 52dip)
+	Dim btnClose As Button
+	btnClose.Initialize("btnCloseSettings")
+	btnClose.Text = "×"
+	btnClose.TextColor = ColorButText1
+	btnClose.TextSize = 20
+	btnClose.Color = Colors.Transparent
+	titleBar.AddView(btnClose, cardW - 52dip, 2dip, 48dip, 48dip)
+	
+	AddSettingsRow(card, 68dip, "Theme", "Dark or light cockpit palette", "btnSettingTheme")
+	AddSettingsRow(card, 150dip, "Result Units", "Dimensional outputs only", "btnSettingUnits")
+	AddSettingsRow(card, 232dip, "Output Format", "AeroCalculator-style precision", "btnSettingPrecision")
+	RefreshSettingsButtons
+End Sub
+
+Private Sub AddSettingsRow(card As Panel, y As Int, title As String, subtitle As String, eventName As String)
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = title & CRLF & subtitle
+	lbl.TextColor = ColorButText1
+	lbl.TextSize = 12
+	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	card.AddView(lbl, 16dip, y, card.Width * 0.48, 64dip)
+	Dim b As Button
+	b.Initialize(eventName)
+	b.TextColor = ColorAccentCyan
+	b.Typeface = Typeface.DEFAULT_BOLD
+	b.TextSize = 12
+	b.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	card.AddView(b, card.Width * 0.53, y + 8dip, card.Width * 0.42, 48dip)
+	If eventName = "btnSettingTheme" Then btnSettingTheme = b
+	If eventName = "btnSettingUnits" Then btnSettingUnits = b
+	If eventName = "btnSettingPrecision" Then btnSettingPrecision = b
+End Sub
+
+Private Sub RefreshSettingsButtons
+	If btnSettingTheme.IsInitialized Then
+		If ThemeMode = 1 Then btnSettingTheme.Text = "LIGHT" Else btnSettingTheme.Text = "DARK"
+	End If
+	If btnSettingUnits.IsInitialized Then
+		If UnitSystem = 1 Then btnSettingUnits.Text = "IMPERIAL" Else btnSettingUnits.Text = "SI"
+	End If
+	If btnSettingPrecision.IsInitialized Then
+		If ExtraPrecision = 1 Then btnSettingPrecision.Text = "+1 DECIMAL" Else btnSettingPrecision.Text = "STANDARD"
+	End If
+End Sub
+
+Sub btnSettingTheme_Click
+	ThemeMode = 1 - ThemeMode
+	SaveUiSettings
+	CloseSettingsPopup
+	ApplyThemePalette
+	RebuildApplicationUI
+End Sub
+
+Sub btnSettingUnits_Click
+	UnitSystem = 1 - UnitSystem
+	SaveUiSettings
+	RefreshSettingsButtons
+	RecalculateRotor
+End Sub
+
+Sub btnSettingPrecision_Click
+	ExtraPrecision = 1 - ExtraPrecision
+	SaveUiSettings
+	RefreshSettingsButtons
+	RecalculateRotor
+End Sub
+
+Sub btnCloseSettings_Click
+	CloseSettingsPopup
+End Sub
+
+Private Sub CloseSettingsPopup
+	If SettingsPopupOpen Then
+		pnlSettingsPopup.RemoveView
+		SettingsPopupOpen = False
+	End If
+End Sub
+
+Private Sub RebuildApplicationUI
+	If GeometryPopupOpen Then CloseGeometryPopup
+	If SweepPopupOpen Then CloseSweepPopup
+	If UnitPopupOpen Then CloseUnitConverter
+	root.RemoveAllViews
+	root.Color = ColorPnlInput5
+	Activity.Color = ColorPnlInput5
+	BuildPageGeom
+	BuildPageCond
+	BuildPageRes
+	root.AddView(pnlBack0, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
+	root.AddView(pnlBack1, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
+	root.AddView(pnlBack2, 0, HeaderHeight, root.Width, root.Height - HeaderHeight)
+	BuildUnifiedHeader
+	LoadConditionDataToFields
+	RecalculateRotor
+	ShowPage(CurrentPage, False)
+End Sub
+
+Private Sub ShowConventionDialog
+	Msgbox("zBET / zBEMT rotor convention:" & CRLF & CRLF & _
+		"+x / +Vx: forward in the rotor plane." & CRLF & _
+		"+y: starboard." & CRLF & _
+		"+z / +Vz: downward through the disk." & CRLF & _
+		"Thrust T > 0 acts upward (-z)." & CRLF & CRLF & _
+		"μ = Vx/(ΩR)." & CRLF & _
+		"μz = Vz/(ΩR), positive downward." & CRLF & _
+		"α > 0 means the stream arrives from below, so μz = -μ tan α." & CRLF & _
+		"λ = μz + λi, with λi ≥ 0 induced downward." & CRLF & CRLF & _
+		"CCW rotation viewed from above; advancing side is the right side.", "zBET / zBEMT Conventions")
+End Sub
+
+Private Sub OpenPhysicsHelp
+	' Replaced by the offline HTML viewer later in this implementation pass.
+	Msgbox("The complete offline physics and equations guide is being packaged with the application.", "Physics & Equations")
+End Sub
 
 ' ====================================================================
 ' QUICK UNIT CONVERTER
