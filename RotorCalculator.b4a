@@ -1179,6 +1179,7 @@ Private Sub RotorListName(fullName As String) As String
 	If fullName.ToLowerCase.Contains("(copy)") And shortName.ToLowerCase.Contains("(copy)") = False Then
 		shortName = shortName & " (Copy)"
 	End If
+	If shortName.Length > 24 Then shortName = shortName.SubString2(0, 21) & "…"
 	Return shortName
 End Sub
 
@@ -1815,6 +1816,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
 	If edtRotorName.IsInitialized And edtRotorName.Text.Trim <> "" Then
 		Dim newName As String = edtRotorName.Text.Trim
+		newName = newName.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
 		If newName.Length > 40 Then newName = newName.SubString2(0, 40)
 		ActiveGeom.Name = newName
 	End If
