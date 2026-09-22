@@ -269,18 +269,28 @@ PY
   python /tmp/tap_text.py CONDITIONS
   sleep 1
   python /tmp/tap_text.py "Coleman-Feingold"
+  sleep 0.5
+  python /tmp/tap_text.py "Drees"
   sleep 1
   python /tmp/tap_text.py "Numerical Vectorial"
+  sleep 0.5
+  python /tmp/tap_text.py "Analytical Tangential"
   sleep 1
   python /tmp/tap_text.py "Collective to CT"
+  sleep 0.5
+  python /tmp/tap_text.py "RPM to Thrust"
   sleep 1
   python /tmp/ui_node.py "$OUT/07a-rpm-trim.xml" > "$OUT/07a-rpm-trim.json"
   grep -qi "RPM to Thrust" "$OUT/07a-rpm-trim.json"
   python /tmp/tap_text.py "RPM to Thrust"
+  sleep 0.5
+  python /tmp/tap_text.py "Manual Pitch"
   sleep 1
   python /tmp/ui_node.py "$OUT/07b-manual-trim.xml" > "$OUT/07b-manual-trim.json"
   grep -qi "Manual Pitch" "$OUT/07b-manual-trim.json"
   python /tmp/tap_text.py "Manual Pitch"
+  sleep 0.5
+  python /tmp/tap_text.py "Collective to Target"
   sleep 1
   python /tmp/ui_node.py "$OUT/07-condition-models.xml" > "$OUT/07-condition-models.json"
   grep -qi "Drees Linear" "$OUT/07-condition-models.json"
