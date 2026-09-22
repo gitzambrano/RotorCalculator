@@ -272,12 +272,18 @@ PY
   sleep 1
   python /tmp/tap_text.py "Collective to CT"
   sleep 1
+  python /tmp/ui_node.py "$OUT/07a-rpm-trim.xml" > "$OUT/07a-rpm-trim.json"
+  grep -qi "RPM to Thrust" "$OUT/07a-rpm-trim.json"
+  python /tmp/tap_text.py "RPM to Thrust"
+  sleep 1
+  python /tmp/ui_node.py "$OUT/07b-manual-trim.xml" > "$OUT/07b-manual-trim.json"
+  grep -qi "Manual Pitch" "$OUT/07b-manual-trim.json"
   python /tmp/tap_text.py "Manual Pitch"
   sleep 1
   python /tmp/ui_node.py "$OUT/07-condition-models.xml" > "$OUT/07-condition-models.json"
   grep -qi "Drees Linear" "$OUT/07-condition-models.json"
   grep -qi "Analytical Tangential" "$OUT/07-condition-models.json"
-  grep -qi "Collective to CT" "$OUT/07-condition-models.json"
+  grep -qi "Collective to Thrust" "$OUT/07-condition-models.json"
 
   # Force a real live portrait -> landscape resize, not only a rotation flag.
   adb shell settings put system user_rotation 1
@@ -298,7 +304,7 @@ PY
   # viewport cannot contain all three controls on a short landscape phone.
   assert_text_scrolling_down "$OUT" "Drees Linear" 873 393 "08b-inflow"
   assert_text_scrolling_down "$OUT" "Analytical Tangential" 873 393 "08c-profile"
-  assert_text_scrolling_down "$OUT" "Collective to CT" 873 393 "08d-trim"
+  assert_text_scrolling_down "$OUT" "Collective to Thrust" 873 393 "08d-trim"
   python /tmp/ui_node.py "$OUT/08e-rotated-models-final.xml" > "$OUT/08e-rotated-models-final.json"
   adb shell wm size 393x873
   adb shell settings put system user_rotation 0
