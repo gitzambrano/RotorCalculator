@@ -39,6 +39,12 @@ def verify_b4a_source_contract() -> None:
         "If f_hi > 0.0 Then Return -1.0",
         "res.SolutionValid = True",
         "res.CompressibilityWarning = False",
+        "Sqrt(0.75 * 0.75 + 0.5 * mu * mu)",
+        "If mEff > 0.85 Then mEff = 0.85",
+        "Dim cpFoM As Double = c.KInd * idealHoverPower + res.CQ0",
+        "res.FoM = idealHoverPower / cpFoM",
+        "For iter_tip = 1 To 8",
+        "For iter_trim_tip = 1 To 8",
         "0.5 * a * (t_mom(2) + 0.5 * mu * mu * t_mom(0)",
         "2.0 * (b_val * b_val) * mid * Sqrt(mu * mu + lam_mid * lam_mid)",
         "cond.KInd * lambda_i * ct_val + cond.MuZ * ct_val - cond.Mu * res.CHi",
@@ -180,6 +186,64 @@ def verify_axial_representations() -> None:
         raise AssertionError("positive alpha must produce negative mu_z")
 
 
+def verify_reference_corrections() -> None:
+    # Prandtl-Glauert must use the reference 75%-radius effective Mach.
+    sol = zBET.resolve_solidity(
+        "chords", radius=5.0, chord_root=0.30, chord_tip=0.24, n_blades=4
+    )
+    geom_pg = zBET.Geometry(
+        420.0,
+        5.0,
+        5.73,
+        0.15,
+        0.009,
+        sol,
+        speed_of_sound=340.3,
+        use_prandtl_glauert=True,
+    )
+    mu = 0.30
+    m_eff = geom_pg.tip_mach * math.sqrt(0.75 * 0.75 + 0.5 * mu * mu)
+    m_eff = min(m_eff, 0.85)
+    expected_a = geom_pg.lift_curve_slope / math.sqrt(max(0.01, 1.0 - m_eff * m_eff))
+    if not math.isclose(geom_pg.lift_slope(mu), expected_a, rel_tol=0.0, abs_tol=1e-14):
+        raise AssertionError("Prandtl-Glauert reference definition changed")
+
+    # Sissingh B must be mutually consistent with the final CT.
+    geom_s = zBET.Geometry(
+        390.0,
+        5.0,
+        5.73,
+        0.15,
+        0.009,
+        sol,
+        tip_loss_mode="sissingh",
+    )
+    _, pitch = zBET.trim_hover(
+        geom_s,
+        hover_trim_mode="none",
+        pitch_mode="linear_twist",
+        theta_root_deg=12.0,
+        theta_tip_deg=4.0,
+    )
+    out = zBET.coefficients(
+        0.20,
+        0.0,
+        pitch,
+        geom_s,
+        "coleman_feingold",
+        profile_drag_model="numerical_vectorial",
+    )
+    expected_b = geom_s.b_factor(ct=out["CT"])
+    if not math.isclose(out["B_tip_loss"], expected_b, rel_tol=0.0, abs_tol=2e-8):
+        raise AssertionError("Sissingh B/CT coupling did not converge")
+
+    # FoM is the hover energy-balance metric, independent of torque selector.
+    ideal = out["CT"] ** 1.5 / math.sqrt(2.0)
+    expected_fom = ideal / (zBET.K_IND * ideal + out["CQ0"])
+    if not math.isclose(out["FoM"], expected_fom, rel_tol=0.0, abs_tol=1e-13):
+        raise AssertionError("FoM no longer matches the energy-balance definition")
+
+
 def main() -> None:
     print("=" * 72)
     print("RotorCalculator offline verification")
@@ -188,6 +252,8 @@ def main() -> None:
     print("PASS: B4A source contract")
     verify_axial_representations()
     print("PASS: alpha / Vz / mu_z representation equivalence")
+    verify_reference_corrections()
+    print("PASS: PG / Sissingh / FoM reference corrections")
     count, residual = run_reference_matrix()
     print(f"PASS: deterministic reference matrix {count}/100")
     print(f"PASS: max momentum-closure residual = {residual:.3e}")
