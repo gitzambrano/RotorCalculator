@@ -144,6 +144,7 @@ def test_engine_defensively_guards_mathematical_domains():
     assert "geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))" in src
     assert "geom.NBlades = Max(1, Min(16, geom.NBlades))" in src
     assert "Public Sub SanitizeCondition" in src
+    assert "If f_lo < 0.0 Then Return -1.0" in src
     assert "If f_hi > 0.0 Then Return -1.0" in src
     assert "SolutionValid As Boolean" in src
     assert "CompressibilityWarning As Boolean" in src
@@ -187,6 +188,7 @@ def test_all_three_trim_modes_are_exposed():
     assert 'Case "collective"' in main
     assert 'Case "rpm"' in main
     assert 'btnHoverTrimMode.Text = "RPM to Thrust"' in main
+    assert "Private Sub DefaultRPMTargetThrust As Double" in main
     assert 'btnHoverTrimMode.Text = "Manual Pitch"' in main
 
 
