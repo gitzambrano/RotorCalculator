@@ -109,10 +109,15 @@ capture_screen() {
   done
   python /tmp/ui_node.py "$OUT/01b-rotor-list-bottom.xml" > "$OUT/01b-rotor-list-bottom.json"
   grep -qi "eVTOL Conceptual Rotor" "$OUT/01b-rotor-list-bottom.json"
-  for _ in 1 2 3 4 5; do
-    adb shell input swipe $((W/2)) $((H/4)) $((W/2)) $((H*3/5)) 220 || true
-  done
-  sleep 0.5
+  # Relaunch instead of trying to reverse an arbitrary ScrollView offset. This
+  # resets the list deterministically on every aspect ratio and also exercises
+  # cold-resume persistence before opening the active rotor.
+  adb shell am force-stop flightdyn.rotorcalculator
+  adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
+  sleep 1
+  assert_app_alive
+  python /tmp/ui_node.py "$OUT/01c-rotor-list-after-relaunch.xml" > "$OUT/01c-rotor-list-after-relaunch.json"
+  grep -qi "Sikorsky UH-60 Black Hawk" "$OUT/01c-rotor-list-after-relaunch.json"
 
   python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
   sleep 1
