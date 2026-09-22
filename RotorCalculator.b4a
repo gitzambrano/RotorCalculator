@@ -1662,8 +1662,11 @@ Sub btnSelectAirfoil_Click
 		Dim selAf As AirfoilData = RotorPopups.Airfoils.Get(resIndex)
 		ActiveGeom.LiftSlope0 = selAf.A0
 		ActiveGeom.Cd0 = selAf.Cd0
+		Dim wasUpdating As Boolean = UpdatingUI
+		UpdatingUI = True
 		edtLiftSlope.Text = NumberFormat(selAf.A0, 1, 2)
 		edtCd0.Text = NumberFormat(selAf.Cd0, 1, 4)
+		UpdatingUI = wasUpdating
 		btnSelectAirfoil.Text = selAf.Name
 		RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 		RecalculateRotor
