@@ -164,13 +164,19 @@ def test_ui_clamps_user_inputs_before_recalculation():
     assert "Sub edtCond_FocusChanged" in main
 
 
-def test_sweep_recomputes_axial_flow_for_every_mu():
+def test_sweep_uses_one_canonical_axial_representation_per_curve():
     popup = text("RotorPopups.bas")
     main = text("RotorCalculator.b4a")
-    assert "activeAlphaDeg As Double" in popup
-    assert "activeVzRate As Double" in popup
-    assert "tempCond.MuZ = -mu * Tan(alphaDeg * cPI / 180.0) + (vzRate / vtip)" in popup
-    assert "tempCond.MuZ = -mu * Tan(ConditionShaftTiltDeg * cPI / 180.0) + (ConditionClimbRateMs / vtip)" in main
+    engine = text("zBETEngine.bas")
+    assert "activeAxialMode As String" in popup
+    assert "activeAxialValue As Double" in popup
+    assert "zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, vtip)" in popup
+    assert "zBETEngine.ResolveMuZ(mu, AxialInputMode, ConditionAxialValue, vtip)" in main
+    assert 'Case "alpha"' in engine
+    assert 'Case "vz"' in engine
+    assert 'Case "muz"' in engine
+    assert "Return -mu * Tan(axialValue * cPI / 180.0)" in engine
+    assert "Return axialValue / vtip" in engine
 
 
 def test_geometry_crud_is_complete_and_row_regions_do_not_overlap():
@@ -234,3 +240,35 @@ def test_visible_geometry_parameterization_is_authoritative_and_names_are_safe()
     assert 'g.PitchMode = "linear_twist"' in storage
     assert 'newName = newName.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")' in main
     assert 'shortName = shortName.SubString2(0, 21) & "…"' in main
+
+
+def test_conditions_group_equivalent_horizontal_and_axial_inputs():
+    main = text("RotorCalculator.b4a")
+    assert 'Public HorizontalInputMode As String = "mu"' in main
+    assert 'Public AxialInputMode As String = "alpha"' in main
+    assert 'btnHorizontalInput.Text = "μ"' in main
+    assert 'btnHorizontalInput.Text = "Vx"' in main
+    assert 'btnAxialInput.Text = "α"' in main
+    assert 'btnAxialInput.Text = "Vz"' in main
+    assert 'btnAxialInput.Text = "μz"' in main
+    assert 'options.Add("μ — advance ratio = Vx/(ΩR)")' in main
+    assert 'options.Add("α — rotor angle of attack [+ stream from below]")' in main
+    assert "ConditionShaftTiltDeg" not in main
+    assert "ConditionClimbRateMs" not in main
+
+
+def test_axial_helper_explains_zbet_zbemt_signs_on_mobile():
+    main = text("RotorCalculator.b4a")
+    assert '"Horizontal Flow Convention"' in main
+    assert '"Axial Flow Convention"' in main
+    assert '"+z and +Vz are downward through the rotor disk."' in main
+    assert '"Rotor angle of attack α is positive when the stream arrives from below."' in main
+    assert '"α is undefined at Vx = 0 for nonzero axial flow. Use Vz or μz."' in main
+
+
+def test_sweep_can_compare_alpha_vz_and_muz_families():
+    popup = text("RotorPopups.bas")
+    assert 'curveAxialMode = "alpha"' in popup
+    assert 'curveAxialMode = "vz"' in popup
+    assert 'curveAxialMode = "muz"' in popup
+    assert 'Array As String("-0.050", "-0.025", "0", "+0.025", "+0.050")' in popup
