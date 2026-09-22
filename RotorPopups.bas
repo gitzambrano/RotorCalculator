@@ -185,8 +185,9 @@ Public Sub ExtractParamValue(res As RotorResults, paramKey As String) As Double
 	End Select
 End Sub
 
-' Renders universal sweep plot of ANY parameter vs advance ratio (μ) with multi-curve comparison
-' multiCurveMode: 0=4 Inflow Models, 1=5 Alphas (-10° to +10°), 2=5 Vertical Speeds (-10 to +10 m/s), 3=Single Active Curve
+' Renders a universal sweep plot with a reserved title/legend band.
+' multiCurveMode: 0=inflow models, 1=alpha family, 2=Vz family, 3=mu_z family, 4=single active.
+' xAxisMode: 0=mu, 1=Vx [m/s].
 Public Sub DrawSweepPlot( _
 	widthPx As Int, _
 	heightPx As Int, _
@@ -198,7 +199,9 @@ Public Sub DrawSweepPlot( _
 	maxMu As Double, _
 	currentMu As Double, _
 	activeAxialMode As String, _
-	activeAxialValue As Double _
+	activeAxialValue As Double, _
+	xAxisMode As Int, _
+	lightTheme As Boolean _
 ) As Bitmap
 
 	Dim bmp As Bitmap
@@ -207,37 +210,67 @@ Public Sub DrawSweepPlot( _
 	Dim cvs As Canvas
 	cvs.Initialize2(bmp)
 	
-	' Dark Cyber-Cockpit Palette
-	Dim colBg As Int = 0xFF10141C
-	Dim colGrid As Int = 0xFF202A36
-	Dim colText As Int = 0xFF8F9CAE
-	Dim colCurrentPoint As Int = 0xFFFFB300
-	Dim colAccent As Int = 0xFF00E5FF
-	' Refined Aero-Tonal Palette (Subtle accents, no multi-color rainbow)
-	Dim colC1 As Int = 0xFF475569   ' Deep slate
-	Dim colC2 As Int = 0xFF0284C7   ' Medium aero blue
-	Dim colC3 As Int = 0xFF00E5FF   ' Electric cyan nominal
-	Dim colC4 As Int = 0xFF7DD3FC   ' Ice cyan
-	Dim colC5 As Int = 0xFFE2E8F0   ' Platinum white
-	
-	' Unified Inflow Model Colors
-	Dim colUniform As Int = 0xFF64748B      ' Muted slate
-	Dim colColemanSimple As Int = 0xFF38BDF8' Sky cyan
-	Dim colColemanFG As Int = 0xFF00E5FF    ' Electric cyan primary
-	Dim colDrees As Int = 0xFFBAE6FD        ' Light ice cyan
+	Dim colBg As Int
+	Dim colGrid As Int
+	Dim colText As Int
+	Dim colCurrentPoint As Int
+	Dim colAccent As Int
+	Dim colC1 As Int
+	Dim colC2 As Int
+	Dim colC3 As Int
+	Dim colC4 As Int
+	Dim colC5 As Int
+	Dim colUniform As Int
+	Dim colColemanSimple As Int
+	Dim colColemanFG As Int
+	Dim colDrees As Int
+	If lightTheme Then
+		colBg = 0xFFFFFFFF
+		colGrid = 0xFFD9E1EA
+		colText = 0xFF475467
+		colCurrentPoint = 0xFFAA5A00
+		colAccent = 0xFF007F95
+		colC1 = 0xFF667085
+		colC2 = 0xFF126A88
+		colC3 = 0xFF007F95
+		colC4 = 0xFF2596B2
+		colC5 = 0xFF172033
+		colUniform = 0xFF667085
+		colColemanSimple = 0xFF2585A5
+		colColemanFG = 0xFF007F95
+		colDrees = 0xFF172033
+	Else
+		colBg = 0xFF10141C
+		colGrid = 0xFF202A36
+		colText = 0xFF8F9CAE
+		colCurrentPoint = 0xFFFFB300
+		colAccent = 0xFF00E5FF
+		colC1 = 0xFF475569
+		colC2 = 0xFF0284C7
+		colC3 = 0xFF00E5FF
+		colC4 = 0xFF7DD3FC
+		colC5 = 0xFFE2E8F0
+		colUniform = 0xFF64748B
+		colColemanSimple = 0xFF38BDF8
+		colColemanFG = 0xFF00E5FF
+		colDrees = 0xFFBAE6FD
+	End If
 	
 	cvs.DrawColor(colBg)
 	
 	' Margins in DIP
 	Dim mLeft As Float = 64dip
 	Dim mRight As Float = 24dip
-	Dim mTop As Float = 38dip
+	Dim mTop As Float = 72dip
 	Dim mBottom As Float = 48dip
 	
 	Dim plotW As Float = widthPx - mLeft - mRight
 	Dim plotH As Float = heightPx - mTop - mBottom
 	
 	If plotW <= 10 Or plotH <= 10 Then Return bmp
+	Dim plotOmega As Double = geom.RPM * (2.0 * cPI / 60.0)
+	Dim plotVtip As Double = plotOmega * geom.Radius
+	If plotVtip < 1.0 Then plotVtip = 1.0
 	
 	' Advance ratio stations (25 points)
 	Dim nPoints As Int = 25
@@ -312,10 +345,7 @@ Public Sub DrawSweepPlot( _
 			muPoints(i) = mu
 			tempCond.Mu = mu
 			
-			Dim omega As Double = geom.RPM * (2.0 * cPI / 60.0)
-			Dim vtip As Double = omega * geom.Radius
-			If vtip < 1.0 Then vtip = 1.0
-			tempCond.MuZ = zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, vtip)
+			tempCond.MuZ = zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, plotVtip)
 			
 			Dim res As RotorResults = zBETEngine.Calculate(geom, tempCond)
 			If res.SolutionValid Then
@@ -373,12 +403,20 @@ Public Sub DrawSweepPlot( _
 		Dim muG As Double = (jg / 5.0) * maxMu
 		Dim xG As Float = mLeft + (jg / 5.0) * plotW
 		cvs.DrawLine(xG, mTop, xG, mTop + plotH, colGrid, 1dip)
-		cvs.DrawText(NumberFormat(muG, 1, 2), xG, mTop + plotH + 18dip, Typeface.MONOSPACE, 10, colText, "CENTER")
+		Dim xText As String
+		If xAxisMode = 1 Then
+			xText = NumberFormat2(muG * plotVtip, 1, 1, 1, False)
+		Else
+			xText = NumberFormat2(muG, 1, 2, 2, False)
+		End If
+		cvs.DrawText(xText, xG, mTop + plotH + 18dip, Typeface.MONOSPACE, 10, colText, "CENTER")
 	Next
 	
-	' Axes title labels
-	cvs.DrawText(SweepPlotTitle(paramKey), mLeft, mTop - 12dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
-	cvs.DrawText("Advance Ratio (μ)", mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 11, colText, "CENTER")
+	' Title and X label. The legend occupies the reserved band below the title.
+	Dim xAxisTitle As String = "Advance Ratio (μ)"
+	If xAxisMode = 1 Then xAxisTitle = "Forward Speed Vx (m/s)"
+	cvs.DrawText(SweepPlotTitle(paramKey) & " vs " & xAxisTitle, mLeft, 18dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
+	cvs.DrawText(xAxisTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 11, colText, "CENTER")
 	
 	' Draw curves
 	For cIdx = 0 To nCurves - 1
@@ -420,53 +458,45 @@ Public Sub DrawSweepPlot( _
 		Next
 	Next
 	
-	' Curve legends
+	' Curve legends — reserved above plot rectangle so labels never cover data.
+	Dim legendY As Float = 46dip
 	If multiCurveMode == 0 Then
-		Dim legX As Float = mLeft + plotW - 195dip
-		Dim legY As Float = mTop + 14dip
-		cvs.DrawLine(legX, legY, legX + 14dip, legY, colUniform, 2dip)
-		cvs.DrawText("Uniform", legX + 18dip, legY + 4dip, Typeface.DEFAULT, 9, colUniform, "LEFT")
-		cvs.DrawLine(legX + 85dip, legY, legX + 99dip, legY, colColemanSimple, 2dip)
-		cvs.DrawText("Coleman S.", legX + 103dip, legY + 4dip, Typeface.DEFAULT, 9, colColemanSimple, "LEFT")
-		legY = legY + 14dip
-		cvs.DrawLine(legX, legY, legX + 14dip, legY, colColemanFG, 3dip)
-		cvs.DrawText("Coleman-FG", legX + 18dip, legY + 4dip, Typeface.DEFAULT_BOLD, 9, colColemanFG, "LEFT")
-		cvs.DrawLine(legX + 85dip, legY, legX + 99dip, legY, colDrees, 2dip)
-		cvs.DrawText("Drees", legX + 103dip, legY + 4dip, Typeface.DEFAULT, 9, colDrees, "LEFT")
+		Dim labels4() As String = Array As String("Uniform", "Coleman S.", "Coleman-FG", "Drees")
+		Dim cols4() As Int = Array As Int(colUniform, colColemanSimple, colColemanFG, colDrees)
+		Dim itemW4 As Float = plotW / 4.0
+		For k = 0 To 3
+			Dim lx4 As Float = mLeft + k * itemW4
+			cvs.DrawLine(lx4, legendY, lx4 + 10dip, legendY, cols4(k), 2.5dip)
+			cvs.DrawText(labels4(k), lx4 + 13dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 8, cols4(k), "LEFT")
+		Next
 	Else If multiCurveMode == 1 Then
-		' Alphas legend: -10°, -5°, 0°, +5°, +10°
-		Dim legX As Float = mLeft + 10dip
-		Dim legY As Float = mTop + 14dip
 		Dim aLabels() As String = Array As String("-10°", "-5°", "0°", "+5°", "+10°")
 		Dim aCols() As Int = Array As Int(colC1, colC2, colC3, colC4, colC5)
+		Dim itemW5 As Float = plotW / 5.0
 		For k = 0 To 4
-			Dim lx As Float = legX + k * 44dip
-			cvs.DrawLine(lx, legY, lx + 12dip, legY, aCols(k), 2.5dip)
-			cvs.DrawText(aLabels(k), lx + 15dip, legY + 4dip, Typeface.DEFAULT_BOLD, 9, aCols(k), "LEFT")
+			Dim lx5 As Float = mLeft + k * itemW5
+			cvs.DrawLine(lx5, legendY, lx5 + 8dip, legendY, aCols(k), 2.5dip)
+			cvs.DrawText(aLabels(k), lx5 + 10dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 8, aCols(k), "LEFT")
 		Next
 	Else If multiCurveMode == 2 Then
-		' Vertical speed legend: -10, -5, 0, +5, +10 m/s
-		Dim legX As Float = mLeft + 6dip
-		Dim legY As Float = mTop + 14dip
-		Dim vzLabels() As String = Array As String("-10m/s", "-5m/s", "0m/s", "+5m/s", "+10m/s")
+		Dim vzLabels() As String = Array As String("-10", "-5", "0", "+5", "+10")
 		Dim vzCols() As Int = Array As Int(colC1, colC2, colC3, colC4, colC5)
+		Dim itemW5 As Float = plotW / 5.0
 		For k = 0 To 4
-			Dim lx As Float = legX + k * 48dip
-			cvs.DrawLine(lx, legY, lx + 10dip, legY, vzCols(k), 2.5dip)
-			cvs.DrawText(vzLabels(k), lx + 13dip, legY + 4dip, Typeface.DEFAULT_BOLD, 8, vzCols(k), "LEFT")
+			Dim lx5 As Float = mLeft + k * itemW5
+			cvs.DrawLine(lx5, legendY, lx5 + 8dip, legendY, vzCols(k), 2.5dip)
+			cvs.DrawText(vzLabels(k) & " m/s", lx5 + 10dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 7, vzCols(k), "LEFT")
 		Next
 	Else If multiCurveMode == 3 Then
-		Dim legX As Float = mLeft + 4dip
-		Dim legY As Float = mTop + 14dip
 		Dim mzLabels() As String = Array As String("-0.050", "-0.025", "0", "+0.025", "+0.050")
 		Dim mzCols() As Int = Array As Int(colC1, colC2, colC3, colC4, colC5)
+		Dim itemW5 As Float = plotW / 5.0
 		For k = 0 To 4
-			Dim lx As Float = legX + k * 50dip
-			cvs.DrawLine(lx, legY, lx + 10dip, legY, mzCols(k), 2.5dip)
-			cvs.DrawText(mzLabels(k), lx + 13dip, legY + 4dip, Typeface.DEFAULT_BOLD, 8, mzCols(k), "LEFT")
+			Dim lx5 As Float = mLeft + k * itemW5
+			cvs.DrawLine(lx5, legendY, lx5 + 8dip, legendY, mzCols(k), 2.5dip)
+			cvs.DrawText(mzLabels(k), lx5 + 10dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 7, mzCols(k), "LEFT")
 		Next
 	End If
-	
 	' Mark the active operating point
 	If currentMu >= 0.0 And currentMu <= maxMu Then
 		Dim curRes As RotorResults = zBETEngine.Calculate(geom, cond)
