@@ -673,30 +673,37 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	Dim ct_val As Double = CT_BET(c.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
 	res.CT = ct_val
 	
-	' Se modo sissingh, refina B e CT com 1 iteração
+	' Sissingh requires B and CT to be mutually consistent. Iterate to convergence.
 	If g.TipLossMode = "sissingh" And ct_val > 0 Then
-		b_val = GetBFactor(g, ct_val)
-		lambda_i = SolveInflow(c.Mu, c.MuZ, g, c, b_val)
-		If lambda_i < 0 Then
-			res.SolutionValid = False
-			res.StatusMessage = "INVALID: no physical inflow root after tip-loss update"
-			Return res
-		End If
-		lambda_total = c.MuZ + lambda_i
-		grads = InflowGradients(c.Mu, lambda_total, c.InflowModel, c.FxColeman, c.FyColeman)
-		kx = grads(0)
-		ky = grads(1)
-		lambda_1c = kx * lambda_i
-		lambda_1s = ky * lambda_i
+		For iter_tip = 1 To 8
+			Dim nextB As Double = GetBFactor(g, ct_val)
+			If Abs(nextB - b_val) < 1e-8 Then
+				b_val = nextB
+				Exit
+			End If
+			b_val = nextB
+			lambda_i = SolveInflow(c.Mu, c.MuZ, g, c, b_val)
+			If lambda_i < 0 Then
+				res.SolutionValid = False
+				res.StatusMessage = "INVALID: no physical inflow root after tip-loss update"
+				Return res
+			End If
+			lambda_total = c.MuZ + lambda_i
+			grads = InflowGradients(c.Mu, lambda_total, c.InflowModel, c.FxColeman, c.FyColeman)
+			kx = grads(0)
+			ky = grads(1)
+			lambda_1c = kx * lambda_i
+			lambda_1s = ky * lambda_i
+			moments = RadialMoments(g, b_val)
+			i_mom = moments(1)
+			t_mom = moments(2)
+			ct_val = CT_BET(c.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
+			res.CT = ct_val
+		Next
 		res.InflowLambda = lambda_total
 		res.InflowLambdaI = lambda_i
 		res.InflowKx = kx
 		res.InflowKy = ky
-		moments = RadialMoments(g, b_val)
-		i_mom = moments(1)
-		t_mom = moments(2)
-		ct_val = CT_BET(c.Mu, lambda_total, lambda_1s, i_mom, t_mom, res.EffectiveLiftSlope)
-		res.CT = ct_val
 	End If
 	res.BFactor = b_val
 	
