@@ -1989,11 +1989,18 @@ Private Sub RefreshDerivedCondition(updateDisplayedValues As Boolean)
 	Dim vtip As Double = RotorTipSpeed
 	If vtip > 0 Then
 		If HorizontalInputMode = "vx" Then
-			ActiveCond.Mu = ClampD(ConditionHorizontalValue / vtip, 0.0, 0.60)
+			ConditionHorizontalValue = ClampD(ConditionHorizontalValue, 0.0, 0.60 * vtip)
+			ActiveCond.Mu = ConditionHorizontalValue / vtip
 		Else
-			ActiveCond.Mu = ClampD(ConditionHorizontalValue, 0.0, 0.60)
+			ConditionHorizontalValue = ClampD(ConditionHorizontalValue, 0.0, 0.60)
+			ActiveCond.Mu = ConditionHorizontalValue
 		End If
-		ActiveCond.MuZ = zBETEngine.ResolveMuZ(ActiveCond.Mu, AxialInputMode, ConditionAxialValue, vtip)
+		If AxialInputMode = "vz" Then
+			ConditionAxialValue = ClampD(ConditionAxialValue, -0.50 * vtip, 0.50 * vtip)
+		Else If AxialInputMode = "muz" Then
+			ConditionAxialValue = ClampD(ConditionAxialValue, -0.50, 0.50)
+		End If
+		ActiveCond.MuZ = ClampD(zBETEngine.ResolveMuZ(ActiveCond.Mu, AxialInputMode, ConditionAxialValue, vtip), -0.50, 0.50)
 	Else
 		ActiveCond.Mu = 0.0
 		ActiveCond.MuZ = 0.0
@@ -2270,7 +2277,8 @@ Sub edtHorizontalValue_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
 	Dim raw As Double = ParseDoubleDef(edtHorizontalValue.Text, ConditionHorizontalValue)
 	If HorizontalInputMode = "vx" Then
-		ConditionHorizontalValue = Max(0.0, raw)
+		Dim vtip As Double = RotorTipSpeed
+		ConditionHorizontalValue = ClampD(raw, 0.0, 0.60 * Max(1.0, vtip))
 	Else
 		ConditionHorizontalValue = ClampD(raw, 0.0, 0.60)
 	End If
