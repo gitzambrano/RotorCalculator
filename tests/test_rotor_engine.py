@@ -59,6 +59,22 @@ def test_forward_flight_inflow_models():
         assert out["lambda_i"] < 0.04, f"Forward flight downwash should be small (got {out['lambda_i']})"
     print("PASS: test_forward_flight_inflow_models")
 
+
+def test_equivalent_axial_representations():
+    """alpha, Vz and mu_z must represent one identical axial operating state."""
+    geom = zBET.DEFAULT_GEOMETRY
+    mu = 0.22
+    alpha_deg = 6.0
+    mu_z_alpha, _ = zBET.axial_condition(mu, alpha_deg, "alpha", geom)
+    vz = mu_z_alpha * geom.vtip
+    mu_z_vz, _ = zBET.axial_condition(mu, vz, "w", geom)
+    mu_z_direct, _ = zBET.axial_condition(mu, mu_z_alpha, "mu_z", geom)
+
+    assert mu_z_alpha < 0.0, "positive alpha must produce negative mu_z in zBET"
+    assert math.isclose(mu_z_alpha, mu_z_vz, rel_tol=0.0, abs_tol=1e-14)
+    assert math.isclose(mu_z_alpha, mu_z_direct, rel_tol=0.0, abs_tol=1e-14)
+    print("PASS: test_equivalent_axial_representations")
+
 def test_presets_stability():
     """Test that all 6 presets compute physically reasonable values without errors."""
     presets = [
@@ -84,5 +100,6 @@ if __name__ == "__main__":
     print("Running RotorCalculator engine tests...")
     test_hover_thrust_and_inflow()
     test_forward_flight_inflow_models()
+    test_equivalent_axial_representations()
     test_presets_stability()
     print("All engine tests passed successfully!")
