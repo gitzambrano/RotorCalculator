@@ -14,6 +14,7 @@ File2=ic_action_accept.png
 File20=xenara-bold.ttf
 File21=icon.png
 File22=icon_bezel_green_white.png
+File23=physics_help.html
 File3=ic_action_cancel.png
 File4=icon_bezel_transp_green.png
 File5=icon_bezel_transp_white.png
@@ -36,6 +37,7 @@ FileGroup2=Default Group
 FileGroup20=Default Group
 FileGroup21=Default Group
 FileGroup22=Default Group
+FileGroup23=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
 FileGroup5=Default Group
@@ -47,12 +49,13 @@ Group=Default Group
 Library1=core
 Library2=phone
 Library3=rspopupmenu
+Library4=javaobject
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
-NumberOfFiles=22
-NumberOfLibraries=3
+NumberOfFiles=23
+NumberOfLibraries=4
 NumberOfModules=3
 Version=13
 @EndOfDesignText@
@@ -139,6 +142,10 @@ Sub Globals
 	Private UnitPopupOpen As Boolean = False
 	Private pnlSettingsPopup As Panel
 	Private SettingsPopupOpen As Boolean = False
+	Private pnlHelpPopup As Panel
+	Private HelpPopupOpen As Boolean = False
+	Private wvHelp As WebView
+	Private ion As Object
 	Private btnSettingTheme As Button
 	Private btnSettingUnits As Button
 	Private btnSettingPrecision As Button
@@ -295,6 +302,10 @@ End Sub
 
 Sub Activity_KeyPress (KeyCode As Int) As Boolean
 	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		If HelpPopupOpen Then
+			ClosePhysicsHelp
+			Return True
+		End If
 		If SettingsPopupOpen Then
 			CloseSettingsPopup
 			Return True
@@ -666,6 +677,7 @@ End Sub
 
 Private Sub RebuildApplicationUI
 	If GeometryPopupOpen Then CloseGeometryPopup
+	If HelpPopupOpen Then ClosePhysicsHelp
 	If SweepPopupOpen Then CloseSweepPopup
 	If UnitPopupOpen Then CloseUnitConverter
 	root.RemoveAllViews
@@ -697,8 +709,50 @@ Private Sub ShowConventionDialog
 End Sub
 
 Private Sub OpenPhysicsHelp
-	' Replaced by the offline HTML viewer later in this implementation pass.
-	Msgbox("The complete offline physics and equations guide is being packaged with the application.", "Physics & Equations")
+	If HelpPopupOpen Then ClosePhysicsHelp
+	pnlHelpPopup.Initialize("pnlHelpPopup")
+	pnlHelpPopup.Color = ColorPnlInput5
+	root.AddView(pnlHelpPopup, 0, 0, root.Width, root.Height)
+	HelpPopupOpen = True
+	pnlHelpPopup.BringToFront
+	
+	Dim titleH As Int = 52dip
+	Dim titleBar As Panel
+	titleBar.Initialize("")
+	titleBar.Color = ColorPnlTitle
+	pnlHelpPopup.AddView(titleBar, 0, 0, root.Width, titleH)
+	Dim lblTitle As Label
+	lblTitle.Initialize("")
+	lblTitle.Text = "PHYSICS & EQUATIONS"
+	lblTitle.TextColor = ColorAccentCyan
+	lblTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblTitle.TextSize = 14
+	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	titleBar.AddView(lblTitle, 16dip, 0, root.Width - 72dip, titleH)
+	Dim btnClose As Button
+	btnClose.Initialize("btnClosePhysicsHelp")
+	btnClose.Text = "×"
+	btnClose.TextColor = ColorButText1
+	btnClose.TextSize = 20
+	btnClose.Color = Colors.Transparent
+	titleBar.AddView(btnClose, root.Width - 52dip, 2dip, 48dip, 48dip)
+	
+	wvHelp.Initialize("")
+	pnlHelpPopup.AddView(wvHelp, 0, titleH, root.Width, root.Height - titleH)
+	Dim themeQuery As String = "dark"
+	If ThemeMode = 1 Then themeQuery = "light"
+	wvHelp.LoadUrl("file:///android_asset/physics_help.html?theme=" & themeQuery)
+End Sub
+
+Sub btnClosePhysicsHelp_Click
+	ClosePhysicsHelp
+End Sub
+
+Private Sub ClosePhysicsHelp
+	If HelpPopupOpen Then
+		pnlHelpPopup.RemoveView
+		HelpPopupOpen = False
+	End If
 End Sub
 
 ' ====================================================================
