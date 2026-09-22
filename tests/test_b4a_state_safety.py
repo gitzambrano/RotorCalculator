@@ -395,3 +395,12 @@ def test_sissingh_is_iterated_in_performance_and_rpm_trim():
     assert "def solve_at_b(b_current):" in reference
     assert "b_override=b_val" in reference
     assert '"B_tip_loss": b_val' in reference
+
+
+def test_release_source_version_and_no_stale_tracked_binaries():
+    main = text("RotorCalculator.b4a")
+    assert "#VersionCode: 3" in main
+    assert "#VersionName: 1.20" in main
+    assert not (ROOT / "Objects" / "RotorCalculator.apk").exists()
+    assert not (ROOT / "RotorCalculator_Signed.apk").exists()
+    assert not (ROOT / "RotorCalculator_Signed.aab").exists()
