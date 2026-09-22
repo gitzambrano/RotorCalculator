@@ -16,9 +16,9 @@ O sistema oferece um cálculo instantâneo e rigoroso do desempenho aerodinâmic
 
 ### Diferenciais em Relação ao AeroCalculator:
 - **Herança de Sucesso**: Mantém o fluxo consagrado do AeroCalculator — abas deslizantes de alta resposta, banco de dados local com biblioteca de aeronaves/rotores salvos, e cálculo instantâneo reativo.
-- **Acabamento "Ultra-Premium"**: Design escuro *cyber-cockpit* / *titanium glass*, com paleta de contraste calibrada (ciano elétrico `#00E5FF`, verde esmeralda `#00E676`, acentos em laranja âmbar `#FFB300`), tipografia nítida e cartões de telemetria estilizados.
+- **Acabamento "Ultra-Premium"**: temas **Dark** e **Light** selecionáveis e persistentes, ambos com contraste de instrumento técnico, tipografia nítida e acentos funcionais consistentes.
 - **Rigor Físico Exaustivo**: Toda a física foi validada contra o zBET de referência e as obras seminais de Wayne Johnson (*Rotorcraft Aeromechanics*) e J. Gordon Leishman (*Principles of Helicopter Aerodynamics*).
-- **Popups de Apoio e Ferramentas**: Popups para escolha de aerofólios típicos, conversão rápida de unidades e gráficos interativos de varredura gerados via `Canvas` nativo do Android.
+- **Popups de Apoio e Ferramentas**: seleção de aerofólios, conversor rápido, convenções, manual offline de física/equações e gráficos interativos de varredura gerados via `Canvas`, com exportação CSV/PNG.
 
 ---
 
@@ -42,6 +42,7 @@ C:\Projetos\RotorCalculator\
 ├── Files\                        # Recursos empacotados no APK/AAB
 │   ├── icon.png                  # Ícone de alta definição do aplicativo (96x96 / mipmap)
 │   ├── xenara-bold.ttf           # Fonte técnica aeronáutica
+│   ├── physics_help.html          # Manual offline de física, equações e convenções
 │   └── icon_*.png                # Ícones de ação (editar, duplicar, deletar, mais, etc.)
 ├── Icons\                        # Ícones fonte do projeto (512x512, 192x192, etc.)
 ├── docs\                         # Documentação teórica e especificações
@@ -161,8 +162,10 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 
 ### 4.2 Conditions
 
-- Altitude [m], temperatura [°C], advance ratio μ, velocidade [km/h], shaft tilt α [deg] e climb rate [m/s].
-- μ e velocidade são sincronizados com o raio e RPM atuais; μz é atualizado junto com shaft tilt e climb rate.
+- Altitude [m] e temperatura [°C].
+- **Horizontal Flow** usa um único seletor de representação: **μ** ou **Vx [m/s]**, com μ = Vx/(ΩR).
+- **Axial Flow** usa um único seletor de representação: **α [deg]**, **Vz [m/s]** ou **μz**, seguindo exatamente zBET/zBEMT: +Vz e +μz apontam para baixo através do disco; α>0 significa escoamento chegando de baixo e, portanto, μz = −μ tan(α).
+- α, Vz e μz são representações alternativas da mesma condição axial; nunca são somadas. Em Vx=0 e escoamento axial não nulo, a UI orienta o uso de Vz ou μz.
 - Modelos de inflow: Uniform, Coleman Simple, Coleman-Feingold e Drees.
 - Modelos de profile drag: Analytical Tangential, Analytical Vectorial e Numerical Vectorial.
 - Três modos de trim: **Collective to Target**, **RPM to Thrust** e **Manual Pitch**. No trim coletivo, **Target Thrust** e **Target CT** são mutuamente exclusivos; o trim por RPM usa Target Thrust e mantém Target CT desabilitado.
@@ -170,11 +173,11 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 
 ### 4.3 Results
 
-Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. Um status explícito sinaliza solução inválida ou uso da correção Prandtl-Glauert fora de sua faixa recomendada, evitando que um número aparentemente válido esconda uma condição fora do modelo. O menu alterna somente as unidades de saída entre SI e Imperial.
+Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. Um status explícito sinaliza solução inválida ou uso da correção Prandtl-Glauert fora de sua faixa recomendada. Cada variável possui precisão base compatível com sua escala; o setting **+1 Decimal** reproduz o comportamento do AeroCalculator e acrescenta exatamente uma casa decimal a todos os outputs. Units alterna dimensionalmente entre SI e Imperial.
 
 ### 4.4 Parameter Sweep
 
-O Sweep trabalha sobre uma cópia independente da condição ativa: abrir uma varredura ou tabela nunca altera μ, μz ou o estado de trim do ponto de operação. Ao variar μ, o Sweep recompõe μz em cada ponto a partir do shaft tilt e do climb rate físicos ativos; as comparações de α e Vz variam somente a grandeza pretendida. O Sweep usa `Canvas` nativo e permite selecionar a grandeza do eixo Y, comparar modelos de inflow, α, Vz ou a condição ativa e alternar μ máximo. Portrait usa controles empilhados; landscape usa uma única faixa horizontal de controles para preservar altura útil do gráfico. O botão Back fecha o Sweep antes de navegar entre tabs.
+O Sweep trabalha sobre uma cópia independente da condição ativa e nunca altera o ponto de operação. O eixo X pode ser **μ** ou **Vx [m/s]**; a malha interna permanece fisicamente equivalente via Vx=μΩR. O eixo Y pode usar qualquer output do catálogo. As famílias de curvas comparam **4 modelos de inflow**, **5 valores de α**, **5 valores de Vz**, **5 valores de μz** ou apenas a condição ativa. Em cada família existe somente uma representação axial autoritativa. As legendas ocupam uma faixa reservada acima da área dos dados, sem cobrir as curvas. Pontos sem solução física são omitidos e identificados como INVALID na tabela/CSV. O footer oferece **TABLE**, **CSV** e **PNG**; CSV exporta os mesmos 25 pontos e famílias mostrados no gráfico e PNG exporta o canvas atual, incluindo tema e legenda.
 
 ---
 
@@ -199,7 +202,11 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
      - *Coleman-Feingold (NDARC)*: Padrão da indústria e NASA para simulações abrangentes.
      - *Drees*: Formulação clássica com forte validação experimental para gradientes laterais e longitudinais.
 4. **Popup Parameter Sweep (Canvas nativo)**:
-   - Renderização direta das curvas selecionadas versus μ, com autoescala, legenda por condição/modelo, indicação do μ operacional e acesso a uma tabela da condição ativa.
+   - Eixo X selecionável μ/Vx, autoescala, legenda não intrusiva, ponto ativo, tabela da condição ativa e export CSV/PNG.
+5. **Physics & Equations (offline)**:
+   - WebView interno carregando `Files/physics_help.html`, sem rede, com convenções zBET/zBEMT, equações essenciais, definição dos outputs, trim, escopo e limitações; acompanha o tema Light/Dark.
+6. **Settings**:
+   - Tema Light/Dark, SI/Imperial e Output Format Standard/+1 Decimal; todas as escolhas são persistidas em `File.DirInternal`.
 
 ---
 
@@ -209,19 +216,20 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
    - `android:minSdkVersion="21"` (Android 5.0+).
    - `android:targetSdkVersion="36"`.
 2. **Runtime B4A**:
-   - Bibliotecas declaradas: `core`, `phone`, `RSPopupMenu`.
+   - Bibliotecas declaradas: `core`, `phone`, `RSPopupMenu` e `JavaObject` (usado somente para o Storage Access Framework de exportação).
    - `#MultiDex: False`.
    - Navegação por três painéis nativos, sem ViewPager.
 3. **Responsividade**:
    - Gate visual em 320×568, 320×568 com font scale 1.3, 360×780, 393×873, 412×915, 600×960, 768×1024, 915×412 e 1024×600.
    - Uso de `dip`, ScrollViews nativas, largura máxima em tablets e layout próprio do Sweep em landscape.
    - `android:windowSoftInputMode="stateHidden|adjustPan"`.
-4. **Armazenamento**:
-   - Presets são gravados em `File.DirInternal`; nenhuma permissão de armazenamento é necessária.
+4. **Armazenamento e exportação**:
+   - Presets e settings são gravados em `File.DirInternal`; nenhuma permissão ampla de armazenamento é necessária.
+   - CSV e PNG usam o Android Storage Access Framework (`ACTION_CREATE_DOCUMENT`), deixando o usuário escolher o destino.
 5. **Validação de release**:
    - `tools/verify_engine.py` executa uma matriz determinística de 100 casos na implementação Python de referência, verifica fechamento de momentum e audita o contrato das equações críticas no fonte B4A; `tests/test_rotor_engine.py` e `tests/test_b4a_state_safety.py` cobrem regressões físicas e de estado.
    - A validação de integração exige **build B4A local real**, APK instalável, execução em emulador/dispositivo, dumps de hierarquia, bounds e screenshots reais. O workflow do GitHub é apenas manual e não é autoridade de release.
-   - Smoke tests cobrem NEW/rename/cópia/delete, persistência do ativo após cold restart, tip-loss, compressibilidade, airfoil, quatro modelos de inflow, três modelos de trim, rotação, SI/Imperial, conversor, Sweep e Back sem crash. A matriz responsiva também prova que o último controle de cada conteúdo rolável é alcançável.
+   - Smoke tests cobrem NEW/rename/cópia/delete, persistência do ativo após cold restart, tip-loss, compressibilidade, airfoil, convenções agrupadas μ/Vx e α/Vz/μz, quatro modelos de inflow, três modos de trim, rotação, Light/Dark, SI/Imperial, +1 Decimal, conversor, help offline, Sweep, controles CSV/PNG e Back sem crash. A matriz responsiva também prova que o último controle de cada conteúdo rolável é alcançável.
 
 ---
 
@@ -247,11 +255,11 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 - Aba 1: Lista e detalhes dos rotores.
 - Aba 2: Controles de condições atmosféricas (ISA), velocidade de avanço e atitude do disco.
 - Aba 3: Cockpit de telemetria com cartões de empuxo, potência, torque, eficiência e coeficientes adimensionais.
-- Aplicação do estilo visual premium (paleta escura, fontes técnicas, realces em ciano e esmeralda).
+- Aplicação do estilo visual premium com temas Light/Dark persistentes, fontes técnicas e hierarquia de contraste consistente.
 
 ### Fase 4: Popups de Apoio, Conversores e Gráficos
-- Implementação dos popups de apoio (Aerofólios, Influxo, Conversores de Unidades).
-- Desenvolvimento do visualizador gráfico em `Canvas` para varreduras rápidas de potência e empuxo vs $\mu$.
+- Implementação dos popups de apoio (Aerofólios, Influxo, Conversores, Convenções e Physics & Equations offline).
+- Desenvolvimento do visualizador gráfico em `Canvas` com eixo μ/Vx, famílias por modelo/α/Vz/μz, legenda reservada e export CSV/PNG.
 
 ### Fase 5: Empacotamento, Testes Finais e Release
 - Testes locais em emulador/dispositivo e múltiplos fatores de forma.
