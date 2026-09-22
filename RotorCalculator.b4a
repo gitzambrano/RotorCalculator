@@ -15,6 +15,7 @@ File20=xenara-bold.ttf
 File21=icon.png
 File22=icon_bezel_green_white.png
 File23=physics_help.html
+File24=physics_help_light.html
 File3=ic_action_cancel.png
 File4=icon_bezel_transp_green.png
 File5=icon_bezel_transp_white.png
@@ -38,6 +39,7 @@ FileGroup20=Default Group
 FileGroup21=Default Group
 FileGroup22=Default Group
 FileGroup23=Default Group
+FileGroup24=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
 FileGroup5=Default Group
@@ -54,7 +56,7 @@ ManifestCode='This code will be applied to the manifest file during compilation.
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
-NumberOfFiles=23
+NumberOfFiles=24
 NumberOfLibraries=4
 NumberOfModules=3
 Version=13
@@ -742,9 +744,9 @@ Private Sub OpenPhysicsHelp
 	
 	wvHelp.Initialize("")
 	pnlHelpPopup.AddView(wvHelp, 0, titleH, root.Width, root.Height - titleH)
-	Dim themeQuery As String = "dark"
-	If ThemeMode = 1 Then themeQuery = "light"
-	wvHelp.LoadUrl("file:///android_asset/physics_help.html?theme=" & themeQuery)
+	Dim helpAsset As String = "physics_help.html"
+	If ThemeMode = 1 Then helpAsset = "physics_help_light.html"
+	wvHelp.LoadUrl("file:///android_asset/" & helpAsset)
 End Sub
 
 Sub btnClosePhysicsHelp_Click
