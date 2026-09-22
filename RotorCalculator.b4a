@@ -1824,6 +1824,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	ActiveGeom.RootCutout = ClampD(ParseDoubleDef(edtRootCutout.Text, ActiveGeom.RootCutout), 0.0, 0.95)
 	ActiveGeom.ChordRoot = ClampD(ParseDoubleDef(edtChordRoot.Text, ActiveGeom.ChordRoot), 0.0001, 2.0 * ActiveGeom.Radius)
 	ActiveGeom.ChordTip = ClampD(ParseDoubleDef(edtChordTip.Text, ActiveGeom.ChordTip), 0.0001, 2.0 * ActiveGeom.Radius)
+	ActiveGeom.SolidityMode = "chords"
 	
 	Dim thRootDeg As Double = ClampD(ParseDoubleDef(edtThetaRoot.Text, 12.0), -90.0, 90.0)
 	Dim thTipDeg As Double = ClampD(ParseDoubleDef(edtThetaTip.Text, 4.0), -90.0, 90.0)
