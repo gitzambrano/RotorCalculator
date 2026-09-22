@@ -154,7 +154,8 @@ def test_engine_defensively_guards_mathematical_domains():
     assert "CompressibilityWarning As Boolean" in src
     assert "If lam_hover < 0 Then Return Array(trimmedGeom)" in src
     assert "For iter_tip = 1 To 8" in src
-    assert "If Abs(nextB - b_val) < 1e-8 Then" in src
+    assert "Dim deltaB As Double = Abs(nextB - b_val)" in src
+    assert "If deltaB < 1e-8 Then Exit" in src
 
 
 def test_ui_clamps_user_inputs_before_recalculation():
@@ -198,8 +199,12 @@ def test_geometry_crud_is_complete_and_row_regions_do_not_overlap():
 
 def test_all_three_trim_modes_are_exposed():
     main = text("RotorCalculator.b4a")
-    assert 'Case "collective"' in main
-    assert 'Case "rpm"' in main
+    assert 'options.Add("Manual Pitch — no trim")' in main
+    assert 'options.Add("Collective to Target — fixed RPM")' in main
+    assert 'options.Add("RPM to Thrust — fixed pitch")' in main
+    assert 'Case 0: ActiveCond.HoverTrimMode = "none"' in main
+    assert 'Case 1: ActiveCond.HoverTrimMode = "collective"' in main
+    assert 'Case 2: ActiveCond.HoverTrimMode = "rpm"' in main
     assert 'btnHoverTrimMode.Text = "RPM to Thrust"' in main
     assert "Private Sub DefaultRPMTargetThrust As Double" in main
     assert 'btnHoverTrimMode.Text = "Manual Pitch"' in main
