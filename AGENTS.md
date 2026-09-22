@@ -98,3 +98,11 @@ Antes de concluir qualquer entrega de desenvolvimento:
 - COPY e DELETE são ações contextuais do popup do rotor; não pertencem ao menu global.
 - A seleção do rotor ativo deve persistir entre cold restarts.
 - Popups devem usar estado explícito para Back/close; não consultar `.Parent` de views já removidas.
+
+
+## Release artifact hygiene
+
+- The source target is currently RotorCalculator 1.20 (versionCode 3).
+- Do not keep an APK or AAB in the repository if it was built from an older source revision.
+- A release APK/AAB may be committed only after the exact source commit is compiled locally, installed, operated, and visually reviewed.
+- GitHub Actions is not the release authority and must not auto-promote binaries.
