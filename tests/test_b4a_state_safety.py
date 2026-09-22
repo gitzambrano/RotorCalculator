@@ -163,7 +163,8 @@ def test_ui_clamps_user_inputs_before_recalculation():
     assert "ActiveGeom.NBlades = Max(1, Min(16" in main
     assert "ConditionAltitudeM = ClampD" in main
     assert "ConditionTemperatureC = ClampD" in main
-    assert "ActiveCond.Mu = ClampD" in main
+    assert "ConditionHorizontalValue = ClampD" in main
+    assert "ActiveCond.Mu = ConditionHorizontalValue / vtip" in main
     assert "Sub edtGeom_FocusChanged" in main
     assert "Sub edtCond_FocusChanged" in main
 
@@ -233,7 +234,8 @@ def test_signing_secrets_are_externalized():
     assert "$env:B4A_KEY_PASSWORD" in build
     assert "Key/*.keystore" in ignore
     assert "service_account" in ignore
-    assert "Base64 is encoding, not encryption" in agents
+    assert "Base64" in agents
+    assert "não é criptografia" in agents
 
 
 def test_visible_geometry_parameterization_is_authoritative_and_names_are_safe():
@@ -299,7 +301,7 @@ def test_physics_help_is_offline_theme_aware_and_packaged():
     assert "Private wvHelp As WebView" in main
     assert 'helpAsset = "physics_help_light.html"' in main
     assert 'wvHelp.LoadUrl("file:///android_asset/" & helpAsset)' in main
-    assert "μz = −μ tan(α)" in html
+    assert "μz = − μ tan(α)" in html
     assert "α, Vz and μz are three equivalent ways" in html
     assert "No dynamic stall" in html
 
@@ -335,3 +337,20 @@ def test_sweep_table_precision_tracks_variable_and_global_precision_setting():
     popup = text("RotorPopups.bas")
     assert "Public Sub SweepParamDigits(paramKey As String) As Int" in popup
     assert "RotorPopups.SweepParamDigits(SweepParamSelectedKey) + ExtraPrecision" in main
+
+
+def test_selected_horizontal_representation_stays_authoritative_after_geometry_changes():
+    main = text("RotorCalculator.b4a")
+    assert "Public ConditionHorizontalValue As Double = 0.0" in main
+    assert 'If HorizontalInputMode = "vx" Then' in main
+    assert "ConditionHorizontalValue = ClampD(ConditionHorizontalValue, 0.0, 0.60 * vtip)" in main
+    assert "ActiveCond.Mu = ConditionHorizontalValue / vtip" in main
+    assert "ConditionHorizontalValue = ActiveCond.Mu * vtip" in main
+
+
+def test_selected_axial_representation_stays_inside_engine_domain():
+    main = text("RotorCalculator.b4a")
+    assert 'If AxialInputMode = "vz" Then' in main
+    assert "ConditionAxialValue = ClampD(ConditionAxialValue, -0.50 * vtip, 0.50 * vtip)" in main
+    assert 'Else If AxialInputMode = "muz" Then' in main
+    assert "ActiveCond.MuZ = ClampD(zBETEngine.ResolveMuZ" in main
