@@ -2539,7 +2539,16 @@ Sub spnSweepParam_ItemClick(Position As Int, Value As Object)
 End Sub
 
 Sub btnSweepMultiModel_Click
-	SweepMultiMode = (SweepMultiMode + 1) Mod 5
+	Dim options As List
+	options.Initialize
+	options.Add("Inflow Models — 4 curves")
+	options.Add("Rotor α — 5 curves")
+	options.Add("Axial Vz — 5 curves")
+	options.Add("Axial μz — 5 curves")
+	options.Add("Single Active Condition")
+	Dim idx As Int = InputList(options, "Curve Family", SweepMultiMode)
+	If idx < 0 Then Return
+	SweepMultiMode = idx
 	UpdateSweepMultiButtonText
 	UpdateSweepPlotView
 End Sub
@@ -2547,19 +2556,19 @@ End Sub
 Private Sub UpdateSweepMultiButtonText
 	Select SweepMultiMode
 		Case 0
-			btnSweepMultiModel.Text = "4 Inflow Models"
+			btnSweepMultiModel.Text = "Inflow Models (4)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 1
-			btnSweepMultiModel.Text = "5 α (-10°..+10°)"
+			btnSweepMultiModel.Text = "α Family (5)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 2
-			btnSweepMultiModel.Text = "5 Vz (-10..+10 m/s)"
+			btnSweepMultiModel.Text = "Vz Family (5)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 3
-			btnSweepMultiModel.Text = "5 μz (-0.05..+0.05)"
+			btnSweepMultiModel.Text = "μz Family (5)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 4
-			btnSweepMultiModel.Text = "Single Active"
+			btnSweepMultiModel.Text = "Active Only"
 			btnSweepMultiModel.TextColor = ColorButText2
 	End Select
 End Sub
