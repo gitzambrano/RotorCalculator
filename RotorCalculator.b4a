@@ -2202,7 +2202,7 @@ Sub spnSweepParam_ItemClick(Position As Int, Value As Object)
 End Sub
 
 Sub btnSweepMultiModel_Click
-	SweepMultiMode = (SweepMultiMode + 1) Mod 4
+	SweepMultiMode = (SweepMultiMode + 1) Mod 5
 	UpdateSweepMultiButtonText
 	UpdateSweepPlotView
 End Sub
@@ -2219,6 +2219,9 @@ Private Sub UpdateSweepMultiButtonText
 			btnSweepMultiModel.Text = "5 Vz (-10..+10 m/s)"
 			btnSweepMultiModel.TextColor = ColorAccentCyan
 		Case 3
+			btnSweepMultiModel.Text = "5 μz (-0.05..+0.05)"
+			btnSweepMultiModel.TextColor = ColorAccentCyan
+		Case 4
 			btnSweepMultiModel.Text = "Single Active"
 			btnSweepMultiModel.TextColor = ColorButText2
 	End Select
