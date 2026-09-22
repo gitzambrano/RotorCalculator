@@ -104,6 +104,7 @@ Sub Process_Globals
 	Public ColorAccentCyan As Int = 0xFF00E5FF   ' Cyan Accent
 	Public ColorAccentGreen As Int = 0xFF00E676  ' Emerald Accent
 	Public ColorAccentAmber As Int = 0xFFFFB300  ' Amber Accent
+	Public ColorAccentRed As Int = ColorAccentRed    ' Error / destructive action
 	
 	' Aerodynamic Global State
 	Public ActiveGeom As RotorGeometry
@@ -546,6 +547,7 @@ Private Sub ApplyThemePalette
 		ColorAccentCyan = 0xFF007F95
 		ColorAccentGreen = 0xFF007A52
 		ColorAccentAmber = 0xFFAA5A00
+		ColorAccentRed = 0xFFB42318
 	Else
 		ColorPnlTitle = 0xFF0D121B
 		ColorTitleText = 0xFFFFFFFF
@@ -570,6 +572,7 @@ Private Sub ApplyThemePalette
 		ColorAccentCyan = 0xFF00E5FF
 		ColorAccentGreen = 0xFF00E676
 		ColorAccentAmber = 0xFFFFB300
+		ColorAccentRed = 0xFFFF6B6B
 	End If
 End Sub
 
@@ -1096,7 +1099,7 @@ Private Sub OpenGeometryPopup
 	Dim btnDelete As Button
 	btnDelete.Initialize("btnGeomDelete")
 	btnDelete.Text = "DELETE"
-	btnDelete.TextColor = 0xFFFF6B6B
+	btnDelete.TextColor = ColorAccentRed
 	btnDelete.Typeface = Typeface.DEFAULT_BOLD
 	btnDelete.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	footer.AddView(btnDelete, 16dip + actionW + gap, 8dip, actionW, 48dip)
@@ -1743,7 +1746,7 @@ Public Sub RecalculateRotor
 	If lblResultStatus.IsInitialized Then
 		If ActiveRes.SolutionValid = False Then
 			lblResultStatus.Text = "MODEL STATUS · INVALID OPERATING POINT"
-			lblResultStatus.TextColor = 0xFFFF6B6B
+			lblResultStatus.TextColor = ColorAccentRed
 			For i = 0 To 24
 				If lblResults(i).IsInitialized Then lblResults(i).Text = "---"
 			Next
@@ -2440,7 +2443,7 @@ Sub btnViewPolarPlot_Click
 	
 	Dim btnClose As Button: btnClose.Initialize("btnCloseSweepPlot")
 	btnClose.Text = "×"
-	btnClose.TextColor = 0xFFFF5252
+	btnClose.TextColor = ColorAccentRed
 	btnClose.TextSize = 20
 	btnClose.Color = Colors.Transparent
 	pnlHeader.AddView(btnClose, root.Width - 52dip, 0, 48dip, topBarH)
