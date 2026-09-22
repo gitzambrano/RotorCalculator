@@ -268,6 +268,37 @@ PY
 
   python /tmp/tap_text.py CONDITIONS
   sleep 1
+
+  # Equivalent flight-condition representations must be explicit selectors.
+  python /tmp/tap_text.py "μ"
+  sleep 0.4
+  python /tmp/tap_text.py "Vx — forward"
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/06c-horizontal-vx.xml" > "$OUT/06c-horizontal-vx.json"
+  grep -Eq '"text": "Vx"' "$OUT/06c-horizontal-vx.json"
+  python /tmp/tap_text.py "Vx"
+  sleep 0.4
+  python /tmp/tap_text.py "μ — advance ratio"
+  sleep 0.6
+
+  python /tmp/tap_text.py "α"
+  sleep 0.4
+  python /tmp/tap_text.py "Vz — axial flow"
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/06d-axial-vz.xml" > "$OUT/06d-axial-vz.json"
+  grep -Eq '"text": "Vz"' "$OUT/06d-axial-vz.json"
+  python /tmp/tap_text.py "Vz"
+  sleep 0.4
+  python /tmp/tap_text.py "μz — axial ratio"
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/06e-axial-muz.xml" > "$OUT/06e-axial-muz.json"
+  grep -Eq '"text": "μz"' "$OUT/06e-axial-muz.json"
+  python /tmp/tap_text.py "μz"
+  sleep 0.4
+  python /tmp/tap_text.py "α — rotor angle"
+  sleep 0.6
+  safe_screencap "$OUT/06f-grouped-flow-selectors.png"
+
   python /tmp/tap_text.py "Coleman-Feingold"
   sleep 0.5
   python /tmp/tap_text.py "Drees"
