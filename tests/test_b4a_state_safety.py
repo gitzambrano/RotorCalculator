@@ -421,3 +421,25 @@ def test_ui_smoke_operates_grouped_flow_selectors_not_only_labels():
     assert 'python /tmp/tap_text.py "μz — axial ratio"' in qa
     assert 'grep -Eq \'"text": "μz"\'' in qa
     assert 'python /tmp/tap_text.py "α — rotor angle"' in qa
+
+
+def test_rpm_trim_uses_post_trim_tip_speed_for_dimensional_flow_representations():
+    main = text("RotorCalculator.b4a")
+    popup = text("RotorPopups.bas")
+    engine = text("zBETEngine.bas")
+    assert "Public Sub ResolveOperatingGeometry" in engine
+    assert 'If ActiveCond.HoverTrimMode = "rpm" And ActiveCond.TargetThrustN > 0 Then' in main
+    assert "g = zBETEngine.ResolveOperatingGeometry(ActiveGeom, ActiveCond)" in main
+    assert "RefreshDerivedCondition(False)" in main
+    assert 'If cond.HoverTrimMode = "rpm" And cond.TargetThrustN > 0 Then' in popup
+    assert "tipGeom = zBETEngine.ResolveOperatingGeometry(geom, cond)" in popup
+
+
+def test_results_expose_actual_post_trim_rpm_and_collective():
+    main = text("RotorCalculator.b4a")
+    assert "Private lblTrimSummary As Label" in main
+    assert 'lblTrimSummary.Text = "RPM TRIM · "' in main
+    assert 'lblTrimSummary.Text = "COLLECTIVE TRIM · "' in main
+    assert "ActiveRes.TrimmedRPM" in main
+    assert "ActiveRes.TrimmedTheta0Deg" in main
+    assert 'Msgbox("This line reports the geometry actually used by the aerodynamic calculation after trim."' in main
