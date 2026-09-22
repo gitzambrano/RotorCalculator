@@ -4,12 +4,13 @@ param(
     [ValidateSet("Build", "BuildBundle")]
     [string]$Task = "Build",
     [string]$AdditionalLibrariesFolder = (Join-Path $PSScriptRoot "..\Libraries"),
-    [string]$KeyFile = (Join-Path $PSScriptRoot "..\Key\key_aero_calc.keystore"),
-    [string]$KeyPassword = "***REDACTED***",
-    [string]$KeyAlias = "b4a"
+    [string]$KeyFile = $env:B4A_KEY_FILE,
+    [string]$KeyPassword = $env:B4A_KEY_PASSWORD,
+    [string]$KeyAlias = $env:B4A_KEY_ALIAS
 )
 
 $ErrorActionPreference = "Stop"
+if (-not $KeyAlias) { $KeyAlias = "b4a" }
 
 if (-not $B4ABuilder) {
     $candidatePaths = @(
