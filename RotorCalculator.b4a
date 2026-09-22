@@ -202,6 +202,7 @@ Sub Globals
 	Private scvRes As ScrollView
 	Private btnViewPolarPlot As Button
 	Private lblResultStatus As Label
+	Private lblTrimSummary As Label
 	Private lblResults(25) As Label
 	
 	' Multi-Parameter μ-Sweep Popup
@@ -1370,7 +1371,16 @@ Private Sub BuildPageRes
 	lblResultStatus.SingleLine = True
 	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + UiContentW * 4 / 100, 58dip * sc, UiContentW * 92 / 100, 30dip * sc)
 	
-	Dim startY As Int = 94dip * sc
+	lblTrimSummary.Initialize("lblTrimSummary")
+	lblTrimSummary.Text = "OPERATING · --- RPM · θ0 ---°"
+	lblTrimSummary.TextColor = ColorButText2
+	lblTrimSummary.Typeface = Typeface.DEFAULT_BOLD
+	If root.Width <= 340dip Then lblTrimSummary.TextSize = 9 Else lblTrimSummary.TextSize = 10 * sc
+	lblTrimSummary.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	lblTrimSummary.SingleLine = True
+	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + UiContentW * 4 / 100, 88dip * sc, UiContentW * 92 / 100, 24dip * sc)
+	
+	Dim startY As Int = 118dip * sc
 	
 	Dim outputLabels As List
 	outputLabels.Initialize2(Array As String( _
@@ -1742,6 +1752,7 @@ End Sub
 Public Sub RecalculateRotor
 	If UpdatingUI Then Return
 	ActiveRes = zBETEngine.Calculate(ActiveGeom, ActiveCond)
+	UpdateTrimSummary
 	
 	If lblResultStatus.IsInitialized Then
 		If ActiveRes.SolutionValid = False Then
@@ -1805,6 +1816,30 @@ Public Sub RecalculateRotor
 		lblResults(23).Text = FormatOutputValue(AmbientPressureHPa * 0.0295299831, 2) & " inHg"
 		lblResults(24).Text = FormatOutputValue(ActiveCond.SpeedOfSound * 3.280839895, 0) & " ft/s"
 	End If
+End Sub
+
+Private Sub UpdateTrimSummary
+	If lblTrimSummary.IsInitialized = False Then Return
+	Dim rpmText As String = FormatResultValue(ActiveRes.TrimmedRPM, ExtraPrecision)
+	Dim thetaText As String = FormatResultValue(ActiveRes.TrimmedTheta0Deg, 2 + ExtraPrecision)
+	Select ActiveCond.HoverTrimMode
+		Case "rpm"
+			lblTrimSummary.Text = "RPM TRIM · " & rpmText & " RPM · θ0 " & thetaText & "°"
+			lblTrimSummary.TextColor = ColorAccentAmber
+		Case "collective"
+			lblTrimSummary.Text = "COLLECTIVE TRIM · " & rpmText & " RPM · θ0 " & thetaText & "°"
+			lblTrimSummary.TextColor = ColorAccentGreen
+		Case Else
+			lblTrimSummary.Text = "OPERATING · " & rpmText & " RPM · θ0 " & thetaText & "°"
+			lblTrimSummary.TextColor = ColorButText2
+	End Select
+End Sub
+
+Sub lblTrimSummary_Click
+	Msgbox("This line reports the geometry actually used by the aerodynamic calculation after trim." & CRLF & CRLF & _
+		"RPM trim: pitch is fixed and RPM is solved to meet Target Thrust." & CRLF & _
+		"Collective trim: RPM is fixed and collective is shifted to meet Target Thrust or Target CT." & CRLF & _
+		"Manual Pitch: both RPM and pitch come directly from Geometry.", "Operating Geometry")
 End Sub
 
 Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String
@@ -1931,8 +1966,12 @@ Private Sub RefreshAxialInputDisplay
 End Sub
 
 Private Sub RotorTipSpeed As Double
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Return omega * ActiveGeom.Radius
+	Dim g As RotorGeometry = ActiveGeom
+	If ActiveCond.HoverTrimMode = "rpm" And ActiveCond.TargetThrustN > 0 Then
+		g = zBETEngine.ResolveOperatingGeometry(ActiveGeom, ActiveCond)
+	End If
+	Dim omega As Double = g.RPM * (cPI / 30.0)
+	Return omega * g.Radius
 End Sub
 
 Private Sub RefreshTrimControls
@@ -2149,6 +2188,7 @@ Sub btnHoverTrimMode_Click
 		Case 2: ActiveCond.HoverTrimMode = "rpm"
 	End Select
 	RefreshTrimControls
+	RefreshDerivedCondition(True)
 	RecalculateRotor
 End Sub
 
@@ -2302,6 +2342,7 @@ Sub edtCond_TextChanged (Old As String, New As String)
 		UpdatingUI = False
 	End If
 	If changedField = "Target Thrust" Or changedField = "Target CT" Then RefreshTrimControls
+	RefreshDerivedCondition(False)
 	RecalculateRotor
 End Sub
 
