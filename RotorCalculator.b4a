@@ -2085,44 +2085,65 @@ Sub btnCompressibility_Click
 End Sub
 
 Sub btnInflowModel_Click
-	If ActiveCond.InflowModel = "uniform" Then
-		ActiveCond.InflowModel = "coleman_simple"
-		btnInflowModel.Text = "Coleman Simple"
-	Else If ActiveCond.InflowModel = "coleman_simple" Then
-		ActiveCond.InflowModel = "coleman_feingold"
-		btnInflowModel.Text = "Coleman-Feingold"
-	Else If ActiveCond.InflowModel = "coleman_feingold" Then
-		ActiveCond.InflowModel = "drees"
-		btnInflowModel.Text = "Drees Linear"
-	Else
-		ActiveCond.InflowModel = "uniform"
-		btnInflowModel.Text = "Uniform Benchmark"
-	End If
+	Dim options As List
+	options.Initialize
+	options.Add("Uniform — benchmark")
+	options.Add("Coleman Simple — longitudinal gradient")
+	options.Add("Coleman-Feingold — longitudinal + lateral")
+	options.Add("Drees — classical longitudinal + lateral")
+	Dim selected As Int = 2
+	Select ActiveCond.InflowModel
+		Case "uniform": selected = 0
+		Case "coleman_simple": selected = 1
+		Case "drees": selected = 3
+	End Select
+	Dim idx As Int = InputList(options, "Inflow Model", selected)
+	If idx < 0 Then Return
+	Select idx
+		Case 0: ActiveCond.InflowModel = "uniform"
+		Case 1: ActiveCond.InflowModel = "coleman_simple"
+		Case 2: ActiveCond.InflowModel = "coleman_feingold"
+		Case 3: ActiveCond.InflowModel = "drees"
+	End Select
+	LoadConditionDataToFields
 	RecalculateRotor
 End Sub
 
 Sub btnProfileDragModel_Click
-	If ActiveCond.ProfileDragModel = "analytical_tangential" Then
-		ActiveCond.ProfileDragModel = "analytical_vectorial"
-		btnProfileDragModel.Text = "Analytical Vectorial"
-	Else If ActiveCond.ProfileDragModel = "analytical_vectorial" Then
-		ActiveCond.ProfileDragModel = "numerical_vectorial"
-		btnProfileDragModel.Text = "Numerical Vectorial"
-	Else
-		ActiveCond.ProfileDragModel = "analytical_tangential"
-		btnProfileDragModel.Text = "Analytical Tangential"
-	End If
+	Dim options As List
+	options.Initialize
+	options.Add("Analytical Tangential — low-order")
+	options.Add("Analytical Vectorial — low-order vector speed")
+	options.Add("Numerical Vectorial — azimuth/radius quadrature")
+	Dim selected As Int = 2
+	If ActiveCond.ProfileDragModel = "analytical_tangential" Then selected = 0
+	If ActiveCond.ProfileDragModel = "analytical_vectorial" Then selected = 1
+	Dim idx As Int = InputList(options, "Profile Drag Model", selected)
+	If idx < 0 Then Return
+	Select idx
+		Case 0: ActiveCond.ProfileDragModel = "analytical_tangential"
+		Case 1: ActiveCond.ProfileDragModel = "analytical_vectorial"
+		Case 2: ActiveCond.ProfileDragModel = "numerical_vectorial"
+	End Select
+	LoadConditionDataToFields
 	RecalculateRotor
 End Sub
 
 Sub btnHoverTrimMode_Click
-	Select ActiveCond.HoverTrimMode
-		Case "collective"
-			ActiveCond.HoverTrimMode = "rpm"
-		Case "rpm"
-			ActiveCond.HoverTrimMode = "none"
-		Case Else
-			ActiveCond.HoverTrimMode = "collective"
+	Dim options As List
+	options.Initialize
+	options.Add("Manual Pitch — no trim")
+	options.Add("Collective to Target — fixed RPM")
+	options.Add("RPM to Thrust — fixed pitch")
+	Dim selected As Int = 1
+	If ActiveCond.HoverTrimMode = "none" Then selected = 0
+	If ActiveCond.HoverTrimMode = "rpm" Then selected = 2
+	Dim idx As Int = InputList(options, "Trim Mode", selected)
+	If idx < 0 Then Return
+	Select idx
+		Case 0: ActiveCond.HoverTrimMode = "none"
+		Case 1: ActiveCond.HoverTrimMode = "collective"
+		Case 2: ActiveCond.HoverTrimMode = "rpm"
 	End Select
 	RefreshTrimControls
 	RecalculateRotor
@@ -2187,9 +2208,15 @@ Sub lblRowTip_Click
 				"Drees: classical longitudinal and lateral gradients with explicit μ dependence.", "Inflow Models")
 			Return
 		Case "Profile Drag"
-			tipMsg = "Method used to evaluate blade profile-drag forces and their torque / in-plane-force contributions."
+			Msgbox("Analytical Tangential: lowest-order tangential drag approximation." & CRLF & CRLF & _
+				"Analytical Vectorial: low-order expansion using the local velocity magnitude." & CRLF & CRLF & _
+				"Numerical Vectorial: radial/azimuthal quadrature of vector profile drag; highest-fidelity option in this model.", "Profile Drag Models")
+			Return
 		Case "Hover Trim"
-			tipMsg = "Cycles Collective to target, RPM to thrust, and Manual Pitch. RPM trim requires a thrust target."
+			Msgbox("Manual Pitch: RPM and blade pitch are prescribed." & CRLF & CRLF & _
+				"Collective to Target: fixed RPM; collective shifts to meet Target Thrust or Target CT." & CRLF & CRLF & _
+				"RPM to Thrust: fixed pitch; RPM changes to meet dimensional Target Thrust.", "Trim Modes")
+			Return
 		Case Else
 			tipMsg = b.Tag
 	End Select
