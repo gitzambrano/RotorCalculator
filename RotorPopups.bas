@@ -277,8 +277,8 @@ Public Sub DrawSweepPlot( _
 	' Margins in DIP
 	Dim mLeft As Float = 64dip
 	Dim mRight As Float = 24dip
-	Dim mTop As Float = 72dip
-	Dim mBottom As Float = 48dip
+	Dim mTop As Float = 60dip
+	Dim mBottom As Float = 44dip
 	
 	Dim plotW As Float = widthPx - mLeft - mRight
 	Dim plotH As Float = heightPx - mTop - mBottom
@@ -444,7 +444,7 @@ Public Sub DrawSweepPlot( _
 	' Title and X label. The legend occupies the reserved band below the title.
 	Dim xAxisTitle As String = "Advance Ratio (μ)"
 	If xAxisMode = 1 Then xAxisTitle = "Forward Speed Vx (m/s)"
-	cvs.DrawText(SweepPlotTitle(paramKey) & " vs " & xAxisTitle, mLeft, 18dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
+	cvs.DrawText(SweepPlotTitle(paramKey), mLeft, 16dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
 	cvs.DrawText(xAxisTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 11, colText, "CENTER")
 	
 	' Draw curves
@@ -488,7 +488,7 @@ Public Sub DrawSweepPlot( _
 	Next
 	
 	' Curve legends — reserved above plot rectangle so labels never cover data.
-	Dim legendY As Float = 46dip
+	Dim legendY As Float = 39dip
 	If multiCurveMode == 0 Then
 		Dim labels4() As String = Array As String("Uniform", "Coleman S.", "Coleman-FG", "Drees")
 		Dim cols4() As Int = Array As Int(colUniform, colColemanSimple, colColemanFG, colDrees)
