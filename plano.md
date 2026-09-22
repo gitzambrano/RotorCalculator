@@ -4,7 +4,8 @@
 > **Plataforma**: Android (B4A — Basic4Android)  
 > **Alvo**: Android 5.0 (API 21) até Android 16 (API 36) — Compatibilidade Universal  
 > **Localização**: `C:\Projetos\RotorCalculator`  
-> **Base Científica**: Teoria do Elemento de Pá e Teoria do Momentum (zBET — Wayne Johnson & Leishman)
+> **Base Científica**: Teoria do Elemento de Pá e Teoria do Momentum (zBET — Wayne Johnson & Leishman)  
+> **Versão de fonte alvo**: 1.20 (versionCode 3)
 
 ---
 
@@ -268,3 +269,8 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
 - Testes locais em emulador/dispositivo e múltiplos fatores de forma.
 - Assinatura somente com credenciais externas ao repositório, fornecidas por `B4A_KEY_FILE`, `B4A_KEY_PASSWORD` e `B4A_KEY_ALIAS`.
 - Geração local do APK/AAB de lançamento para a Google Play Store; nenhum binário é promovido automaticamente por GitHub Actions.
+
+
+### Gate final da versão 1.20
+
+A árvore de fonte não deve carregar APK/AAB de revisões antigas. O binário final entra no repositório somente depois de: compilação B4A do commit exato, instalação, operação do app, smoke matrix completa, screenshots reais em Light/Dark e portrait/landscape, revisão visual e confirmação de que CSV/PNG são exportados pelo Android Storage Access Framework. Até esse gate ser executado, o estado correto do repositório é **source-complete, binary-pending**.
