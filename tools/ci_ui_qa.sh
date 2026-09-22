@@ -313,6 +313,13 @@ PY
   sleep 1
   python /tmp/ui_node.py "$OUT/07a-rpm-trim.xml" > "$OUT/07a-rpm-trim.json"
   grep -qi "RPM to Thrust" "$OUT/07a-rpm-trim.json"
+  python /tmp/tap_text.py RESULTS
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/07a2-rpm-trim-result.xml" > "$OUT/07a2-rpm-trim-result.json"
+  grep -qi "RPM TRIM" "$OUT/07a2-rpm-trim-result.json"
+  safe_screencap "$OUT/07a2-rpm-trim-result.png"
+  python /tmp/tap_text.py CONDITIONS
+  sleep 0.6
   python /tmp/tap_text.py "RPM to Thrust"
   sleep 0.5
   python /tmp/tap_text.py "Manual Pitch"
