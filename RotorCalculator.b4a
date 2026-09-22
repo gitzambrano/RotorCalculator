@@ -1676,7 +1676,6 @@ End Sub
 ' ====================================================================
 Public Sub RecalculateRotor
 	If UpdatingUI Then Return
-	
 	ActiveRes = zBETEngine.Calculate(ActiveGeom, ActiveCond)
 	
 	If lblResultStatus.IsInitialized Then
@@ -1697,52 +1696,54 @@ Public Sub RecalculateRotor
 	End If
 	
 	Dim tipMachHover As Double = 0
-	Dim omega As Double = ActiveGeom.RPM * (cPI / 30.0)
-	Dim vtip As Double = omega * ActiveGeom.Radius
-	If ActiveCond.SpeedOfSound > 0 Then
-		tipMachHover = vtip / ActiveCond.SpeedOfSound
+	Dim vtip As Double = RotorTipSpeed
+	If ActiveCond.SpeedOfSound > 0 Then tipMachHover = vtip / ActiveCond.SpeedOfSound
+	
+	' Baseline precision is variable-specific. ExtraPrecision adds exactly one
+	' decimal place, matching the AeroCalculator Output Format setting.
+	If UnitSystem = 0 Then
+		lblResults(0).Text = FormatOutputValue(ActiveRes.ThrustN, 0) & " N"
+		lblResults(2).Text = FormatOutputValue(ActiveRes.PowerShaftKW, 1) & " kW"
+		lblResults(4).Text = FormatOutputValue(ActiveRes.TorqueNm, 1) & " N·m"
+		lblResults(8).Text = FormatOutputValue(ActiveRes.DragHN, 1) & " N"
+	Else
+		lblResults(0).Text = FormatOutputValue(ActiveRes.ThrustLbf, 0) & " lbf"
+		lblResults(2).Text = FormatOutputValue(ActiveRes.PowerShaftHP, 1) & " hp"
+		lblResults(4).Text = FormatOutputValue(ActiveRes.TorqueLbft, 1) & " lb·ft"
+		lblResults(8).Text = FormatOutputValue(ActiveRes.DragHN * 0.224808943, 1) & " lbf"
 	End If
 	
-	' Populate 25 Results Rows (UnitSystem: 0=SI, 1=Imperial)
+	lblResults(1).Text = FormatOutputValue(ActiveRes.CT, 5)
+	lblResults(3).Text = FormatOutputValue(ActiveRes.CPair, 6)
+	lblResults(5).Text = FormatOutputValue(ActiveRes.CQ, 6)
+	lblResults(6).Text = FormatOutputValue(ActiveRes.CQi, 6)
+	lblResults(7).Text = FormatOutputValue(ActiveRes.CQ0, 6)
+	lblResults(9).Text = FormatOutputValue(ActiveRes.CH, 6)
+	lblResults(10).Text = FormatOutputValue(ActiveRes.CY, 6)
+	lblResults(11).Text = FormatOutputValue(ActiveRes.CMy, 6)
+	lblResults(12).Text = FormatOutputValue(ActiveRes.CMx, 6)
+	lblResults(13).Text = FormatOutputValue(ActiveRes.FoM, 4)
+	lblResults(14).Text = FormatOutputValue(ActiveRes.L_D_eff, 2)
+	lblResults(15).Text = FormatOutputValue(ActiveRes.InflowLambda, 5)
+	lblResults(16).Text = FormatOutputValue(ActiveRes.InflowLambdaI, 5)
+	lblResults(17).Text = FormatOutputValue(ActiveRes.InflowKx, 3)
+	lblResults(18).Text = FormatOutputValue(ActiveRes.InflowKy, 3)
+	lblResults(19).Text = FormatOutputValue(ActiveRes.WakeSkewChiDeg, 1) & "°"
+	lblResults(20).Text = FormatOutputValue(tipMachHover, 3)
+	lblResults(21).Text = FormatOutputValue(ActiveRes.AdvancingTipMach, 3)
 	If UnitSystem = 0 Then
-		lblResults(0).Text = NumberFormat(ActiveRes.ThrustN, 1, 0) & " N"
-		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftKW, 1, 1) & " kW"
-		lblResults(4).Text = NumberFormat(ActiveRes.TorqueNm, 1, 1) & " N·m"
-		lblResults(8).Text = NumberFormat(ActiveRes.DragHN, 1, 1) & " N"
+		lblResults(22).Text = FormatOutputValue(ActiveCond.Rho, 4) & " kg/m³"
+		lblResults(23).Text = FormatOutputValue(AmbientPressureHPa, 1) & " hPa"
+		lblResults(24).Text = FormatOutputValue(ActiveCond.SpeedOfSound, 1) & " m/s"
 	Else
-		lblResults(0).Text = NumberFormat(ActiveRes.ThrustLbf, 1, 0) & " lbf"
-		lblResults(2).Text = NumberFormat(ActiveRes.PowerShaftHP, 1, 1) & " HP"
-		lblResults(4).Text = NumberFormat(ActiveRes.TorqueLbft, 1, 1) & " lb·ft"
-		lblResults(8).Text = NumberFormat(ActiveRes.DragHN * 0.224808943, 1, 1) & " lbf"
+		lblResults(22).Text = FormatOutputValue(ActiveCond.Rho * 0.0019403203, 5) & " slug/ft³"
+		lblResults(23).Text = FormatOutputValue(AmbientPressureHPa * 0.0295299831, 2) & " inHg"
+		lblResults(24).Text = FormatOutputValue(ActiveCond.SpeedOfSound * 3.280839895, 0) & " ft/s"
 	End If
-	
-	lblResults(1).Text = FormatResultValue(ActiveRes.CT, 5)
-	lblResults(3).Text = FormatResultValue(ActiveRes.CPair, 6)
-	lblResults(5).Text = FormatResultValue(ActiveRes.CQ, 6)
-	lblResults(6).Text = FormatResultValue(ActiveRes.CQi, 6)
-	lblResults(7).Text = FormatResultValue(ActiveRes.CQ0, 6)
-	lblResults(9).Text = FormatResultValue(ActiveRes.CH, 6)
-	lblResults(10).Text = FormatResultValue(ActiveRes.CY, 6)
-	lblResults(11).Text = FormatResultValue(ActiveRes.CMy, 6)
-	lblResults(12).Text = FormatResultValue(ActiveRes.CMx, 6)
-	lblResults(13).Text = FormatResultValue(ActiveRes.FoM, 4)
-	lblResults(14).Text = FormatResultValue(ActiveRes.L_D_eff, 2)
-	lblResults(15).Text = FormatResultValue(ActiveRes.InflowLambda, 5)
-	lblResults(16).Text = FormatResultValue(ActiveRes.InflowLambdaI, 5)
-	lblResults(17).Text = FormatResultValue(ActiveRes.InflowKx, 3)
-	lblResults(18).Text = FormatResultValue(ActiveRes.InflowKy, 3)
-	lblResults(19).Text = FormatResultValue(ActiveRes.WakeSkewChiDeg, 1) & "°"
-	lblResults(20).Text = NumberFormat(tipMachHover, 1, 3)
-	lblResults(21).Text = NumberFormat(ActiveRes.AdvancingTipMach, 1, 3)
-	If UnitSystem = 0 Then
-		lblResults(22).Text = NumberFormat(ActiveCond.Rho, 1, 4) & " kg/m³"
-		lblResults(23).Text = NumberFormat(AmbientPressureHPa, 1, 1) & " hPa"
-		lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound, 1, 1) & " m/s"
-	Else
-		lblResults(22).Text = NumberFormat(ActiveCond.Rho * 0.0019403203, 1, 5) & " slug/ft³"
-		lblResults(23).Text = NumberFormat(AmbientPressureHPa * 0.0295299831, 1, 2) & " inHg"
-		lblResults(24).Text = NumberFormat(ActiveCond.SpeedOfSound * 3.280839895, 1, 0) & " ft/s"
-	End If
+End Sub
+
+Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String
+	Return FormatResultValue(Value, BaseDigits + ExtraPrecision)
 End Sub
 
 Private Sub FormatResultValue(Value As Double, FractionDigits As Int) As String
@@ -1751,7 +1752,7 @@ Private Sub FormatResultValue(Value As Double, FractionDigits As Int) As String
 		scale = scale * 10
 	Next
 	If Abs(Value) < (0.5 / scale) Then Value = 0
-	Return NumberFormat(Value, 1, FractionDigits)
+	Return NumberFormat2(Value, 1, FractionDigits, FractionDigits, False)
 End Sub
 
 Public Sub LoadRotorDataToFields(geom As RotorGeometry)
