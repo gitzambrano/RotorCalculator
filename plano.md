@@ -31,7 +31,7 @@ C:\Projetos\RotorCalculator\
 ├── RotorCalculator.b4a           # Ponto de entrada do aplicativo no B4A
 ├── zBETEngine.bas                # Motor de cálculo aerodinâmico zBET (Módulo puro B4A)
 ├── RotorStorage.bas              # Módulo de persistência e presets de geometrias de rotores
-├── agente.md                     # Regras de governança de código e integridade física
+├── AGENTS.md                     # Regras de governança de código e integridade física
 ├── plano.md                      # Este documento detalhado
 ├── Key\                          # Apenas material público/não secreto
 │   ├── README.md                  # Política de chaves externas ao Git
