@@ -848,7 +848,19 @@ $$
 \frac{\mu C_T}{C_{Pair}}.
 $$
 
-### 7.4 Hover figure of merit
+### 7.4 Operating geometry after trim
+
+The Android UI reports the geometry actually used by the solver after trim through the result fields `TrimmedRPM` and `TrimmedTheta0Deg`. When RPM trim is active, any dimensional flow representation that depends on tip speed must use the solved value of $\Omega R$:
+
+$
+\mu = \frac{V_x}{\Omega_{trim}R},
+\qquad
+\mu_z = \frac{V_z}{\Omega_{trim}R}.
+$
+
+The same resolved tip speed is used for the Sweep $V_x$ axis and Mach quantities. This avoids a mismatch where the UI would otherwise show a dimensional speed based on the nominal geometry while the aerodynamic calculation used a different trimmed RPM.
+
+### 7.5 Hover figure of merit
 
 The ideal hover power coefficient is
 
