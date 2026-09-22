@@ -365,12 +365,13 @@ End Sub
 Public Sub GetLiftSlope(geom As RotorGeometry, mu As Double, speedOfSound As Double) As Double
 	If Not(geom.UsePrandtlGlauert) Then Return geom.LiftSlope0
 	If speedOfSound <= 1.0 Then Return geom.LiftSlope0
+	' Exact zBET reference definition: representative Mach at 75% radius.
 	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0
 	Dim vtip As Double = omega * geom.Radius
-	Dim mat As Double = Abs(vtip * (1.0 + mu) / speedOfSound)
-	' Keep the algebra finite. Calculate exposes a warning when the real Mat exceeds 0.80.
-	If mat >= 0.95 Then mat = 0.95
-	Return geom.LiftSlope0 / Sqrt(1.0 - mat * mat)
+	Dim tipMach As Double = vtip / speedOfSound
+	Dim mEff As Double = tipMach * Sqrt(0.75 * 0.75 + 0.5 * mu * mu)
+	If mEff > 0.85 Then mEff = 0.85
+	Return geom.LiftSlope0 / Sqrt(Max(0.01, 1.0 - mEff * mEff))
 End Sub
 
 ' Calcula as integrais radiais puras J_n = integral_{x0}^B (x^n dx)
@@ -774,8 +775,11 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 		res.L_D_eff = 0.0
 	End If
 	
-	If res.CQ > 1e-9 And ct_val > 0 Then
-		res.FoM = (Power(ct_val, 1.5) / Sqrt(2.0)) / res.CQ
+	Dim idealHoverPower As Double = 0.0
+	If ct_val > 0 Then idealHoverPower = Power(ct_val, 1.5) / Sqrt(2.0)
+	Dim cpFoM As Double = c.KInd * idealHoverPower + res.CQ0
+	If cpFoM > 1e-9 Then
+		res.FoM = idealHoverPower / cpFoM
 	Else
 		res.FoM = 0.0
 	End If
