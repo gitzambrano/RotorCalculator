@@ -153,6 +153,22 @@ Private Sub SweepPlotTitle(paramKey As String) As String
 	End Select
 End Sub
 
+Public Sub SweepParamDigits(paramKey As String) As Int
+	Select paramKey
+		Case "CT": Return 5
+		Case "CP", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair": Return 6
+		Case "lambda", "lambda_i": Return 5
+		Case "L_D_eff": Return 2
+		Case "FoM": Return 4
+		Case "Kx", "Ky": Return 3
+		Case "chi": Return 1
+		Case "Mat": Return 3
+		Case "PowerKW", "PowerHP", "TorqueNm", "DragHN": Return 1
+		Case "ThrustN", "ThrustKgf": Return 0
+		Case Else: Return 5
+	End Select
+End Sub
+
 ' Extracts the target parameter value from the results data structure
 Public Sub ExtractParamValue(res As RotorResults, paramKey As String) As Double
 	Select Case paramKey
