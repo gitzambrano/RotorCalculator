@@ -86,7 +86,7 @@ Antes de concluir qualquer entrega de desenvolvimento:
 - `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.
 - `RotorGeometry` e `FlightCondition` são custom `Type` B4A e portanto objetos por referência. Qualquer rotina temporária de cálculo, trim, sweep ou duplicação deve usar `zBETEngine.CloneGeometry` / `CloneCondition` antes de modificar campos; cálculos não podem alterar silenciosamente o estado do chamador.
 - Tip-loss deve representar explicitamente `none`, `fixed` e `sissingh`; presets com fator fixo não podem ser apresentados como OFF.
-- Antes de uma entrega final, o workflow deve executar os testes zBET, compilar B4A, instalar o APK gerado no emulador, capturar as nove configurações alvo e executar smoke tests de interação. Screenshots reais devem ser inspecionadas antes de substituir o APK assinado versionado no repositório.
+- Antes de uma entrega final, a validação deve ser executada localmente: testes zBET, compilação B4A real, instalação do APK em emulador/dispositivo, nove configurações alvo, smoke tests de interação e inspeção das screenshots reais. O workflow GitHub é manual e auxiliar; não promove binários nem substitui a validação local.
 
 
 ## 7. Gestão de Rotores na UI
