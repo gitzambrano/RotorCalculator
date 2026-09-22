@@ -121,6 +121,7 @@ Sub Process_Globals
 	Public ConditionAltitudeM As Double = 0.0
 	Public ConditionTemperatureC As Double = 15.0
 	Public HorizontalInputMode As String = "mu"   ' mu | vx
+	Public ConditionHorizontalValue As Double = 0.0
 	Public AxialInputMode As String = "alpha"     ' alpha | vz | muz
 	Public ConditionAxialValue As Double = 0.0
 	Private ion As Object ' Storage Access Framework activity-result callback
@@ -1893,16 +1894,15 @@ End Sub
 
 Private Sub RefreshHorizontalInputDisplay
 	If btnHorizontalInput.IsInitialized = False Then Return
-	Dim vtip As Double = RotorTipSpeed
 	If HorizontalInputMode = "vx" Then
 		btnHorizontalInput.Text = "Vx"
 		lblHorizontalUnit.Text = "m/s"
-		edtHorizontalValue.Text = NumberFormat2(ActiveCond.Mu * vtip, 1, 1, 1, False)
+		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 1, 1, False)
 	Else
 		HorizontalInputMode = "mu"
 		btnHorizontalInput.Text = "μ"
 		lblHorizontalUnit.Text = "[-]"
-		edtHorizontalValue.Text = NumberFormat2(ActiveCond.Mu, 1, 3, 3, False)
+		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 3, 3, False)
 	End If
 End Sub
 
@@ -1988,8 +1988,14 @@ End Sub
 Private Sub RefreshDerivedCondition(updateDisplayedValues As Boolean)
 	Dim vtip As Double = RotorTipSpeed
 	If vtip > 0 Then
+		If HorizontalInputMode = "vx" Then
+			ActiveCond.Mu = ClampD(ConditionHorizontalValue / vtip, 0.0, 0.60)
+		Else
+			ActiveCond.Mu = ClampD(ConditionHorizontalValue, 0.0, 0.60)
+		End If
 		ActiveCond.MuZ = zBETEngine.ResolveMuZ(ActiveCond.Mu, AxialInputMode, ConditionAxialValue, vtip)
 	Else
+		ActiveCond.Mu = 0.0
 		ActiveCond.MuZ = 0.0
 	End If
 	If updateDisplayedValues Then
@@ -2262,12 +2268,11 @@ End Sub
 
 Sub edtHorizontalValue_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	Dim raw As Double = ParseDoubleDef(edtHorizontalValue.Text, 0.0)
+	Dim raw As Double = ParseDoubleDef(edtHorizontalValue.Text, ConditionHorizontalValue)
 	If HorizontalInputMode = "vx" Then
-		Dim vtip As Double = RotorTipSpeed
-		If vtip > 0 Then ActiveCond.Mu = ClampD(raw / vtip, 0.0, 0.60)
+		ConditionHorizontalValue = Max(0.0, raw)
 	Else
-		ActiveCond.Mu = ClampD(raw, 0.0, 0.60)
+		ConditionHorizontalValue = ClampD(raw, 0.0, 0.60)
 	End If
 	RefreshDerivedCondition(False)
 	RecalculateRotor
@@ -2294,7 +2299,14 @@ Sub btnHorizontalInput_Click
 	If HorizontalInputMode = "vx" Then selected = 1
 	Dim idx As Int = InputList(options, "Horizontal Flow · zBET convention", selected)
 	If idx < 0 Then Return
-	If idx = 0 Then HorizontalInputMode = "mu" Else HorizontalInputMode = "vx"
+	Dim vtip As Double = RotorTipSpeed
+	If idx = 0 Then
+		HorizontalInputMode = "mu"
+		ConditionHorizontalValue = ActiveCond.Mu
+	Else
+		HorizontalInputMode = "vx"
+		ConditionHorizontalValue = ActiveCond.Mu * vtip
+	End If
 	UpdatingUI = True
 	RefreshHorizontalInputDisplay
 	UpdatingUI = False
@@ -2353,7 +2365,12 @@ Sub edtHorizontalValue_FocusChanged (HasFocus As Boolean)
 End Sub
 
 Sub edtAxialValue_FocusChanged (HasFocus As Boolean)
-	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
+	If HasFocus = False And UpdatingUI = False Then
+		LoadConditionDataToFields
+		If AxialInputMode = "alpha" And Abs(ActiveCond.Mu) < 1e-8 And Abs(ConditionAxialValue) > 1e-8 Then
+			ToastMessageShow("At Vx = 0, α does not define nonzero axial flow; use Vz or μz.", True)
+		End If
+	End If
 End Sub
 
 ' ====================================================================
