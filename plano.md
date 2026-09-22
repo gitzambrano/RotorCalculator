@@ -198,8 +198,8 @@ Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados 
      - *Coleman Simples*: Considera o gradiente longitudinal simples da esteira.
      - *Coleman-Feingold (NDARC)*: Padrão da indústria e NASA para simulações abrangentes.
      - *Drees*: Formulação clássica com forte validação experimental para gradientes laterais e longitudinais.
-4. **Popup de Gráfico de Desempenho (Canvas Polar)**:
-   - Renderização gráfica direta na tela com curva de potência vs velocidade, eixos graduados e ponto de operação atual destacado com uma mira pulsante.
+4. **Popup Parameter Sweep (Canvas nativo)**:
+   - Renderização direta das curvas selecionadas versus μ, com autoescala, legenda por condição/modelo, indicação do μ operacional e acesso a uma tabela da condição ativa.
 
 ---
 
