@@ -629,6 +629,17 @@ Public Sub PerformHoverTrim(geom As RotorGeometry, cond As FlightCondition) As O
 	Return Array(trimmedGeom)
 End Sub
 
+' Returns the actual geometry used by the operating point after the selected trim.
+' This is the authoritative source for RPM-dependent UI conversions such as Vx<->mu
+' and Vz<->mu_z. Caller geometry and condition are never mutated.
+Public Sub ResolveOperatingGeometry(geom As RotorGeometry, cond As FlightCondition) As RotorGeometry
+	Dim baseGeom As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	Dim safeCond As FlightCondition = SanitizeCondition(cond)
+	Dim trimObj() As Object = PerformHoverTrim(baseGeom, safeCond)
+	Dim resolved As RotorGeometry = trimObj(0)
+	Return ResolveSolidity(resolved)
+End Sub
+
 ' FUNÇÃO PRINCIPAL: Calcula todos os parâmetros aerodinâmicos do rotor
 Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorResults
 	Dim res As RotorResults
