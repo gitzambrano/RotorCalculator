@@ -284,8 +284,12 @@ Public Sub DrawSweepPlot( _
 	Dim plotH As Float = heightPx - mTop - mBottom
 	
 	If plotW <= 10 Or plotH <= 10 Then Return bmp
-	Dim plotOmega As Double = geom.RPM * (2.0 * cPI / 60.0)
-	Dim plotVtip As Double = plotOmega * geom.Radius
+	Dim tipGeom As RotorGeometry = geom
+	If cond.HoverTrimMode = "rpm" And cond.TargetThrustN > 0 Then
+		tipGeom = zBETEngine.ResolveOperatingGeometry(geom, cond)
+	End If
+	Dim plotOmega As Double = tipGeom.RPM * (2.0 * cPI / 60.0)
+	Dim plotVtip As Double = plotOmega * tipGeom.Radius
 	If plotVtip < 1.0 Then plotVtip = 1.0
 	
 	' Advance ratio stations (25 points)
