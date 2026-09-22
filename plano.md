@@ -15,9 +15,9 @@ O **RotorCalculator** é um aplicativo móvel avançado para Android projetado p
 O sistema oferece um cálculo instantâneo e rigoroso do desempenho aerodinâmico de rotores em voo pairado (*hover*) e voo de avanço (*forward flight*), empregando a formulação semi-analítica do **zBET** com integração de momentos radiais, teoria do momentum global com esteira inclinada, gradientes de influxo harmônico (Uniforme, Coleman, Coleman-Feingold/NDARC e Drees), correções de compressibilidade e perda de ponta, além de quadratura vetorial de arrasto de perfil.
 
 ### Diferenciais em Relação ao AeroCalculator:
-- **Herança de Sucesso**: Mantém o fluxo consagrado do AeroCalculator — abas deslizantes de alta resposta, banco de dados local com biblioteca de aeronaves/rotores salvos, e cálculo instantâneo reativo.
+- **Herança de Sucesso**: Mantém o fluxo consagrado do AeroCalculator — tabs fixas de resposta imediata, banco local de rotores salvos e cálculo reativo.
 - **Acabamento "Ultra-Premium"**: temas **Dark** e **Light** selecionáveis e persistentes, ambos com contraste de instrumento técnico, tipografia nítida e acentos funcionais consistentes.
-- **Rigor Físico Exaustivo**: Toda a física foi validada contra o zBET de referência e as obras seminais de Wayne Johnson (*Rotorcraft Aeromechanics*) e J. Gordon Leishman (*Principles of Helicopter Aerodynamics*).
+- **Rigor Físico Auditável**: As equações e convenções são mantidas alinhadas ao `tools/zBET.py` e documentadas com base em Wayne Johnson (*Rotorcraft Aeromechanics*) e J. Gordon Leishman (*Principles of Helicopter Aerodynamics*). A equivalência do binário B4A só é declarada após o gate compilado previsto na seção de release.
 - **Popups de Apoio e Ferramentas**: seleção de aerofólios, conversor rápido, convenções, manual offline de física/equações e gráficos interativos de varredura gerados via `Canvas`, com exportação CSV/PNG.
 
 ---
@@ -87,8 +87,10 @@ O módulo `zBETEngine.bas` é projetado como uma biblioteca pura sem acoplamento
    - `fixed`: $B = 0.97$
    - `sissingh`: $B = 1 - \frac{\sqrt{2 C_T}}{N}$
 2. **Compressibilidade (Prandtl-Glauert)**:
-   - Mach da ponta na pá avançante: $M_{\mathrm{at}} = \frac{\Omega R (1 + \mu)}{a_{\mathrm{som}}}$
-   - Se ativado e $M_{\mathrm{at}} < 1.0$: $a = \frac{a_0}{\sqrt{1 - M_{\mathrm{at}}^2}}$.
+   - O output $M_{\mathrm{at}} = \frac{\Omega R (1 + \mu)}{a_{\mathrm{som}}}$ é mantido como indicador conservador da ponta avançante e gera caution a partir de 0.80.
+   - A correção do lift slope segue exatamente o zBET de referência com Mach efetivo representativo a 75% do raio:
+     $M_{\mathrm{eff}} = \frac{\Omega R}{a_{\mathrm{som}}}\sqrt{0.75^2 + 0.5\mu^2}$.
+   - $M_{\mathrm{eff}}$ é limitado a 0.85 para manter a aproximação subsonica finita, e $a = \frac{a_0}{\sqrt{\max(0.01,1-M_{\mathrm{eff}}^2)}}$.
 
 ### 3.3 Modelos de Influxo Harmônico
 A velocidade induzida adimensional tem a distribuição:
@@ -140,7 +142,7 @@ A solução é encontrada via algoritmo de bissecção ultrarrápido (convergind
 - **Torque Total**: $C_Q = C_{Qi} + C_{Q0}$
 - **Potência de Eixo**: $C_{P,\mathrm{shaft}} = C_Q \implies P_{\mathrm{shaft}} = C_Q \rho A (\Omega R)^3$ [W]
 - **Potência do Ar**: $C_{Pair} = K_{\mathrm{ind}}\lambda_i C_T + \mu_z C_T + C_{Q0} + \mu C_{H0}$
-- **Figura de Mérito (Hover)**: $FoM = \frac{C_T^{3/2} / \sqrt{2}}{C_Q}$
+- **Figura de Mérito (Hover)**: $FoM = \frac{C_T^{3/2}/\sqrt{2}}{K_{\mathrm{ind}}C_T^{3/2}/\sqrt{2}+C_{Q0}}$, igual à definição do zBET de referência.
 - **Eficiência Efetiva Sustentação/Arrasto**: $L/D_{\mathrm{eff}} = \frac{C_T \mu}{C_{Pair}} = \frac{T V_\infty}{P_{\mathrm{air}}}$
 
 ---
