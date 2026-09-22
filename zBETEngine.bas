@@ -202,6 +202,35 @@ Public Sub CloneGeometry(src As RotorGeometry) As RotorGeometry
 	Return dst
 End Sub
 
+' Canonical zBET / zBEMT flight-condition convention:
+'   +x / Vx is forward in-plane flow; μ = Vx/(ΩR)
+'   +z / Vz is downward through the rotor disk
+'   μz = Vz/(ΩR) when Vz is specified directly
+'   rotor angle of attack α is positive when the stream arrives from below,
+'   therefore μz = -μ tan(α).
+Public Sub ResolveMuZ(mu As Double, axialMode As String, axialValue As Double, vtip As Double) As Double
+	Select axialMode.ToLowerCase
+		Case "alpha"
+			Return -mu * Tan(axialValue * cPI / 180.0)
+		Case "vz"
+			If Abs(vtip) < 1e-12 Then Return 0.0
+			Return axialValue / vtip
+		Case "muz"
+			Return axialValue
+		Case Else
+			Return axialValue
+	End Select
+End Sub
+
+Public Sub AlphaFromMuZ(mu As Double, muZ As Double) As Double
+	If Abs(mu) < 1e-12 Then Return 0.0
+	Return -ATan(muZ / mu) * 180.0 / cPI
+End Sub
+
+Public Sub VzFromMuZ(muZ As Double, vtip As Double) As Double
+	Return muZ * vtip
+End Sub
+
 Public Sub CloneCondition(src As FlightCondition) As FlightCondition
 	Dim dst As FlightCondition
 	dst.Initialize
