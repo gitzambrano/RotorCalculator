@@ -56,10 +56,11 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
 
 ## 4. Gestão de Chaves, Keystore e Google Play
 
-1. **Diretório `Key/`**:
-   - O diretório `Key/` contém a keystore oficial (`key_aero_calc.keystore`, alias `b4a`, senha `***REDACTED***`) e as credenciais de API (`play_store_service_account.json`).
-   - **Confidencialidade Máxima**: Nenhum arquivo privado ou senha deve ser commitado em repositórios públicos.
-   - Para backups na nuvem, utilizar o formato codificado em Base64 (`key_aero_calc.keystore.b64.txt`). A build final deve usar a keystore oficial; builds de QA podem usar chave efêmera separada.
+1. **Credenciais fora do repositório**:
+   - Keystores, chaves PEPK, senhas e service accounts nunca pertencem ao Git, mesmo em repositórios privados.
+   - Builds locais usam `B4A_KEY_FILE`, `B4A_KEY_PASSWORD` e, opcionalmente, `B4A_KEY_ALIAS`. Sem essas variáveis, `tools/b4a_build.ps1` produz uma build não assinada.
+   - Materiais de publicação devem permanecer em um cofre de segredos ou armazenamento privado separado; Base64 não é criptografia nem mecanismo de proteção.
+   - Qualquer credencial que tenha sido historicamente versionada deve ser considerada exposta e rotacionada no provedor correspondente.
 2. **Publicação na Play Store**:
    - Sempre incrementar `#VersionCode` (inteiro estritamente crescente) e atualizar `#VersionName` antes de gerar pacotes de release.
    - Gerar pacotes assinados `.aab` (*Android App Bundle*) direcionados ao SDK 36 (Android 16), mantendo compatibilidade retroativa até Android 5.0 (API 16/21).
