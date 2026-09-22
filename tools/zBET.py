@@ -712,9 +712,18 @@ def ct_bet(mu, lam, lambda_1s, moments, geometry, a=None):
     )
 
 
-def solve_inflow(mu, mu_z, pitch, geometry, model, fx=FX_COLEMAN, fy=FY_COLEMAN):
-    """Solves for lambda_i >= 0 via momentum theory and Blade Element Theory equilibrium."""
-    b_val = geometry.b_factor()
+def solve_inflow(
+    mu,
+    mu_z,
+    pitch,
+    geometry,
+    model,
+    fx=FX_COLEMAN,
+    fy=FY_COLEMAN,
+    b_override=None,
+):
+    """Solves for lambda_i >= 0 via momentum/BET closure at the supplied effective radius."""
+    b_val = geometry.b_factor() if b_override is None else float(b_override)
     moments = radial_moments(geometry, pitch, b=b_val)
     lift_slope = geometry.lift_slope(mu)
 
@@ -760,10 +769,12 @@ def _gauss_nodes(order):
     return np.polynomial.legendre.leggauss(order)
 
 
-def induced_torque_coefficient(mu, lam, lambda_1c, lambda_1s, pitch, geometry, a):
+def induced_torque_coefficient(
+    mu, lam, lambda_1c, lambda_1s, pitch, geometry, a, b_override=None
+):
     """Calculates CQi from the direct radial BET torque integral."""
     x0 = geometry.root_cutout
-    b = geometry.b_factor()
+    b = geometry.b_factor() if b_override is None else float(b_override)
     if b <= x0:
         return 0.0
 
@@ -864,16 +875,67 @@ def coefficients(
         pitch = pitch_input
 
     b_val = geometry.b_factor()
-    j, i_mom, t_mom = radial_moments(geometry, pitch, b=b_val)
     a = geometry.lift_slope(mu)
 
-    lambda_i = solve_inflow(mu, mu_z, pitch, geometry, model, fx=fx, fy=fy)
-    lam = mu_z + lambda_i
-    kx, ky = inflow_gradients(mu, lam, model, fx=fx, fy=fy)
-    lambda_1c = kx * lambda_i
-    lambda_1s = ky * lambda_i
+    def solve_at_b(b_current):
+        moments_current = radial_moments(geometry, pitch, b=b_current)
+        lambda_i_current = solve_inflow(
+            mu,
+            mu_z,
+            pitch,
+            geometry,
+            model,
+            fx=fx,
+            fy=fy,
+            b_override=b_current,
+        )
+        lam_current = mu_z + lambda_i_current
+        kx_current, ky_current = inflow_gradients(
+            mu, lam_current, model, fx=fx, fy=fy
+        )
+        lambda_1c_current = kx_current * lambda_i_current
+        lambda_1s_current = ky_current * lambda_i_current
+        ct_current = ct_bet(
+            mu,
+            lam_current,
+            lambda_1s_current,
+            moments_current,
+            geometry,
+            a=a,
+        )
+        return (
+            moments_current,
+            lambda_i_current,
+            lam_current,
+            kx_current,
+            ky_current,
+            lambda_1c_current,
+            lambda_1s_current,
+            ct_current,
+        )
 
-    ct = ct_bet(mu, lam, lambda_1s, (j, i_mom, t_mom), geometry, a=a)
+    state = solve_at_b(b_val)
+    if geometry.tip_loss_mode == "sissingh" and state[-1] > 0.0:
+        for _ in range(8):
+            next_b = geometry.b_factor(ct=state[-1])
+            if abs(next_b - b_val) < 1e-8:
+                b_val = next_b
+                state = solve_at_b(b_val)
+                break
+            b_val = next_b
+            state = solve_at_b(b_val)
+
+    (
+        (j, i_mom, t_mom),
+        lambda_i,
+        lam,
+        kx,
+        ky,
+        lambda_1c,
+        lambda_1s,
+        ct,
+    ) = state
+
     ch0, cq0 = profile_drag_coefficients(mu, mu_z, geometry, profile_drag_model)
 
     # Induced longitudinal H-force CHi:
@@ -889,7 +951,7 @@ def coefficients(
     elif induced_torque_model == "analytical_bet":
         # Direct BET induced shaft torque.
         cqi = induced_torque_coefficient(
-            mu, lam, lambda_1c, lambda_1s, pitch, geometry, a
+            mu, lam, lambda_1c, lambda_1s, pitch, geometry, a, b_override=b_val
         )
     else:
         raise ValueError("induced_torque_model must be 'analytical_bet' or 'energy_balance'")
@@ -942,6 +1004,7 @@ def coefficients(
         "lambda_i": lambda_i,
         "L_D_eff": l_d_eff,
         "FoM": fom,
+        "B_tip_loss": b_val,
         "T_N": thrust_n,
         "P_kW": power_shaft_kw,
         "P_air_kw": power_air_kw,
