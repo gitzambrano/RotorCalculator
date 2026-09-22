@@ -24,3 +24,14 @@ Desktop.ini
 .vscode/
 *.bak
 *.tmp
+
+# Signing / publishing secrets (never version)
+Key/*.keystore
+Key/*.jks
+Key/*.pepk
+Key/*.b64.txt
+Key/*service_account*.json
+Key/*PassKey*
+Key/*commandline*
+.env
+.env.*
