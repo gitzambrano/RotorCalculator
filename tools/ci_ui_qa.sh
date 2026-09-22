@@ -263,8 +263,7 @@ PY
   adb shell settings put system user_rotation 1
   adb shell wm size 873x393
   sleep 2
-  python /tmp/ui_node.py "$OUT/08-rotated.xml" > "$OUT/08-rotated.json"
-  grep -qi "Drees Linear" "$OUT/08-rotated.json"
+  # First prove that the activity actually resized to landscape.
   safe_screencap "$OUT/08-rotated.png"
   python3 - "$OUT/08-rotated.png" <<'PY'
 import struct,sys
@@ -274,6 +273,16 @@ w,hh=struct.unpack(">II",h[16:24])
 if w <= hh:
     raise SystemExit(f"live rotation did not produce landscape dimensions: {w}x{hh}")
 PY
+  # A real resize rebuilds the page at scroll position zero. Scroll back to the
+  # model controls before asserting that the user's selections survived.
+  for _ in 1 2 3 4 5; do
+    adb shell input swipe 436 270 436 105 220 || true
+    sleep 0.2
+  done
+  python /tmp/ui_node.py "$OUT/08b-rotated-models.xml" > "$OUT/08b-rotated-models.json"
+  grep -qi "Drees Linear" "$OUT/08b-rotated-models.json"
+  grep -qi "Analytical Tangential" "$OUT/08b-rotated-models.json"
+  grep -qi "Collective to CT" "$OUT/08b-rotated-models.json"
   adb shell wm size 393x873
   adb shell settings put system user_rotation 0
   sleep 2
