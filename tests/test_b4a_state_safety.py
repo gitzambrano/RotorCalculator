@@ -130,3 +130,11 @@ def test_responsive_matrix_proves_scrollable_content_reaches_true_bottom():
     assert 'grep -qi "eVTOL Conceptual Rotor" "$OUT/01b-rotor-list-bottom.json"' in qa
     assert 'grep -qi "Target CT" "$OUT/05-conditions-bottom.json"' in qa
     assert 'grep -Eqi "Sound Speed|Speed of Sound" "$OUT/08-results-bottom.json"' in qa
+
+
+def test_live_resize_state_gate_scrolls_incrementally():
+    qa = text("tools/ci_ui_qa.sh")
+    assert "assert_text_scrolling_down" in qa
+    assert '"Drees Linear" 873 393 "08b-inflow"' in qa
+    assert '"Analytical Tangential" 873 393 "08c-profile"' in qa
+    assert '"Collective to CT" 873 393 "08d-trim"' in qa

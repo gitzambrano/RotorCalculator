@@ -82,6 +82,26 @@ tap_text_scrolling() {
   return 1
 }
 
+assert_text_scrolling_down() {
+  local OUTDIR="$1"
+  local TEXT="$2"
+  local W="$3"
+  local H="$4"
+  local STEM="$5"
+  local attempt
+  for attempt in 0 1 2 3 4 5 6; do
+    python /tmp/ui_node.py "$OUTDIR/$STEM-$attempt.xml" > "$OUTDIR/$STEM-$attempt.json"
+    if grep -Fqi "$TEXT" "$OUTDIR/$STEM-$attempt.json"; then
+      echo "Verified after live resize: $TEXT"
+      return 0
+    fi
+    adb shell input swipe $((W/2)) $((H*2/3)) $((W/2)) $((H/3)) 180 || true
+    sleep 0.3
+  done
+  echo "Could not verify persisted text after scrolling: $TEXT" >&2
+  return 1
+}
+
 capture_screen() {
   local NAME="$1" SIZE="$2" ROT="$3" FONT="$4"
   local OUT="qa-results/$NAME"
@@ -273,16 +293,13 @@ w,hh=struct.unpack(">II",h[16:24])
 if w <= hh:
     raise SystemExit(f"live rotation did not produce landscape dimensions: {w}x{hh}")
 PY
-  # A real resize rebuilds the page at scroll position zero. Scroll back to the
-  # model controls before asserting that the user's selections survived.
-  for _ in 1 2 3 4 5; do
-    adb shell input swipe 436 270 436 105 220 || true
-    sleep 0.2
-  done
-  python /tmp/ui_node.py "$OUT/08b-rotated-models.xml" > "$OUT/08b-rotated-models.json"
-  grep -qi "Drees Linear" "$OUT/08b-rotated-models.json"
-  grep -qi "Analytical Tangential" "$OUT/08b-rotated-models.json"
-  grep -qi "Collective to CT" "$OUT/08b-rotated-models.json"
+  # A real resize rebuilds the page at scroll position zero. Verify each
+  # persisted selection while scrolling in small increments; a single final
+  # viewport cannot contain all three controls on a short landscape phone.
+  assert_text_scrolling_down "$OUT" "Drees Linear" 873 393 "08b-inflow"
+  assert_text_scrolling_down "$OUT" "Analytical Tangential" 873 393 "08c-profile"
+  assert_text_scrolling_down "$OUT" "Collective to CT" 873 393 "08d-trim"
+  python /tmp/ui_node.py "$OUT/08e-rotated-models-final.xml" > "$OUT/08e-rotated-models-final.json"
   adb shell wm size 393x873
   adb shell settings put system user_rotation 0
   sleep 2
