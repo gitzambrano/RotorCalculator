@@ -99,15 +99,14 @@ def test_ui_tap_helper_prefers_exact_clickable_controls():
     assert "candidates.sort(key=lambda c:(c[0],c[1]))" in wf
 
 
-def test_release_promotion_uses_same_run_artifact():
+def test_github_qa_is_manual_only_and_never_handles_release_keys():
     wf = text(".github/workflows/frontend-source-qa.yml")
-    assert "promote-release:" in wf
-    assert "needs: [build-b4a, ui-qa]" in wf
-    assert "RotorCalculator-b4a-build" in wf
-    assert "verified-build/RotorCalculator_Signed.apk" in wf
-    assert "createOrUpdateFileContents" in wf
-    assert "contents: write" in wf
-    assert "'RotorCalculator_Signed.apk'" in wf
+    assert "workflow_dispatch:" in wf
+    assert "\n  push:" not in wf
+    assert "promote-release:" not in wf
+    assert "RotorCalculator_Signed.apk" not in wf
+    assert "key_aero_calc.keystore" not in wf
+    assert "ci-build/RotorCalculator-ci.apk" in wf
 
 
 def test_results_normalize_display_only_negative_zero():
@@ -138,3 +137,85 @@ def test_live_resize_state_gate_scrolls_incrementally():
     assert '"Drees Linear" 873 393 "08b-inflow"' in qa
     assert '"Analytical Tangential" 873 393 "08c-profile"' in qa
     assert '"Collective to CT" 873 393 "08d-trim"' in qa
+
+
+def test_engine_defensively_guards_mathematical_domains():
+    src = text("zBETEngine.bas")
+    assert "geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))" in src
+    assert "geom.NBlades = Max(1, Min(16, geom.NBlades))" in src
+    assert "Public Sub SanitizeCondition" in src
+    assert "If f_hi > 0.0 Then Return -1.0" in src
+    assert "SolutionValid As Boolean" in src
+    assert "CompressibilityWarning As Boolean" in src
+
+
+def test_ui_clamps_user_inputs_before_recalculation():
+    main = text("RotorCalculator.b4a")
+    assert "ActiveGeom.RootCutout = ClampD" in main
+    assert "ActiveGeom.NBlades = Max(1, Min(16" in main
+    assert "ConditionAltitudeM = ClampD" in main
+    assert "ConditionTemperatureC = ClampD" in main
+    assert "ActiveCond.Mu = ClampD" in main
+    assert "Sub edtGeom_FocusChanged" in main
+    assert "Sub edtCond_FocusChanged" in main
+
+
+def test_sweep_recomputes_axial_flow_for_every_mu():
+    popup = text("RotorPopups.bas")
+    main = text("RotorCalculator.b4a")
+    assert "activeAlphaDeg As Double" in popup
+    assert "activeVzRate As Double" in popup
+    assert "tempCond.MuZ = -mu * Tan(alphaDeg * cPI / 180.0) + (vzRate / vtip)" in popup
+    assert "tempCond.MuZ = -mu * Tan(ConditionShaftTiltDeg * cPI / 180.0) + (ConditionClimbRateMs / vtip)" in main
+
+
+def test_geometry_crud_is_complete_and_row_regions_do_not_overlap():
+    main = text("RotorCalculator.b4a")
+    storage = text("RotorStorage.bas")
+    assert 'btnNewRotor.Text = "+ NEW ROTOR"' in main
+    assert "Sub btnNewRotor_Click" in main
+    assert "Public Sub CreateNewRotor As Int" in storage
+    assert "edtRotorName" in main
+    assert "row.AddView(lblName, 16dip, 6dip, listW - 128dip, 30dip)" in main
+    assert "row.AddView(lblActive, listW - 112dip, 10dip, 64dip, 22dip)" in main
+    assert "row.AddView(lblArrow, listW - 44dip, 10dip, 36dip, 48dip)" in main
+
+
+def test_all_three_trim_modes_are_exposed():
+    main = text("RotorCalculator.b4a")
+    assert 'Case "collective"' in main
+    assert 'Case "rpm"' in main
+    assert 'btnHoverTrimMode.Text = "RPM to Thrust"' in main
+    assert 'btnHoverTrimMode.Text = "Manual Pitch"' in main
+
+
+def test_results_expose_validity_and_pg_domain_warning():
+    main = text("RotorCalculator.b4a")
+    engine = text("zBETEngine.bas")
+    assert 'lblResultStatus.Text = "MODEL STATUS · VALID"' in main
+    assert "ActiveRes.SolutionValid = False" in main
+    assert "ActiveRes.CompressibilityWarning" in main
+    assert "res.AdvancingTipMach >= 0.80" in engine
+
+
+def test_inflow_help_and_unit_converter_are_real_features():
+    main = text("RotorCalculator.b4a")
+    assert '"Quick Unit Converter"' in main
+    assert "Private Sub OpenUnitConverter" in main
+    assert '"kW → hp"' in main
+    assert '"N → kgf"' in main
+    assert '"km/h → kt"' in main
+    assert '"m → ft"' in main
+    assert '"mm → in"' in main
+    assert 'Msgbox("Uniform: uniform induced velocity' in main
+
+
+def test_signing_secrets_are_externalized():
+    build = text("tools/b4a_build.ps1")
+    ignore = text(".gitignore")
+    agents = text("AGENTS.md")
+    assert "$env:B4A_KEY_FILE" in build
+    assert "$env:B4A_KEY_PASSWORD" in build
+    assert "Key/*.keystore" in ignore
+    assert "service_account" in ignore
+    assert "Base64 is encoding, not encryption" in agents
