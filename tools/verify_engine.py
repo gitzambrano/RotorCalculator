@@ -28,6 +28,12 @@ def verify_b4a_source_contract() -> None:
     required = [
         "Dim trimmedGeom As RotorGeometry = CloneGeometry(geom)",
         "Public Sub SanitizeCondition",
+        "Public Sub ResolveMuZ",
+        'Case "alpha"',
+        'Case "vz"',
+        'Case "muz"',
+        "Return -mu * Tan(axialValue * cPI / 180.0)",
+        "Return axialValue / vtip",
         "geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))",
         "If f_lo < 0.0 Then Return -1.0",
         "If f_hi > 0.0 Then Return -1.0",
@@ -156,12 +162,32 @@ def verify_presets() -> int:
     return len(presets)
 
 
+def verify_axial_representations() -> None:
+    geom = zBET.DEFAULT_GEOMETRY
+    for mu in (0.05, 0.15, 0.30, 0.45):
+        for alpha_deg in (-10.0, -5.0, 0.0, 5.0, 10.0):
+            mu_z_alpha, _ = zBET.axial_condition(mu, alpha_deg, "alpha", geom)
+            vz = mu_z_alpha * geom.vtip
+            mu_z_vz, _ = zBET.axial_condition(mu, vz, "w", geom)
+            mu_z_direct, _ = zBET.axial_condition(mu, mu_z_alpha, "mu_z", geom)
+            if not math.isclose(mu_z_alpha, mu_z_vz, rel_tol=0.0, abs_tol=1e-14):
+                raise AssertionError("alpha/Vz axial representations diverged")
+            if not math.isclose(mu_z_alpha, mu_z_direct, rel_tol=0.0, abs_tol=1e-14):
+                raise AssertionError("alpha/mu_z axial representations diverged")
+    # Canonical sign: positive alpha => stream from below => negative imposed mu_z.
+    mu_z_positive_alpha, _ = zBET.axial_condition(0.2, 5.0, "alpha", geom)
+    if not mu_z_positive_alpha < 0.0:
+        raise AssertionError("positive alpha must produce negative mu_z")
+
+
 def main() -> None:
     print("=" * 72)
     print("RotorCalculator offline verification")
     print("=" * 72)
     verify_b4a_source_contract()
     print("PASS: B4A source contract")
+    verify_axial_representations()
+    print("PASS: alpha / Vz / mu_z representation equivalence")
     count, residual = run_reference_matrix()
     print(f"PASS: deterministic reference matrix {count}/100")
     print(f"PASS: max momentum-closure residual = {residual:.3e}")
