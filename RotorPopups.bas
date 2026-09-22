@@ -256,10 +256,12 @@ Public Sub DrawSweepPlot( _
 	
 	' Curves matrix
 	Dim allCurves(nCurves, nPoints) As Double
+	Dim validPoint(nCurves, nPoints) As Boolean
 	Dim muPoints(nPoints) As Double
 	
 	Dim yMax As Double = -1e9
 	Dim yMin As Double = 1e9
+	Dim validCount As Int = 0
 	
 	For cIdx = 0 To nCurves - 1
 		Dim tempCond As FlightCondition = zBETEngine.CloneCondition(cond)
@@ -306,15 +308,24 @@ Public Sub DrawSweepPlot( _
 			tempCond.MuZ = -mu * Tan(alphaDeg * cPI / 180.0) + (vzRate / vtip)
 			
 			Dim res As RotorResults = zBETEngine.Calculate(geom, tempCond)
-			Dim val As Double = ExtractParamValue(res, paramKey)
-			allCurves(cIdx, i) = val
-			
-			If val > yMax Then yMax = val
-			If val < yMin Then yMin = val
+			If res.SolutionValid Then
+				Dim val As Double = ExtractParamValue(res, paramKey)
+				allCurves(cIdx, i) = val
+				validPoint(cIdx, i) = True
+				validCount = validCount + 1
+				If val > yMax Then yMax = val
+				If val < yMin Then yMin = val
+			Else
+				validPoint(cIdx, i) = False
+			End If
 		Next
 	Next
 	
 	' Auto-scaling vertical range with padding
+	If validCount = 0 Then
+		cvs.DrawText("No valid operating points in this sweep.", widthPx * 0.5, heightPx * 0.5, Typeface.DEFAULT_BOLD, 13, colText, "CENTER")
+		Return bmp
+	End If
 	If yMax == yMin Then
 		yMax = yMax + 0.1
 		yMin = yMin - 0.1
@@ -389,12 +400,13 @@ Public Sub DrawSweepPlot( _
 		End If
 		
 		For i = 0 To nPoints - 2
-			Dim x1 As Float = mLeft + (muPoints(i) / maxMu) * plotW
-			Dim y1 As Float = mTop + plotH - ((allCurves(cIdx, i) - yMin) / (yMax - yMin)) * plotH
-			Dim x2 As Float = mLeft + (muPoints(i + 1) / maxMu) * plotW
-			Dim y2 As Float = mTop + plotH - ((allCurves(cIdx, i + 1) - yMin) / (yMax - yMin)) * plotH
-			
-			cvs.DrawLine(x1, y1, x2, y2, curveColor, strokeWidth)
+			If validPoint(cIdx, i) And validPoint(cIdx, i + 1) Then
+				Dim x1 As Float = mLeft + (muPoints(i) / maxMu) * plotW
+				Dim y1 As Float = mTop + plotH - ((allCurves(cIdx, i) - yMin) / (yMax - yMin)) * plotH
+				Dim x2 As Float = mLeft + (muPoints(i + 1) / maxMu) * plotW
+				Dim y2 As Float = mTop + plotH - ((allCurves(cIdx, i + 1) - yMin) / (yMax - yMin)) * plotH
+				cvs.DrawLine(x1, y1, x2, y2, curveColor, strokeWidth)
+			End If
 		Next
 	Next
 	
@@ -438,13 +450,13 @@ Public Sub DrawSweepPlot( _
 	' Mark the active operating point
 	If currentMu >= 0.0 And currentMu <= maxMu Then
 		Dim curRes As RotorResults = zBETEngine.Calculate(geom, cond)
-		Dim curVal As Double = ExtractParamValue(curRes, paramKey)
-		
-		Dim cx As Float = mLeft + (currentMu / maxMu) * plotW
-		Dim cy As Float = mTop + plotH - ((curVal - yMin) / (yMax - yMin)) * plotH
-		
-		cvs.DrawCircle(cx, cy, 5dip, colCurrentPoint, True, 1dip)
-		cvs.DrawCircle(cx, cy, 9dip, colCurrentPoint, False, 1.5dip)
+		If curRes.SolutionValid Then
+			Dim curVal As Double = ExtractParamValue(curRes, paramKey)
+			Dim cx As Float = mLeft + (currentMu / maxMu) * plotW
+			Dim cy As Float = mTop + plotH - ((curVal - yMin) / (yMax - yMin)) * plotH
+			cvs.DrawCircle(cx, cy, 5dip, colCurrentPoint, True, 1dip)
+			cvs.DrawCircle(cx, cy, 9dip, colCurrentPoint, False, 1.5dip)
+		End If
 		
 
 	End If
