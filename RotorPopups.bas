@@ -196,7 +196,9 @@ Public Sub DrawSweepPlot( _
 	paramTitle As String, _
 	multiCurveMode As Int, _
 	maxMu As Double, _
-	currentMu As Double _
+	currentMu As Double, _
+	activeAlphaDeg As Double, _
+	activeVzRate As Double _
 ) As Bitmap
 
 	Dim bmp As Bitmap
@@ -261,8 +263,9 @@ Public Sub DrawSweepPlot( _
 	
 	For cIdx = 0 To nCurves - 1
 		Dim tempCond As FlightCondition = zBETEngine.CloneCondition(cond)
-		Dim alphaDeg As Double = 0.0
-		Dim vzRate As Double = 0.0
+		' Preserve the active physical condition unless this curve intentionally varies it.
+		Dim alphaDeg As Double = activeAlphaDeg
+		Dim vzRate As Double = activeVzRate
 		
 		If multiCurveMode == 0 Then
 			Select Case cIdx
@@ -296,14 +299,11 @@ Public Sub DrawSweepPlot( _
 			muPoints(i) = mu
 			tempCond.Mu = mu
 			
-			If multiCurveMode == 1 Then
-				tempCond.MuZ = -mu * Tan(alphaDeg * cPI / 180.0)
-			Else If multiCurveMode == 2 Then
-				Dim omega As Double = geom.RPM * (2.0 * cPI / 60.0)
-				Dim vtip As Double = omega * geom.Radius
-				If vtip < 1.0 Then vtip = 200.0
-				tempCond.MuZ = vzRate / vtip
-			End If
+			' Keep shaft tilt and vertical speed physically consistent as μ changes.
+			Dim omega As Double = geom.RPM * (2.0 * cPI / 60.0)
+			Dim vtip As Double = omega * geom.Radius
+			If vtip < 1.0 Then vtip = 1.0
+			tempCond.MuZ = -mu * Tan(alphaDeg * cPI / 180.0) + (vzRate / vtip)
 			
 			Dim res As RotorResults = zBETEngine.Calculate(geom, tempCond)
 			Dim val As Double = ExtractParamValue(res, paramKey)
