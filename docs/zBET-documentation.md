@@ -81,11 +81,13 @@ $$
 
 with
 
-$$
+$
 x=\frac{r}{R},
 \qquad
-\mu=\frac{V_h}{\Omega R}.
-$$
+\mu=\frac{V_x}{\Omega R}.
+$
+
+Here $V_x>0$ is forward in-plane free-stream velocity.
 
 At $\psi=90^\circ$,
 
@@ -115,18 +117,19 @@ $$
 
 where $\lambda_i\ge 0$ is induced downwash in the $+z$ direction.
 
-The code convention is:
+The code and UI convention is:
 
-- $\mu_z>0$: imposed relative flow is downward through the disk;
-- $\mu_z<0$: imposed relative flow is upward through the disk.
+- $V_z>0$: imposed relative flow is downward through the disk;
+- $\mu_z=V_z/(\Omega R)$, so $\mu_z>0$ is also downward;
+- rotor angle of attack $\alpha>0$ means the free stream arrives from below the disk.
 
-For `AXIAL_FLOW = "alpha"`,
+Therefore, when the axial state is prescribed by angle,
 
-$$
+$
 \mu_z=-\mu\tan\alpha.
-$$
+$
 
-Therefore a positive rotor angle of attack, as defined in zBET, gives $\mu_z<0$.
+The three inputs $\alpha$, $V_z$, and $\mu_z$ are **alternative representations of the same axial operating condition**. They are not additive inputs. Likewise, $V_x$ and $\mu$ are alternative horizontal representations linked by $\mu=V_x/(\Omega R)$. At $V_x=0$, a nonzero axial condition should be specified with $V_z$ or $\mu_z$, because $\alpha$ alone is not a unique representation.
 
 ### 2.4 Rotor loads
 
