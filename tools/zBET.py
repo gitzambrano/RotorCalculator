@@ -532,26 +532,41 @@ def trim_hover(
         else:
             raise ValueError(f"Unknown PITCH_MODE: '{pitch_mode}'")
 
-        # Solve hover CT produced by this pitch:
-        b_val = geometry.b_factor()
-        moments = radial_moments(geometry, pitch, b=b_val)
+        # Solve hover CT produced by this pitch, including the same
+        # Sissingh B<->CT iteration used by the Android engine.
         lift_slope = geometry.lift_slope(mu=0.0)
 
-        def hover_residual(lambda_i):
-            momentum_ct = 2.0 * (b_val * b_val) * (lambda_i ** 2)
-            bet_ct = 0.5 * lift_slope * (moments[2][2] - lambda_i * moments[1][1])
-            return bet_ct - momentum_ct
+        def solve_hover_at_b(b_current):
+            moments = radial_moments(geometry, pitch, b=b_current)
 
-        # Root search for lambda_hover:
-        lo, hi = 0.0, 0.5
-        for _ in range(100):
-            mid = 0.5 * (lo + hi)
-            if hover_residual(mid) > 0.0:
-                lo = mid
-            else:
-                hi = mid
-        lam_hover = 0.5 * (lo + hi)
-        ct_hover = 2.0 * (b_val * b_val) * (lam_hover ** 2)
+            def hover_residual(lambda_i):
+                momentum_ct = 2.0 * (b_current * b_current) * (lambda_i ** 2)
+                bet_ct = 0.5 * lift_slope * (
+                    moments[2][2] - lambda_i * moments[1][1]
+                )
+                return bet_ct - momentum_ct
+
+            lo, hi = 0.0, 0.5
+            for _ in range(100):
+                mid = 0.5 * (lo + hi)
+                if hover_residual(mid) > 0.0:
+                    lo = mid
+                else:
+                    hi = mid
+            lam_current = 0.5 * (lo + hi)
+            ct_current = 2.0 * (b_current * b_current) * (lam_current ** 2)
+            return lam_current, ct_current
+
+        b_val = geometry.b_factor()
+        lam_hover, ct_hover = solve_hover_at_b(b_val)
+        if geometry.tip_loss_mode == "sissingh" and ct_hover > 0.0:
+            for _ in range(8):
+                next_b = geometry.b_factor(ct=ct_hover)
+                delta_b = abs(next_b - b_val)
+                b_val = next_b
+                lam_hover, ct_hover = solve_hover_at_b(b_val)
+                if delta_b < 1e-8:
+                    break
 
         if ct_hover <= 1e-6:
             raise ValueError(
