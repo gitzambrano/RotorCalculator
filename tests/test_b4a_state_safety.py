@@ -404,6 +404,12 @@ def test_release_source_version_and_no_stale_tracked_binaries():
     assert not (ROOT / "Objects" / "RotorCalculator.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.aab").exists()
+    assert not (ROOT / "Objects" / "classes.dex").exists()
+    assert not (ROOT / "Objects" / "d8_arguments.txt").exists()
+    ignore = text(".gitignore")
+    assert "Objects/*.apk" in ignore
+    assert "Objects/*.dex" in ignore
+    assert "Objects/d8_arguments.txt" in ignore
 
 
 def test_ui_smoke_operates_grouped_flow_selectors_not_only_labels():
