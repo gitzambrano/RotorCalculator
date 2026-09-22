@@ -1829,7 +1829,7 @@ Sub UpdateSweepPlotView
 	
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
 		plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepParamSelectedLabel, _
-		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu)
+		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu, ConditionShaftTiltDeg, ConditionClimbRateMs)
 	ivSweepPlot.Bitmap = bmp
 	
 	lblSweepCurrentVal.Text = "Operating μ = " & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False)
@@ -1844,6 +1844,10 @@ Sub btnSweepTable_Click
 	For i = 0 To 10
 		Dim mu As Double = i * (SweepMaxMuVal / 10.0)
 		tempCond.Mu = mu
+		Dim omega As Double = ActiveGeom.RPM * (2.0 * cPI / 60.0)
+		Dim vtip As Double = omega * ActiveGeom.Radius
+		If vtip < 1.0 Then vtip = 1.0
+		tempCond.MuZ = -mu * Tan(ConditionShaftTiltDeg * cPI / 180.0) + (ConditionClimbRateMs / vtip)
 		Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
 		Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
 		sb.Append(NumberFormat(mu, 1, 2)).Append(TAB).Append(TAB).Append(NumberFormat(v, 1, 5)).Append(CRLF)
