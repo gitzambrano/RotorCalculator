@@ -204,10 +204,12 @@ Sub Globals
 	Private SweepPopupOpen As Boolean = False
 	Private spnSweepParam As Spinner
 	Private btnSweepMultiModel As Button
+	Private btnSweepXAxis As Button
 	Private btnSweepMaxMu As Button
 	Private ivSweepPlot As ImageView
 	Private lblSweepCurrentVal As Label
 	Private SweepMultiMode As Int = 0
+	Private SweepXAxisMode As Int = 0 ' 0=mu, 1=Vx
 	Private SweepMaxMuVal As Double = 0.40
 	Private SweepParamSelectedKey As String = "CP"
 	Private SweepParamSelectedLabel As String = "CQ / CPshaft — Shaft Power"
@@ -2357,7 +2359,7 @@ End Sub
 Sub btnViewPolarPlot_Click
 	If SweepPopupOpen Then CloseSweepPopup
 	pnlSweepPopup.Initialize("pnlSweepPopup")
-	pnlSweepPopup.Color = 0xFA0A0E15
+	pnlSweepPopup.Color = ColorPnlInput5
 	root.AddView(pnlSweepPopup, 0, 0, root.Width, root.Height)
 	SweepPopupOpen = True
 	pnlSweepPopup.BringToFront
@@ -2365,7 +2367,7 @@ Sub btnViewPolarPlot_Click
 	Dim topBarH As Int
 	If ld = 1 Then topBarH = 48dip Else topBarH = 48dip * sc
 	Dim footerH As Int
-	If ld = 1 Then footerH = 50dip Else footerH = 56dip * sc
+	If ld = 1 Then footerH = 50dip Else footerH = 94dip * sc
 	
 	Dim pnlHeader As Panel: pnlHeader.Initialize("")
 	pnlHeader.Color = ColorPnlTitle
@@ -2403,22 +2405,30 @@ Sub btnViewPolarPlot_Click
 	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 10.5 Else btnSweepMultiModel.TextSize = 11 * sc
 	
+	btnSweepXAxis.Initialize("btnSweepXAxis")
+	UpdateSweepXAxisButtonText
+	btnSweepXAxis.TextColor = ColorAccentGreen
+	btnSweepXAxis.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	If root.Width <= 340dip Then btnSweepXAxis.TextSize = 10.5 Else btnSweepXAxis.TextSize = 11 * sc
+	
 	btnSweepMaxMu.Initialize("btnSweepMaxMu")
-	btnSweepMaxMu.Text = "μ max " & NumberFormat(SweepMaxMuVal, 1, 2)
+	UpdateSweepMaxButtonText
 	btnSweepMaxMu.TextColor = ColorAccentAmber
 	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 10.5 Else btnSweepMaxMu.TextSize = 11 * sc
 	
 	If ld = 1 Then
 		' Landscape: one compact control row maximizes useful plot height.
-		Dim gap As Int = 8dip
+		Dim gap As Int = 6dip
 		Dim usableW As Int = root.Width - 24dip
-		Dim paramW As Int = usableW * 0.37
-		Dim modeW As Int = usableW * 0.39
-		Dim maxW As Int = usableW - paramW - modeW - 2 * gap
+		Dim paramW As Int = usableW * 0.32
+		Dim modeW As Int = usableW * 0.32
+		Dim axisW As Int = usableW * 0.16
+		Dim maxW As Int = usableW - paramW - modeW - axisW - 3 * gap
 		pnlControls.AddView(spnSweepParam, 12dip, 5dip, paramW, 48dip)
 		pnlControls.AddView(btnSweepMultiModel, 12dip + paramW + gap, 5dip, modeW, 48dip)
-		pnlControls.AddView(btnSweepMaxMu, 12dip + paramW + gap + modeW + gap, 5dip, maxW, 48dip)
+		pnlControls.AddView(btnSweepXAxis, 12dip + paramW + gap + modeW + gap, 5dip, axisW, 48dip)
+		pnlControls.AddView(btnSweepMaxMu, 12dip + paramW + gap + modeW + gap + axisW + gap, 5dip, maxW, 48dip)
 	Else
 		Dim lblParamH As Label: lblParamH.Initialize("")
 		lblParamH.Text = "Y-AXIS PARAMETER"
@@ -2428,8 +2438,13 @@ Sub btnViewPolarPlot_Click
 		pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
 		
 		pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 48dip * sc)
-		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, (root.Width - 30dip) * 0.60, 48dip * sc)
-		pnlControls.AddView(btnSweepMaxMu, 18dip + (root.Width - 30dip) * 0.60, 72dip * sc, (root.Width - 30dip) * 0.40, 48dip * sc)
+		Dim rowW As Int = root.Width - 30dip
+		Dim modeW As Int = rowW * 0.50
+		Dim axisW As Int = rowW * 0.23
+		Dim maxW As Int = rowW - modeW - axisW - 12dip
+		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, modeW, 48dip * sc)
+		pnlControls.AddView(btnSweepXAxis, 18dip + modeW, 72dip * sc, axisW, 48dip * sc)
+		pnlControls.AddView(btnSweepMaxMu, 24dip + modeW + axisW, 72dip * sc, maxW, 48dip * sc)
 	End If
 	
 	spnSweepParam.Clear
@@ -2460,18 +2475,54 @@ Sub btnViewPolarPlot_Click
 	
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
-	If root.Width <= 340dip Then lblSweepCurrentVal.TextSize = 10.5 Else lblSweepCurrentVal.TextSize = 12 * sc
+	If root.Width <= 340dip Then lblSweepCurrentVal.TextSize = 9.5 Else lblSweepCurrentVal.TextSize = 10.5 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
-	lblSweepCurrentVal.Gravity = Gravity.CENTER_VERTICAL
-	pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 144dip, footerH)
+	lblSweepCurrentVal.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	lblSweepCurrentVal.SingleLine = True
 	
 	Dim btnTable As Button: btnTable.Initialize("btnSweepTable")
-	btnTable.Text = "ACTIVE TABLE"
+	btnTable.Text = "TABLE"
 	btnTable.TextColor = ColorAccentCyan
 	btnTable.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnTable.TextSize = 12 * sc
 	btnTable.Typeface = Typeface.DEFAULT_BOLD
-	pnlFooter.AddView(btnTable, root.Width - 132dip, (footerH - 48dip) / 2, 120dip, 48dip)
+	Dim btnCsv As Button: btnCsv.Initialize("btnSweepExportCsv")
+	btnCsv.Text = "CSV"
+	btnCsv.TextColor = ColorAccentGreen
+	btnCsv.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	btnCsv.Typeface = Typeface.DEFAULT_BOLD
+	Dim btnPng As Button: btnPng.Initialize("btnSweepExportPng")
+	btnPng.Text = "PNG"
+	btnPng.TextColor = ColorAccentGreen
+	btnPng.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	btnPng.Typeface = Typeface.DEFAULT_BOLD
+	If root.Width <= 340dip Then
+		btnTable.TextSize = 10
+		btnCsv.TextSize = 10
+		btnPng.TextSize = 10
+	Else
+		btnTable.TextSize = 11 * sc
+		btnCsv.TextSize = 11 * sc
+		btnPng.TextSize = 11 * sc
+	End If
+	
+	If ld = 1 Then
+		Dim infoW As Int = root.Width * 0.38
+		pnlFooter.AddView(lblSweepCurrentVal, 10dip, 0, infoW - 12dip, footerH)
+		Dim actionLeft As Int = infoW
+		Dim actionGap As Int = 5dip
+		Dim actionW As Int = (root.Width - actionLeft - 16dip - 2 * actionGap) / 3
+		pnlFooter.AddView(btnTable, actionLeft, 1dip, actionW, 48dip)
+		pnlFooter.AddView(btnCsv, actionLeft + actionW + actionGap, 1dip, actionW, 48dip)
+		pnlFooter.AddView(btnPng, actionLeft + 2 * (actionW + actionGap), 1dip, actionW, 48dip)
+	Else
+		pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 24dip, 34dip * sc)
+		Dim actionGap As Int = 6dip
+		Dim actionW As Int = (root.Width - 24dip - 2 * actionGap) / 3
+		Dim actionY As Int = 36dip * sc
+		pnlFooter.AddView(btnTable, 12dip, actionY, actionW, 48dip * sc)
+		pnlFooter.AddView(btnCsv, 12dip + actionW + actionGap, actionY, actionW, 48dip * sc)
+		pnlFooter.AddView(btnPng, 12dip + 2 * (actionW + actionGap), actionY, actionW, 48dip * sc)
+	End If
 	
 	UpdateSweepPlotView
 End Sub
@@ -2510,14 +2561,39 @@ Private Sub UpdateSweepMultiButtonText
 	End Select
 End Sub
 
+Sub btnSweepXAxis_Click
+	SweepXAxisMode = 1 - SweepXAxisMode
+	UpdateSweepXAxisButtonText
+	UpdateSweepMaxButtonText
+	UpdateSweepPlotView
+End Sub
+
+Private Sub UpdateSweepXAxisButtonText
+	If btnSweepXAxis.IsInitialized = False Then Return
+	If SweepXAxisMode = 1 Then
+		btnSweepXAxis.Text = "X: Vx"
+	Else
+		btnSweepXAxis.Text = "X: μ"
+	End If
+End Sub
+
 Sub btnSweepMaxMu_Click
 	If SweepMaxMuVal < 0.45 Then
 		SweepMaxMuVal = 0.50
 	Else
 		SweepMaxMuVal = 0.40
 	End If
-	btnSweepMaxMu.Text = "μ max " & NumberFormat(SweepMaxMuVal, 1, 2)
+	UpdateSweepMaxButtonText
 	UpdateSweepPlotView
+End Sub
+
+Private Sub UpdateSweepMaxButtonText
+	If btnSweepMaxMu.IsInitialized = False Then Return
+	If SweepXAxisMode = 1 Then
+		btnSweepMaxMu.Text = "Vx max " & NumberFormat2(SweepMaxMuVal * RotorTipSpeed, 1, 0, 0, False)
+	Else
+		btnSweepMaxMu.Text = "μ max " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
+	End If
 End Sub
 
 Sub btnCloseSweepPlot_Click
@@ -2540,11 +2616,12 @@ Sub UpdateSweepPlotView
 	
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
 		plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepParamSelectedLabel, _
-		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu, AxialInputMode, ConditionAxialValue)
+		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu, AxialInputMode, ConditionAxialValue, _
+		SweepXAxisMode, ThemeMode = 1)
 	ivSweepPlot.Bitmap = bmp
 	
 	Dim vx As Double = ActiveCond.Mu * RotorTipSpeed
-	lblSweepCurrentVal.Text = "Operating μ=" & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False) & " · Vx=" & NumberFormat2(vx, 1, 1, 1, False) & " m/s"
+	lblSweepCurrentVal.Text = "ACTIVE · μ=" & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False) & " · Vx=" & NumberFormat2(vx, 1, 1, 1, False) & " m/s · μz=" & NumberFormat2(ActiveCond.MuZ, 1, 3, 3, False)
 End Sub
 
 Sub btnSweepTable_Click
