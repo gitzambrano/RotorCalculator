@@ -169,6 +169,7 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 - Altitude [m] e temperatura [°C].
 - **Horizontal Flow** usa um único seletor de representação: **μ** ou **Vx [m/s]**, com μ = Vx/(ΩR).
 - **Axial Flow** usa um único seletor de representação: **α [deg]**, **Vz [m/s]** ou **μz**, seguindo exatamente zBET/zBEMT: +Vz e +μz apontam para baixo através do disco; α>0 significa escoamento chegando de baixo e, portanto, μz = −μ tan(α).
+- Quando o modo é **RPM to Thrust**, toda conversão dimensional que depende de ΩR usa o **RPM resolvido pelo trim**, não o RPM nominal salvo na geometria. Isso vale para Vx↔μ, Vz↔μz, Mach e eixo Vx do Sweep.
 - α, Vz e μz são representações alternativas da mesma condição axial; nunca são somadas. Em Vx=0 e escoamento axial não nulo, a UI orienta o uso de Vz ou μz.
 - Modelos de inflow: Uniform, Coleman Simple, Coleman-Feingold e Drees.
 - Modelos de profile drag: Analytical Tangential, Analytical Vectorial e Numerical Vectorial.
@@ -177,7 +178,7 @@ O layout é responsivo desde 320dp, possui largura máxima de conteúdo em table
 
 ### 4.3 Results
 
-Os resultados são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. Um status explícito sinaliza solução inválida ou uso da correção Prandtl-Glauert fora de sua faixa recomendada. Cada variável possui precisão base compatível com sua escala; o setting **+1 Decimal** reproduz o comportamento do AeroCalculator e acrescenta exatamente uma casa decimal a todos os outputs. Units alterna dimensionalmente entre SI e Imperial.
+Os resultados exibem primeiro uma linha compacta de **Operating Geometry** com o RPM e o coletivo efetivamente usados após trim. Em seguida são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. Um status explícito sinaliza solução inválida ou uso da correção Prandtl-Glauert fora de sua faixa recomendada. Cada variável possui precisão base compatível com sua escala; o setting **+1 Decimal** reproduz o comportamento do AeroCalculator e acrescenta exatamente uma casa decimal a todos os outputs. Units alterna dimensionalmente entre SI e Imperial.
 
 ### 4.4 Parameter Sweep
 
