@@ -767,7 +767,7 @@ End Sub
 Private Sub OpenUnitConverter
 	If UnitPopupOpen Then CloseUnitConverter
 	pnlUnitPopup.Initialize("pnlUnitPopup")
-	pnlUnitPopup.Color = 0xF20A0E15
+	pnlUnitPopup.Color = 0xA0000000
 	root.AddView(pnlUnitPopup, 0, 0, root.Width, root.Height)
 	UnitPopupOpen = True
 	pnlUnitPopup.BringToFront
@@ -1032,7 +1032,7 @@ Private Sub OpenGeometryPopup
 	If GeometryPopupOpen Then CloseGeometryPopup
 	
 	pnlGeomPopup.Initialize("pnlGeomPopup")
-	pnlGeomPopup.Color = 0xF20A0E15
+	pnlGeomPopup.Color = 0xA0000000
 	root.AddView(pnlGeomPopup, 0, 0, root.Width, root.Height)
 	GeometryPopupOpen = True
 	pnlGeomPopup.BringToFront
@@ -1349,7 +1349,7 @@ Private Sub BuildPageRes
 	
 	' 1. Top Action Button: Open Multi-Parameter μ-Sweep
 	btnViewPolarPlot.Initialize("btnViewPolarPlot")
-	btnViewPolarPlot.Text = "OPEN PARAMETER SWEEP (μ)"
+	btnViewPolarPlot.Text = "OPEN PARAMETER SWEEP"
 	If root.Width <= 340dip Then btnViewPolarPlot.TextSize = 12 Else btnViewPolarPlot.TextSize = 14 * sc
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextColor = ColorAccentCyan
@@ -2402,7 +2402,7 @@ Sub btnViewPolarPlot_Click
 	pnlSweepPopup.AddView(pnlHeader, 0, 0, root.Width, topBarH)
 	
 	Dim lblTitle As Label: lblTitle.Initialize("")
-	lblTitle.Text = "PARAMETER SWEEP vs μ"
+	lblTitle.Text = "PARAMETER SWEEP"
 	lblTitle.TextColor = ColorAccentCyan
 	If root.Width <= 340dip Then lblTitle.TextSize = 12 Else lblTitle.TextSize = 14 * sc
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
