@@ -8,6 +8,9 @@ Objects/extra/
 Objects/dexed/
 Objects/AndroidManifest.xml
 Objects/*.zip
+Objects/*.apk
+Objects/*.dex
+Objects/d8_arguments.txt
 AutoBackups/
 
 # Python & Environment cache
