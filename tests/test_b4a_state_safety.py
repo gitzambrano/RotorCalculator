@@ -404,3 +404,14 @@ def test_release_source_version_and_no_stale_tracked_binaries():
     assert not (ROOT / "Objects" / "RotorCalculator.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.aab").exists()
+
+
+def test_ui_smoke_operates_grouped_flow_selectors_not_only_labels():
+    qa = text("tools/ci_ui_qa.sh")
+    assert 'python /tmp/tap_text.py "Vx — forward"' in qa
+    assert 'grep -Eq \'"text": "Vx"\'' in qa
+    assert 'python /tmp/tap_text.py "Vz — axial flow"' in qa
+    assert 'grep -Eq \'"text": "Vz"\'' in qa
+    assert 'python /tmp/tap_text.py "μz — axial ratio"' in qa
+    assert 'grep -Eq \'"text": "μz"\'' in qa
+    assert 'python /tmp/tap_text.py "α — rotor angle"' in qa
