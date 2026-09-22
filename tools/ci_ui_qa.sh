@@ -159,6 +159,8 @@ capture_screen() {
   sleep 1
   safe_screencap "$OUT/04-conditions-top.png"
   python /tmp/ui_node.py "$OUT/04-conditions-top.xml" > "$OUT/04-conditions-top.json"
+  grep -qi "Horizontal" "$OUT/04-conditions-top.json"
+  grep -qi "Axial" "$OUT/04-conditions-top.json"
 
   for _ in 1 2 3 4 5; do
     adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
@@ -317,22 +319,45 @@ PY
   sleep 1
   adb shell input tap 369 28
   sleep 1
-  python /tmp/tap_text.py "Toggle Result Units"
+  python /tmp/tap_text.py "Settings"
   sleep 1
-  python /tmp/ui_node.py "$OUT/10-results-imperial.xml" > "$OUT/10-results-imperial.json"
-  grep -qi "lbf" "$OUT/10-results-imperial.json"
-  grep -qi "HP" "$OUT/10-results-imperial.json"
-  if grep -Eq '"text": "-0([°"]|$)' "$OUT/10-results-imperial.json"; then
+  python /tmp/tap_text.py "SI"
+  sleep 0.5
+  python /tmp/tap_text.py "STANDARD"
+  sleep 0.5
+  # Theme is changed last because it closes Settings and rebuilds the live UI.
+  python /tmp/tap_text.py "DARK"
+  sleep 2
+  python /tmp/ui_node.py "$OUT/10-results-imperial-light.xml" > "$OUT/10-results-imperial-light.json"
+  grep -qi "lbf" "$OUT/10-results-imperial-light.json"
+  grep -qi "hp" "$OUT/10-results-imperial-light.json"
+  if grep -Eq '"text": "-0([°"]|$)' "$OUT/10-results-imperial-light.json"; then
     echo "Display-only negative zero found in Results" >&2
     exit 1
   fi
-  safe_screencap "$OUT/10-results-imperial.png"
+  safe_screencap "$OUT/10-results-imperial-light.png"
+
+  # Re-open settings and prove all three choices persisted across the UI rebuild.
+  adb shell input tap 369 28
+  sleep 0.5
+  python /tmp/tap_text.py "Settings"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/10b-settings-persisted.xml" > "$OUT/10b-settings-persisted.json"
+  grep -qi "LIGHT" "$OUT/10b-settings-persisted.json"
+  grep -qi "IMPERIAL" "$OUT/10b-settings-persisted.json"
+  grep -qi "+1 DECIMAL" "$OUT/10b-settings-persisted.json"
+  adb shell input keyevent 4
+  sleep 0.5
 
   python /tmp/tap_text.py "OPEN PARAMETER SWEEP"
   sleep 2
   python /tmp/ui_node.py "$OUT/11-sweep.xml" > "$OUT/11-sweep.json"
   grep -qi "PARAMETER SWEEP" "$OUT/11-sweep.json"
-  grep -qi "Operating μ = 0.00" "$OUT/11-sweep.json"
+  grep -qi "ACTIVE" "$OUT/11-sweep.json"
+  grep -qi "X: μ" "$OUT/11-sweep.json"
+  grep -qi "TABLE" "$OUT/11-sweep.json"
+  grep -qi "CSV" "$OUT/11-sweep.json"
+  grep -qi "PNG" "$OUT/11-sweep.json"
   safe_screencap "$OUT/11-sweep.png"
   adb shell input keyevent 4
   sleep 1
