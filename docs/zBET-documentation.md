@@ -898,22 +898,31 @@ B
 1-\frac{\sqrt{2C_T}}{N}.
 $$
 
-The momentum closure also uses the effective area factor $B^2$.
+The momentum closure also uses the effective area factor $B^2$. For Sissingh mode, $B$, $C_T$, and the inflow solution are iterated to mutual consistency (up to eight updates with a $10^{-8}$ change criterion); the same iteration is used by the Python reference and Android engine.
 
 > This is an **effective-radius engineering approximation**. It should not be interpreted as a literal implementation of the full Prandtl finite-blade circulation/inflow correction.
 
 ### 8.2 Prandtl-Glauert lift-slope correction
 
-If enabled, zBET modifies the linear section lift-curve slope using a representative subsonic Mach number:
+If enabled, zBET modifies the linear section lift-curve slope using the same representative subsonic Mach definition in Python and B4A:
 
-$$
+$
+M_{\mathrm{eff}}
+=
+\frac{\Omega R}{a_{\mathrm{sound}}}
+\sqrt{0.75^2+0.5\mu^2},
+$
+
+with $M_{\mathrm{eff}}$ capped at $0.85$, and
+
+$
 a(M)
 =
 \frac{a_0}
-{\sqrt{1-M_{\mathrm{eff}}^2}}.
-$$
+{\sqrt{\max(0.01,1-M_{\mathrm{eff}}^2)}}.
+$
 
-The representative Mach construction and the numerical cap used in the code are engineering approximations, not a local compressible-airfoil solution.
+The reported advancing-tip Mach $M_{at}=\Omega R(1+\mu)/a_{\mathrm{sound}}$ is a separate operational caution metric. The representative Mach construction and cap are engineering approximations, not a local compressible-airfoil solution.
 
 ---
 
