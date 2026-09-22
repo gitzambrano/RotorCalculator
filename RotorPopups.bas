@@ -197,8 +197,8 @@ Public Sub DrawSweepPlot( _
 	multiCurveMode As Int, _
 	maxMu As Double, _
 	currentMu As Double, _
-	activeAlphaDeg As Double, _
-	activeVzRate As Double _
+	activeAxialMode As String, _
+	activeAxialValue As Double _
 ) As Bitmap
 
 	Dim bmp As Bitmap
@@ -250,6 +250,8 @@ Public Sub DrawSweepPlot( _
 		nCurves = 5 ' 5 Alphas
 	Else If multiCurveMode == 2 Then
 		nCurves = 5 ' 5 Vertical Speeds
+	Else If multiCurveMode == 3 Then
+		nCurves = 5 ' 5 imposed axial ratios
 	Else
 		nCurves = 1 ' Single active curve
 	End If
@@ -265,9 +267,9 @@ Public Sub DrawSweepPlot( _
 	
 	For cIdx = 0 To nCurves - 1
 		Dim tempCond As FlightCondition = zBETEngine.CloneCondition(cond)
-		' Preserve the active physical condition unless this curve intentionally varies it.
-		Dim alphaDeg As Double = activeAlphaDeg
-		Dim vzRate As Double = activeVzRate
+		' Preserve exactly one axial representation; alpha, Vz and muz are alternatives.
+		Dim curveAxialMode As String = activeAxialMode
+		Dim curveAxialValue As Double = activeAxialValue
 		
 		If multiCurveMode == 0 Then
 			Select Case cIdx
@@ -277,22 +279,31 @@ Public Sub DrawSweepPlot( _
 				Case 3: tempCond.InflowModel = "drees"
 			End Select
 		Else If multiCurveMode == 1 Then
-			' Alphas: -10, -5, 0, +5, +10 deg
+			curveAxialMode = "alpha"
 			Select Case cIdx
-				Case 0: alphaDeg = -10.0
-				Case 1: alphaDeg = -5.0
-				Case 2: alphaDeg = 0.0
-				Case 3: alphaDeg = 5.0
-				Case 4: alphaDeg = 10.0
+				Case 0: curveAxialValue = -10.0
+				Case 1: curveAxialValue = -5.0
+				Case 2: curveAxialValue = 0.0
+				Case 3: curveAxialValue = 5.0
+				Case 4: curveAxialValue = 10.0
 			End Select
 		Else If multiCurveMode == 2 Then
-			' Vertical Speeds: -10, -5, 0, +5, +10 m/s
+			curveAxialMode = "vz"
 			Select Case cIdx
-				Case 0: vzRate = -10.0
-				Case 1: vzRate = -5.0
-				Case 2: vzRate = 0.0
-				Case 3: vzRate = 5.0
-				Case 4: vzRate = 10.0
+				Case 0: curveAxialValue = -10.0
+				Case 1: curveAxialValue = -5.0
+				Case 2: curveAxialValue = 0.0
+				Case 3: curveAxialValue = 5.0
+				Case 4: curveAxialValue = 10.0
+			End Select
+		Else If multiCurveMode == 3 Then
+			curveAxialMode = "muz"
+			Select Case cIdx
+				Case 0: curveAxialValue = -0.05
+				Case 1: curveAxialValue = -0.025
+				Case 2: curveAxialValue = 0.0
+				Case 3: curveAxialValue = 0.025
+				Case 4: curveAxialValue = 0.05
 			End Select
 		End If
 		
@@ -301,11 +312,10 @@ Public Sub DrawSweepPlot( _
 			muPoints(i) = mu
 			tempCond.Mu = mu
 			
-			' Keep shaft tilt and vertical speed physically consistent as μ changes.
 			Dim omega As Double = geom.RPM * (2.0 * cPI / 60.0)
 			Dim vtip As Double = omega * geom.Radius
 			If vtip < 1.0 Then vtip = 1.0
-			tempCond.MuZ = -mu * Tan(alphaDeg * cPI / 180.0) + (vzRate / vtip)
+			tempCond.MuZ = zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, vtip)
 			
 			Dim res As RotorResults = zBETEngine.Calculate(geom, tempCond)
 			If res.SolutionValid Then
@@ -384,7 +394,7 @@ Public Sub DrawSweepPlot( _
 					strokeWidth = 3.0dip
 				Case 3: curveColor = colDrees
 			End Select
-		Else If multiCurveMode == 1 Or multiCurveMode == 2 Then
+		Else If multiCurveMode == 1 Or multiCurveMode == 2 Or multiCurveMode == 3 Then
 			Select Case cIdx
 				Case 0: curveColor = colC1
 				Case 1: curveColor = colC2
@@ -444,6 +454,16 @@ Public Sub DrawSweepPlot( _
 			Dim lx As Float = legX + k * 48dip
 			cvs.DrawLine(lx, legY, lx + 10dip, legY, vzCols(k), 2.5dip)
 			cvs.DrawText(vzLabels(k), lx + 13dip, legY + 4dip, Typeface.DEFAULT_BOLD, 8, vzCols(k), "LEFT")
+		Next
+	Else If multiCurveMode == 3 Then
+		Dim legX As Float = mLeft + 4dip
+		Dim legY As Float = mTop + 14dip
+		Dim mzLabels() As String = Array As String("-0.050", "-0.025", "0", "+0.025", "+0.050")
+		Dim mzCols() As Int = Array As Int(colC1, colC2, colC3, colC4, colC5)
+		For k = 0 To 4
+			Dim lx As Float = legX + k * 50dip
+			cvs.DrawLine(lx, legY, lx + 10dip, legY, mzCols(k), 2.5dip)
+			cvs.DrawText(mzLabels(k), lx + 13dip, legY + 4dip, Typeface.DEFAULT_BOLD, 8, mzCols(k), "LEFT")
 		Next
 	End If
 	
