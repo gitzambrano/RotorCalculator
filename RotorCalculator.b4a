@@ -140,6 +140,7 @@ Sub Globals
 	Private GeometryPopupOpen As Boolean = False
 	Private scvGeomEditor As ScrollView
 	Private lblGeomPopupTitle As Label
+	Private edtRotorName As EditText
 	Private edtRadius As EditText
 	Private edtRPM As EditText
 	Private edtNBlades As EditText
@@ -173,6 +174,7 @@ Sub Globals
 	Private pnlBack2 As Panel
 	Private scvRes As ScrollView
 	Private btnViewPolarPlot As Button
+	Private lblResultStatus As Label
 	Private lblResults(25) As Label
 	
 	' Multi-Parameter μ-Sweep Popup
@@ -479,11 +481,20 @@ Private Sub RefreshRotorList
 	
 	Dim lblHint As Label
 	lblHint.Initialize("")
-	lblHint.Text = "Select a rotor to view or edit its geometry"
+	lblHint.Text = "Select a rotor to view or edit"
 	lblHint.TextColor = ColorButText2
 	lblHint.TextSize = 11 * sc
 	lblHint.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	scvGeom.Panel.AddView(lblHint, listLeft + 16dip, y, listW - 32dip, hintH)
+	scvGeom.Panel.AddView(lblHint, listLeft + 16dip, y, listW - 154dip, hintH)
+	
+	Dim btnNewRotor As Button
+	btnNewRotor.Initialize("btnNewRotor")
+	btnNewRotor.Text = "+ NEW ROTOR"
+	btnNewRotor.TextColor = ColorAccentCyan
+	btnNewRotor.Typeface = Typeface.DEFAULT_BOLD
+	If root.Width <= 340dip Then btnNewRotor.TextSize = 10 Else btnNewRotor.TextSize = 11 * sc
+	btnNewRotor.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	scvGeom.Panel.AddView(btnNewRotor, listLeft + listW - 130dip, y + 3dip, 114dip, 40dip)
 	y = y + hintH
 	
 	For i = 0 To RotorStorage.Rotors.Size - 1
@@ -507,13 +518,13 @@ Private Sub RefreshRotorList
 		
 		Dim lblName As Label
 		lblName.Initialize("")
-		lblName.Text = g.Name
+		lblName.Text = RotorListName(g.Name)
 		lblName.TextColor = ColorTitleText
 		lblName.Typeface = Typeface.DEFAULT_BOLD
 		If root.Width <= 340dip Then lblName.TextSize = 12 Else lblName.TextSize = 13 * sc
 		lblName.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 		lblName.SingleLine = True
-		row.AddView(lblName, 16dip, 6dip, listW - 94dip, 30dip)
+		row.AddView(lblName, 16dip, 6dip, listW - 128dip, 30dip)
 		
 		Dim lblMeta As Label
 		lblMeta.Initialize("")
@@ -522,7 +533,7 @@ Private Sub RefreshRotorList
 		lblMeta.TextSize = 10.5 * sc
 		lblMeta.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 		lblMeta.SingleLine = True
-		row.AddView(lblMeta, 16dip, 34dip, listW - 94dip, 26dip)
+		row.AddView(lblMeta, 16dip, 34dip, listW - 128dip, 26dip)
 		
 		If i = RotorStorage.ActiveIndex Then
 			Dim lblActive As Label
@@ -532,7 +543,7 @@ Private Sub RefreshRotorList
 			lblActive.TextSize = 9.5 * sc
 			lblActive.Typeface = Typeface.DEFAULT_BOLD
 			lblActive.Gravity = Gravity.CENTER
-			row.AddView(lblActive, listW - 84dip, 10dip, 56dip, 22dip)
+			row.AddView(lblActive, listW - 112dip, 10dip, 64dip, 22dip)
 		End If
 		
 		Dim lblArrow As Label
@@ -541,7 +552,7 @@ Private Sub RefreshRotorList
 		lblArrow.TextColor = ColorAccentCyan
 		lblArrow.TextSize = 24
 		lblArrow.Gravity = Gravity.CENTER
-		row.AddView(lblArrow, listW - 36dip, 10dip, 28dip, 48dip)
+		row.AddView(lblArrow, listW - 44dip, 10dip, 36dip, 48dip)
 		
 		' Dedicated touch surface keeps the whole row clickable, including labels.
 		Dim tap As Panel
@@ -558,6 +569,16 @@ Private Sub RefreshRotorList
 	Next
 	
 	scvGeom.Panel.Height = y + 16dip
+End Sub
+
+Sub btnNewRotor_Click
+	Dim newIdx As Int = RotorStorage.CreateNewRotor
+	RotorStorage.SetActiveRotor(newIdx)
+	ActiveGeom = RotorStorage.GetActiveRotor
+	RefreshRotorList
+	RefreshDerivedCondition(True)
+	RecalculateRotor
+	OpenGeometryPopup
 End Sub
 
 Sub pnlRotorTap_Click
@@ -650,7 +671,7 @@ Private Sub BuildGeometryEditor(editorW As Int)
 	Dim ib As Int = 4dip
 	Dim tb As Int = 48dip
 	Dim rowH As Int = (ib * 2 + tb) * sc
-	Dim rowCount As Int = 13
+	Dim rowCount As Int = 14
 	Dim j As Int
 	
 	For j = 0 To rowCount - 1
@@ -665,26 +686,28 @@ Private Sub BuildGeometryEditor(editorW As Int)
 		
 		Select j
 			Case 0
-				edtRadius = AddFullInputRow(pnlInput, ib, tb, "Radius R", "5.50", "m", "edtGeom_TextChanged")
+				edtRotorName = AddTextInputRow(pnlInput, ib, tb, "Rotor Name", ActiveGeom.Name, "edtGeom_TextChanged")
 			Case 1
-				edtRPM = AddFullInputRow(pnlInput, ib, tb, "Rotor RPM", "390.0", "RPM", "edtGeom_TextChanged")
+				edtRadius = AddFullInputRow(pnlInput, ib, tb, "Radius R", "5.50", "m", "edtGeom_TextChanged")
 			Case 2
-				edtNBlades = AddFullInputRow(pnlInput, ib, tb, "Blade Count", "4", "blades", "edtGeom_TextChanged")
+				edtRPM = AddFullInputRow(pnlInput, ib, tb, "Rotor RPM", "390.0", "RPM", "edtGeom_TextChanged")
 			Case 3
-				edtRootCutout = AddFullInputRow(pnlInput, ib, tb, "Root Cutout", "0.15", "r0/R", "edtGeom_TextChanged")
+				edtNBlades = AddFullInputRow(pnlInput, ib, tb, "Blade Count", "4", "blades", "edtGeom_TextChanged")
 			Case 4
-				edtChordRoot = AddFullInputRow(pnlInput, ib, tb, "Root Chord", "0.324", "m", "edtGeom_TextChanged")
+				edtRootCutout = AddFullInputRow(pnlInput, ib, tb, "Root Cutout", "0.15", "r0/R", "edtGeom_TextChanged")
 			Case 5
-				edtChordTip = AddFullInputRow(pnlInput, ib, tb, "Tip Chord", "0.324", "m", "edtGeom_TextChanged")
+				edtChordRoot = AddFullInputRow(pnlInput, ib, tb, "Root Chord", "0.324", "m", "edtGeom_TextChanged")
 			Case 6
-				edtThetaRoot = AddFullInputRow(pnlInput, ib, tb, "θ Root Pitch", "12.0", "°", "edtGeom_TextChanged")
+				edtChordTip = AddFullInputRow(pnlInput, ib, tb, "Tip Chord", "0.324", "m", "edtGeom_TextChanged")
 			Case 7
-				edtThetaTip = AddFullInputRow(pnlInput, ib, tb, "θ Tip Pitch", "4.0", "°", "edtGeom_TextChanged")
+				edtThetaRoot = AddFullInputRow(pnlInput, ib, tb, "θ Root Pitch", "12.0", "°", "edtGeom_TextChanged")
 			Case 8
-				edtLiftSlope = AddFullInputRow(pnlInput, ib, tb, "Lift Slope a0", "5.73", "1/rad", "edtGeom_TextChanged")
+				edtThetaTip = AddFullInputRow(pnlInput, ib, tb, "θ Tip Pitch", "4.0", "°", "edtGeom_TextChanged")
 			Case 9
-				edtCd0 = AddFullInputRow(pnlInput, ib, tb, "Profile Cd0", "0.0090", "—", "edtGeom_TextChanged")
+				edtLiftSlope = AddFullInputRow(pnlInput, ib, tb, "Lift Slope a0", "5.73", "1/rad", "edtGeom_TextChanged")
 			Case 10
+				edtCd0 = AddFullInputRow(pnlInput, ib, tb, "Profile Cd0", "0.0090", "—", "edtGeom_TextChanged")
+			Case 11
 				Dim lblAf As Label = CreateRowLabel("Airfoil", "lblRowTip_Click")
 				pnlInput.AddView(lblAf, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnSelectAirfoil.Initialize("btnSelectAirfoil")
@@ -693,7 +716,7 @@ Private Sub BuildGeometryEditor(editorW As Int)
 				btnSelectAirfoil.TextColor = ColorAccentCyan
 				btnSelectAirfoil.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnSelectAirfoil, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 11
+			Case 12
 				Dim lblTipLoss As Label = CreateRowLabel("Tip Loss", "lblRowTip_Click")
 				pnlInput.AddView(lblTipLoss, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnTipLoss.Initialize("btnTipLoss")
@@ -702,7 +725,7 @@ Private Sub BuildGeometryEditor(editorW As Int)
 				btnTipLoss.TextColor = ColorAccentGreen
 				btnTipLoss.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 				pnlInput.AddView(btnTipLoss, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 12
+			Case 13
 				Dim lblCompress As Label = CreateRowLabel("Compressibility", "lblRowTip_Click")
 				pnlInput.AddView(lblCompress, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
 				btnCompressibility.Initialize("btnCompressibility")
@@ -965,6 +988,7 @@ Private Sub InputDisplayLabel(fullText As String) As String
 	If root.Width > 340dip Then Return fullText
 	Select fullText
 		Case "Rotor Preset": Return "Preset"
+		Case "Rotor Name": Return "Name"
 		Case "Blade Count": Return "Blades"
 		Case "Root Cutout": Return "Root Cut."
 		Case "Root Chord": Return "Root c"
@@ -1058,6 +1082,24 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "Speed of Sound (a)": Return "Local speed of sound used for Mach and compressibility calculations."
 		Case Else: Return labelText
 	End Select
+End Sub
+
+' Text row for rotor names; numeric rows stay numeric-only.
+Private Sub AddTextInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVal As String, evtName As String) As EditText
+	Dim lbl As Label = CreateRowLabel(lblText, "lblRowTip_Click")
+	pnl.AddView(lbl, pnl.Width * 3 / 100, ib * sc, pnl.Width * 30 / 100, tb * sc)
+	Dim edt As EditText
+	edt.Initialize(evtName)
+	edt.Tag = lblText
+	edt.Text = defVal
+	edt.TextSize = 13 * sc
+	edt.TextColor = ColorEdtText
+	edt.Color = ColorEdt
+	edt.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	edt.SingleLine = True
+	edt.ForceDoneButton = True
+	pnl.AddView(edt, pnl.Width * 37 / 100, ib * sc, pnl.Width * 60 / 100, tb * sc)
+	Return edt
 End Sub
 
 ' Helper to create 30%x | 36%x | 20%x standard input rows
@@ -1270,6 +1312,7 @@ End Sub
 Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	If edtRadius.IsInitialized = False Then Return
 	UpdatingUI = True
+	If edtRotorName.IsInitialized Then edtRotorName.Text = geom.Name
 	edtRadius.Text = NumberFormat(geom.Radius, 1, 2)
 	edtRPM.Text = NumberFormat(geom.RPM, 1, 1)
 	edtNBlades.Text = geom.NBlades
@@ -1498,6 +1541,8 @@ Sub lblRowTip_Click
 	Dim b As Label = Sender
 	Dim tipMsg As String = ""
 	Select b.Tag
+		Case "Rotor Name"
+			tipMsg = "Editable name stored with this rotor geometry."
 		Case "Radius R"
 			tipMsg = "Rotor radius R measured from hub centerline to blade tip in meters."
 		Case "Rotor RPM"
@@ -1557,6 +1602,7 @@ End Sub
 
 Sub edtGeom_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
+	If edtRotorName.IsInitialized And edtRotorName.Text.Trim <> "" Then ActiveGeom.Name = edtRotorName.Text.Trim
 	ActiveGeom.Radius = ParseDoubleDef(edtRadius.Text, ActiveGeom.Radius)
 	ActiveGeom.RPM = ParseDoubleDef(edtRPM.Text, ActiveGeom.RPM)
 	ActiveGeom.NBlades = ParseIntDef(edtNBlades.Text, ActiveGeom.NBlades)
@@ -1573,6 +1619,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	ActiveGeom.LiftSlope0 = ParseDoubleDef(edtLiftSlope.Text, ActiveGeom.LiftSlope0)
 	ActiveGeom.Cd0 = ParseDoubleDef(edtCd0.Text, ActiveGeom.Cd0)
 	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+	If lblGeomPopupTitle.IsInitialized Then lblGeomPopupTitle.Text = ActiveGeom.Name
 	btnSelectAirfoil.Text = AirfoilDisplayName(ActiveGeom)
 	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
 	RefreshDerivedCondition(True)
