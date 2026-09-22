@@ -313,10 +313,11 @@ def test_sweep_axis_selector_and_legends_are_nonintrusive():
     assert 'btnSweepXAxis.Text = "X: μ"' in main
     assert 'btnSweepXAxis.Text = "X: Vx"' in main
     assert 'xAxisTitle = "Forward Speed Vx (m/s)"' in popup
-    assert "Dim mTop As Float = 72dip" in popup
+    assert "Dim mTop As Float = 60dip" in popup
     assert "Curve legends — reserved above plot rectangle" in popup
-    assert "Dim legendY As Float = 46dip" in popup
+    assert "Dim legendY As Float = 39dip" in popup
     assert "If lightTheme Then" in popup
+    assert 'cvs.DrawText(SweepPlotTitle(paramKey), mLeft, 16dip' in popup
 
 
 def test_sweep_exports_exact_plot_family_to_csv_and_png_without_storage_permission():
@@ -354,3 +355,18 @@ def test_selected_axial_representation_stays_inside_engine_domain():
     assert "ConditionAxialValue = ClampD(ConditionAxialValue, -0.50 * vtip, 0.50 * vtip)" in main
     assert 'Else If AxialInputMode = "muz" Then' in main
     assert "ActiveCond.MuZ = ClampD(zBETEngine.ResolveMuZ" in main
+
+
+def test_result_helpers_match_actual_power_based_metrics():
+    main = text("RotorCalculator.b4a")
+    assert "Power-based effective rotor L/D: (L/D)eff = μ·CT / CPair = T·Vx / Pair" in main
+    assert "imposed axial-flow work" in main
+    assert "derived from resultant aerodynamic forces" not in main
+
+
+def test_export_handles_cancel_and_provider_failure_without_crashing():
+    main = text("RotorCalculator.b4a")
+    assert "If Args.Length > 1 And -1 = Args(0) Then" in main
+    assert 'Log("Export failed: " & LastException.Message)' in main
+    assert 'ToastMessageShow("CSV export canceled or failed."' in main
+    assert 'ToastMessageShow("PNG export canceled or failed."' in main
