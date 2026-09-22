@@ -149,6 +149,8 @@ def test_engine_defensively_guards_mathematical_domains():
     assert "SolutionValid As Boolean" in src
     assert "CompressibilityWarning As Boolean" in src
     assert "If lam_hover < 0 Then Return Array(trimmedGeom)" in src
+    assert "For iter_tip = 1 To 8" in src
+    assert "If Abs(nextB - b_val) < 1e-8 Then" in src
 
 
 def test_ui_clamps_user_inputs_before_recalculation():
@@ -222,3 +224,13 @@ def test_signing_secrets_are_externalized():
     assert "Key/*.keystore" in ignore
     assert "service_account" in ignore
     assert "Base64 is encoding, not encryption" in agents
+
+
+def test_visible_geometry_parameterization_is_authoritative_and_names_are_safe():
+    main = text("RotorCalculator.b4a")
+    storage = text("RotorStorage.bas")
+    assert 'ActiveGeom.SolidityMode = "chords"' in main
+    assert 'g.SolidityMode = "chords"' in storage
+    assert 'g.PitchMode = "linear_twist"' in storage
+    assert 'newName = newName.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")' in main
+    assert 'shortName = shortName.SubString2(0, 21) & "…"' in main
