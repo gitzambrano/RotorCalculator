@@ -377,8 +377,21 @@ Public Sub DrawSweepPlot( _
 		Next
 	Next
 	
+	' Include the live operating point in the vertical range so its marker is never clipped.
+	Dim currentPointValid As Boolean = False
+	Dim currentPointVal As Double = 0.0
+	If currentMu >= 0.0 And currentMu <= maxMu Then
+		Dim liveRes As RotorResults = zBETEngine.Calculate(geom, cond)
+		If liveRes.SolutionValid Then
+			currentPointVal = ExtractParamValue(liveRes, paramKey)
+			currentPointValid = True
+			If currentPointVal > yMax Then yMax = currentPointVal
+			If currentPointVal < yMin Then yMin = currentPointVal
+		End If
+	End If
+	
 	' Auto-scaling vertical range with padding
-	If validCount = 0 Then
+	If validCount = 0 And currentPointValid = False Then
 		cvs.DrawText("No valid operating points in this sweep.", widthPx * 0.5, heightPx * 0.5, Typeface.DEFAULT_BOLD, 13, colText, "CENTER")
 		Return bmp
 	End If
@@ -513,18 +526,12 @@ Public Sub DrawSweepPlot( _
 			cvs.DrawText(mzLabels(k), lx5 + 10dip, legendY + 4dip, Typeface.DEFAULT_BOLD, 7, mzCols(k), "LEFT")
 		Next
 	End If
-	' Mark the active operating point
-	If currentMu >= 0.0 And currentMu <= maxMu Then
-		Dim curRes As RotorResults = zBETEngine.Calculate(geom, cond)
-		If curRes.SolutionValid Then
-			Dim curVal As Double = ExtractParamValue(curRes, paramKey)
-			Dim cx As Float = mLeft + (currentMu / maxMu) * plotW
-			Dim cy As Float = mTop + plotH - ((curVal - yMin) / (yMax - yMin)) * plotH
-			cvs.DrawCircle(cx, cy, 5dip, colCurrentPoint, True, 1dip)
-			cvs.DrawCircle(cx, cy, 9dip, colCurrentPoint, False, 1.5dip)
-		End If
-		
-
+	' Mark the active operating point.
+	If currentPointValid Then
+		Dim cx As Float = mLeft + (currentMu / maxMu) * plotW
+		Dim cy As Float = mTop + plotH - ((currentPointVal - yMin) / (yMax - yMin)) * plotH
+		cvs.DrawCircle(cx, cy, 5dip, colCurrentPoint, True, 1dip)
+		cvs.DrawCircle(cx, cy, 9dip, colCurrentPoint, False, 1.5dip)
 	End If
 	
 	Return bmp
