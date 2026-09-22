@@ -443,3 +443,9 @@ def test_results_expose_actual_post_trim_rpm_and_collective():
     assert "ActiveRes.TrimmedRPM" in main
     assert "ActiveRes.TrimmedTheta0Deg" in main
     assert 'Msgbox("This line reports the geometry actually used by the aerodynamic calculation after trim."' in main
+
+
+def test_ui_smoke_verifies_resolved_rpm_trim_result():
+    qa = text("tools/ci_ui_qa.sh")
+    assert 'grep -qi "RPM TRIM" "$OUT/07a2-rpm-trim-result.json"' in qa
+    assert 'safe_screencap "$OUT/07a2-rpm-trim-result.png"' in qa
