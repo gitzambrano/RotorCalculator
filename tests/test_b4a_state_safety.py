@@ -428,6 +428,22 @@ def test_github_qa_is_manual_only_and_release_signing_is_externalized():
     assert "$env:B4A_KEY_PASSWORD" in build
 
 
+def test_runtime_qa_matches_responsive_labels_and_dimensions():
+    qa = text("tools/ci_ui_qa.sh")
+    assert '''tap_text_scrolling() {
+  local TEXT="$1"
+  local W="$2"
+  local H="$3"''' in qa
+    assert 'local SOLVED_RPM_LABEL="Solved RPM"' in qa
+    assert 'local SOUND_SPEED_LABEL="Speed of Sound"' in qa
+    assert 'if [ "$W" -le 380 ]; then' in qa
+    assert 'SOLVED_RPM_LABEL="RPM"' in qa
+    assert 'SOUND_SPEED_LABEL="Sound Speed"' in qa
+    assert 'assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"' in qa
+    assert 'assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"' in qa
+    assert 'assert_text_scrolling_down "$OUT" "Collective Increment (Δθ)" 393 873 "11-solved-collective"' in qa
+
+
 def test_requirements_and_plan_are_authoritative_for_new_architecture():
     req = text("docs/software_requirements.md")
     plan = text("plano.md")
