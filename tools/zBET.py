@@ -134,9 +134,9 @@ class BladeSolidity:
     sigma_geom: float          # True geometric physical solidity [-]
     sigma_thrust: float        # Thrust-weighted equivalent solidity [-]
     n_blades: int = 4          # Number of blades
-    chord_root: float = 0.0    # Chord at root cutout station x0 [m]
-    chord_tip: float = 0.0     # Chord at tip station x=1.0 [m]
-    chord_center: float = 0.0  # Extrapolated chord at hub x=0 [m]
+    chord_root: float = 0.0    # Reference chord c0 at rotor axis x=0 [m]
+    chord_tip: float = 0.0     # Reference chord c1 at tip x=1 [m]
+    chord_center: float = 0.0  # Alias of c0 retained for compatibility
     radius: float = 1.0        # Rotor radius R [m]
     root_cutout: float = 0.0   # Root cutout ratio x0 = r0 / R
 
@@ -144,24 +144,18 @@ class BladeSolidity:
         """Returns local solidity sigma(x) = N * c(x) / (pi * R).
         Accepts either float scalar or NumPy array.
         """
-        x0 = self.root_cutout
         if self.chord_root == self.chord_tip:
             if isinstance(x, np.ndarray):
                 return np.full_like(x, self.sigma_ref, dtype=float)
             return float(self.sigma_ref)
-        c = self.chord_root + (self.chord_tip - self.chord_root) * (x - x0) / (1.0 - x0)
+        c = self.chord_root + (self.chord_tip - self.chord_root) * x
         return self.n_blades * c / (math.pi * self.radius)
 
     @property
     def linear_coeffs(self):
         """Returns (s0, s1) such that sigma(x) = s0 + s1 * x."""
-        if self.chord_root == self.chord_tip:
-            return self.sigma_ref, 0.0
-        x0 = self.root_cutout
-        sig_root = self.n_blades * self.chord_root / (math.pi * self.radius)
-        sig_tip = self.n_blades * self.chord_tip / (math.pi * self.radius)
-        s1 = (sig_tip - sig_root) / (1.0 - x0)
-        s0 = sig_root - s1 * x0
+        s0 = self.n_blades * self.chord_root / (math.pi * self.radius)
+        s1 = self.n_blades * (self.chord_tip - self.chord_root) / (math.pi * self.radius)
         return s0, s1
 
 
@@ -393,26 +387,21 @@ def resolve_solidity(
             root_cutout=x0,
         )
 
-    # Case 3: Input by root chord (at x0) and tip chord (at x=1.0)
+    # Case 3: zBEMT reference planform c(x)=c0+(c1-c0)x from axis to tip.
     if mode in ("chords", "taper"):
         c_root = float(chord_root)
         c_tip = float(chord_tip)
         if min(nb, c_root, c_tip, rad) <= 0:
             raise ValueError("N_BLADES, CHORD_ROOT, CHORD_TIP, and R must be positive")
 
-        # Linear chord distribution c(x) and extrapolation to center (x=0)
-        c_center = c_root - (c_tip - c_root) * x0 / (1.0 - x0)
-        sig_root = nb * c_root / (math.pi * rad)
-        sig_tip = nb * c_tip / (math.pi * rad)
-        s1 = (sig_tip - sig_root) / (1.0 - x0)
-        s0 = sig_root - s1 * x0
-
-        # 1. Reference solidity extrapolated to hub: integral from 0 to 1 of sigma(x) dx
+        s0 = nb * c_root / (math.pi * rad)
+        s1 = nb * (c_tip - c_root) / (math.pi * rad)
         s_ref = s0 + 0.5 * s1
-        # 2. True geometric solidity: integral from x0 to 1 of sigma(x) dx
-        s_geom = (1.0 - x0) * (s0 + 0.5 * s1 * (1.0 + x0))
-        # 3. Thrust-weighted solidity: 3 * integral_{x0}^1 x^2 sigma(x) dx
-        s_thrust = 3.0 * (s0 * (1.0 - x0 ** 3) / 3.0 + s1 * (1.0 - x0 ** 4) / 4.0)
+        s_geom = s0 * (1.0 - x0) + 0.5 * s1 * (1.0 - x0 ** 2)
+        s_thrust = 3.0 * (
+            s0 * (1.0 - x0 ** 3) / 3.0
+            + s1 * (1.0 - x0 ** 4) / 4.0
+        )
 
         return BladeSolidity(
             mode="chords",
@@ -422,7 +411,7 @@ def resolve_solidity(
             n_blades=nb,
             chord_root=c_root,
             chord_tip=c_tip,
-            chord_center=c_center,
+            chord_center=c_root,
             radius=rad,
             root_cutout=x0,
         )
