@@ -242,7 +242,7 @@ functional_smoke() {
   grep -qi "ACTIVE" "$OUT/04-after-restart.json"
 
   # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
-  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk Copy"
+  python /tmp/tap_text.py "UH-60 (Copy)"
   sleep 0.5
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
   python /tmp/tap_text.py "Fixed B"
