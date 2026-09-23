@@ -1032,16 +1032,16 @@ Private Sub BuildPageGeom
 	
 	y = AddGeometrySectionHeader(y, "BLADE GEOMETRY")
 	Dim pnl As Panel
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRotorName = AddTextInputRow(pnl, 4dip, 48dip, "Rotor Name", ActiveGeom.Name, "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRadius = AddFullInputRow(pnl, 4dip, 48dip, "Radius R", "", "m", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtNBlades = AddFullInputRow(pnl, 4dip, 48dip, "Blade Count", "", "[-]", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRootCutout = AddFullInputRow(pnl, 4dip, 48dip, "Root Cutout", "", "r/R", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Chord c0", "", "m", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Chord c1", "", "m", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtSigmaRef = AddFullInputRow(pnl, 4dip, 48dip, "Reference Solidity", "", "[-]", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtAspectRatio = AddFullInputRow(pnl, 4dip, 48dip, "Aspect Ratio", "", "[-]", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Incidence", "", "deg", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Incidence", "", "deg", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRotorName = AddTextInputRow(pnl, 4dip, 48dip, "Rotor Name", ActiveGeom.Name, "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRadius = AddFullInputRow(pnl, 4dip, 48dip, "Radius R", "", "m", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtNBlades = AddFullInputRow(pnl, 4dip, 48dip, "Blade Count", "", "[-]", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRootCutout = AddFullInputRow(pnl, 4dip, 48dip, "Root Cutout", "", "r/R", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Chord c0", "", "m", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Chord c1", "", "m", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtSigmaRef = AddFullInputRow(pnl, 4dip, 48dip, "Reference Solidity", "", "[-]", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtAspectRatio = AddFullInputRow(pnl, 4dip, 48dip, "Aspect Ratio", "", "[-]", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Incidence", "", "deg", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Incidence", "", "deg", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
 	
 	y = AddGeometrySectionHeader(y + 4dip, "DERIVED GEOMETRY")
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblSigmaGeomDerived = AddDerivedRow(pnl, "Geometric Solidity", "[-]"): y=y+rowH: rowIndex=rowIndex+1
@@ -1054,22 +1054,22 @@ Private Sub BuildPageGeom
 	
 	y = AddGeometrySectionHeader(y + 4dip, "ROTOR AERODYNAMICS")
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
-	Dim lblAirfoil As Label = CreateRowLabel("Airfoil", "lblRowTip_Click")
+	Dim lblAirfoil As Label = CreateRowLabel("Airfoil", "lblRowTip")
 	pnl.AddView(lblAirfoil, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
 	btnSelectAirfoil = CreateRowButton("Airfoil", "btnSelectAirfoil")
 	pnl.AddView(btnSelectAirfoil, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtLiftSlope = AddFullInputRow(pnl, 4dip, 48dip, "Lift Slope a0", "", "1/rad", "edtGeom_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtCd0 = AddFullInputRow(pnl, 4dip, 48dip, "Profile Cd0", "", "[-]", "edtGeom_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtLiftSlope = AddFullInputRow(pnl, 4dip, 48dip, "Lift Slope a0", "", "1/rad", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtCd0 = AddFullInputRow(pnl, 4dip, 48dip, "Profile Cd0", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
-	Dim lblTip As Label = CreateRowLabel("Tip Loss", "lblRowTip_Click")
+	Dim lblTip As Label = CreateRowLabel("Tip Loss", "lblRowTip")
 	pnl.AddView(lblTip, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
 	btnTipLoss = CreateRowButton("Tip Loss", "btnTipLoss")
 	pnl.AddView(btnTipLoss, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtTipLossB = AddFullInputRow(pnl, 4dip, 48dip, "Fixed Tip Factor B", "", "[-]", "edtGeom_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtTipLossB = AddFullInputRow(pnl, 4dip, 48dip, "Fixed Tip Factor B", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
-	Dim lblComp As Label = CreateRowLabel("Compressibility", "lblRowTip_Click")
+	Dim lblComp As Label = CreateRowLabel("Compressibility", "lblRowTip")
 	pnl.AddView(lblComp, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
 	btnCompressibility = CreateRowButton("Compressibility", "btnCompressibility")
 	pnl.AddView(btnCompressibility, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
@@ -1130,7 +1130,7 @@ Private Sub AddFormRowPanelH(scv As ScrollView, y As Int, rowIndex As Int, h As 
 End Sub
 
 Private Sub AddDerivedRow(pnl As Panel, title As String, unit As String) As Label
-	Dim lbl As Label = CreateRowLabel(title, "lblRowTip_Click")
+	Dim lbl As Label = CreateRowLabel(title, "lblRowTip")
 	pnl.AddView(lbl, pnl.Width*3/100, 4dip, pnl.Width*48/100, 48dip)
 	Dim value As Label
 	value.Initialize("")
@@ -1220,11 +1220,11 @@ Private Sub BuildPageCond
 	Dim pnl As Panel
 	
 	y = AddConditionSectionHeader(y, "ATMOSPHERE & FLOW")
-	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtAltitude = AddFullInputRow(pnl, 4dip, 48dip, "Altitude", "0", "m", "edtCond_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtTemperature = AddFullInputRow(pnl, 4dip, 48dip, "Temperature", "15", "°C", "edtCond_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtAltitude = AddFullInputRow(pnl, 4dip, 48dip, "Altitude", "0", "m", "edtCond"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtTemperature = AddFullInputRow(pnl, 4dip, 48dip, "Temperature", "15", "°C", "edtCond"): y=y+rowH: rowIndex=rowIndex+1
 	
 	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
-	Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow", "lblRowTip_Click")
+	Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow", "lblRowTip")
 	pnl.AddView(lblHorizontal, pnl.Width*3/100, 4dip, pnl.Width*25/100, 48dip)
 	btnHorizontalInput.Initialize("btnHorizontalInput")
 	btnHorizontalInput.Typeface = Typeface.DEFAULT_BOLD
@@ -1255,7 +1255,7 @@ Private Sub BuildPageCond
 	y=y+flowRowH: rowIndex=rowIndex+1
 	
 	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
-	Dim lblAxial As Label = CreateRowLabel("Axial Flow", "lblRowTip_Click")
+	Dim lblAxial As Label = CreateRowLabel("Axial Flow", "lblRowTip")
 	pnl.AddView(lblAxial, pnl.Width*3/100, 4dip, pnl.Width*25/100, 48dip)
 	btnAxialInput.Initialize("btnAxialInput")
 	btnAxialInput.Typeface = Typeface.DEFAULT_BOLD
@@ -1287,7 +1287,7 @@ Private Sub BuildPageCond
 	
 	y = AddConditionSectionHeader(y + 4dip, "OPERATING CONSTRAINTS")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
-	Dim lblPair As Label = CreateRowLabel("Operating Inputs", "lblRowTip_Click")
+	Dim lblPair As Label = CreateRowLabel("Operating Inputs", "lblRowTip")
 	pnl.AddView(lblPair, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
 	btnOperatingPair = CreateRowButton("Operating Inputs", "btnOperatingPair")
 	pnl.AddView(btnOperatingPair, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
@@ -1341,14 +1341,14 @@ Private Sub BuildPageCond
 	
 	y = AddConditionSectionHeader(y + 4dip, "AERODYNAMIC MODEL")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
-	Dim lblInflow As Label = CreateRowLabel("Inflow Model", "lblRowTip_Click")
+	Dim lblInflow As Label = CreateRowLabel("Inflow Model", "lblRowTip")
 	pnl.AddView(lblInflow, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
 	btnInflowModel = CreateRowButton("Inflow Model", "btnInflowModel")
 	pnl.AddView(btnInflowModel, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtKInd = AddFullInputRow(pnl, 4dip, 48dip, "Induced Factor Kind", "1.15", "[-]", "edtKInd_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtKInd = AddFullInputRow(pnl, 4dip, 48dip, "Induced Factor Kind", "1.15", "[-]", "edtKInd"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
-	Dim lblDrag As Label = CreateRowLabel("Profile Drag", "lblRowTip_Click")
+	Dim lblDrag As Label = CreateRowLabel("Profile Drag", "lblRowTip")
 	pnl.AddView(lblDrag, pnl.Width*3/100, 4dip, pnl.Width*40/100, 48dip)
 	Dim lblDragFixed As Label
 	lblDragFixed.Initialize("")
@@ -1624,7 +1624,7 @@ End Sub
 
 ' Text row for rotor names; numeric rows stay numeric-only.
 Private Sub AddTextInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVal As String, evtName As String) As EditText
-	Dim lbl As Label = CreateRowLabel(lblText, "lblRowTip_Click")
+	Dim lbl As Label = CreateRowLabel(lblText, "lblRowTip")
 	pnl.AddView(lbl, pnl.Width * 3 / 100, ib * sc, pnl.Width * 30 / 100, tb * sc)
 	Dim edt As EditText
 	edt.Initialize(evtName)
@@ -1642,7 +1642,7 @@ End Sub
 
 ' Helper to create 30%x | 36%x | 20%x standard input rows
 Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVal As String, unitText As String, evtName As String) As EditText
-	Dim lbl As Label = CreateRowLabel(lblText, "lblRowTip_Click")
+	Dim lbl As Label = CreateRowLabel(lblText, "lblRowTip")
 	pnl.AddView(lbl, pnl.Width * 3 / 100, ib * sc, pnl.Width * 30 / 100, tb * sc)
 	
 	Dim edt As EditText
