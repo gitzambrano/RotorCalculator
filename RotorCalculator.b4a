@@ -2992,7 +2992,7 @@ End Sub
 
 Private Sub UpdateSweepMaxButtonText
 	If btnSweepMaxMu.IsInitialized = False Then Return
-	btnSweepMaxMu.Text = "RANGE · μ≤" & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
+	btnSweepMaxMu.Text = "μ MAX " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
 End Sub
 
 Sub btnCloseSweepPlot_Click
