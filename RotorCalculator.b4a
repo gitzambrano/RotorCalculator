@@ -2719,59 +2719,185 @@ End Sub
 Sub btnSweepMultiModel_Click
 	Dim options As List
 	options.Initialize
-	options.Add("Inflow Models — 4 curves")
-	options.Add("Rotor α — 5 curves")
-	options.Add("Axial Vz — 5 curves")
-	options.Add("Axial μz — 5 curves")
-	options.Add("Single Active Condition")
+	options.Add("Inflow Models")
+	options.Add("Rotor α Family")
+	options.Add("Axial Vz Family")
+	options.Add("Axial μz Family")
+	options.Add("Active Only")
 	Dim idx As Int = InputList(options, "Curve Family", SweepMultiMode)
 	If idx < 0 Then Return
 	SweepMultiMode = idx
 	UpdateSweepMultiButtonText
+	UpdateSweepAuxControls
 	UpdateSweepPlotView
 End Sub
 
-Private Sub UpdateSweepMultiButtonText
+Private Sub CurrentSweepFamilyText As String
 	Select SweepMultiMode
-		Case 0
-			btnSweepMultiModel.Text = "Inflow Models (4)"
-			btnSweepMultiModel.TextColor = ColorAccentCyan
-		Case 1
-			btnSweepMultiModel.Text = "α Family (5)"
-			btnSweepMultiModel.TextColor = ColorAccentCyan
-		Case 2
-			btnSweepMultiModel.Text = "Vz Family (5)"
-			btnSweepMultiModel.TextColor = ColorAccentCyan
-		Case 3
-			btnSweepMultiModel.Text = "μz Family (5)"
-			btnSweepMultiModel.TextColor = ColorAccentCyan
-		Case 4
-			btnSweepMultiModel.Text = "Active Only"
-			btnSweepMultiModel.TextColor = ColorButText2
+		Case 1: Return SweepAlphaValues
+		Case 2: Return SweepVzValues
+		Case 3: Return SweepMuZValues
 	End Select
+	Return ""
+End Sub
+
+Private Sub SetCurrentSweepFamilyText(value As String)
+	Select SweepMultiMode
+		Case 1: SweepAlphaValues = value
+		Case 2: SweepVzValues = value
+		Case 3: SweepMuZValues = value
+	End Select
+End Sub
+
+Private Sub ParseSweepFamilyValues(raw As String) As List
+	Dim values As List
+	values.Initialize
+	Dim parts() As String = Regex.Split(",", raw)
+	If parts.Length < 1 Or parts.Length > 9 Then Return values
+	For valueIndex = 0 To parts.Length - 1
+		Dim token As String = parts(valueIndex).Trim
+		If token = "" Then
+			values.Clear
+			Return values
+		End If
+		Try
+			Dim v As Double = token
+			values.Add(v)
+		Catch
+			values.Clear
+			Return values
+		End Try
+	Next
+	Return values
+End Sub
+
+Private Sub CurrentSweepFamilyValues As List
+	Dim values As List
+	If SweepMultiMode >= 1 And SweepMultiMode <= 3 Then values = ParseSweepFamilyValues(CurrentSweepFamilyText) Else values.Initialize
+	If SweepMultiMode = 1 And values.Size = 0 Then values = ParseSweepFamilyValues("-10,-5,0,5,10")
+	If SweepMultiMode = 2 And values.Size = 0 Then values = ParseSweepFamilyValues("-10,-5,0,5,10")
+	If SweepMultiMode = 3 And values.Size = 0 Then values = ParseSweepFamilyValues("-0.05,-0.025,0,0.025,0.05")
+	Return values
+End Sub
+
+Private Sub UpdateSweepMultiButtonText
+	If btnSweepMultiModel.IsInitialized = False Then Return
+	Dim count As Int = RotorPopups.SweepCurveCount(SweepMultiMode, CurrentSweepFamilyValues)
+	Select SweepMultiMode
+		Case 0: btnSweepMultiModel.Text = "Inflow Models (4)"
+		Case 1: btnSweepMultiModel.Text = "α Family (" & count & ")"
+		Case 2: btnSweepMultiModel.Text = "Vz Family (" & count & ")"
+		Case 3: btnSweepMultiModel.Text = "μz Family (" & count & ")"
+		Case Else: btnSweepMultiModel.Text = "Active Only"
+	End Select
+	If SweepMultiMode = 4 Then btnSweepMultiModel.TextColor = ColorButText2 Else btnSweepMultiModel.TextColor = ColorAccentCyan
+End Sub
+
+Private Sub UpdateSweepAuxControls
+	If btnSweepValues.IsInitialized Then btnSweepValues.Visible = (SweepMultiMode >= 1 And SweepMultiMode <= 3)
+	If btnSweepTrimHover.IsInitialized Then
+		btnSweepTrimHover.Visible = (ActiveCond.OperatingPair <> "rpm_collective")
+		If SweepTrimOnlyHover Then
+			btnSweepTrimHover.Text = "☑ HOVER TRIM"
+			btnSweepTrimHover.TextColor = ColorAccentGreen
+		Else
+			btnSweepTrimHover.Text = "☐ HOVER TRIM"
+			btnSweepTrimHover.TextColor = ColorButText2
+		End If
+	End If
+End Sub
+
+Sub btnSweepValues_Click
+	If SweepMultiMode < 1 Or SweepMultiMode > 3 Then Return
+	If SweepValuesPopupOpen Then CloseSweepValuesPopup
+	pnlSweepValuesPopup.Initialize("")
+	pnlSweepValuesPopup.Color = 0x99000000
+	root.AddView(pnlSweepValuesPopup, 0, 0, root.Width, root.Height)
+	SweepValuesPopupOpen = True
+	pnlSweepValuesPopup.BringToFront
+	Dim cardW As Int = Min(root.Width - 24dip, 520dip)
+	Dim cardH As Int = 230dip
+	Dim card As Panel
+	card.Initialize("")
+	card.Color = ColorPnlInput5
+	pnlSweepValuesPopup.AddView(card, (root.Width-cardW)/2, (root.Height-cardH)/2, cardW, cardH)
+	Dim title As Label
+	title.Initialize("")
+	title.Text = "FAMILY VALUES"
+	title.TextColor = ColorAccentCyan
+	title.Typeface = Typeface.DEFAULT_BOLD
+	title.TextSize = 13
+	card.AddView(title, 16dip, 12dip, cardW-32dip, 28dip)
+	Dim hint As Label
+	hint.Initialize("")
+	hint.Text = "Enter 1–9 values separated by commas. Example: -10, -5, 0, 5, 10"
+	hint.TextColor = ColorButText2
+	hint.TextSize = 10.5
+	hint.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	card.AddView(hint, 16dip, 44dip, cardW-32dip, 40dip)
+	edtSweepValues.Initialize("")
+	edtSweepValues.Text = CurrentSweepFamilyText
+	edtSweepValues.TextColor = ColorEdtText
+	edtSweepValues.Color = ColorEdt
+	edtSweepValues.TextSize = 13
+	edtSweepValues.SingleLine = True
+	card.AddView(edtSweepValues, 16dip, 90dip, cardW-32dip, 48dip)
+	Dim btnCancel As Button = CreateRowButton("CANCEL", "btnCancelSweepValues")
+	Dim btnApply As Button = CreateRowButton("APPLY", "btnApplySweepValues")
+	card.AddView(btnCancel, 16dip, 158dip, (cardW-38dip)/2, 48dip)
+	card.AddView(btnApply, 22dip+(cardW-38dip)/2, 158dip, (cardW-38dip)/2, 48dip)
+End Sub
+
+Sub btnApplySweepValues_Click
+	Dim values As List = ParseSweepFamilyValues(edtSweepValues.Text)
+	If values.Size = 0 Then
+		ToastMessageShow("Enter 1–9 valid numbers separated by commas.", True)
+		Return
+	End If
+	SetCurrentSweepFamilyText(edtSweepValues.Text.Trim)
+	CloseSweepValuesPopup
+	UpdateSweepMultiButtonText
+	UpdateSweepPlotView
+End Sub
+
+Sub btnCancelSweepValues_Click
+	CloseSweepValuesPopup
+End Sub
+
+Private Sub CloseSweepValuesPopup
+	If SweepValuesPopupOpen Then
+		pnlSweepValuesPopup.RemoveView
+		SweepValuesPopupOpen = False
+	End If
+End Sub
+
+Sub btnSweepTrimHover_Click
+	If ActiveCond.OperatingPair = "rpm_collective" Then Return
+	SweepTrimOnlyHover = Not(SweepTrimOnlyHover)
+	UpdateSweepAuxControls
+	UpdateSweepPlotView
 End Sub
 
 Sub btnSweepXAxis_Click
 	SweepXAxisMode = 1 - SweepXAxisMode
 	UpdateSweepXAxisButtonText
-	UpdateSweepMaxButtonText
 	UpdateSweepPlotView
 End Sub
 
 Private Sub UpdateSweepXAxisButtonText
 	If btnSweepXAxis.IsInitialized = False Then Return
-	If SweepXAxisMode = 1 Then
-		btnSweepXAxis.Text = "X: Vx"
-	Else
-		btnSweepXAxis.Text = "X: μ"
-	End If
+	If SweepXAxisMode = 1 Then btnSweepXAxis.Text = "X: Vx" Else btnSweepXAxis.Text = "X: μ"
 End Sub
 
 Sub btnSweepMaxMu_Click
-	If SweepMaxMuVal < 0.45 Then
-		SweepMaxMuVal = 0.50
-	Else
+	If SweepMaxMuVal < 0.35 Then
 		SweepMaxMuVal = 0.40
+	Else If SweepMaxMuVal < 0.45 Then
+		SweepMaxMuVal = 0.50
+	Else If SweepMaxMuVal < 0.55 Then
+		SweepMaxMuVal = 0.60
+	Else
+		SweepMaxMuVal = 0.30
 	End If
 	UpdateSweepMaxButtonText
 	UpdateSweepPlotView
@@ -2779,11 +2905,7 @@ End Sub
 
 Private Sub UpdateSweepMaxButtonText
 	If btnSweepMaxMu.IsInitialized = False Then Return
-	If SweepXAxisMode = 1 Then
-		btnSweepMaxMu.Text = "Vx max " & NumberFormat2(SweepMaxMuVal * RotorTipSpeed, 1, 0, 0, False)
-	Else
-		btnSweepMaxMu.Text = "μ max " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
-	End If
+	btnSweepMaxMu.Text = "μ≤" & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
 End Sub
 
 Sub btnCloseSweepPlot_Click
@@ -2791,6 +2913,8 @@ Sub btnCloseSweepPlot_Click
 End Sub
 
 Private Sub CloseSweepPopup
+	If SweepValuesPopupOpen Then CloseSweepValuesPopup
+	If SweepTablePopupOpen Then CloseSweepTablePopup
 	If SweepPopupOpen Then
 		pnlSweepPopup.RemoveView
 		SweepPopupOpen = False
@@ -2799,50 +2923,113 @@ End Sub
 
 Sub UpdateSweepPlotView
 	If ivSweepPlot.IsInitialized = False Then Return
+	SyncConditionRepresentations
 	Dim plotW As Int = ivSweepPlot.Width
 	Dim plotH As Int = ivSweepPlot.Height
 	If plotW <= 10 Then plotW = root.Width - 16dip
 	If plotH <= 10 Then plotH = 300dip
-	
-	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot( _
-		plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepParamSelectedLabel, _
-		SweepMultiMode, SweepMaxMuVal, ActiveCond.Mu, AxialInputMode, ConditionAxialValue, _
-		SweepXAxisMode, ThemeMode = 1)
+	Dim familyValues As List = CurrentSweepFamilyValues
+	SweepSamplesCache = RotorPopups.BuildSweepSamples(ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepMultiMode, SweepMaxMuVal, familyValues, SweepTrimOnlyHover)
+	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot(plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, _
+		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, ThemeMode = 1, SweepSamplesCache)
 	ivSweepPlot.Bitmap = bmp
-	
-	Dim vx As Double = ActiveCond.Mu * RotorTipSpeed
-	lblSweepCurrentVal.Text = "ACTIVE · μ=" & NumberFormat2(ActiveCond.Mu, 1, 2, 2, False) & " · Vx=" & NumberFormat2(vx, 1, 1, 1, False) & " m/s · μz=" & NumberFormat2(ActiveCond.MuZ, 1, 3, 3, False)
+	If ActiveRes.SolutionValid Then
+		lblSweepCurrentVal.Text = "ACTIVE · μ=" & NumberFormat2(ActiveRes.OperatingMu, 1, 2, 2, False) & _
+			" · Vx=" & NumberFormat2(ActiveRes.OperatingVx, 1, 1, 1, False) & " m/s · μz=" & NumberFormat2(ActiveRes.OperatingMuZ, 1, 3, 3, False)
+	Else
+		lblSweepCurrentVal.Text = "ACTIVE · INVALID"
+	End If
+	UpdateSweepMultiButtonText
+	UpdateSweepAuxControls
 End Sub
 
 Sub btnSweepTable_Click
-	Dim sb As StringBuilder: sb.Initialize
-	Dim xLabel As String = "μ"
-	If SweepXAxisMode = 1 Then xLabel = "Vx [m/s]"
-	sb.Append(xLabel).Append(TAB).Append(SweepParamSelectedKey).Append(CRLF)
-	sb.Append("----------------------------------------").Append(CRLF)
-	
-	Dim tempCond As FlightCondition = zBETEngine.CloneCondition(ActiveCond)
-	Dim vtip As Double = RotorTipSpeed
-	If vtip < 1.0 Then vtip = 1.0
-	Dim digits As Int = RotorPopups.SweepParamDigits(SweepParamSelectedKey) + ExtraPrecision
-	For i = 0 To 10
-		Dim mu As Double = i * (SweepMaxMuVal / 10.0)
-		tempCond.Mu = mu
-		tempCond.MuZ = zBETEngine.ResolveMuZ(mu, AxialInputMode, ConditionAxialValue, vtip)
-		Dim res As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
-		Dim xVal As Double = mu
-		If SweepXAxisMode = 1 Then xVal = mu * vtip
-		Dim xDigits As Int = 2
-		If SweepXAxisMode = 1 Then xDigits = 1
-		If res.SolutionValid Then
-			Dim v As Double = RotorPopups.ExtractParamValue(res, SweepParamSelectedKey)
-			sb.Append(FormatResultValue(xVal, xDigits)).Append(TAB).Append(TAB).Append(FormatResultValue(v, digits)).Append(CRLF)
+	If SweepSamplesCache.IsInitialized = False Or SweepSamplesCache.Size = 0 Then UpdateSweepPlotView
+	OpenSweepTablePopup
+End Sub
+
+Private Sub OpenSweepTablePopup
+	If SweepTablePopupOpen Then CloseSweepTablePopup
+	pnlSweepTablePopup.Initialize("")
+	pnlSweepTablePopup.Color = ColorPnlInput5
+	root.AddView(pnlSweepTablePopup, 0, 0, root.Width, root.Height)
+	SweepTablePopupOpen = True
+	pnlSweepTablePopup.BringToFront
+	Dim headerH As Int = 52dip
+	Dim header As Panel
+	header.Initialize("")
+	header.Color = ColorPnlTitle
+	pnlSweepTablePopup.AddView(header, 0, 0, root.Width, headerH)
+	Dim title As Label
+	title.Initialize("")
+	title.Text = "SWEEP DATA · " & SweepParamSelectedKey
+	title.TextColor = ColorAccentCyan
+	title.Typeface = Typeface.DEFAULT_BOLD
+	title.TextSize = 13
+	title.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	header.AddView(title, 16dip, 0, root.Width-72dip, headerH)
+	Dim close As Button
+	close.Initialize("btnCloseSweepTable")
+	close.Text = "×"
+	close.TextColor = ColorAccentRed
+	close.TextSize = 20
+	close.Color = Colors.Transparent
+	header.AddView(close, root.Width-52dip, 2dip, 48dip, 48dip)
+	Dim wv As WebView
+	wv.Initialize("")
+	pnlSweepTablePopup.AddView(wv, 0, headerH, root.Width, root.Height-headerH)
+	wv.LoadHtml(BuildSweepTableHtml)
+End Sub
+
+Sub btnCloseSweepTable_Click
+	CloseSweepTablePopup
+End Sub
+
+Private Sub CloseSweepTablePopup
+	If SweepTablePopupOpen Then
+		pnlSweepTablePopup.RemoveView
+		SweepTablePopupOpen = False
+	End If
+End Sub
+
+Private Sub HtmlEscape(textValue As String) As String
+	Return textValue.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;")
+End Sub
+
+Private Sub BuildSweepTableHtml As String
+	Dim dark As Boolean = (ThemeMode = 0)
+	Dim bg As String = "#ffffff"
+	Dim fg As String = "#172033"
+	Dim grid As String = "#d5dce6"
+	If dark Then
+		bg = "#10141c"
+		fg = "#f1f5f9"
+		grid = "#273244"
+	End If
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>")
+	sb.Append("body{margin:10px;background:").Append(bg).Append(";color:").Append(fg).Append(";font-family:monospace;font-size:12px}")
+	sb.Append("table{border-collapse:collapse;width:100%;white-space:nowrap}th,td{border:1px solid ").Append(grid).Append(";padding:6px;text-align:right}th{position:sticky;top:0;background:").Append(bg).Append("}td:first-child,th:first-child{text-align:left}</style></head><body>")
+	sb.Append("<table><tr><th>Curve</th><th>μ</th><th>Vx</th><th>").Append(HtmlEscape(SweepParamSelectedKey)).Append("</th><th>RPM</th><th>Δθ</th><th>CT</th><th>T [N]</th><th>Status</th></tr>")
+	For rowIndex = 0 To SweepSamplesCache.Size - 1
+		Dim point As SweepPoint = SweepSamplesCache.Get(rowIndex)
+		sb.Append("<tr><td>").Append(HtmlEscape(point.CurveLabel)).Append("</td>")
+		sb.Append("<td>").Append(CsvNum(point.Mu, 4)).Append("</td>")
+		If point.Valid Then
+			sb.Append("<td>").Append(CsvNum(point.Vx, 2)).Append("</td>")
+			sb.Append("<td>").Append(CsvNum(point.Value, RotorPopups.SweepParamDigits(SweepParamSelectedKey)+ExtraPrecision)).Append("</td>")
+			sb.Append("<td>").Append(CsvNum(point.RPM, 1)).Append("</td>")
+			sb.Append("<td>").Append(CsvNum(point.CollectiveDeg, 2)).Append("</td>")
+			sb.Append("<td>").Append(CsvNum(point.CT, 6)).Append("</td>")
+			sb.Append("<td>").Append(CsvNum(point.ThrustN, 2)).Append("</td><td>VALID</td>")
 		Else
-			sb.Append(FormatResultValue(xVal, xDigits)).Append(TAB).Append(TAB).Append("INVALID").Append(CRLF)
+			sb.Append("<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>INVALID</td>")
 		End If
+		sb.Append("</tr>")
 	Next
-	
-	Msgbox(sb.ToString, "Active Data Table: " & SweepParamSelectedKey)
+	sb.Append("</table></body></html>")
+	Return sb.ToString
 End Sub
 
 ' ====================================================================
