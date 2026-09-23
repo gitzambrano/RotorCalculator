@@ -347,6 +347,14 @@ Sub Activity_KeyPress (KeyCode As Int) As Boolean
 			CloseUnitConverter
 			Return True
 		End If
+		If SweepValuesPopupOpen Then
+			CloseSweepValuesPopup
+			Return True
+		End If
+		If SweepTablePopupOpen Then
+			CloseSweepTablePopup
+			Return True
+		End If
 		If SweepPopupOpen Then
 			CloseSweepPopup
 			Return True
