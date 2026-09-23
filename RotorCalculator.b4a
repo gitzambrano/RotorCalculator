@@ -1779,45 +1779,61 @@ End Sub
 
 Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	If edtRadius.IsInitialized = False Then Return
+	Dim g As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(geom))
 	UpdatingUI = True
-	If edtRotorName.IsInitialized Then edtRotorName.Text = geom.Name
-	edtRadius.Text = NumberFormat(geom.Radius, 1, 2)
-	edtRPM.Text = NumberFormat(geom.RPM, 1, 1)
-	edtNBlades.Text = geom.NBlades
-	edtRootCutout.Text = NumberFormat(geom.RootCutout, 1, 3)
-	edtChordRoot.Text = NumberFormat(geom.ChordRoot, 1, 4)
-	edtChordTip.Text = NumberFormat(geom.ChordTip, 1, 4)
-	edtThetaRoot.Text = NumberFormat(geom.ThetaRoot * 180.0 / cPI, 1, 2)
-	edtThetaTip.Text = NumberFormat(geom.ThetaTip * 180.0 / cPI, 1, 2)
-	edtLiftSlope.Text = NumberFormat(geom.LiftSlope0, 1, 2)
-	edtCd0.Text = NumberFormat(geom.Cd0, 1, 4)
-	
-	RefreshTipLossButton(geom)
-	btnSelectAirfoil.Text = AirfoilDisplayName(geom)
-	
-	If geom.UsePrandtlGlauert Then
+	edtRotorName.Text = g.Name
+	edtRadius.Text = NumberFormat2(g.Radius, 1, 2, 2, False)
+	edtNBlades.Text = g.NBlades
+	edtRootCutout.Text = NumberFormat2(g.RootCutout, 1, 3, 3, False)
+	edtChordRoot.Text = NumberFormat2(g.ChordRoot, 1, 4, 4, False)
+	edtChordTip.Text = NumberFormat2(g.ChordTip, 1, 4, 4, False)
+	edtSigmaRef.Text = NumberFormat2(g.SigmaRef, 1, 5, 5, False)
+	edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(g), 1, 3, 3, False)
+	edtThetaRoot.Text = NumberFormat2(g.ThetaRoot * 180.0 / cPI, 1, 2, 2, False)
+	edtThetaTip.Text = NumberFormat2(g.ThetaTip * 180.0 / cPI, 1, 2, 2, False)
+	edtLiftSlope.Text = NumberFormat2(g.LiftSlope0, 1, 3, 3, False)
+	edtCd0.Text = NumberFormat2(g.Cd0, 1, 5, 5, False)
+	edtTipLossB.Text = NumberFormat2(g.TipLossB, 1, 4, 4, False)
+	btnSelectAirfoil.Text = AirfoilDisplayName(g)
+	RefreshTipLossButton(g)
+	If g.UsePrandtlGlauert Then
 		btnCompressibility.Text = "Prandtl-Glauert: ON"
 		btnCompressibility.TextColor = ColorAccentGreen
 	Else
 		btnCompressibility.Text = "Prandtl-Glauert: OFF"
 		btnCompressibility.TextColor = ColorButText2
 	End If
-	
 	UpdatingUI = False
+	RefreshGeometryDerivedFields
+	RefreshLoadedRotorStrip
+End Sub
+
+Private Sub RefreshGeometryDerivedFields
+	If lblSigmaGeomDerived.IsInitialized = False Then Return
+	Dim g As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(ActiveGeom))
+	lblSigmaGeomDerived.Text = FormatResultValue(g.SigmaGeom, 5)
+	lblSigmaThrustDerived.Text = FormatResultValue(g.SigmaThrust, 5)
+	lblTaperDerived.Text = FormatResultValue(zBETEngine.TaperRatio(g), 3)
+	lblDiskAreaDerived.Text = FormatResultValue(cPI * g.Radius * g.Radius, 2)
+	lblRefBladeAreaDerived.Text = FormatResultValue(zBETEngine.ReferenceBladeArea(g), 3)
+	lblActiveBladeAreaDerived.Text = FormatResultValue(zBETEngine.ActiveBladeArea(g), 3)
+	lblTwistDerived.Text = FormatResultValue((g.ThetaTip - g.ThetaRoot) * 180.0 / cPI, 2)
+	If edtTipLossB.IsInitialized Then edtTipLossB.Enabled = (g.TipLossMode = "fixed")
 End Sub
 
 Private Sub RefreshTipLossButton(geom As RotorGeometry)
 	Select geom.TipLossMode
 		Case "sissingh"
-			btnTipLoss.Text = "Sissingh: ON"
+			btnTipLoss.Text = "Sissingh"
 			btnTipLoss.TextColor = ColorAccentGreen
 		Case "fixed"
-			btnTipLoss.Text = "Fixed B=" & NumberFormat(geom.TipLossB, 1, 2)
+			btnTipLoss.Text = "Fixed B"
 			btnTipLoss.TextColor = ColorAccentCyan
 		Case Else
-			btnTipLoss.Text = "Tip Loss: OFF"
+			btnTipLoss.Text = "None"
 			btnTipLoss.TextColor = ColorButText2
 	End Select
+	If edtTipLossB.IsInitialized Then edtTipLossB.Enabled = (geom.TipLossMode = "fixed")
 End Sub
 
 Private Sub AirfoilDisplayName(geom As RotorGeometry) As String
@@ -1828,30 +1844,52 @@ Private Sub AirfoilDisplayName(geom As RotorGeometry) As String
 	Return "Custom Section"
 End Sub
 
+Private Sub UpdateAtmosphere
+	ConditionAltitudeM = ClampD(ConditionAltitudeM, -500.0, 11000.0)
+	ConditionTemperatureC = ClampD(ConditionTemperatureC, -80.0, 60.0)
+	Dim base As Double = Max(0.05, 1.0 - 0.0065 * ConditionAltitudeM / 288.15)
+	Dim pRatio As Double = Power(base, 5.2561)
+	AmbientPressureHPa = 1013.25 * pRatio
+	Dim tKelvin As Double = ConditionTemperatureC + 273.15
+	ActiveCond.AltitudeM = ConditionAltitudeM
+	ActiveCond.TemperatureC = ConditionTemperatureC
+	ActiveCond.PressurePa = AmbientPressureHPa * 100.0
+	ActiveCond.Rho = ActiveCond.PressurePa / (287.058 * tKelvin)
+	ActiveCond.SpeedOfSound = Sqrt(1.4 * 287.058 * tKelvin)
+End Sub
+
+Private Sub SyncConditionRepresentations
+	ActiveCond.HorizontalMode = HorizontalInputMode
+	ActiveCond.HorizontalValue = ConditionHorizontalValue
+	ActiveCond.AxialMode = AxialInputMode
+	ActiveCond.AxialValue = ConditionAxialValue
+	ActiveCond.ProfileDragModel = "numerical_vectorial"
+	UpdateAtmosphere
+End Sub
+
 Private Sub LoadConditionDataToFields
-	If ActiveCond.TargetThrustN > 0 And ActiveCond.TargetCT > 0 Then ActiveCond.TargetCT = 0
+	ConditionAltitudeM = ActiveCond.AltitudeM
+	ConditionTemperatureC = ActiveCond.TemperatureC
+	If ActiveCond.HorizontalMode <> "" Then HorizontalInputMode = ActiveCond.HorizontalMode
+	ConditionHorizontalValue = ActiveCond.HorizontalValue
+	If ActiveCond.AxialMode <> "" Then AxialInputMode = ActiveCond.AxialMode
+	ConditionAxialValue = ActiveCond.AxialValue
 	UpdatingUI = True
-	edtAltitude.Text = NumberFormat(ConditionAltitudeM, 1, 0)
-	edtTemperature.Text = NumberFormat(ConditionTemperatureC, 1, 1)
+	edtAltitude.Text = NumberFormat2(ConditionAltitudeM, 1, 0, 0, False)
+	edtTemperature.Text = NumberFormat2(ConditionTemperatureC, 1, 1, 1, False)
 	RefreshHorizontalInputDisplay
 	RefreshAxialInputDisplay
-	edtTargetThrust.Text = NumberFormat(ActiveCond.TargetThrustN, 1, 0)
-	edtTargetCT.Text = NumberFormat(ActiveCond.TargetCT, 1, 5)
-	
 	Select ActiveCond.InflowModel
-		Case "uniform": btnInflowModel.Text = "Uniform Benchmark"
+		Case "uniform": btnInflowModel.Text = "Uniform"
 		Case "coleman_simple": btnInflowModel.Text = "Coleman Simple"
-		Case "drees": btnInflowModel.Text = "Drees Linear"
+		Case "drees": btnInflowModel.Text = "Drees"
 		Case Else: btnInflowModel.Text = "Coleman-Feingold"
 	End Select
-	Select ActiveCond.ProfileDragModel
-		Case "analytical_tangential": btnProfileDragModel.Text = "Analytical Tangential"
-		Case "analytical_vectorial": btnProfileDragModel.Text = "Analytical Vectorial"
-		Case Else: btnProfileDragModel.Text = "Numerical Vectorial"
-	End Select
-	RefreshTrimControls
+	If edtKInd.IsInitialized Then edtKInd.Text = NumberFormat2(ActiveCond.KInd, 1, 3, 3, False)
+	RefreshOperatingControls
 	UpdatingUI = False
-	RefreshDerivedCondition(False)
+	SyncConditionRepresentations
+	RefreshFlowDerivedLabels
 End Sub
 
 Private Sub RefreshHorizontalInputDisplay
@@ -1859,12 +1897,12 @@ Private Sub RefreshHorizontalInputDisplay
 	If HorizontalInputMode = "vx" Then
 		btnHorizontalInput.Text = "Vx"
 		lblHorizontalUnit.Text = "m/s"
-		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 1, 1, False)
+		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 2, 2, False)
 	Else
 		HorizontalInputMode = "mu"
 		btnHorizontalInput.Text = "μ"
 		lblHorizontalUnit.Text = "[-]"
-		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 3, 3, False)
+		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 4, 4, False)
 	End If
 End Sub
 
@@ -1888,96 +1926,97 @@ Private Sub RefreshAxialInputDisplay
 End Sub
 
 Private Sub RotorTipSpeed As Double
-	Dim g As RotorGeometry = ActiveGeom
-	If ActiveCond.HoverTrimMode = "rpm" And ActiveCond.TargetThrustN > 0 Then
-		g = zBETEngine.ResolveOperatingGeometry(ActiveGeom, ActiveCond)
-	End If
-	Dim omega As Double = g.RPM * (cPI / 30.0)
-	Return omega * g.Radius
+	If ActiveRes.SolutionValid And ActiveRes.TipSpeed > 0 Then Return ActiveRes.TipSpeed
+	Dim g As RotorGeometry = zBETEngine.ResolveOperatingGeometry(ActiveGeom, ActiveCond)
+	Return g.RPM * cPI / 30.0 * g.Radius
 End Sub
 
-Private Sub RefreshTrimControls
-	If ActiveCond.HoverTrimMode = "rpm" Then
-		If ActiveCond.TargetThrustN <= 0 Then ActiveCond.TargetThrustN = DefaultRPMTargetThrust
-		ActiveCond.TargetCT = 0
-		Dim wasUpdatingRpm As Boolean = UpdatingUI
-		UpdatingUI = True
-		If edtTargetThrust.IsInitialized Then edtTargetThrust.Text = NumberFormat(ActiveCond.TargetThrustN, 1, 0)
-		If edtTargetCT.IsInitialized Then edtTargetCT.Text = "0"
-		UpdatingUI = wasUpdatingRpm
-		btnHoverTrimMode.Text = "RPM to Thrust"
-		btnHoverTrimMode.TextColor = ColorAccentAmber
-		edtTargetThrust.Enabled = True
-		edtTargetCT.Enabled = False
-		Return
-	End If
-	If ActiveCond.HoverTrimMode <> "none" And ActiveCond.TargetThrustN <= 0 And ActiveCond.TargetCT <= 0 Then
-		ActiveCond.TargetCT = 0.0065
-		If edtTargetCT.IsInitialized Then
-			Dim wasUpdating As Boolean = UpdatingUI
-			UpdatingUI = True
-			edtTargetCT.Text = NumberFormat(ActiveCond.TargetCT, 1, 5)
-			UpdatingUI = wasUpdating
-		End If
-	End If
-	If ActiveCond.HoverTrimMode = "none" Then
-		btnHoverTrimMode.Text = "Manual Pitch"
-		btnHoverTrimMode.TextColor = ColorButText2
-		edtTargetThrust.Enabled = False
-		edtTargetCT.Enabled = False
-	Else
-		If ActiveCond.TargetThrustN > 0 Then
-			btnHoverTrimMode.Text = "Collective to Thrust"
-		Else
-			btnHoverTrimMode.Text = "Collective to CT"
-		End If
-		btnHoverTrimMode.TextColor = ColorAccentGreen
-		edtTargetThrust.Enabled = True
-		edtTargetCT.Enabled = True
-	End If
-End Sub
-
-Private Sub DefaultRPMTargetThrust As Double
-	Dim tempCond As FlightCondition = zBETEngine.CloneCondition(ActiveCond)
-	tempCond.HoverTrimMode = "none"
-	tempCond.Mu = 0
-	tempCond.MuZ = 0
-	tempCond.TargetThrustN = 0
-	tempCond.TargetCT = 0
-	Dim natural As RotorResults = zBETEngine.Calculate(ActiveGeom, tempCond)
-	If natural.SolutionValid And natural.ThrustN > 0 Then Return natural.ThrustN
+Private Sub RefreshFlowDerivedLabels
+	If lblHorizontalDerived.IsInitialized = False Then Return
+	Dim mu As Double = ActiveCond.Mu
+	Dim muz As Double = ActiveCond.MuZ
 	Dim vtip As Double = RotorTipSpeed
-	Dim diskArea As Double = cPI * ActiveGeom.Radius * ActiveGeom.Radius
-	Return 0.0065 * ActiveCond.Rho * diskArea * vtip * vtip
+	Dim vx As Double = mu * vtip
+	Dim vz As Double = muz * vtip
+	Dim alpha As Double = zBETEngine.AlphaFromMuZ(mu, muz)
+	If HorizontalInputMode = "vx" Then
+		lblHorizontalDerived.Text = "μ " & FormatResultValue(mu, 4)
+	Else
+		lblHorizontalDerived.Text = "Vx " & FormatResultValue(vx, 1)
+	End If
+	Select AxialInputMode
+		Case "alpha"
+			lblAxialDerived.Text = "Vz " & FormatResultValue(vz, 1) & " · μz " & FormatResultValue(muz, 3)
+		Case "vz"
+			lblAxialDerived.Text = "α " & FormatResultValue(alpha, 1) & "° · μz " & FormatResultValue(muz, 3)
+		Case Else
+			lblAxialDerived.Text = "Vz " & FormatResultValue(vz, 1) & " · α " & FormatResultValue(alpha, 1) & "°"
+	End Select
+End Sub
+
+Private Sub PairInputName(pair As String, position As Int) As String
+	Select pair
+		Case "rpm_collective"
+			If position = 1 Then Return "RPM" Else Return "Collective Δθ"
+		Case "rpm_ct"
+			If position = 1 Then Return "RPM" Else Return "Target CT"
+		Case "rpm_thrust"
+			If position = 1 Then Return "RPM" Else Return "Target Thrust"
+		Case "collective_ct"
+			If position = 1 Then Return "Collective Δθ" Else Return "Target CT"
+		Case "collective_thrust"
+			If position = 1 Then Return "Collective Δθ" Else Return "Target Thrust"
+		Case Else
+			If position = 1 Then Return "Target CT" Else Return "Target Thrust"
+	End Select
+End Sub
+
+Private Sub PairInputUnit(name As String) As String
+	If name = "RPM" Then Return "rpm"
+	If name.Contains("Collective") Then Return "deg"
+	If name.Contains("CT") Then Return "[-]"
+	Return "N"
+End Sub
+
+Private Sub PairInputValue(name As String) As Double
+	If name = "RPM" Then Return ActiveCond.RPM
+	If name.Contains("Collective") Then Return ActiveCond.CollectiveDeg
+	If name.Contains("CT") Then Return ActiveCond.TargetCT
+	Return ActiveCond.TargetThrustN
+End Sub
+
+Private Sub RefreshOperatingControls
+	If btnOperatingPair.IsInitialized = False Then Return
+	btnOperatingPair.Text = OperatingPairDisplayName(ActiveCond.OperatingPair)
+	Dim n1 As String = PairInputName(ActiveCond.OperatingPair, 1)
+	Dim n2 As String = PairInputName(ActiveCond.OperatingPair, 2)
+	lblOperatingInput1.Text = n1
+	lblOperatingInput1.Tag = n1
+	lblOperatingInput2.Text = n2
+	lblOperatingInput2.Tag = n2
+	lblOperatingUnit1.Text = PairInputUnit(n1)
+	lblOperatingUnit2.Text = PairInputUnit(n2)
+	edtOperatingInput1.Text = FormatOperatingInput(n1, PairInputValue(n1))
+	edtOperatingInput2.Text = FormatOperatingInput(n2, PairInputValue(n2))
+End Sub
+
+Private Sub FormatOperatingInput(name As String, value As Double) As String
+	If name = "RPM" Or name.Contains("Thrust") Then Return NumberFormat2(value, 1, 0, 0, False)
+	If name.Contains("CT") Then Return NumberFormat2(value, 1, 5, 5, False)
+	Return NumberFormat2(value, 1, 2, 2, False)
 End Sub
 
 Private Sub RefreshDerivedCondition(updateDisplayedValues As Boolean)
-	Dim vtip As Double = RotorTipSpeed
-	If vtip > 0 Then
-		If HorizontalInputMode = "vx" Then
-			ConditionHorizontalValue = ClampD(ConditionHorizontalValue, 0.0, 0.60 * vtip)
-			ActiveCond.Mu = ConditionHorizontalValue / vtip
-		Else
-			ConditionHorizontalValue = ClampD(ConditionHorizontalValue, 0.0, 0.60)
-			ActiveCond.Mu = ConditionHorizontalValue
-		End If
-		If AxialInputMode = "vz" Then
-			ConditionAxialValue = ClampD(ConditionAxialValue, -0.50 * vtip, 0.50 * vtip)
-		Else If AxialInputMode = "muz" Then
-			ConditionAxialValue = ClampD(ConditionAxialValue, -0.50, 0.50)
-		End If
-		ActiveCond.MuZ = ClampD(zBETEngine.ResolveMuZ(ActiveCond.Mu, AxialInputMode, ConditionAxialValue, vtip), -0.50, 0.50)
-	Else
-		ActiveCond.Mu = 0.0
-		ActiveCond.MuZ = 0.0
-	End If
+	SyncConditionRepresentations
 	If updateDisplayedValues Then
 		Dim wasUpdating As Boolean = UpdatingUI
 		UpdatingUI = True
 		RefreshHorizontalInputDisplay
 		RefreshAxialInputDisplay
+		RefreshOperatingControls
 		UpdatingUI = wasUpdating
 	End If
+	If ActiveRes.SolutionValid Then RefreshFlowDerivedLabels
 End Sub
 
 Private Sub RefreshRotorSpinner
