@@ -161,10 +161,6 @@ Sub Globals
 	' Page 0: Geometry Views
 	Private pnlBack0 As Panel
 	Private scvGeom As ScrollView
-	Private pnlGeomPopup As Panel
-	Private GeometryPopupOpen As Boolean = False
-	Private scvGeomEditor As ScrollView
-	Private lblGeomPopupTitle As Label
 	Private edtRotorName As EditText
 	Private lblLoadedRotor As Label
 	Private edtRadius As EditText
@@ -345,10 +341,6 @@ Sub Activity_KeyPress (KeyCode As Int) As Boolean
 			CloseUnitConverter
 			Return True
 		End If
-		If GeometryPopupOpen Then
-			CloseGeometryPopup
-			Return True
-		End If
 		If SweepPopupOpen Then
 			CloseSweepPopup
 			Return True
@@ -496,10 +488,11 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 		Case 4
 			Dim resetAnswer As Int = Msgbox2("Restore all factory rotor presets? Custom copies and edits will be removed.", "Reset Rotor Presets", "RESET", "Cancel", "", Null)
 			If resetAnswer = DialogResponse.POSITIVE Then
-				If GeometryPopupOpen Then CloseGeometryPopup
 				RotorStorage.ResetToDefaults
 				ActiveGeom = RotorStorage.GetActiveRotor
-				RefreshRotorList
+				GeometryDirty = False
+				LoadRotorDataToFields(ActiveGeom)
+				RefreshLoadedRotorStrip
 				RefreshDerivedCondition(True)
 				RecalculateRotor
 				ToastMessageShow("Factory presets restored.", False)
@@ -711,7 +704,6 @@ Private Sub CloseSettingsPopup
 End Sub
 
 Private Sub RebuildApplicationUI
-	If GeometryPopupOpen Then CloseGeometryPopup
 	If HelpPopupOpen Then ClosePhysicsHelp
 	If SweepPopupOpen Then CloseSweepPopup
 	If UnitPopupOpen Then CloseUnitConverter
@@ -1943,7 +1935,7 @@ Private Sub RefreshDerivedCondition(updateDisplayedValues As Boolean)
 End Sub
 
 Private Sub RefreshRotorSpinner
-	RefreshRotorList
+	RefreshLoadedRotorStrip
 End Sub
 
 Sub btnSelectAirfoil_Click
@@ -2190,7 +2182,7 @@ End Sub
 Sub edtGeom_FocusChanged (HasFocus As Boolean)
 	If HasFocus = False And UpdatingUI = False Then
 		LoadRotorDataToFields(ActiveGeom)
-		RefreshRotorList
+		RefreshLoadedRotorStrip
 	End If
 End Sub
 
