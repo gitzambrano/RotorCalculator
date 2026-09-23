@@ -17,6 +17,8 @@ def test_geometry_is_rotor_library_with_contextual_editor():
     assert '"BLADE GEOMETRY"' in main
     assert '"DERIVED GEOMETRY"' in main
     assert '"ROTOR AERODYNAMICS"' in main
+    assert 'lowerName.Contains(" copy")' in main
+    assert 'shortName = shortName & " (Copy)"' in main
     assert 'CreateRowButton("SAVE", "btnGeometrySave")' in main
     assert 'CreateRowButton("COPY", "btnGeometryCopy")' in main
     assert 'CreateRowButton("DELETE", "btnGeometryDelete")' in main
