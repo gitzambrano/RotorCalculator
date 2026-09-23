@@ -96,9 +96,9 @@ Public Sub Initialize
 		AddSweepParam("CP", "CQ / CPshaft — Shaft Power")
 		AddSweepParam("CQi", "CQi — Induced Torque")
 		AddSweepParam("CQ0", "CQ0 — Profile Torque")
-		AddSweepParam("CH", "CH — In-Plane Drag")
-		AddSweepParam("CHi", "CHi — Induced Drag")
-		AddSweepParam("CH0", "CH0 — Profile Drag")
+		AddSweepParam("CH", "CH — In-Plane Force")
+		AddSweepParam("CHi", "CHi — Induced In-Plane")
+		AddSweepParam("CH0", "CH0 — Profile In-Plane")
 		AddSweepParam("CY", "CY — Side Force")
 		AddSweepParam("CMx", "CMx — Roll Moment")
 		AddSweepParam("CMy", "CMy — Pitch Moment")
@@ -116,7 +116,7 @@ Public Sub Initialize
 		AddSweepParam("ThrustN", "Thrust (N)")
 		AddSweepParam("ThrustKgf", "Thrust (kgf)")
 		AddSweepParam("TorqueNm", "Torque (N·m)")
-		AddSweepParam("DragHN", "In-Plane Drag (N)")
+		AddSweepParam("DragHN", "In-Plane Force H (N)")
 		AddSweepParam("B", "B — Tip-Loss Factor")
 		AddSweepParam("TipSpeed", "Tip Speed ΩR (m/s)")
 		AddSweepParam("RPM", "Solved RPM")
@@ -145,9 +145,9 @@ Private Sub SweepPlotTitle(paramKey As String) As String
 		Case "CP", "CQ": Return "CQ / CPshaft — Shaft Power"
 		Case "CQi": Return "CQi — Induced Torque"
 		Case "CQ0": Return "CQ0 — Profile Torque"
-		Case "CH": Return "CH — In-Plane Drag"
-		Case "CHi": Return "CHi — Induced Drag"
-		Case "CH0": Return "CH0 — Profile Drag"
+		Case "CH": Return "CH — In-Plane Force"
+		Case "CHi": Return "CHi — Induced In-Plane"
+		Case "CH0": Return "CH0 — Profile In-Plane"
 		Case "CY": Return "CY — Side Force"
 		Case "CMx": Return "CMx — Roll Moment"
 		Case "CMy": Return "CMy — Pitch Moment"
@@ -165,7 +165,7 @@ Private Sub SweepPlotTitle(paramKey As String) As String
 		Case "ThrustN": Return "Thrust (N)"
 		Case "ThrustKgf": Return "Thrust (kgf)"
 		Case "TorqueNm": Return "Torque (N·m)"
-		Case "DragHN": Return "In-Plane Drag H (N)"
+		Case "DragHN": Return "In-Plane Force H (N)"
 		Case "B": Return "B — Tip-Loss Factor"
 		Case "TipSpeed": Return "Tip Speed ΩR (m/s)"
 		Case "RPM": Return "Solved RPM"
