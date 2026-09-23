@@ -22,6 +22,9 @@ Sub Process_Globals
 	' Complete catalog of ALL selectable parameters for μ-sweeps
 	Public SweepParamKeys As List
 	Public SweepParamLabels As List
+	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
+		MuZ As Double, InflowModel As String, Value As Double, Valid As Boolean, RPM As Double, _
+		CollectiveDeg As Double, CT As Double, ThrustN As Double)
 End Sub
 
 ' Initializes the rotorcraft airfoil library and the complete parameter catalog
@@ -114,6 +117,20 @@ Public Sub Initialize
 		AddSweepParam("ThrustKgf", "Thrust (kgf)")
 		AddSweepParam("TorqueNm", "Torque (N·m)")
 		AddSweepParam("DragHN", "In-Plane Drag (N)")
+		AddSweepParam("B", "B — Tip-Loss Factor")
+		AddSweepParam("TipSpeed", "Tip Speed ΩR (m/s)")
+		AddSweepParam("RPM", "Solved RPM")
+		AddSweepParam("Collective", "Solved Collective Δθ (deg)")
+		AddSweepParam("Mu", "μ — Advance Ratio")
+		AddSweepParam("Vx", "Vx — Forward Speed (m/s)")
+		AddSweepParam("MuZ", "μz — Axial Ratio")
+		AddSweepParam("Vz", "Vz — Axial Speed (m/s)")
+		AddSweepParam("Alpha", "α — Rotor AoA (deg)")
+		AddSweepParam("Altitude", "Altitude (m)")
+		AddSweepParam("Temperature", "Temperature (°C)")
+		AddSweepParam("Density", "Air Density ρ (kg/m³)")
+		AddSweepParam("Pressure", "Ambient Pressure (Pa)")
+		AddSweepParam("SoundSpeed", "Speed of Sound (m/s)")
 	End If
 End Sub
 
@@ -149,6 +166,20 @@ Private Sub SweepPlotTitle(paramKey As String) As String
 		Case "ThrustKgf": Return "Thrust (kgf)"
 		Case "TorqueNm": Return "Torque (N·m)"
 		Case "DragHN": Return "In-Plane Drag H (N)"
+		Case "B": Return "B — Tip-Loss Factor"
+		Case "TipSpeed": Return "Tip Speed ΩR (m/s)"
+		Case "RPM": Return "Solved RPM"
+		Case "Collective": Return "Solved Collective Δθ (deg)"
+		Case "Mu": Return "μ — Advance Ratio"
+		Case "Vx": Return "Vx — Forward Speed (m/s)"
+		Case "MuZ": Return "μz — Axial Ratio"
+		Case "Vz": Return "Vz — Axial Speed (m/s)"
+		Case "Alpha": Return "α — Rotor AoA (deg)"
+		Case "Altitude": Return "Altitude (m)"
+		Case "Temperature": Return "Temperature (°C)"
+		Case "Density": Return "Air Density ρ (kg/m³)"
+		Case "Pressure": Return "Ambient Pressure (Pa)"
+		Case "SoundSpeed": Return "Speed of Sound (m/s)"
 		Case Else: Return paramKey
 	End Select
 End Sub
@@ -164,7 +195,11 @@ Public Sub SweepParamDigits(paramKey As String) As Int
 		Case "chi": Return 1
 		Case "Mat": Return 3
 		Case "PowerKW", "PowerHP", "TorqueNm", "DragHN": Return 1
-		Case "ThrustN", "ThrustKgf": Return 0
+		Case "ThrustN", "ThrustKgf", "RPM", "Altitude": Return 0
+		Case "B", "Mu", "MuZ", "Density": Return 4
+		Case "Collective", "Alpha": Return 2
+		Case "TipSpeed", "Vx", "Vz", "Temperature", "SoundSpeed": Return 1
+		Case "Pressure": Return 0
 		Case Else: Return 5
 	End Select
 End Sub
@@ -197,6 +232,20 @@ Public Sub ExtractParamValue(res As RotorResults, paramKey As String) As Double
 		Case "ThrustKgf": Return res.ThrustKgf
 		Case "TorqueNm": Return res.TorqueNm
 		Case "DragHN": Return res.DragHN
+		Case "B": Return res.BFactor
+		Case "TipSpeed": Return res.TipSpeed
+		Case "RPM": Return res.TrimmedRPM
+		Case "Collective": Return res.TrimmedCollectiveDeg
+		Case "Mu": Return res.OperatingMu
+		Case "Vx": Return res.OperatingVx
+		Case "MuZ": Return res.OperatingMuZ
+		Case "Vz": Return res.OperatingVz
+		Case "Alpha": Return res.OperatingAlphaDeg
+		Case "Altitude": Return res.AltitudeM
+		Case "Temperature": Return res.TemperatureC
+		Case "Density": Return res.Density
+		Case "Pressure": Return res.PressurePa
+		Case "SoundSpeed": Return res.SpeedOfSound
 		Case Else: Return res.CT
 	End Select
 End Sub
