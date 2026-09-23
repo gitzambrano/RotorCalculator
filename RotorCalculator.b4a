@@ -1417,7 +1417,7 @@ End Sub
 
 Sub btnGeometryCopy_Click
 	Dim copyGeom As RotorGeometry = zBETEngine.CloneGeometry(ActiveGeom)
-	copyGeom.Name = RotorStorage.MakeUniqueName(copyGeom.Name & " Copy")
+	copyGeom.Name = RotorStorage.MakeCopyName(copyGeom.Name)
 	Dim idx As Int = RotorStorage.AddRotor(copyGeom)
 	RotorStorage.SetActiveRotor(idx)
 	ActiveGeom = RotorStorage.GetActiveRotor
