@@ -84,6 +84,12 @@ Sub Process_Globals
 		TorqueNm As Double, _
 		TorqueLbft As Double, _
 		DragHN As Double, _
+		SideForceYN As Double, _
+		SideForceYLbf As Double, _
+		RollMomentNm As Double, _
+		RollMomentLbft As Double, _
+		PitchMomentNm As Double, _
+		PitchMomentLbft As Double, _
 		TipSpeed As Double, _
 		AdvancingTipMach As Double, _
 		InflowKx As Double, _
@@ -1072,8 +1078,14 @@ Private Sub CalculateCoreResolved(geom As RotorGeometry, cond As FlightCondition
 	res.ThrustLbf = res.ThrustN * 0.224808943
 	
 	res.DragHN = res.CH * dynP
+	res.SideForceYN = res.CY * dynP
+	res.SideForceYLbf = res.SideForceYN * 0.224808943
 	res.TorqueNm = res.CQ * dynP * g.Radius
 	res.TorqueLbft = res.TorqueNm * 0.737562149
+	res.RollMomentNm = res.CMx * dynP * g.Radius
+	res.RollMomentLbft = res.RollMomentNm * 0.737562149
+	res.PitchMomentNm = res.CMy * dynP * g.Radius
+	res.PitchMomentLbft = res.PitchMomentNm * 0.737562149
 	
 	res.PowerShaftW = res.TorqueNm * omega
 	res.PowerShaftKW = res.PowerShaftW / 1000.0
