@@ -2115,8 +2115,6 @@ Public Sub RecalculateRotor
 	lblResults(24).Text = FormatOutputValue(ActiveRes.WakeSkewChiDeg, 1) & "°"
 	lblResults(25).Text = FormatOutputValue(ActiveRes.BFactor, 4)
 	
-	Dim tipMach As Double = 0.0
-	If ActiveRes.SpeedOfSound > 0 Then tipMach = ActiveRes.TipSpeed / ActiveRes.SpeedOfSound
 	lblResults(26).Text = FormatOutputValue(ActiveRes.TrimmedRPM, 0) & " rpm"
 	lblResults(27).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg, 2) & "°"
 	lblResults(28).Text = FormatOutputValue(ActiveRes.CT, 5)
