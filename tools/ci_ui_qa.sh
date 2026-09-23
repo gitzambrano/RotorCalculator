@@ -292,6 +292,54 @@ functional_smoke() {
   python /tmp/ui_node.py "$OUT/04c-after-discard.xml" > "$OUT/04c-after-discard.json"
   grep -qi "ROTOR LIBRARY" "$OUT/04c-after-discard.json"
 
+  # Global menu: converter, help, conventions, about and factory restore.
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "Quick Unit Converter"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/04d-unit-converter.xml" > "$OUT/04d-unit-converter.json"
+  grep -qi "QUICK UNIT CONVERTER" "$OUT/04d-unit-converter.json"
+  grep -qi "hp" "$OUT/04d-unit-converter.json"
+  adb shell input keyevent 4
+  sleep 0.3
+
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "Physics & Equations"
+  sleep 0.8
+  python /tmp/ui_node.py "$OUT/04e-physics-help.xml" > "$OUT/04e-physics-help.json"
+  grep -qi "PHYSICS & EQUATIONS" "$OUT/04e-physics-help.json"
+  adb shell input keyevent 4
+  sleep 0.3
+
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "zBET Conventions & Physical Axes"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/04f-conventions.xml" > "$OUT/04f-conventions.json"
+  grep -qi "zBET / zBEMT Conventions" "$OUT/04f-conventions.json"
+  adb shell input keyevent 4
+  sleep 0.3
+
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "About RotorCalculator"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/04g-about.xml" > "$OUT/04g-about.json"
+  grep -qi "About RotorCalculator" "$OUT/04g-about.json"
+  adb shell input keyevent 4
+  sleep 0.3
+
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "Restore Factory Rotor Presets"
+  sleep 0.5
+  python /tmp/tap_text.py "RESTORE"
+  sleep 0.8
+  python /tmp/ui_node.py "$OUT/04h-after-factory-restore.xml" > "$OUT/04h-after-factory-restore.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/04h-after-factory-restore.json"
+  grep -Fqi "UH-60 (Copy 2)" "$OUT/04h-after-factory-restore.json"
+
   python /tmp/tap_text.py CONDITIONS
   sleep 0.8
 
