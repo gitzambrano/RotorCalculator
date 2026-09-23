@@ -9,6 +9,7 @@ def text(path: str) -> str:
 
 def test_geometry_is_rotor_library_with_contextual_editor():
     main = text("RotorCalculator.b4a")
+    storage = text("RotorStorage.bas")
     assert '"ROTOR LIBRARY"' in main
     assert '"Tap a rotor to select it and open its geometry."' in main
     assert 'CreateRowButton("NEW ROTOR", "btnNewRotor")' in main
