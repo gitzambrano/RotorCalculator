@@ -23,6 +23,9 @@ def test_geometry_is_rotor_library_with_contextual_editor():
     assert 'btnSweepTrimHover.Text = "HOVER ✓"' in main
     assert 'btnSweepMaxMu.Text = "μ " & NumberFormat2' in main
     assert 'shortName = shortName & " (Copy)"' in main
+    assert 'Dim copySuffix As String = fullName.SubString(copyPos + 1).Trim' in main
+    assert "Public Sub MakeCopyName(SourceName As String) As String" in storage
+    assert 'g.Name = MakeCopyName(g.Name)' in storage
     assert 'CreateRowButton("SAVE", "btnGeometrySave")' in main
     assert 'CreateRowButton("COPY", "btnGeometryCopy")' in main
     assert 'CreateRowButton("DELETE", "btnGeometryDelete")' in main
