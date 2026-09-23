@@ -1,119 +1,111 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RotorCalculator — Physics & Equations</title>
-<style>
-:root{--bg:#07090e;--card:#0e131c;--text:#f1f5f9;--muted:#94a3b8;--accent:#00e5ff;--green:#00e676;--line:#1e2738;--warn:#ffb300}
+<style>:root{--bg:#07090e;--card:#0e131c;--text:#f1f5f9;--muted:#94a3b8;--accent:#00e5ff;--green:#00e676;--line:#1e2738;--warn:#ffb300}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:860px;margin:auto;padding:20px 16px 48px}h1{font-size:24px;margin:4px 0 4px;color:var(--accent)}h2{font-size:18px;margin:28px 0 10px;color:var(--green);border-bottom:1px solid var(--line);padding-bottom:6px}h3{font-size:15px;color:var(--accent);margin:18px 0 6px}
-p,li{color:var(--text)}.lead,.muted{color:var(--muted)}.eq{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;overflow:auto}
-.note{background:var(--card);border-left:3px solid var(--warn);padding:10px 12px;border-radius:6px;margin:12px 0}.good{border-left-color:var(--green)}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}th{color:var(--accent)}
-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent)}
-</style>
-</head>
+main{max-width:860px;margin:auto;padding:20px 16px 48px}h1{font-size:24px;margin:4px 0;color:var(--accent)}
+h2{font-size:18px;margin:28px 0 10px;color:var(--green);border-bottom:1px solid var(--line);padding-bottom:6px}
+h3{font-size:15px;color:var(--accent);margin:18px 0 6px}p,li{color:var(--text)}.lead,.muted{color:var(--muted)}
+.eq{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;overflow:auto}
+.note{background:var(--card);border-left:3px solid var(--warn);padding:10px 12px;border-radius:6px;margin:12px 0}.good{border-left-color:var(--green)}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}th{color:var(--accent)}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent)}</style></head>
 <body><main>
 <h1>RotorCalculator — Physics & Equations</h1>
-<p class="lead">Offline reference for the zBET analytical rotor model used by RotorCalculator. Conventions are aligned with zBET and zBEMT.</p>
+<p class="lead">Offline reference for the zBET analytical rotor model used by RotorCalculator. UI conventions and equations follow zBET/zBEMT.</p>
 
 <h2>1. Coordinate and sign convention</h2>
-<table>
-<tr><th>Quantity</th><th>Positive direction / meaning</th></tr>
+<table><tr><th>Quantity</th><th>Positive meaning</th></tr>
 <tr><td><b>+x, Vx</b></td><td>Forward, in the rotor plane.</td></tr>
 <tr><td><b>+y</b></td><td>Starboard / right side.</td></tr>
-<tr><td><b>+z, Vz</b></td><td>Downward through the rotor disk.</td></tr>
+<tr><td><b>+z</b></td><td>Downward through the rotor disk.</td></tr>
+<tr><td><b>Vz &gt; 0</b></td><td>Positive climb rate; relative wind arrives from above and flows downward through the disk.</td></tr>
+<tr><td><b>μz &gt; 0</b></td><td>Positive downward relative-flow ratio.</td></tr>
+<tr><td><b>α &gt; 0</b></td><td>Relative wind arrives from below the disk.</td></tr>
 <tr><td><b>T &gt; 0</b></td><td>Upward rotor thrust, along −z.</td></tr>
-<tr><td><b>α &gt; 0</b></td><td>Rotor angle of attack: the free stream arrives from below the disk.</td></tr>
-<tr><td><b>λi ≥ 0</b></td><td>Induced downwash in +z.</td></tr>
-</table>
-<div class="eq">μ = Vx / (ΩR)</div>
-<div class="eq">μz = Vz / (ΩR)</div>
-<div class="eq">μz = − μ tan(α)</div>
-<div class="eq">λ = μz + λi</div>
-<div class="note"><b>Important:</b> α, Vz and μz are three equivalent ways to prescribe the same axial operating condition. RotorCalculator never adds them together. At Vx = 0, use Vz or μz for non-zero axial flow because α is not a unique representation there.</div>
+<tr><td><b>λi ≥ 0</b></td><td>Induced downwash in +z.</td></tr></table>
+<div class="eq">μ = Vx / (ΩR)</div><div class="eq">μz = Vz / (ΩR)</div><div class="eq">μz = −μ tan(α)</div><div class="eq">λ = μz + λi</div>
+<div class="note"><b>Equivalent inputs:</b> α, Vz and μz describe one axial condition. They are alternatives, not additive terms. At Vx=0, use Vz or μz for non-zero axial flow.</div>
 
-<h2>2. Geometry</h2>
-<p>The lifting span is defined by radius <code>R</code>, root cutout <code>x0=r0/R</code>, blade count <code>N</code>, root/tip chord, and root/tip pitch. The visible chord fields are the authoritative planform input.</p>
-<div class="eq">A = πR²</div>
-<div class="eq">Ω = RPM · 2π / 60</div>
-<div class="eq">Vtip = ΩR</div>
-<p>Linear chord and twist are interpolated between root and tip. The section model uses a linear lift-curve slope <code>a0</code> and constant baseline profile drag <code>Cd0</code>.</p>
+<h2>2. Reference blade geometry</h2>
+<p>Geometry uses a reference linear planform from the rotor axis to the tip. Root cutout defines where the active aerodynamic blade begins; it does not redefine the reference chord law.</p>
+<div class="eq">c(x) = c0 + (c1 − c0)x, &nbsp; 0 ≤ x ≤ 1</div>
+<div class="eq">Sref,b = R(c0+c1)/2</div>
+<div class="eq">AR = R²/Sref,b = 2R/(c0+c1)</div>
+<div class="eq">σref = Nb Sref,b/(πR²) = Nb/(π AR)</div>
+<div class="eq">σgeom = Nb/(πR) ∫[x0..1] c(x) dx</div>
+<div class="eq">σthrust = 3 ∫[x0..1] x² σ(x) dx</div>
+<p>Changing radius scales c0 and c1 proportionally, preserving σref, AR and taper. Changing σref or AR scales both chords with constant taper. Root and tip incidence define baseline twist.</p>
 
-<h2>3. Mean inflow and momentum closure</h2>
-<p>For a given flight condition, zBET solves the induced component <code>λi</code> from blade-element thrust and momentum balance. The induced solution is constrained to a physical non-negative root.</p>
-<div class="eq">CT,momentum = 2 B² λi √( μ² + λ² )</div>
-<div class="eq">CT,BET = CT,BET( μ, λ, pitch, geometry, inflow gradients )</div>
-<p>The solver finds <code>λi</code> such that both expressions agree. If no physical root is bracketed, the operating point is explicitly marked invalid.</p>
+<h2>3. Collective and operating constraints</h2>
+<p>Operating collective is one constant pitch increment along the blade:</p>
+<div class="eq">θroot,op = θroot + Δθ &nbsp;&nbsp; θtip,op = θtip + Δθ</div>
+<p>The operating state contains four linked quantities: <b>RPM, Δθ, CT and thrust</b>. Conditions lets you prescribe any two:</p>
+<table><tr><th>Prescribed pair</th><th>Solved quantities</th></tr>
+<tr><td>RPM + Collective</td><td>CT and thrust</td></tr>
+<tr><td>RPM + CT</td><td>Collective and thrust</td></tr>
+<tr><td>RPM + Thrust</td><td>Collective and CT</td></tr>
+<tr><td>Collective + CT</td><td>RPM and thrust when the flight/model state provides a unique dimensional solution</td></tr>
+<tr><td>Collective + Thrust</td><td>RPM and CT</td></tr>
+<tr><td>CT + Thrust</td><td>RPM and collective</td></tr></table>
+<div class="note good">Trim is performed at the current flight condition, including forward flight and climb/descent. If RPM changes, dimensional Vx and Vz are re-nondimensionalized at each candidate RPM.</div>
 
-<h2>4. Inflow distribution models</h2>
-<table>
-<tr><th>Model</th><th>Interpretation</th></tr>
-<tr><td>Uniform</td><td>Uniform induced velocity; useful as a benchmark.</td></tr>
-<tr><td>Coleman Simple</td><td>First-harmonic longitudinal gradient based on wake skew.</td></tr>
-<tr><td>Coleman–Feingold</td><td>Longitudinal and lateral first-harmonic gradients; zBET default for forward-flight trade studies.</td></tr>
-<tr><td>Drees</td><td>Classical longitudinal/lateral gradient formulation with explicit μ dependence.</td></tr>
-</table>
-<div class="eq">λd(x,ψ) = λ + x [ λ1c cosψ + λ1s sinψ ]</div>
+<h2>4. Mean inflow and momentum closure</h2>
+<div class="eq">CT,momentum = 2 B² λi √(μ² + λ²)</div>
+<div class="eq">CT,BET = CT,BET(μ, λ, pitch, geometry, inflow gradients)</div>
+<p>zBET solves λi ≥ 0 so blade-element thrust and momentum theory agree. If no physical root exists, the point is marked invalid.</p>
 
-<h2>5. Tip loss and compressibility</h2>
-<h3>Sissingh effective tip radius</h3>
-<div class="eq">B = 1 − √(2CT) / N</div>
-<p>RotorCalculator iterates the coupling between <code>B</code>, inflow and <code>CT</code> to convergence. This is an engineering effective-radius approximation.</p>
+<h2>5. Inflow models</h2>
+<table><tr><th>Model</th><th>Interpretation</th></tr>
+<tr><td>Uniform</td><td>No first-harmonic inflow gradient; useful benchmark.</td></tr>
+<tr><td>Coleman Simple</td><td>Longitudinal first harmonic based on wake skew.</td></tr>
+<tr><td>Coleman–Feingold</td><td>Longitudinal and lateral first harmonics.</td></tr>
+<tr><td>Drees</td><td>Classical longitudinal/lateral gradient formulation with explicit μ dependence.</td></tr></table>
+<div class="eq">λd(x,ψ) = λ + x[λ1c cosψ + λ1s sinψ]</div>
+
+<h2>6. Profile drag, tip loss and compressibility</h2>
+<h3>Profile drag</h3>
+<p>RotorCalculator always uses <b>Numerical Vectorial</b> radial/azimuthal integration for profile drag. It is not a user-selectable approximation.</p>
+<h3>Tip loss</h3>
+<p>Available tip-loss choices are None, Fixed B and Sissingh.</p>
+<div class="eq">B(Sissingh) = 1 − √(2CT)/Nb</div>
+<p>Sissingh B, inflow and CT are iterated to mutual consistency.</p>
 <h3>Prandtl–Glauert</h3>
-<div class="eq">Meff = (ΩR / asound) √(0.75² + 0.5 μ²)</div>
-<div class="eq">a(Meff) = a0 / √max(0.01, 1 − Meff²), with Meff ≤ 0.85</div>
-<p>The lift-slope correction uses this 75%-radius representative Mach, exactly as in the zBET reference. Separately, the app reports advancing-tip Mach Mat = ΩR(1+μ)/asound and flags a caution from Mat = 0.80. Neither approximation is a transonic airfoil model.</p>
+<div class="eq">Meff = (ΩR/asound) √(0.75² + 0.5μ²)</div>
+<div class="eq">a(Meff) = a0 / √max(0.01, 1−Meff²), &nbsp; Meff ≤ 0.85</div>
+<p>Advancing-tip Mach Mat = ΩR(1+μ)/asound is reported separately and generates a caution from Mat=0.80 when the correction is enabled.</p>
 
-<h2>6. Torque and power</h2>
-<div class="eq">CQ = CQi + CQ0</div>
-<div class="eq">Pshaft = Q Ω</div>
-<div class="eq">CPair = Kind λi CT + μz CT + CQ0 + μ CH0</div>
-<p>With the energy-balance torque closure:</p>
+<h2>7. Torque, power and Kind</h2>
+<div class="eq">CQ = CQi + CQ0</div><div class="eq">Pshaft = QΩ</div>
 <div class="eq">CQi = Kind λi CT + μz CT − μ CHi</div>
-<div class="eq">CPair = CQ + μ CH</div>
-<p><code>CPair</code> is air power. <code>CQ</code> is shaft torque coefficient. They are related, but they are not interchangeable labels.</p>
+<div class="eq">CPair = Kind λi CT + μz CT + CQ0 + μ CH0 = CQ + μCH</div>
+<p><b>Kind</b> is the induced-power factor entered in Conditions. CPair is air power; CQ is shaft torque/power coefficient.</p>
 
-<h2>7. Efficiency metrics</h2>
-<div class="eq">FoM = (CT^(3/2)/√2) / [ Kind CT^(3/2)/√2 + CQ0 ]</div>
+<h2>8. Efficiency</h2>
+<div class="eq">FoM = (CT^(3/2)/√2) / [Kind CT^(3/2)/√2 + CQ0]</div>
 <div class="eq">(L/D)eff = μ CT / CPair</div>
-<p>Figure of Merit is a hover efficiency metric. Effective rotor L/D is meaningful in forward flight when air power is positive.</p>
 
-<h2>8. Trim modes</h2>
-<table>
-<tr><th>Mode</th><th>What is solved</th></tr>
-<tr><td>Manual Pitch</td><td>Pitch and RPM are prescribed; thrust is an output.</td></tr>
-<tr><td>Collective to Thrust / CT</td><td>RPM and blade twist are fixed; collective is shifted to meet the target.</td></tr>
-<tr><td>RPM to Thrust</td><td>Pitch is fixed; RPM is solved to meet a dimensional thrust target.</td></tr>
-</table>
-
-<h2>9. Operating geometry after trim</h2>
-<p>RotorCalculator always distinguishes the saved geometry from the geometry actually used by the solver. Results shows the effective RPM and mean collective after trim.</p>
-<div class="note good">With RPM to Thrust, Vx↔μ, Vz↔μz, Mach numbers and the Sweep Vx axis all use the solved tip speed ΩtrimR. A physical speed therefore remains physically consistent with the trimmed rotor.</div>
+<h2>9. Results</h2>
+<p>Results groups outputs as Dimensional Performance, all Aerodynamic Coefficients together, Efficiency, Inflow &amp; Wake, and Operating State &amp; Atmosphere.</p>
+<p>The final section explicitly reports solved RPM, Δθ, CT, thrust, μ/Vx, μz/Vz/α, tip speed, Mach values, altitude, temperature, density, pressure and speed of sound.</p>
 
 <h2>10. Parameter sweeps</h2>
-<p>The sweep changes horizontal flight state while cloning the active condition; it never changes the live operating point. The x-axis may be displayed as <code>μ</code> or <code>Vx</code>. Multi-curve comparisons can use inflow model, α, Vz or μz families.</p>
-<div class="note good">When α is selected as the axial representation, varying μ changes μz according to μz = −μ tanα. When Vz or μz is selected, the corresponding physical quantity is held fixed across the sweep.</div>
+<p>Any scalar Result can be plotted against μ, with Vx as an equivalent x-axis display. Curve families are Active Only, Inflow Models, α, Vz and μz. Family values can be edited with the VALUES control.</p>
+<p>Plot, TABLE and CSV share the same sampled dataset. Invalid samples appear as gaps.</p>
+<div class="note good"><b>Trim only in hover:</b> when CT or thrust is prescribed, OFF re-trims every sweep point. ON trims once at μ=0, μz=0 and then holds that solved RPM and collective throughout the sweep.</div>
 
-<h2>11. Result coefficients</h2>
-<table>
-<tr><th>Output</th><th>Definition</th></tr>
-<tr><td>CT</td><td>T / [ρ A (ΩR)²]</td></tr>
-<tr><td>CQ</td><td>Q / [ρ A (ΩR)² R]</td></tr>
-<tr><td>CH</td><td>In-plane H-force coefficient; positive aft.</td></tr>
-<tr><td>CY</td><td>Side-force coefficient; positive starboard.</td></tr>
-<tr><td>CMx</td><td>Roll moment coefficient; positive right side down.</td></tr>
-<tr><td>CMy</td><td>Pitch moment coefficient; positive nose up.</td></tr>
+<h2>11. Coefficient summary</h2>
+<table><tr><th>Output</th><th>Definition / meaning</th></tr>
+<tr><td>CT</td><td>T / [ρA(ΩR)²]</td></tr>
+<tr><td>CQ</td><td>Q / [ρA(ΩR)²R] = CPshaft</td></tr>
+<tr><td>CQi, CQ0</td><td>Induced and profile torque contributions.</td></tr>
+<tr><td>CH, CHi, CH0</td><td>Total, induced and profile longitudinal in-plane force coefficients.</td></tr>
+<tr><td>CY</td><td>Lateral side-force coefficient.</td></tr>
+<tr><td>CMx, CMy</td><td>Roll and pitch moment coefficients.</td></tr>
+<tr><td>CPair</td><td>Air-power coefficient.</td></tr>
 <tr><td>χ</td><td>Wake-skew angle.</td></tr>
-<tr><td>Kx, Ky</td><td>First-harmonic inflow-gradient factors.</td></tr>
-</table>
+<tr><td>Kx, Ky</td><td>First-harmonic inflow-gradient factors.</td></tr></table>
 
 <h2>12. Model scope</h2>
-<ul>
-<li>Linear section lift curve and constant baseline Cd0.</li>
-<li>No dynamic stall, cyclic trim, blade structural dynamics or free wake.</li>
-<li>First-harmonic prescribed inflow gradients.</li>
-<li>Conceptual / preliminary rotor performance use, not certification-level loads analysis.</li>
-</ul>
-<p class="muted">For the complete implementation reference, see the repository documentation <code>docs/zBET-documentation.md</code>.</p>
+<ul><li>Linear section lift curve and baseline constant Cd0.</li><li>No dynamic stall, cyclic trim, blade structural dynamics or free wake.</li><li>First-harmonic prescribed inflow gradients.</li><li>Conceptual/preliminary rotor performance use, not certification-level loads analysis.</li></ul>
 </main></body></html>
