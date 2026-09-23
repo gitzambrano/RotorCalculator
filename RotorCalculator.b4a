@@ -177,7 +177,6 @@ Sub Globals
 	Private lblGeometryPopupTitle As Label
 	Private scvGeom As ScrollView
 	Private edtRotorName As EditText
-	Private lblLoadedRotor As Label
 	Private edtRadius As EditText
 	Private edtNBlades As EditText
 	Private edtRootCutout As EditText
