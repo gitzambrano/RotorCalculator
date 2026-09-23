@@ -816,10 +816,10 @@ Private Sub ShowConventionDialog
 	Msgbox("zBET / zBEMT rotor convention:" & CRLF & CRLF & _
 		"+x / +Vx: forward in the rotor plane." & CRLF & _
 		"+y: starboard." & CRLF & _
-		"+z / +Vz: downward through the disk." & CRLF & _
+		"+Vz: positive climb rate; relative wind is from above and through the disk." & CRLF & _
 		"Thrust T > 0 acts upward (-z)." & CRLF & CRLF & _
 		"μ = Vx/(ΩR)." & CRLF & _
-		"μz = Vz/(ΩR), positive downward." & CRLF & _
+		"μz = Vz/(ΩR), positive for that downward relative flow." & CRLF & _
 		"α > 0 means the stream arrives from below, so μz = -μ tan α." & CRLF & _
 		"λ = μz + λi, with λi ≥ 0 induced downward." & CRLF & CRLF & _
 		"CCW rotation viewed from above; advancing side is the right side.", "zBET / zBEMT Conventions")
@@ -2814,10 +2814,10 @@ Private Sub UpdateSweepAuxControls
 	If btnSweepTrimHover.IsInitialized Then
 		btnSweepTrimHover.Visible = (ActiveCond.OperatingPair <> "rpm_collective")
 		If SweepTrimOnlyHover Then
-			btnSweepTrimHover.Text = "☑ HOVER TRIM"
+			btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorAccentGreen
 		Else
-			btnSweepTrimHover.Text = "☐ HOVER TRIM"
+			btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorButText2
 		End If
 	End If
@@ -2870,6 +2870,21 @@ Sub btnApplySweepValues_Click
 		ToastMessageShow("Enter 1–9 valid numbers separated by commas.", True)
 		Return
 	End If
+	For familyIndex = 0 To values.Size - 1
+		Dim familyValue As Double = values.Get(familyIndex)
+		If SweepMultiMode = 1 And (familyValue <= -89 Or familyValue >= 89) Then
+			ToastMessageShow("α family values must stay between -89° and +89°.", True)
+			Return
+		End If
+		If SweepMultiMode = 2 And Abs(familyValue) > 200 Then
+			ToastMessageShow("Vz family values must stay within ±200 m/s.", True)
+			Return
+		End If
+		If SweepMultiMode = 3 And Abs(familyValue) > 0.50 Then
+			ToastMessageShow("μz family values must stay within ±0.50.", True)
+			Return
+		End If
+	Next
 	SetCurrentSweepFamilyText(edtSweepValues.Text.Trim)
 	CloseSweepValuesPopup
 	UpdateSweepMultiButtonText
@@ -3027,6 +3042,10 @@ Private Sub BuildSweepTableHtml As String
 	sb.Append("<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>")
 	sb.Append("body{margin:10px;background:").Append(bg).Append(";color:").Append(fg).Append(";font-family:monospace;font-size:12px}")
 	sb.Append("table{border-collapse:collapse;width:100%;white-space:nowrap}th,td{border:1px solid ").Append(grid).Append(";padding:6px;text-align:right}th{position:sticky;top:0;background:").Append(bg).Append("}td:first-child,th:first-child{text-align:left}</style></head><body>")
+	Dim strategy As String = "Re-trim at every sweep point"
+	If ActiveCond.OperatingPair = "rpm_collective" Then strategy = "Prescribed RPM + collective"
+	If SweepTrimOnlyHover And ActiveCond.OperatingPair <> "rpm_collective" Then strategy = "Trim once in hover; hold RPM + collective"
+	sb.Append("<p><b>").Append(HtmlEscape(strategy)).Append("</b></p>")
 	sb.Append("<table><tr><th>Curve</th><th>μ</th><th>Vx</th><th>").Append(HtmlEscape(SweepParamSelectedKey)).Append("</th><th>RPM</th><th>Δθ</th><th>CT</th><th>T [N]</th><th>Status</th></tr>")
 	For rowIndex = 0 To SweepSamplesCache.Size - 1
 		Dim point As SweepPoint = SweepSamplesCache.Get(rowIndex)
