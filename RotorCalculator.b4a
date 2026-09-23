@@ -3098,7 +3098,8 @@ Private Sub BuildSweepCsv As String
 			sb.Append(CsvNum(point.RPM, 8)).Append(",").Append(CsvNum(point.CollectiveDeg, 8)).Append(",")
 			sb.Append(CsvNum(point.CT, 10)).Append(",").Append(CsvNum(point.ThrustN, 8)).Append(",")
 		Else
-			sb.Append(",,,").Append(point.InflowModel).Append(",").Append(SweepParamSelectedKey).Append(",,INVALID,,,,,")
+			sb.Append(",").Append(point.AxialMode).Append(",").Append(CsvNum(point.AxialValue, 8)).Append(",,")
+			sb.Append(point.InflowModel).Append(",").Append(SweepParamSelectedKey).Append(",,INVALID,,,,")
 		End If
 		sb.Append(strategy).Append(CRLF)
 	Next
