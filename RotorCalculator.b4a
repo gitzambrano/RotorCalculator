@@ -104,7 +104,7 @@ Sub Process_Globals
 	Public ColorAccentCyan As Int = 0xFF00E5FF   ' Cyan Accent
 	Public ColorAccentGreen As Int = 0xFF00E676  ' Emerald Accent
 	Public ColorAccentAmber As Int = 0xFFFFB300  ' Amber Accent
-	Public ColorAccentRed As Int = ColorAccentRed    ' Error / destructive action
+	Public ColorAccentRed As Int = 0xFFFF6B6B    ' Error / destructive action
 	
 	' Aerodynamic Global State
 	Public ActiveGeom As RotorGeometry
