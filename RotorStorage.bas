@@ -78,6 +78,56 @@ Public Sub CreateDefaultPresets As List
 	Return presets
 End Sub
 
+Public Sub IsFactoryPresetName(Name As String) As Boolean
+	Dim n As String = Name.Trim.ToLowerCase
+	Dim presets As List = CreateDefaultPresets
+	For i = 0 To presets.Size - 1
+		Dim g As RotorGeometry = presets.Get(i)
+		If g.Name.Trim.ToLowerCase = n Then Return True
+	Next
+	Return False
+End Sub
+
+Public Sub RestoreFactoryPresets
+	Dim defaults As List = CreateDefaultPresets
+	For i = 0 To defaults.Size - 1
+		Dim factoryGeom As RotorGeometry = defaults.Get(i)
+		Dim existing As Int = FindRotorByName(factoryGeom.Name)
+		If existing >= 0 Then
+			Rotors.Set(existing, zBETEngine.CloneGeometry(factoryGeom))
+		Else
+			Rotors.Add(zBETEngine.CloneGeometry(factoryGeom))
+		End If
+	Next
+	If ActiveIndex < 0 Or ActiveIndex >= Rotors.Size Then ActiveIndex = 0
+	SaveRotors
+	SaveActiveIndex
+End Sub
+
+Private Sub IsFiniteD(value As Double) As Boolean
+	If value <> value Then Return False
+	If Abs(value) > 1.0e100 Then Return False
+	Return True
+End Sub
+
+Private Sub IsImportedGeometryValid(g As RotorGeometry) As Boolean
+	If g.Name.Trim = "" Then Return False
+	If IsFiniteD(g.Radius) = False Or g.Radius < 0.02 Or g.Radius > 50.0 Then Return False
+	If g.NBlades < 1 Or g.NBlades > 16 Then Return False
+	If IsFiniteD(g.RootCutout) = False Or g.RootCutout < 0.0 Or g.RootCutout > 0.95 Then Return False
+	If IsFiniteD(g.ChordRoot) = False Or g.ChordRoot <= 0.0 Or g.ChordRoot > 2.0 * g.Radius Then Return False
+	If IsFiniteD(g.ChordTip) = False Or g.ChordTip <= 0.0 Or g.ChordTip > 2.0 * g.Radius Then Return False
+	If IsFiniteD(g.ThetaRoot) = False Or Abs(g.ThetaRoot) > cPI / 2.0 Then Return False
+	If IsFiniteD(g.ThetaTip) = False Or Abs(g.ThetaTip) > cPI / 2.0 Then Return False
+	If IsFiniteD(g.LiftSlope0) = False Or g.LiftSlope0 < 0.1 Or g.LiftSlope0 > 10.0 Then Return False
+	If IsFiniteD(g.Cd0) = False Or g.Cd0 < 0.0 Or g.Cd0 > 0.5 Then Return False
+	If g.TipLossMode <> "none" And g.TipLossMode <> "fixed" And g.TipLossMode <> "sissingh" Then Return False
+	If g.TipLossMode = "fixed" Then
+		If IsFiniteD(g.TipLossB) = False Or g.TipLossB <= g.RootCutout Or g.TipLossB > 1.0 Then Return False
+	End If
+	Return True
+End Sub
+
 Private Sub CleanName(Name As String) As String
 	Dim n As String = Name.Trim.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
 	If n = "" Then n = "Imported Rotor"
@@ -119,7 +169,7 @@ Private Sub ParseV2Rotor(parts() As String) As RotorGeometry
 	g.TipLossMode = parts(11)
 	g.TipLossB = parts(12)
 	g.UsePrandtlGlauert = (parts(13) = "1")
-	Return zBETEngine.ResolveSolidity(g)
+	Return g
 End Sub
 
 Private Sub ParseLegacyRotor(parts() As String) As RotorGeometry
@@ -175,7 +225,12 @@ Public Sub ParseDatabaseText(Text As String) As List
 			version = parts(1)
 		Else If version = 2 And parts.Length >= 14 And parts(0) = "R" Then
 			Try
-				imported.Add(ParseV2Rotor(parts))
+				Dim importedGeom As RotorGeometry = ParseV2Rotor(parts)
+				If IsImportedGeometryValid(importedGeom) Then
+					imported.Add(zBETEngine.ResolveSolidity(importedGeom))
+				Else
+					Log("Skipping out-of-domain imported rotor line " & i)
+				End If
 			Catch
 				Log("Skipping invalid imported rotor line " & i)
 			End Try
