@@ -928,321 +928,182 @@ End Sub
 Private Sub BuildPageGeom
 	pnlBack0.Initialize("")
 	pnlBack0.Color = ColorPnlInput5
-	scvGeom.Initialize(1200)
+	scvGeom.Initialize(3200)
 	pnlBack0.AddView(scvGeom, 0, 0, root.Width, root.Height - HeaderHeight)
-	RefreshRotorList
+	Dim y As Int = 8dip
+	Dim rowIndex As Int = 0
+	Dim rowH As Int = 57dip
+	
+	Dim loaded As Panel
+	loaded.Initialize("")
+	loaded.Color = ColorPnlTitle
+	scvGeom.Panel.AddView(loaded, UiContentLeft, y, UiContentW, 52dip)
+	lblLoadedRotor.Initialize("")
+	lblLoadedRotor.TextColor = ColorAccentCyan
+	lblLoadedRotor.Typeface = Typeface.DEFAULT_BOLD
+	lblLoadedRotor.TextSize = 12 * sc
+	lblLoadedRotor.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	loaded.AddView(lblLoadedRotor, 14dip, 0, UiContentW - 28dip, 52dip)
+	y = y + 60dip
+	
+	y = AddGeometrySectionHeader(y, "BLADE GEOMETRY")
+	Dim pnl As Panel
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRotorName = AddTextInputRow(pnl, 4dip, 48dip, "Rotor Name", ActiveGeom.Name, "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRadius = AddFullInputRow(pnl, 4dip, 48dip, "Radius R", "", "m", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtNBlades = AddFullInputRow(pnl, 4dip, 48dip, "Blade Count", "", "[-]", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRootCutout = AddFullInputRow(pnl, 4dip, 48dip, "Root Cutout", "", "r/R", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Chord c0", "", "m", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Chord c1", "", "m", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtSigmaRef = AddFullInputRow(pnl, 4dip, 48dip, "Reference Solidity", "", "[-]", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtAspectRatio = AddFullInputRow(pnl, 4dip, 48dip, "Aspect Ratio", "", "[-]", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Incidence", "", "deg", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Incidence", "", "deg", "edtGeom_TextChanged"): y = y + rowH: rowIndex=rowIndex+1
+	
+	y = AddGeometrySectionHeader(y + 4dip, "DERIVED GEOMETRY")
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblSigmaGeomDerived = AddDerivedRow(pnl, "Geometric Solidity", "[-]"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblSigmaThrustDerived = AddDerivedRow(pnl, "Thrust Solidity", "[-]"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblTaperDerived = AddDerivedRow(pnl, "Taper Ratio", "[-]"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblDiskAreaDerived = AddDerivedRow(pnl, "Disk Area", "m²"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblRefBladeAreaDerived = AddDerivedRow(pnl, "Reference Blade Area", "m²"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblActiveBladeAreaDerived = AddDerivedRow(pnl, "Active Blade Area", "m²"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblTwistDerived = AddDerivedRow(pnl, "Total Twist", "deg"): y=y+rowH: rowIndex=rowIndex+1
+	
+	y = AddGeometrySectionHeader(y + 4dip, "ROTOR AERODYNAMICS")
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
+	Dim lblAirfoil As Label = CreateRowLabel("Airfoil", "lblRowTip_Click")
+	pnl.AddView(lblAirfoil, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
+	btnSelectAirfoil = CreateRowButton("Airfoil", "btnSelectAirfoil")
+	pnl.AddView(btnSelectAirfoil, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
+	y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtLiftSlope = AddFullInputRow(pnl, 4dip, 48dip, "Lift Slope a0", "", "1/rad", "edtGeom_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtCd0 = AddFullInputRow(pnl, 4dip, 48dip, "Profile Cd0", "", "[-]", "edtGeom_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
+	Dim lblTip As Label = CreateRowLabel("Tip Loss", "lblRowTip_Click")
+	pnl.AddView(lblTip, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
+	btnTipLoss = CreateRowButton("Tip Loss", "btnTipLoss")
+	pnl.AddView(btnTipLoss, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
+	y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtTipLossB = AddFullInputRow(pnl, 4dip, 48dip, "Fixed Tip Factor B", "", "[-]", "edtGeom_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
+	Dim lblComp As Label = CreateRowLabel("Compressibility", "lblRowTip_Click")
+	pnl.AddView(lblComp, pnl.Width*3/100, 4dip, pnl.Width*30/100, 48dip)
+	btnCompressibility = CreateRowButton("Compressibility", "btnCompressibility")
+	pnl.AddView(btnCompressibility, pnl.Width*37/100, 4dip, pnl.Width*60/100, 48dip)
+	y=y+rowH: rowIndex=rowIndex+1
+	
+	Dim actions As Panel
+	actions.Initialize("")
+	actions.Color = ColorPnlInput5
+	scvGeom.Panel.AddView(actions, UiContentLeft, y + 8dip, UiContentW, 64dip)
+	Dim gap As Int = 6dip
+	Dim bw As Int = (UiContentW - gap*4) / 3
+	Dim bLoad As Button = CreateRowButton("LOAD ROTOR", "btnLoadRotor")
+	Dim bSave As Button = CreateRowButton("SAVE", "btnSaveRotor")
+	Dim bNew As Button = CreateRowButton("SAVE AS NEW", "btnSaveAsNewRotor")
+	actions.AddView(bLoad, gap, 8dip, bw, 48dip)
+	actions.AddView(bSave, gap*2+bw, 8dip, bw, 48dip)
+	actions.AddView(bNew, gap*3+bw*2, 8dip, bw, 48dip)
+	y = y + 82dip
+	scvGeom.Panel.Height = y + 16dip
+	LoadRotorDataToFields(ActiveGeom)
+	RefreshLoadedRotorStrip
 End Sub
 
-Private Sub RefreshRotorList
-	If scvGeom.IsInitialized = False Then Return
-	scvGeom.Panel.RemoveAllViews
-	
-	Dim listW As Int = UiContentW
-	Dim listLeft As Int = UiContentLeft
-	Dim hintH As Int = 46dip
-	Dim rowH As Int = 68dip
-	Dim y As Int = 0
-	
-	Dim lblHint As Label
-	lblHint.Initialize("")
-	lblHint.Text = "Select a rotor to view or edit"
-	lblHint.TextColor = ColorButText2
-	lblHint.TextSize = 11 * sc
-	lblHint.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	scvGeom.Panel.AddView(lblHint, listLeft + 16dip, y, listW - 154dip, hintH)
-	
-	Dim btnNewRotor As Button
-	btnNewRotor.Initialize("btnNewRotor")
-	btnNewRotor.Text = "+ NEW ROTOR"
-	btnNewRotor.TextColor = ColorAccentCyan
-	btnNewRotor.Typeface = Typeface.DEFAULT_BOLD
-	If root.Width <= 340dip Then btnNewRotor.TextSize = 10 Else btnNewRotor.TextSize = 11 * sc
-	btnNewRotor.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	scvGeom.Panel.AddView(btnNewRotor, listLeft + listW - 130dip, y + 3dip, 114dip, 40dip)
-	y = y + hintH
-	
+Private Sub AddGeometrySectionHeader(y As Int, title As String) As Int
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = title
+	lbl.TextColor = ColorAccentGreen
+	lbl.Typeface = Typeface.DEFAULT_BOLD
+	lbl.TextSize = 10 * sc
+	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	scvGeom.Panel.AddView(lbl, UiContentLeft + 12dip, y, UiContentW - 24dip, 26dip)
+	Return y + 28dip
+End Sub
+
+Private Sub AddFormRowPanel(scv As ScrollView, y As Int, rowIndex As Int) As Panel
+	Dim pnl As Panel
+	pnl.Initialize("")
+	If rowIndex Mod 2 = 0 Then pnl.Color = ColorPnlInput2 Else pnl.Color = ColorPnlInput1
+	scv.Panel.AddView(pnl, UiContentLeft, y, UiContentW, 56dip)
+	Dim lineRow As Panel
+	lineRow.Initialize("")
+	lineRow.Color = ColorPnlLine3
+	scv.Panel.AddView(lineRow, UiContentLeft, y + 55dip, UiContentW, 1dip)
+	Return pnl
+End Sub
+
+Private Sub AddDerivedRow(pnl As Panel, title As String, unit As String) As Label
+	Dim lbl As Label = CreateRowLabel(title, "lblRowTip_Click")
+	pnl.AddView(lbl, pnl.Width*3/100, 4dip, pnl.Width*48/100, 48dip)
+	Dim value As Label
+	value.Initialize("")
+	value.Text = "---"
+	value.TextColor = ColorAccentCyan
+	value.Typeface = Typeface.DEFAULT_BOLD
+	value.TextSize = 13 * sc
+	value.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+	pnl.AddView(value, pnl.Width*52/100, 4dip, pnl.Width*28/100, 48dip)
+	Dim u As Label
+	u.Initialize("")
+	u.Text = unit
+	u.TextColor = ColorButText2
+	u.TextSize = 11 * sc
+	u.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+	pnl.AddView(u, pnl.Width*82/100, 4dip, pnl.Width*15/100, 48dip)
+	Return value
+End Sub
+
+Private Sub RefreshLoadedRotorStrip
+	If lblLoadedRotor.IsInitialized = False Then Return
+	Dim suffix As String = ""
+	If GeometryDirty Then suffix = "  •  UNSAVED"
+	lblLoadedRotor.Text = "Loaded rotor: " & ActiveGeom.Name & suffix
+End Sub
+
+Private Sub SaveCurrentRotor
+	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
+	GeometryDirty = False
+	RefreshLoadedRotorStrip
+	ToastMessageShow("Rotor saved.", False)
+End Sub
+
+Sub btnLoadRotor_Click
+	If GeometryDirty Then
+		Dim answer As Int = Msgbox2("Save current geometry changes before loading another rotor?", "Unsaved Geometry", "SAVE", "Cancel", "Discard", Null)
+		If answer = DialogResponse.CANCEL Then Return
+		If answer = DialogResponse.POSITIVE Then SaveCurrentRotor
+	End If
+	Dim options As List
+	options.Initialize
 	For i = 0 To RotorStorage.Rotors.Size - 1
 		Dim g As RotorGeometry = RotorStorage.Rotors.Get(i)
-		Dim row As Panel
-		row.Initialize("")
-		row.Tag = i
-		If i = RotorStorage.ActiveIndex Then
-			row.Color = ColorPnlInput1
-		Else
-			row.Color = ColorPnlInput2
-		End If
-		scvGeom.Panel.AddView(row, listLeft, y, listW, rowH)
-		
-		If i = RotorStorage.ActiveIndex Then
-			Dim activeBar As Panel
-			activeBar.Initialize("")
-			activeBar.Color = ColorAccentCyan
-			row.AddView(activeBar, 0, 0, 4dip, rowH)
-		End If
-		
-		Dim lblName As Label
-		lblName.Initialize("")
-		lblName.Text = RotorListName(g.Name)
-		lblName.TextColor = ColorTitleText
-		lblName.Typeface = Typeface.DEFAULT_BOLD
-		If root.Width <= 340dip Then lblName.TextSize = 12 Else lblName.TextSize = 13 * sc
-		lblName.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-		lblName.SingleLine = True
-		row.AddView(lblName, 16dip, 6dip, listW - 128dip, 30dip)
-		
-		Dim lblMeta As Label
-		lblMeta.Initialize("")
-		lblMeta.Text = "R " & NumberFormat(g.Radius, 1, 2) & " m  •  " & g.NBlades & " blades  •  " & NumberFormat(g.RPM, 1, 0) & " RPM"
-		lblMeta.TextColor = ColorButText2
-		lblMeta.TextSize = 10.5 * sc
-		lblMeta.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-		lblMeta.SingleLine = True
-		row.AddView(lblMeta, 16dip, 34dip, listW - 128dip, 26dip)
-		
-		If i = RotorStorage.ActiveIndex Then
-			Dim lblActive As Label
-			lblActive.Initialize("")
-			lblActive.Text = "ACTIVE"
-			lblActive.TextColor = ColorAccentGreen
-			lblActive.TextSize = 9.5 * sc
-			lblActive.Typeface = Typeface.DEFAULT_BOLD
-			lblActive.Gravity = Gravity.CENTER
-			row.AddView(lblActive, listW - 112dip, 10dip, 64dip, 22dip)
-		End If
-		
-		Dim lblArrow As Label
-		lblArrow.Initialize("")
-		lblArrow.Text = "›"
-		lblArrow.TextColor = ColorAccentCyan
-		lblArrow.TextSize = 24
-		lblArrow.Gravity = Gravity.CENTER
-		row.AddView(lblArrow, listW - 44dip, 10dip, 36dip, 48dip)
-		
-		' Dedicated touch surface keeps the whole row clickable, including labels.
-		Dim tap As Panel
-		tap.Initialize("pnlRotorTap")
-		tap.Tag = i
-		tap.Color = Colors.Transparent
-		row.AddView(tap, 0, 0, listW, rowH)
-		
-		Dim sep As Panel
-		sep.Initialize("")
-		sep.Color = ColorPnlLine3
-		scvGeom.Panel.AddView(sep, listLeft, y + rowH - 1dip, listW, 1dip)
-		y = y + rowH
+		options.Add(g.Name)
 	Next
-	
-	scvGeom.Panel.Height = y + 16dip
-End Sub
-
-Sub btnNewRotor_Click
-	Dim newIdx As Int = RotorStorage.CreateNewRotor
-	RotorStorage.SetActiveRotor(newIdx)
-	ActiveGeom = RotorStorage.GetActiveRotor
-	RefreshRotorList
-	RefreshDerivedCondition(True)
-	RecalculateRotor
-	OpenGeometryPopup
-End Sub
-
-Sub pnlRotorTap_Click
-	Dim row As Panel = Sender
-	Dim idx As Int = row.Tag
-	If idx < 0 Or idx >= RotorStorage.Rotors.Size Then Return
+	Dim idx As Int = InputList(options, "Load Rotor", RotorStorage.ActiveIndex)
+	If idx < 0 Then Return
 	RotorStorage.SetActiveRotor(idx)
 	ActiveGeom = RotorStorage.GetActiveRotor
-	RefreshRotorList
-	RefreshDerivedCondition(True)
-	RecalculateRotor
-	OpenGeometryPopup
-End Sub
-
-Private Sub OpenGeometryPopup
-	If GeometryPopupOpen Then CloseGeometryPopup
-	
-	pnlGeomPopup.Initialize("pnlGeomPopup")
-	pnlGeomPopup.Color = 0xA0000000
-	root.AddView(pnlGeomPopup, 0, 0, root.Width, root.Height)
-	GeometryPopupOpen = True
-	pnlGeomPopup.BringToFront
-	
-	Dim popupW As Int = root.Width - 16dip
-	If popupW > 620dip Then popupW = 620dip
-	Dim popupLeft As Int = (root.Width - popupW) / 2
-	Dim popupTop As Int = 8dip
-	Dim popupH As Int = root.Height - 16dip
-	Dim titleH As Int = 52dip
-	
-	Dim card As Panel
-	card.Initialize("")
-	card.Color = ColorPnlInput5
-	pnlGeomPopup.AddView(card, popupLeft, popupTop, popupW, popupH)
-	
-	Dim titleBar As Panel
-	titleBar.Initialize("")
-	titleBar.Color = ColorPnlTitle
-	card.AddView(titleBar, 0, 0, popupW, titleH)
-	
-	lblGeomPopupTitle.Initialize("")
-	lblGeomPopupTitle.Text = ActiveGeom.Name
-	lblGeomPopupTitle.TextColor = ColorAccentCyan
-	lblGeomPopupTitle.Typeface = Typeface.DEFAULT_BOLD
-	lblGeomPopupTitle.TextSize = 13 * sc
-	lblGeomPopupTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	lblGeomPopupTitle.SingleLine = True
-	titleBar.AddView(lblGeomPopupTitle, 16dip, 0, popupW - 72dip, titleH)
-	
-	Dim btnClose As Button
-	btnClose.Initialize("btnCloseGeometryPopup")
-	btnClose.Text = "×"
-	btnClose.TextColor = ColorButText1
-	btnClose.TextSize = 20
-	btnClose.Color = Colors.Transparent
-	titleBar.AddView(btnClose, popupW - 52dip, 2dip, 48dip, 48dip)
-	
-	Dim footerH As Int = 64dip
-	scvGeomEditor.Initialize(1800)
-	card.AddView(scvGeomEditor, 0, titleH, popupW, popupH - titleH - footerH)
-	BuildGeometryEditor(popupW)
-	
-	Dim footer As Panel
-	footer.Initialize("")
-	footer.Color = ColorPnlTitle
-	card.AddView(footer, 0, popupH - footerH, popupW, footerH)
-	
-	Dim gap As Int = 8dip
-	Dim actionW As Int = (popupW - 32dip - gap) / 2
-	Dim btnCopy As Button
-	btnCopy.Initialize("btnGeomCopy")
-	btnCopy.Text = "COPY ROTOR"
-	btnCopy.TextColor = ColorAccentCyan
-	btnCopy.Typeface = Typeface.DEFAULT_BOLD
-	btnCopy.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	footer.AddView(btnCopy, 16dip, 8dip, actionW, 48dip)
-	
-	Dim btnDelete As Button
-	btnDelete.Initialize("btnGeomDelete")
-	btnDelete.Text = "DELETE"
-	btnDelete.TextColor = ColorAccentRed
-	btnDelete.Typeface = Typeface.DEFAULT_BOLD
-	btnDelete.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	footer.AddView(btnDelete, 16dip + actionW + gap, 8dip, actionW, 48dip)
-	
+	GeometryDirty = False
 	LoadRotorDataToFields(ActiveGeom)
+	RefreshLoadedRotorStrip
+	RecalculateRotor
 End Sub
 
-Private Sub BuildGeometryEditor(editorW As Int)
-	Dim ib As Int = 4dip
-	Dim tb As Int = 48dip
-	Dim rowH As Int = (ib * 2 + tb) * sc
-	Dim rowCount As Int = 14
-	Dim j As Int
-	
-	For j = 0 To rowCount - 1
-		Dim pnlInput As Panel
-		Dim pnlline As Panel
-		pnlInput.Initialize("")
-		pnlline.Initialize("")
-		scvGeomEditor.Panel.AddView(pnlInput, 0, j * (rowH + 1dip), editorW, rowH)
-		scvGeomEditor.Panel.AddView(pnlline, 0, j * (rowH + 1dip) + rowH - 1dip, editorW, 1dip)
-		pnlline.Color = ColorPnlLine3
-		If (j Mod 2) = 1 Then pnlInput.Color = ColorPnlInput1 Else pnlInput.Color = ColorPnlInput2
-		
-		Select j
-			Case 0
-				edtRotorName = AddTextInputRow(pnlInput, ib, tb, "Rotor Name", ActiveGeom.Name, "edtGeom_TextChanged")
-			Case 1
-				edtRadius = AddFullInputRow(pnlInput, ib, tb, "Radius R", "5.50", "m", "edtGeom_TextChanged")
-			Case 2
-				edtRPM = AddFullInputRow(pnlInput, ib, tb, "Rotor RPM", "390.0", "RPM", "edtGeom_TextChanged")
-			Case 3
-				edtNBlades = AddFullInputRow(pnlInput, ib, tb, "Blade Count", "4", "blades", "edtGeom_TextChanged")
-			Case 4
-				edtRootCutout = AddFullInputRow(pnlInput, ib, tb, "Root Cutout", "0.15", "r0/R", "edtGeom_TextChanged")
-			Case 5
-				edtChordRoot = AddFullInputRow(pnlInput, ib, tb, "Root Chord", "0.324", "m", "edtGeom_TextChanged")
-			Case 6
-				edtChordTip = AddFullInputRow(pnlInput, ib, tb, "Tip Chord", "0.324", "m", "edtGeom_TextChanged")
-			Case 7
-				edtThetaRoot = AddFullInputRow(pnlInput, ib, tb, "θ Root Pitch", "12.0", "°", "edtGeom_TextChanged")
-			Case 8
-				edtThetaTip = AddFullInputRow(pnlInput, ib, tb, "θ Tip Pitch", "4.0", "°", "edtGeom_TextChanged")
-			Case 9
-				edtLiftSlope = AddFullInputRow(pnlInput, ib, tb, "Lift Slope a0", "5.73", "1/rad", "edtGeom_TextChanged")
-			Case 10
-				edtCd0 = AddFullInputRow(pnlInput, ib, tb, "Profile Cd0", "0.0090", "—", "edtGeom_TextChanged")
-			Case 11
-				Dim lblAf As Label = CreateRowLabel("Airfoil", "lblRowTip_Click")
-				pnlInput.AddView(lblAf, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
-				btnSelectAirfoil.Initialize("btnSelectAirfoil")
-				btnSelectAirfoil.TextSize = 13 * sc
-				btnSelectAirfoil.SingleLine = True
-				btnSelectAirfoil.TextColor = ColorAccentCyan
-				btnSelectAirfoil.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-				pnlInput.AddView(btnSelectAirfoil, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 12
-				Dim lblTipLoss As Label = CreateRowLabel("Tip Loss", "lblRowTip_Click")
-				pnlInput.AddView(lblTipLoss, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
-				btnTipLoss.Initialize("btnTipLoss")
-				btnTipLoss.TextSize = 13 * sc
-				btnTipLoss.SingleLine = True
-				btnTipLoss.TextColor = ColorAccentGreen
-				btnTipLoss.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-				pnlInput.AddView(btnTipLoss, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-			Case 13
-				Dim lblCompress As Label = CreateRowLabel("Compressibility", "lblRowTip_Click")
-				pnlInput.AddView(lblCompress, pnlInput.Width * 3 / 100, ib * sc, pnlInput.Width * 30 / 100, tb * sc)
-				btnCompressibility.Initialize("btnCompressibility")
-				btnCompressibility.TextSize = 13 * sc
-				btnCompressibility.SingleLine = True
-				btnCompressibility.TextColor = ColorAccentGreen
-				btnCompressibility.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-				pnlInput.AddView(btnCompressibility, pnlInput.Width * 37 / 100, ib * sc, pnlInput.Width * 60 / 100, tb * sc)
-		End Select
-	Next
-	
-	scvGeomEditor.Panel.Height = rowCount * (rowH + 1dip) + 12dip
+Sub btnSaveRotor_Click
+	SaveCurrentRotor
 End Sub
 
-Sub btnCloseGeometryPopup_Click
-	CloseGeometryPopup
-End Sub
-
-Private Sub CloseGeometryPopup
-	If GeometryPopupOpen Then
-		pnlGeomPopup.RemoveView
-		GeometryPopupOpen = False
-	End If
-	RefreshRotorList
-End Sub
-
-Sub btnGeomCopy_Click
-	Dim newIdx As Int = RotorStorage.DuplicateRotor(RotorStorage.ActiveIndex)
-	RotorStorage.SetActiveRotor(newIdx)
+Sub btnSaveAsNewRotor_Click
+	Dim clone As RotorGeometry = zBETEngine.CloneGeometry(ActiveGeom)
+	clone.Name = RotorStorage.MakeUniqueName(clone.Name)
+	Dim idx As Int = RotorStorage.AddRotor(clone)
+	RotorStorage.SetActiveRotor(idx)
 	ActiveGeom = RotorStorage.GetActiveRotor
-	lblGeomPopupTitle.Text = ActiveGeom.Name
+	GeometryDirty = False
 	LoadRotorDataToFields(ActiveGeom)
-	RefreshDerivedCondition(True)
-	RecalculateRotor
-	RefreshRotorList
-	ToastMessageShow("Rotor copied: " & ActiveGeom.Name, False)
-End Sub
-
-Sub btnGeomDelete_Click
-	If RotorStorage.Rotors.Size <= 1 Then
-		ToastMessageShow("At least one rotor must remain.", False)
-		Return
-	End If
-	Dim deleteName As String = ActiveGeom.Name
-	Dim answer As Int = Msgbox2("Delete '" & deleteName & "'?", "Delete Rotor", "DELETE", "Cancel", "", Null)
-	If answer <> DialogResponse.POSITIVE Then Return
-	If RotorStorage.DeleteRotor(RotorStorage.ActiveIndex) Then
-		ActiveGeom = RotorStorage.GetActiveRotor
-		CloseGeometryPopup
-		RefreshDerivedCondition(True)
-		RecalculateRotor
-		ToastMessageShow("Deleted: " & deleteName, False)
-	End If
+	RefreshLoadedRotorStrip
+	ToastMessageShow("Saved as new rotor: " & ActiveGeom.Name, False)
 End Sub
 
 
