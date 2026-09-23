@@ -72,8 +72,8 @@ assert_app_alive() {
 
 tap_text_scrolling() {
   local TEXT="$1"
-  local H="$2"
-  local W="$3"
+  local W="$2"
+  local H="$3"
   local attempt
   for attempt in 1 2 3 4; do
     if python /tmp/tap_text.py "$TEXT"; then return 0; fi
@@ -111,7 +111,13 @@ capture_screen() {
   local W="${SIZE%x*}"
   local H="${SIZE#*x}"
   local ROTOR_LABEL="Sikorsky UH-60 Black Hawk"
+  local SOLVED_RPM_LABEL="Solved RPM"
+  local SOUND_SPEED_LABEL="Speed of Sound"
   if [ "$W" -le 430 ]; then ROTOR_LABEL="UH-60"; fi
+  if [ "$W" -le 380 ]; then
+    SOLVED_RPM_LABEL="RPM"
+    SOUND_SPEED_LABEL="Sound Speed"
+  fi
 
   adb shell wm size "$SIZE"
   adb shell wm density 160
@@ -173,8 +179,8 @@ capture_screen() {
 
   assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" "$W" "$H" "06-coefficients"
   assert_text_scrolling_down "$OUT" "OPERATING STATE & ATMOSPHERE" "$W" "$H" "07-operating-state"
-  assert_text_scrolling_down "$OUT" "Solved RPM" "$W" "$H" "08-solved-rpm"
-  assert_text_scrolling_down "$OUT" "Sound Speed" "$W" "$H" "09-atmosphere-bottom"
+  assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"
+  assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"
 
   # Reopen Results from the top and inspect the universal sweep.
   python /tmp/tap_text.py RESULTS || true
@@ -405,7 +411,7 @@ functional_smoke() {
   sleep 0.8
   assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" 393 873 "09-coefficients"
   assert_text_scrolling_down "$OUT" "Solved RPM" 393 873 "10-solved-rpm"
-  assert_text_scrolling_down "$OUT" "Collective Δθ" 393 873 "11-solved-collective"
+  assert_text_scrolling_down "$OUT" "Collective Increment (Δθ)" 393 873 "11-solved-collective"
   assert_text_scrolling_down "$OUT" "Solved CT" 393 873 "12-solved-ct"
   assert_text_scrolling_down "$OUT" "Solved Thrust" 393 873 "13-solved-thrust"
 
