@@ -434,6 +434,9 @@ def test_requirements_and_plan_are_authoritative_for_new_architecture():
 def test_activity_recreation_preserves_unsaved_geometry_and_sweep_state():
     main = text("RotorCalculator.b4a")
     assert "Public GeometryDirty As Boolean = False" in main
+    assert "Public GeometryEditorRequested As Boolean = False" in main
+    assert "If CurrentPage = 0 And GeometryEditorRequested Then OpenGeometryPopup" in main
+    assert "If idx = RotorStorage.ActiveIndex And GeometryDirty Then" in main
     assert "Public SweepMultiMode As Int = 0" in main
     assert 'Public SweepParamSelectedKey As String = "CP"' in main
     assert "Private GeometryDirty As Boolean" not in main
