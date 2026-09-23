@@ -630,6 +630,207 @@ def trim_hover(
     )
 
 
+def _operating_pitch(geometry, theta_root_deg, theta_tip_deg, collective_deg):
+    """Baseline linear incidence plus one constant collective offset."""
+    root = math.radians(float(theta_root_deg) + float(collective_deg))
+    tip = math.radians(float(theta_tip_deg) + float(collective_deg))
+    return BladePitch(
+        "linear_twist",
+        theta0=0.5 * (root + tip),
+        theta_root=root,
+        theta_tip=tip,
+        root_cutout=geometry.root_cutout,
+    )
+
+
+def _operating_flow(geometry, horizontal_mode, horizontal_value, axial_mode, axial_value):
+    """Resolve equivalent flow representations at this geometry's actual RPM."""
+    if horizontal_mode == "vx":
+        mu = float(horizontal_value) / geometry.vtip
+    elif horizontal_mode == "mu":
+        mu = float(horizontal_value)
+    else:
+        raise ValueError("horizontal_mode must be 'mu' or 'vx'")
+
+    if axial_mode == "vz":
+        mu_z, _ = axial_condition(mu, axial_value, "w", geometry)
+    elif axial_mode == "muz":
+        mu_z, _ = axial_condition(mu, axial_value, "mu_z", geometry)
+    elif axial_mode == "alpha":
+        mu_z, _ = axial_condition(mu, axial_value, "alpha", geometry)
+    else:
+        raise ValueError("axial_mode must be 'alpha', 'vz', or 'muz'")
+    return mu, mu_z
+
+
+def solve_operating_pair(
+    geometry,
+    *,
+    pair,
+    rpm,
+    collective_deg,
+    target_ct,
+    target_thrust_n,
+    theta_root_deg,
+    theta_tip_deg,
+    horizontal_mode="mu",
+    horizontal_value=0.0,
+    axial_mode="alpha",
+    axial_value=0.0,
+    inflow_model="coleman_feingold",
+    k_ind=K_IND,
+    fx=FX_COLEMAN,
+    fy=FY_COLEMAN,
+):
+    """Solve any two prescribed quantities among RPM, collective, CT and thrust.
+
+    Supported pairs are:
+    rpm_collective, rpm_ct, rpm_thrust,
+    collective_ct, collective_thrust, ct_thrust.
+
+    The solve is performed at the current flight condition. When RPM is varied,
+    dimensional Vx/Vz inputs are re-nondimensionalized at each candidate RPM.
+    Profile drag is always numerical-vectorial in this RotorCalculator reference path.
+    """
+
+    def evaluate(candidate_rpm, candidate_collective):
+        geom = geometry.with_rpm(float(candidate_rpm))
+        mu, mu_z = _operating_flow(
+            geom, horizontal_mode, horizontal_value, axial_mode, axial_value
+        )
+        pitch = _operating_pitch(
+            geom, theta_root_deg, theta_tip_deg, candidate_collective
+        )
+        result = coefficients(
+            mu,
+            mu_z,
+            pitch,
+            geom,
+            inflow_model,
+            profile_drag_model="numerical_vectorial",
+            induced_torque_model="energy_balance",
+            k_ind=k_ind,
+            fx=fx,
+            fy=fy,
+        )
+        return geom, pitch, mu, mu_z, result
+
+    def residual(candidate_rpm, candidate_collective, target_kind, target_value):
+        try:
+            state = evaluate(candidate_rpm, candidate_collective)
+        except ValueError:
+            return None
+        result = state[-1]
+        value = result["T_N"] if target_kind == "thrust" else result["CT"]
+        return value - float(target_value)
+
+    def bracket_bisect_collective(fixed_rpm, target_kind, target_value):
+        xs = np.linspace(-60.0, 60.0, 49)
+        prev_x = None
+        prev_f = None
+        for x in xs:
+            fval = residual(fixed_rpm, x, target_kind, target_value)
+            if fval is None:
+                continue
+            if abs(fval) < 1e-10:
+                return float(x)
+            if prev_f is not None and fval * prev_f <= 0.0:
+                lo, hi = prev_x, float(x)
+                flo = prev_f
+                for _ in range(100):
+                    mid = 0.5 * (lo + hi)
+                    fm = residual(fixed_rpm, mid, target_kind, target_value)
+                    if fm is None:
+                        raise ValueError("collective trim entered an invalid operating point")
+                    if abs(fm) < 1e-9 or hi - lo < 1e-8:
+                        return mid
+                    if flo * fm <= 0.0:
+                        hi = mid
+                    else:
+                        lo, flo = mid, fm
+                return 0.5 * (lo + hi)
+            prev_x, prev_f = float(x), fval
+        raise ValueError("could not bracket collective for selected operating constraints")
+
+    def bracket_bisect_rpm(fixed_collective, target_kind, target_value):
+        rpms = np.geomspace(10.0, 30000.0, 81)
+        prev_rpm = None
+        prev_f = None
+        for candidate in rpms:
+            fval = residual(candidate, fixed_collective, target_kind, target_value)
+            if fval is None:
+                continue
+            if abs(fval) < 1e-10:
+                return float(candidate)
+            if prev_f is not None and fval * prev_f <= 0.0:
+                lo, hi = prev_rpm, float(candidate)
+                flo = prev_f
+                for _ in range(100):
+                    mid = 0.5 * (lo + hi)
+                    fm = residual(mid, fixed_collective, target_kind, target_value)
+                    if fm is None:
+                        raise ValueError("RPM trim entered an invalid operating point")
+                    if abs(fm) < 1e-9 or hi - lo < 1e-7:
+                        return mid
+                    if flo * fm <= 0.0:
+                        hi = mid
+                    else:
+                        lo, flo = mid, fm
+                return 0.5 * (lo + hi)
+            prev_rpm, prev_f = float(candidate), fval
+        raise ValueError("could not bracket RPM for selected operating constraints")
+
+    solved_rpm = float(rpm)
+    solved_collective = float(collective_deg)
+
+    if pair == "rpm_collective":
+        pass
+    elif pair == "rpm_ct":
+        solved_collective = bracket_bisect_collective(
+            solved_rpm, "ct", target_ct
+        )
+    elif pair == "rpm_thrust":
+        solved_collective = bracket_bisect_collective(
+            solved_rpm, "thrust", target_thrust_n
+        )
+    elif pair == "collective_ct":
+        solved_rpm = bracket_bisect_rpm(
+            solved_collective, "ct", target_ct
+        )
+    elif pair == "collective_thrust":
+        solved_rpm = bracket_bisect_rpm(
+            solved_collective, "thrust", target_thrust_n
+        )
+    elif pair == "ct_thrust":
+        if target_ct <= 0.0 or target_thrust_n <= 0.0:
+            raise ValueError("CT and thrust targets must both be positive")
+        vtip = math.sqrt(
+            float(target_thrust_n)
+            / (geometry.rho * geometry.disk_area * float(target_ct))
+        )
+        solved_rpm = vtip / geometry.radius * 60.0 / (2.0 * math.pi)
+        solved_collective = bracket_bisect_collective(
+            solved_rpm, "ct", target_ct
+        )
+    else:
+        raise ValueError(f"unknown operating pair: {pair!r}")
+
+    geom, pitch, mu, mu_z, result = evaluate(solved_rpm, solved_collective)
+    return {
+        "rpm": solved_rpm,
+        "collective_deg": solved_collective,
+        "mu": mu,
+        "mu_z": mu_z,
+        "Vx_m_s": mu * geom.vtip,
+        "Vz_m_s": mu_z * geom.vtip,
+        "CT": result["CT"],
+        "T_N": result["T_N"],
+        "geometry": geom,
+        "pitch": pitch,
+        "results": result,
+    }
+
+
 def resolve_pitch(
     geometry,
     pitch_mode=PITCH_MODE,
