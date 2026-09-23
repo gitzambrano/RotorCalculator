@@ -608,96 +608,240 @@ Public Sub ProfileDrag(mu As Double, mu_z As Double, geom As RotorGeometry, mode
 	Return Array As Double(ch0_sum, cq0_sum)
 End Sub
 
-' Rotina de Trim de Hover (Collective, RPM ou None)
-Public Sub PerformHoverTrim(geom As RotorGeometry, cond As FlightCondition) As Object()
-	Dim trimmedGeom As RotorGeometry = CloneGeometry(geom)
-	Dim targetCT As Double = cond.TargetCT
-	Dim diskArea As Double = cPI * geom.Radius * geom.Radius
+' Applies the operating RPM and a uniform collective increment to the saved blade incidence law.
+Private Sub ApplyOperatingGeometry(baseGeom As RotorGeometry, rpm As Double, collectiveDeg As Double) As RotorGeometry
+	Dim g As RotorGeometry = ResolveSolidity(CloneGeometry(baseGeom))
+	g.RPM = Max(1.0, Min(30000.0, rpm))
+	Dim dtheta As Double = collectiveDeg * cPI / 180.0
+	g.PitchMode = "linear_twist"
+	g.ThetaRoot = baseGeom.ThetaRoot + dtheta
+	g.ThetaTip = baseGeom.ThetaTip + dtheta
+	g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)
+	Return ResolveSolidity(g)
+End Sub
+
+' Resolves the selected dimensional/nondimensional flight-condition representations
+' using the candidate operating RPM. This makes RPM trim consistent with Vx and Vz inputs.
+Public Sub ResolveConditionAtRPM(src As FlightCondition, geom As RotorGeometry) As FlightCondition
+	Dim c As FlightCondition = SanitizeCondition(src)
 	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0
-	Dim vtip As Double = omega * geom.Radius
-	
-	If cond.TargetThrustN > 0 Then
-		targetCT = cond.TargetThrustN / (cond.Rho * diskArea * vtip * vtip)
+	Dim vtip As Double = Max(1.0e-9, omega * geom.Radius)
+	If c.HorizontalMode = "vx" Then
+		c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue / vtip))
+	Else
+		c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue))
 	End If
-	
-	If cond.HoverTrimMode = "collective" And targetCT > 0 Then
-		Dim b_val As Double = GetBFactor(geom, targetCT)
-		Dim a_hover As Double = GetLiftSlope(geom, 0.0, cond.SpeedOfSound)
-		Dim lam_hover As Double = Sqrt(targetCT / (2.0 * b_val * b_val))
-		Dim j() As Double = RadialIntegralsJ(geom.RootCutout, b_val)
-		Dim s_coeffs() As Double = GetSolidityCoeffs(geom)
-		Dim i_mom(5) As Double
-		For m = 0 To 4
-			i_mom(m) = s_coeffs(0) * j(m) + s_coeffs(1) * j(m + 1)
-		Next
-		
-		If geom.PitchMode = "constant" Then
-			Dim t0 As Double = (2.0 * targetCT / a_hover + lam_hover * i_mom(1)) / i_mom(2)
-			trimmedGeom.Theta0 = t0
-			trimmedGeom.ThetaRoot = t0
-			trimmedGeom.ThetaTip = t0
+	c.MuZ = Max(-0.50, Min(0.50, ResolveMuZ(c.Mu, c.AxialMode, c.AxialValue, vtip)))
+	c.RPM = geom.RPM
+	Return c
+End Sub
+
+Private Sub CandidateResult(baseGeom As RotorGeometry, sourceCond As FlightCondition, rpm As Double, collectiveDeg As Double) As RotorResults
+	Dim g As RotorGeometry = ApplyOperatingGeometry(baseGeom, rpm, collectiveDeg)
+	Dim c As FlightCondition = ResolveConditionAtRPM(sourceCond, g)
+	c.OperatingPair = "rpm_collective"
+	c.RPM = g.RPM
+	c.CollectiveDeg = collectiveDeg
+	Return CalculateCoreResolved(g, c)
+End Sub
+
+Private Sub CandidateResidual(baseGeom As RotorGeometry, sourceCond As FlightCondition, rpm As Double, collectiveDeg As Double, targetKind As String, targetValue As Double) As Object()
+	Dim res As RotorResults = CandidateResult(baseGeom, sourceCond, rpm, collectiveDeg)
+	If res.SolutionValid = False Then Return Array(0.0, False)
+	Dim value As Double
+	If targetKind = "thrust" Then
+		value = res.ThrustN
+	Else
+		value = res.CT
+	End If
+	Return Array(value - targetValue, True)
+End Sub
+
+Private Sub SolveCollective(baseGeom As RotorGeometry, sourceCond As FlightCondition, rpm As Double, targetKind As String, targetValue As Double) As Object()
+	Dim lo As Double = -60.0
+	Dim hi As Double = 60.0
+	Dim prevX As Double = lo
+	Dim prevObj() As Object = CandidateResidual(baseGeom, sourceCond, rpm, prevX, targetKind, targetValue)
+	Dim found As Boolean = False
+	Dim fLo As Double = 0.0
+	Dim fHi As Double = 0.0
+	If prevObj(1) Then fLo = prevObj(0)
+	For i = 1 To 48
+		Dim x As Double = lo + i * (hi - lo) / 48.0
+		Dim obj() As Object = CandidateResidual(baseGeom, sourceCond, rpm, x, targetKind, targetValue)
+		If prevObj(1) And obj(1) Then
+			Dim f As Double = obj(0)
+			If Abs(f) < 1.0e-10 Then Return Array(x, True)
+			If (fLo <= 0 And f >= 0) Or (fLo >= 0 And f <= 0) Then
+				lo = prevX
+				hi = x
+				fHi = f
+				found = True
+				Exit
+			End If
+			fLo = f
+		End If
+		prevX = x
+		prevObj = obj
+	Next
+	If found = False Then Return Array(sourceCond.CollectiveDeg, False)
+	For iter = 1 To 80
+		Dim mid As Double = 0.5 * (lo + hi)
+		Dim midObj() As Object = CandidateResidual(baseGeom, sourceCond, rpm, mid, targetKind, targetValue)
+		If midObj(1) = False Then Return Array(sourceCond.CollectiveDeg, False)
+		Dim fm As Double = midObj(0)
+		If Abs(fm) < 1.0e-9 Or Abs(hi - lo) < 1.0e-8 Then Return Array(mid, True)
+		If (fLo <= 0 And fm >= 0) Or (fLo >= 0 And fm <= 0) Then
+			hi = mid
+			fHi = fm
 		Else
-			Dim delta_twist As Double = geom.ThetaTip - geom.ThetaRoot
-			Dim t1_twist As Double = delta_twist / (1.0 - geom.RootCutout)
-			Dim t2_twist As Double = t1_twist * (i_mom(3) - geom.RootCutout * i_mom(2))
-			Dim th_root_calc As Double = (2.0 * targetCT / a_hover + lam_hover * i_mom(1) - t2_twist) / i_mom(2)
-			Dim delta_theta As Double = th_root_calc - geom.ThetaRoot
-			trimmedGeom.ThetaRoot = th_root_calc
-			trimmedGeom.ThetaTip = geom.ThetaTip + delta_theta
-			trimmedGeom.Theta0 = 0.5 * (trimmedGeom.ThetaRoot + trimmedGeom.ThetaTip)
+			lo = mid
+			fLo = fm
 		End If
-		
-	Else If cond.HoverTrimMode = "rpm" And cond.TargetThrustN > 0 Then
-		' Fixed pitch: solve hover CT, including Sissingh B<->CT coupling, then required RPM.
-		Dim b_val As Double = GetBFactor(geom, 0.0)
-		Dim lam_hover As Double = SolveInflow(0.0, 0.0, geom, cond, b_val)
-		If lam_hover < 0 Then Return Array(trimmedGeom)
-		Dim ct_hover As Double = 2.0 * (b_val * b_val) * (lam_hover * lam_hover)
-		If geom.TipLossMode = "sissingh" And ct_hover > 0 Then
-			For iter_trim_tip = 1 To 8
-				Dim nextBTrim As Double = GetBFactor(geom, ct_hover)
-				Dim deltaBTrim As Double = Abs(nextBTrim - b_val)
-				b_val = nextBTrim
-				lam_hover = SolveInflow(0.0, 0.0, geom, cond, b_val)
-				If lam_hover < 0 Then Return Array(trimmedGeom)
-				ct_hover = 2.0 * (b_val * b_val) * (lam_hover * lam_hover)
-				If deltaBTrim < 1e-8 Then Exit
-			Next
-		End If
-		If ct_hover > 1e-6 Then
-			Dim vtip_req As Double = Sqrt(cond.TargetThrustN / (cond.Rho * diskArea * ct_hover))
-			Dim omega_req As Double = vtip_req / geom.Radius
-			trimmedGeom.RPM = omega_req * 60.0 / (2.0 * cPI)
-		End If
-	End If
-	
-	Return Array(trimmedGeom)
+	Next
+	Return Array(0.5 * (lo + hi), True)
 End Sub
 
-' Returns the actual geometry used by the operating point after the selected trim.
-' This is the authoritative source for RPM-dependent UI conversions such as Vx<->mu
-' and Vz<->mu_z. Caller geometry and condition are never mutated.
-Public Sub ResolveOperatingGeometry(geom As RotorGeometry, cond As FlightCondition) As RotorGeometry
+Private Sub SolveRPM(baseGeom As RotorGeometry, sourceCond As FlightCondition, collectiveDeg As Double, targetKind As String, targetValue As Double) As Object()
+	Dim prevRPM As Double = 10.0
+	Dim prevObj() As Object = CandidateResidual(baseGeom, sourceCond, prevRPM, collectiveDeg, targetKind, targetValue)
+	Dim lo As Double = 0.0
+	Dim hi As Double = 0.0
+	Dim fLo As Double = 0.0
+	Dim found As Boolean = False
+	If prevObj(1) Then fLo = prevObj(0)
+	For i = 1 To 80
+		Dim rpm As Double = 10.0 * Power(3000.0, i / 80.0)
+		Dim obj() As Object = CandidateResidual(baseGeom, sourceCond, rpm, collectiveDeg, targetKind, targetValue)
+		If prevObj(1) And obj(1) Then
+			Dim f As Double = obj(0)
+			If Abs(f) < 1.0e-10 Then Return Array(rpm, True)
+			If (fLo <= 0 And f >= 0) Or (fLo >= 0 And f <= 0) Then
+				lo = prevRPM
+				hi = rpm
+				found = True
+				Exit
+			End If
+			fLo = f
+		End If
+		prevRPM = rpm
+		prevObj = obj
+	Next
+	If found = False Then Return Array(sourceCond.RPM, False)
+	For iter = 1 To 80
+		Dim mid As Double = 0.5 * (lo + hi)
+		Dim midObj() As Object = CandidateResidual(baseGeom, sourceCond, mid, collectiveDeg, targetKind, targetValue)
+		If midObj(1) = False Then Return Array(sourceCond.RPM, False)
+		Dim fm As Double = midObj(0)
+		If Abs(fm) < 1.0e-9 Or Abs(hi - lo) < 1.0e-7 Then Return Array(mid, True)
+		If (fLo <= 0 And fm >= 0) Or (fLo >= 0 And fm <= 0) Then
+			hi = mid
+		Else
+			lo = mid
+			fLo = fm
+		End If
+	Next
+	Return Array(0.5 * (lo + hi), True)
+End Sub
+
+' Resolves the selected pair among RPM, collective, CT and thrust at the current flight condition.
+' Returns Array(resolved geometry, resolved condition, status string).
+Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition) As Object()
 	Dim baseGeom As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
-	Dim safeCond As FlightCondition = SanitizeCondition(cond)
-	Dim trimObj() As Object = PerformHoverTrim(baseGeom, safeCond)
-	Dim resolved As RotorGeometry = trimObj(0)
-	Return ResolveSolidity(resolved)
+	Dim c As FlightCondition = SanitizeCondition(cond)
+	Dim rpm As Double = c.RPM
+	Dim collective As Double = c.CollectiveDeg
+	Dim ok As Boolean = True
+	Dim status As String = "VALID"
+	Select c.OperatingPair
+		Case "rpm_collective"
+			' Both operating variables are prescribed.
+		Case "rpm_ct"
+			If c.TargetCT <= 0 Then
+				ok = False
+			Else
+				Dim sc() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
+				collective = sc(0): ok = sc(1)
+			End If
+		Case "rpm_thrust"
+			If c.TargetThrustN <= 0 Then
+				ok = False
+			Else
+				Dim sc() As Object = SolveCollective(baseGeom, c, rpm, "thrust", c.TargetThrustN)
+				collective = sc(0): ok = sc(1)
+			End If
+		Case "collective_ct"
+			If c.TargetCT <= 0 Then
+				ok = False
+			Else
+				Dim sr() As Object = SolveRPM(baseGeom, c, collective, "ct", c.TargetCT)
+				rpm = sr(0): ok = sr(1)
+			End If
+		Case "collective_thrust"
+			If c.TargetThrustN <= 0 Then
+				ok = False
+			Else
+				Dim sr() As Object = SolveRPM(baseGeom, c, collective, "thrust", c.TargetThrustN)
+				rpm = sr(0): ok = sr(1)
+			End If
+		Case "ct_thrust"
+			If c.TargetCT <= 0 Or c.TargetThrustN <= 0 Then
+				ok = False
+			Else
+				Dim area As Double = cPI * baseGeom.Radius * baseGeom.Radius
+				Dim vtipReq As Double = Sqrt(c.TargetThrustN / (c.Rho * area * c.TargetCT))
+				rpm = vtipReq / baseGeom.Radius * 60.0 / (2.0 * cPI)
+				If rpm < 1.0 Or rpm > 30000.0 Then
+					ok = False
+				Else
+					Dim sc() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
+					collective = sc(0): ok = sc(1)
+				End If
+		End Select
+	If ok = False Then status = "INVALID: selected operating constraints could not be trimmed"
+	Dim resolvedGeom As RotorGeometry = ApplyOperatingGeometry(baseGeom, rpm, collective)
+	Dim resolvedCond As FlightCondition = ResolveConditionAtRPM(c, resolvedGeom)
+	resolvedCond.RPM = resolvedGeom.RPM
+	resolvedCond.CollectiveDeg = collective
+	Return Array(resolvedGeom, resolvedCond, status)
 End Sub
 
-' FUNÇÃO PRINCIPAL: Calcula todos os parâmetros aerodinâmicos do rotor
+Public Sub ResolveOperatingGeometry(geom As RotorGeometry, cond As FlightCondition) As RotorGeometry
+	Dim state() As Object = ResolveOperatingState(geom, cond)
+	Return state(0)
+End Sub
+
+Public Sub ResolveOperatingCondition(geom As RotorGeometry, cond As FlightCondition) As FlightCondition
+	Dim state() As Object = ResolveOperatingState(geom, cond)
+	Return state(1)
+End Sub
+
 Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorResults
+	Dim state() As Object = ResolveOperatingState(geom, cond)
+	Dim status As String = state(2)
+	If status <> "VALID" Then
+		Dim invalid As RotorResults
+		invalid.Initialize
+		invalid.SolutionValid = False
+		invalid.StatusMessage = status
+		Return invalid
+	End If
+	Dim g As RotorGeometry = state(0)
+	Dim c As FlightCondition = state(1)
+	Return CalculateCoreResolved(g, c)
+End Sub
+
+' Núcleo aerodinâmico para geometria/condição já resolvidas.
+Private Sub CalculateCoreResolved(geom As RotorGeometry, cond As FlightCondition) As RotorResults
 	Dim res As RotorResults
 	res.Initialize
 	res.SolutionValid = True
 	res.CompressibilityWarning = False
 	res.StatusMessage = "VALID"
 	
-	' Defensive condition copy plus one authoritative post-trim geometry path.
+	' Caller already supplied the resolved operating RPM, collective and kinematics.
 	Dim c As FlightCondition = SanitizeCondition(cond)
-	
-	' 1. Resolve the exact geometry used by the operating point.
-	Dim g As RotorGeometry = ResolveOperatingGeometry(geom, c)
+	Dim g As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
 	
 	' 2. Parâmetros Cinemáticos Globais
 	Dim diskArea As Double = cPI * g.Radius * g.Radius
@@ -707,11 +851,18 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	
 	res.TipSpeed = vtip
 	res.TrimmedRPM = g.RPM
-	If g.PitchMode = "constant" Then
-		res.TrimmedTheta0Deg = g.Theta0 * 180.0 / cPI
-	Else
-		res.TrimmedTheta0Deg = 0.5 * (g.ThetaRoot + g.ThetaTip) * 180.0 / cPI
-	End If
+	res.TrimmedCollectiveDeg = c.CollectiveDeg
+	res.TrimmedTheta0Deg = 0.5 * (g.ThetaRoot + g.ThetaTip) * 180.0 / cPI
+	res.OperatingMu = c.Mu
+	res.OperatingMuZ = c.MuZ
+	res.OperatingVx = c.Mu * vtip
+	res.OperatingVz = c.MuZ * vtip
+	res.OperatingAlphaDeg = AlphaFromMuZ(c.Mu, c.MuZ)
+	res.AltitudeM = c.AltitudeM
+	res.TemperatureC = c.TemperatureC
+	res.Density = c.Rho
+	res.PressurePa = c.PressurePa
+	res.SpeedOfSound = c.SpeedOfSound
 	
 	' Mach da pá avançante
 	res.AdvancingTipMach = vtip * (1.0 + c.Mu) / c.SpeedOfSound
@@ -813,7 +964,7 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 	res.CMy = (res.EffectiveLiftSlope * lambda_1c / 4.0) * i_mom(3)
 	
 	' 7. Arrasto de Perfil (CH0, CQ0)
-	Dim profDrag() As Double = ProfileDrag(c.Mu, c.MuZ, g, c.ProfileDragModel)
+	Dim profDrag() As Double = ProfileDrag(c.Mu, c.MuZ, g, "numerical_vectorial")
 	res.CH0 = profDrag(0)
 	res.CQ0 = profDrag(1)
 	res.CH = res.CHi + res.CH0
