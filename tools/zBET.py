@@ -644,13 +644,17 @@ def _operating_pitch(geometry, theta_root_deg, theta_tip_deg, collective_deg):
 
 
 def _operating_flow(geometry, horizontal_mode, horizontal_value, axial_mode, axial_value):
-    """Resolve equivalent flow representations at this geometry's actual RPM."""
+    """Resolve equivalent flow representations at this geometry's actual RPM.
+
+    Match the Android engine domain guards at every candidate RPM.
+    """
     if horizontal_mode == "vx":
         mu = float(horizontal_value) / geometry.vtip
     elif horizontal_mode == "mu":
         mu = float(horizontal_value)
     else:
         raise ValueError("horizontal_mode must be 'mu' or 'vx'")
+    mu = max(-0.60, min(0.60, mu))
 
     if axial_mode == "vz":
         mu_z, _ = axial_condition(mu, axial_value, "w", geometry)
@@ -660,6 +664,7 @@ def _operating_flow(geometry, horizontal_mode, horizontal_value, axial_mode, axi
         mu_z, _ = axial_condition(mu, axial_value, "alpha", geometry)
     else:
         raise ValueError("axial_mode must be 'alpha', 'vz', or 'muz'")
+    mu_z = max(-0.50, min(0.50, mu_z))
     return mu, mu_z
 
 
