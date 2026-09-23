@@ -377,8 +377,13 @@ Sub Activity_KeyPress (KeyCode As Int) As Boolean
 		Else If CurrentPage = 0 And GeometryDirty Then
 			Dim exitAnswer As Int = Msgbox2("Save geometry changes before leaving RotorCalculator?", "Unsaved Geometry", "SAVE", "Cancel", "Discard", Null)
 			If exitAnswer = DialogResponse.CANCEL Then Return True
-			If exitAnswer = DialogResponse.POSITIVE Then SaveCurrentRotor
-			GeometryDirty = False
+			If exitAnswer = DialogResponse.POSITIVE Then
+				SaveCurrentRotor
+			Else
+				ActiveGeom = RotorStorage.GetActiveRotor
+				GeometryDirty = False
+				RecalculateRotor
+			End If
 			Return False
 		End If
 	End If
