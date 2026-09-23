@@ -2951,33 +2951,48 @@ Sub btnSweepTrimHover_Click
 End Sub
 
 Sub btnSweepXAxis_Click
-	SweepXAxisMode = 1 - SweepXAxisMode
+	Dim options As List
+	options.Initialize
+	options.Add("μ — advance ratio")
+	options.Add("Vx — forward speed [m/s]")
+	Dim idx As Int = InputList(options, "Sweep X Axis", SweepXAxisMode)
+	If idx < 0 Then Return
+	SweepXAxisMode = idx
 	UpdateSweepXAxisButtonText
 	UpdateSweepPlotView
 End Sub
 
 Private Sub UpdateSweepXAxisButtonText
 	If btnSweepXAxis.IsInitialized = False Then Return
-	If SweepXAxisMode = 1 Then btnSweepXAxis.Text = "X: Vx" Else btnSweepXAxis.Text = "X: μ"
+	If SweepXAxisMode = 1 Then btnSweepXAxis.Text = "X · Vx" Else btnSweepXAxis.Text = "X · μ"
 End Sub
 
 Sub btnSweepMaxMu_Click
-	If SweepMaxMuVal < 0.35 Then
-		SweepMaxMuVal = 0.40
-	Else If SweepMaxMuVal < 0.45 Then
-		SweepMaxMuVal = 0.50
-	Else If SweepMaxMuVal < 0.55 Then
-		SweepMaxMuVal = 0.60
-	Else
-		SweepMaxMuVal = 0.30
-	End If
+	Dim options As List
+	options.Initialize
+	options.Add("μ max = 0.30")
+	options.Add("μ max = 0.40")
+	options.Add("μ max = 0.50")
+	options.Add("μ max = 0.60")
+	Dim selected As Int = 1
+	If Abs(SweepMaxMuVal - 0.30) < 0.001 Then selected = 0
+	If Abs(SweepMaxMuVal - 0.50) < 0.001 Then selected = 2
+	If Abs(SweepMaxMuVal - 0.60) < 0.001 Then selected = 3
+	Dim idx As Int = InputList(options, "Sweep Range", selected)
+	If idx < 0 Then Return
+	Select idx
+		Case 0: SweepMaxMuVal = 0.30
+		Case 1: SweepMaxMuVal = 0.40
+		Case 2: SweepMaxMuVal = 0.50
+		Case 3: SweepMaxMuVal = 0.60
+	End Select
 	UpdateSweepMaxButtonText
 	UpdateSweepPlotView
 End Sub
 
 Private Sub UpdateSweepMaxButtonText
 	If btnSweepMaxMu.IsInitialized = False Then Return
-	btnSweepMaxMu.Text = "μ≤" & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
+	btnSweepMaxMu.Text = "RANGE · μ≤" & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
 End Sub
 
 Sub btnCloseSweepPlot_Click
