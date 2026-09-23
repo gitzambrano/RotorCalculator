@@ -416,7 +416,7 @@ def main() -> None:
     verify_axial_representations()
     print("PASS: alpha / Vz / muz representations and signs")
     verify_operating_pairs()
-    print("PASS: all six operating pairs at forward/climb condition")
+    print("PASS: all six operating pairs, including Collective + CT uniqueness")
     verify_reference_corrections()
     print("PASS: PG / Sissingh / FoM reference corrections")
     count, residual = verify_reference_matrix()
