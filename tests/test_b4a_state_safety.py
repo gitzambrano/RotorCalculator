@@ -7,445 +7,411 @@ def text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_engine_clones_geometry_before_trim():
-    src = text("zBETEngine.bas")
-    assert "Dim trimmedGeom As RotorGeometry = CloneGeometry(geom)" in src
-    assert "Dim trimmedGeom As RotorGeometry = geom" not in src
-
-
-def test_sweep_and_table_clone_flight_condition():
-    popup = text("RotorPopups.bas")
+def test_geometry_is_complete_in_page_editor():
     main = text("RotorCalculator.b4a")
-    assert "Dim tempCond As FlightCondition = zBETEngine.CloneCondition(cond)" in popup
-    assert "Dim tempCond As FlightCondition = cond" not in popup
-    assert "Dim tempCond As FlightCondition = zBETEngine.CloneCondition(ActiveCond)" in main
-    assert "Dim tempCond As FlightCondition = ActiveCond" not in main
+    assert 'lblLoadedRotor.Text = "Loaded rotor: "' in main
+    assert '"BLADE GEOMETRY"' in main
+    assert '"DERIVED GEOMETRY"' in main
+    assert '"ROTOR AERODYNAMICS"' in main
+    assert 'CreateRowButton("LOAD ROTOR", "btnLoadRotor")' in main
+    assert 'CreateRowButton("SAVE", "btnSaveRotor")' in main
+    assert 'CreateRowButton("SAVE AS NEW", "btnSaveAsNewRotor")' in main
+    assert "OpenGeometryPopup" not in main
+    assert "GeometryPopupOpen" not in main
 
 
-def test_duplicate_uses_storage_clone_path():
+def test_geometry_exposes_all_authoritative_inputs():
     main = text("RotorCalculator.b4a")
-    storage = text("RotorStorage.bas")
-    assert "RotorStorage.DuplicateRotor(RotorStorage.ActiveIndex)" in main
-    assert "clone.Name = src.Name" in storage
-    assert "clone.Radius = src.Radius" in storage
-    assert "clone.TipLossMode = src.TipLossMode" in storage
+    for label in (
+        "Radius R",
+        "Blade Count",
+        "Root Cutout",
+        "Root Chord c0",
+        "Tip Chord c1",
+        "Reference Solidity",
+        "Aspect Ratio",
+        "Root Incidence",
+        "Tip Incidence",
+    ):
+        assert f'"{label}"' in main
 
 
-def test_geometry_is_list_with_contextual_popup_not_header_selector():
-    main = text("RotorCalculator.b4a")
-    assert "Private Sub RefreshRotorList" in main
-    assert "Sub pnlRotorTap_Click" in main
-    assert "Private Sub OpenGeometryPopup" in main
-    assert 'btnCopy.Text = "COPY ROTOR"' in main
-    assert "spnRotorSelect" not in main
-    assert "lblRotorNameHeader" not in main
-
-
-def test_sweep_spinner_selected_text_is_legible():
-    main = text("RotorCalculator.b4a")
-    assert "spnSweepParam.TextColor = ColorTitleText" in main
-
-
-def test_qa_checks_state_purity_and_real_geometry_popup():
-    qa = text("tools/ci_ui_qa.sh")
-    assert 'grep -qi "ACTIVE" "$OUT/11-sweep.json"' in qa
-    assert "09-geometry-after-rotation" in qa
-    assert "02-geometry-popup-top.png" in qa
-    assert "safe_screencap" in qa
-
-
-def test_popup_back_navigation_uses_explicit_state_flags():
-    main = text("RotorCalculator.b4a")
-    assert "Private GeometryPopupOpen As Boolean = False" in main
-    assert "Private SweepPopupOpen As Boolean = False" in main
-    assert "If GeometryPopupOpen Then" in main
-    assert "If SweepPopupOpen Then" in main
-    assert ".Parent = root" not in main
-
-
-def test_active_rotor_selection_is_persisted():
-    storage = text("RotorStorage.bas")
-    assert 'ACTIVE_INDEX_FILENAME As String = "active_rotor.txt"' in storage
-    assert "Private Sub LoadActiveIndex" in storage
-    assert "Private Sub SaveActiveIndex" in storage
-    assert "SetActiveRotor(index As Int)" in storage
-    assert "SaveActiveIndex" in storage
-
-
-def test_qa_rejects_corrupt_frames_and_checks_process_liveness():
-    qa = text("tools/ci_ui_qa.sh")
-    assert "check_dark_png.py" in qa
-    assert "assert_app_alive" in qa
-    assert "06b-after-sweep-back" in qa
-
-
-def test_sweep_footer_is_compact_and_explicit():
-    main = text("RotorCalculator.b4a")
-    assert 'lblSweepCurrentVal.Text = "ACTIVE · μ="' in main
-    assert '" · Vx="' in main
-    assert '" m/s · μz="' in main
-    assert 'btnTable.Text = "TABLE"' in main
-    assert 'btnCsv.Text = "CSV"' in main
-    assert 'btnPng.Text = "PNG"' in main
-
-
-def test_functional_smoke_verifies_active_rotor_after_cold_restart():
-    qa = text("tools/ci_ui_qa.sh")
-    assert "06b-list-after-cold-restart" in qa
-    assert "ACTIVE badge is not on copied rotor row after cold restart" in qa
-
-
-def test_ui_tap_helper_prefers_exact_clickable_controls():
-    wf = text(".github/workflows/frontend-source-qa.yml")
-    assert "Exact clickable controls win" in wf
-    assert "priority=(0 if exact and clickable else" in wf
-    assert "candidates.sort(key=lambda c:(c[0],c[1]))" in wf
-
-
-def test_github_qa_is_manual_only_and_never_handles_release_keys():
-    wf = text(".github/workflows/frontend-source-qa.yml")
-    assert "workflow_dispatch:" in wf
-    assert "\n  push:" not in wf
-    assert "promote-release:" not in wf
-    assert "RotorCalculator_Signed.apk" not in wf
-    assert "key_aero_calc.keystore" not in wf
-    assert "ci-build/RotorCalculator-ci.apk" in wf
-
-
-def test_results_use_variable_specific_precision_and_normalize_negative_zero():
-    main = text("RotorCalculator.b4a")
-    assert "Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String" in main
-    assert "BaseDigits + ExtraPrecision" in main
-    assert "If Abs(Value) < (0.5 / scale) Then Value = 0" in main
-    assert "lblResults(10).Text = FormatOutputValue(ActiveRes.CY, 6)" in main
-    assert "lblResults(14).Text = FormatOutputValue(ActiveRes.L_D_eff, 2)" in main
-    assert "lblResults(21).Text = FormatOutputValue(ActiveRes.AdvancingTipMach, 3)" in main
-
-
-def test_geometry_matrix_captures_true_bottom_controls():
-    qa = text("tools/ci_ui_qa.sh")
-    assert 'grep -qi "Prandtl-Glauert" "$OUT/03-geometry-popup-bottom.json"' in qa
-    assert "for _ in 1 2 3 4 5; do" in qa
-
-
-def test_responsive_matrix_proves_scrollable_content_reaches_true_bottom():
-    qa = text("tools/ci_ui_qa.sh")
-    assert 'grep -qi "eVTOL Conceptual Rotor" "$OUT/01b-rotor-list-bottom.json"' in qa
-    assert 'grep -qi "Target CT" "$OUT/05-conditions-bottom.json"' in qa
-    assert 'grep -Eqi "Sound Speed|Speed of Sound" "$OUT/08-results-bottom.json"' in qa
-
-
-def test_live_resize_state_gate_scrolls_incrementally():
-    qa = text("tools/ci_ui_qa.sh")
-    assert "assert_text_scrolling_down" in qa
-    assert '"Drees Linear" 873 393 "08b-inflow"' in qa
-    assert '"Analytical Tangential" 873 393 "08c-profile"' in qa
-    assert '"Collective to Thrust" 873 393 "08d-trim"' in qa
-
-
-def test_engine_defensively_guards_mathematical_domains():
-    src = text("zBETEngine.bas")
-    assert "geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))" in src
-    assert "geom.NBlades = Max(1, Min(16, geom.NBlades))" in src
-    assert "Public Sub SanitizeCondition" in src
-    assert "If f_lo < 0.0 Then Return -1.0" in src
-    assert "If f_hi > 0.0 Then Return -1.0" in src
-    assert "SolutionValid As Boolean" in src
-    assert "CompressibilityWarning As Boolean" in src
-    assert "If lam_hover < 0 Then Return Array(trimmedGeom)" in src
-    assert "For iter_tip = 1 To 8" in src
-    assert "Dim deltaB As Double = Abs(nextB - b_val)" in src
-    assert "If deltaB < 1e-8 Then Exit" in src
-
-
-def test_ui_clamps_user_inputs_before_recalculation():
-    main = text("RotorCalculator.b4a")
-    assert "ActiveGeom.RootCutout = ClampD" in main
-    assert "ActiveGeom.NBlades = Max(1, Min(16" in main
-    assert "ConditionAltitudeM = ClampD" in main
-    assert "ConditionTemperatureC = ClampD" in main
-    assert "ConditionHorizontalValue = ClampD" in main
-    assert "ActiveCond.Mu = ConditionHorizontalValue / vtip" in main
-    assert "Sub edtGeom_FocusChanged" in main
-    assert "Sub edtCond_FocusChanged" in main
-
-
-def test_sweep_uses_one_canonical_axial_representation_per_curve():
-    popup = text("RotorPopups.bas")
-    main = text("RotorCalculator.b4a")
+def test_geometry_reference_planform_equations_match_zbemt():
     engine = text("zBETEngine.bas")
-    assert "activeAxialMode As String" in popup
-    assert "activeAxialValue As Double" in popup
-    assert "zBETEngine.ResolveMuZ(mu, curveAxialMode, curveAxialValue, plotVtip)" in popup
-    assert "zBETEngine.ResolveMuZ(mu, AxialInputMode, ConditionAxialValue, vtip)" in main
-    assert 'Case "alpha"' in engine
-    assert 'Case "vz"' in engine
-    assert 'Case "muz"' in engine
-    assert "Return -mu * Tan(axialValue * cPI / 180.0)" in engine
-    assert "Return axialValue / vtip" in engine
+    assert "ChordRoot is the reference-axis chord c0 at x=0" in engine
+    assert "nb * geom.ChordRoot / (cPI * rad)" in engine
+    assert "nb * (geom.ChordTip - geom.ChordRoot) / (cPI * rad)" in engine
+    assert "geom.SigmaRef = s0 + 0.5 * s1" in engine
+    assert "geom.SigmaGeom = s0 * (1.0 - x0) + 0.5 * s1 * (1.0 - x0 * x0)" in engine
+    assert "Public Sub ReferenceAspectRatio" in engine
+    assert "Return geom.Radius * geom.Radius / area" in engine
 
 
-def test_geometry_crud_is_complete_and_row_regions_do_not_overlap():
-    main = text("RotorCalculator.b4a")
-    storage = text("RotorStorage.bas")
-    assert 'btnNewRotor.Text = "+ NEW ROTOR"' in main
-    assert "Sub btnNewRotor_Click" in main
-    assert "Public Sub CreateNewRotor As Int" in storage
-    assert "edtRotorName" in main
-    assert "row.AddView(lblName, 16dip, 6dip, listW - 128dip, 30dip)" in main
-    assert "row.AddView(lblActive, listW - 112dip, 10dip, 64dip, 22dip)" in main
-    assert "row.AddView(lblArrow, listW - 44dip, 10dip, 36dip, 48dip)" in main
-
-
-def test_all_three_trim_modes_are_exposed():
-    main = text("RotorCalculator.b4a")
-    assert 'options.Add("Manual Pitch — no trim")' in main
-    assert 'options.Add("Collective to Target — fixed RPM")' in main
-    assert 'options.Add("RPM to Thrust — fixed pitch")' in main
-    assert 'Case 0: ActiveCond.HoverTrimMode = "none"' in main
-    assert 'Case 1: ActiveCond.HoverTrimMode = "collective"' in main
-    assert 'Case 2: ActiveCond.HoverTrimMode = "rpm"' in main
-    assert 'btnHoverTrimMode.Text = "RPM to Thrust"' in main
-    assert "Private Sub DefaultRPMTargetThrust As Double" in main
-    assert 'btnHoverTrimMode.Text = "Manual Pitch"' in main
-
-
-def test_results_expose_validity_and_pg_domain_warning():
-    main = text("RotorCalculator.b4a")
+def test_radius_change_preserves_reference_planform_shape_and_solidity():
     engine = text("zBETEngine.bas")
-    assert 'lblResultStatus.Text = "MODEL STATUS · VALID"' in main
-    assert "ActiveRes.SolutionValid = False" in main
-    assert "ActiveRes.CompressibilityWarning" in main
-    assert "res.AdvancingTipMach >= 0.80" in engine
-
-
-def test_inflow_help_and_unit_converter_are_real_features():
     main = text("RotorCalculator.b4a")
-    assert '"Quick Unit Converter"' in main
-    assert "Private Sub OpenUnitConverter" in main
-    assert '"kW → hp"' in main
-    assert '"N → kgf"' in main
-    assert '"km/h → kt"' in main
-    assert '"m → ft"' in main
-    assert '"mm → in"' in main
-    assert 'Msgbox("Uniform: uniform induced velocity' in main
+    assert "Public Sub ScaleRadiusPreserveReference" in engine
+    assert "Dim scale As Double = newRadius / oldRadius" in engine
+    assert "g.ChordRoot = g.ChordRoot * scale" in engine
+    assert "g.ChordTip = g.ChordTip * scale" in engine
+    assert "zBETEngine.ScaleRadiusPreserveReference(ActiveGeom, newR)" in main
 
 
-def test_signing_secrets_are_externalized():
-    build = text("tools/b4a_build.ps1")
-    ignore = text(".gitignore")
-    agents = text("AGENTS.md")
-    assert "$env:B4A_KEY_FILE" in build
-    assert "$env:B4A_KEY_PASSWORD" in build
-    assert "Key/*.keystore" in ignore
-    assert "service_account" in ignore
-    assert "Base64" in agents
-    assert "não é criptografia" in agents
-
-
-def test_visible_geometry_parameterization_is_authoritative_and_names_are_safe():
+def test_sigma_and_aspect_ratio_edits_scale_both_chords():
+    engine = text("zBETEngine.bas")
     main = text("RotorCalculator.b4a")
+    assert "Public Sub ScaleChordsToSigmaRef" in engine
+    assert "Public Sub ScaleChordsToAspectRatio" in engine
+    assert "g.ChordRoot = g.ChordRoot * scale" in engine
+    assert "g.ChordTip = g.ChordTip * scale" in engine
+    assert "zBETEngine.ScaleChordsToSigmaRef" in main
+    assert "zBETEngine.ScaleChordsToAspectRatio" in main
+
+
+def test_geometry_derived_metrics_are_visible():
+    main = text("RotorCalculator.b4a")
+    for label in (
+        "Geometric Solidity",
+        "Thrust Solidity",
+        "Taper Ratio",
+        "Disk Area",
+        "Reference Blade Area",
+        "Active Blade Area",
+        "Total Twist",
+    ):
+        assert f'"{label}"' in main
+    assert "zBETEngine.ReferenceBladeArea" in main
+    assert "zBETEngine.ActiveBladeArea" in main
+    assert "zBETEngine.TaperRatio" in main
+
+
+def test_rotor_aerodynamics_share_geometry_panel_language():
+    main = text("RotorCalculator.b4a")
+    assert '"ROTOR AERODYNAMICS"' in main
+    assert '"Airfoil"' in main
+    assert '"Lift Slope a0"' in main
+    assert '"Profile Cd0"' in main
+    assert '"Tip Loss"' in main
+    assert '"Fixed Tip Factor B"' in main
+    assert '"Compressibility"' in main
+    assert 'options.Add("Sissingh")' in main
+
+
+def test_geometry_edits_are_explicitly_saved():
+    main = text("RotorCalculator.b4a")
+    assert "GeometryDirty = True" in main
+    assert "Private Sub SaveCurrentRotor" in main
+    assert "RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)" in main
+    assert "Sub btnSaveRotor_Click" in main
+    assert "Sub btnSaveAsNewRotor_Click" in main
+    assert '"Unsaved Geometry"' in main
+
+
+def test_geometry_storage_is_versioned_and_migrates_legacy_chord_definition():
     storage = text("RotorStorage.bas")
-    assert 'ActiveGeom.SolidityMode = "chords"' in main
-    assert 'g.SolidityMode = "chords"' in storage
-    assert 'g.PitchMode = "linear_twist"' in storage
-    assert 'newName = newName.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")' in main
-    assert 'shortName = shortName.SubString2(0, 21) & "…"' in main
+    assert 'SCHEMA_TAG As String = "ROTORCALCULATOR_GEOMETRIES"' in storage
+    assert "SCHEMA_VERSION As Int = 2" in storage
+    assert "Private Sub ParseLegacyRotor" in storage
+    assert "g.ChordRoot = oldRoot - (tip - oldRoot) * g.RootCutout / (1.0 - g.RootCutout)" in storage
+    assert "Public Sub ExportDatabaseText" in storage
+    assert "Public Sub ParseDatabaseText" in storage
 
 
-def test_conditions_group_equivalent_horizontal_and_axial_inputs():
+def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     main = text("RotorCalculator.b4a")
-    assert 'Public HorizontalInputMode As String = "mu"' in main
-    assert 'Public AxialInputMode As String = "alpha"' in main
+    assert '"ATMOSPHERE & FLOW"' in main
+    assert '"Altitude"' in main
+    assert '"Temperature"' in main
+    assert '"Horizontal Flow"' in main
+    assert '"Axial Flow"' in main
     assert 'btnHorizontalInput.Text = "μ"' in main
     assert 'btnHorizontalInput.Text = "Vx"' in main
     assert 'btnAxialInput.Text = "α"' in main
     assert 'btnAxialInput.Text = "Vz"' in main
     assert 'btnAxialInput.Text = "μz"' in main
-    assert 'options.Add("μ — advance ratio = Vx/(ΩR)")' in main
-    assert 'options.Add("α — rotor angle of attack [+ stream from below]")' in main
-    assert "ConditionShaftTiltDeg" not in main
-    assert "ConditionClimbRateMs" not in main
+    assert "lblHorizontalDerived" in main
+    assert "lblAxialDerived" in main
 
 
-def test_axial_helper_explains_zbet_zbemt_signs_on_mobile():
+def test_axial_sign_convention_matches_requirements():
     main = text("RotorCalculator.b4a")
-    assert '"Horizontal Flow Convention"' in main
-    assert '"Axial Flow Convention"' in main
-    assert '"+z and +Vz are downward through the rotor disk."' in main
-    assert '"Rotor angle of attack α is positive when the stream arrives from below."' in main
-    assert '"α is undefined at Vx = 0 for nonzero axial flow. Use Vz or μz."' in main
+    engine = text("zBETEngine.bas")
+    assert "Return -mu * Tan(axialValue * cPI / 180.0)" in engine
+    assert "Return axialValue / vtip" in engine
+    assert '"+Vz means positive climb rate' in main
+    assert '"+α means relative wind arriving from below' in main
+    assert '"Vz > 0: positive climb rate, relative wind from above."' in main
 
 
-def test_sweep_can_compare_alpha_vz_and_muz_families():
-    popup = text("RotorPopups.bas")
-    assert 'curveAxialMode = "alpha"' in popup
-    assert 'curveAxialMode = "vz"' in popup
-    assert 'curveAxialMode = "muz"' in popup
-    assert 'Array As String("-0.050", "-0.025", "0", "+0.025", "+0.050")' in popup
-
-
-def test_settings_persist_theme_units_and_aerocalculator_precision():
+def test_conditions_expose_all_six_operating_pairs():
     main = text("RotorCalculator.b4a")
-    assert 'Public ThemeMode As Int = 0' in main
-    assert 'Public ExtraPrecision As Int = 0' in main
-    assert 'File.WriteMap(File.DirInternal, "ui_settings.txt", m)' in main
-    assert 'btnSettingTheme.Text = "LIGHT"' in main
-    assert 'btnSettingTheme.Text = "DARK"' in main
+    engine = text("zBETEngine.bas")
+    pairs = (
+        ("rpm_collective", "RPM + Collective"),
+        ("rpm_ct", "RPM + CT"),
+        ("rpm_thrust", "RPM + Thrust"),
+        ("collective_ct", "Collective + CT"),
+        ("collective_thrust", "Collective + Thrust"),
+        ("ct_thrust", "CT + Thrust"),
+    )
+    for key, label in pairs:
+        assert f'"{key}"' in engine
+        assert f'"{label}"' in main
+
+
+def test_only_two_operating_inputs_are_presented_for_selected_pair():
+    main = text("RotorCalculator.b4a")
+    assert "Private lblOperatingInput1 As Label" in main
+    assert "Private lblOperatingInput2 As Label" in main
+    assert "Private edtOperatingInput1 As EditText" in main
+    assert "Private edtOperatingInput2 As EditText" in main
+    assert "Private Sub PairInputName" in main
+    assert "Sub edtOperatingInput_TextChanged" in main
+
+
+def test_collective_is_uniform_delta_pitch():
+    engine = text("zBETEngine.bas")
+    assert "Dim dtheta As Double = collectiveDeg * cPI / 180.0" in engine
+    assert "g.ThetaRoot = baseGeom.ThetaRoot + dtheta" in engine
+    assert "g.ThetaTip = baseGeom.ThetaTip + dtheta" in engine
+    assert "g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)" in engine
+
+
+def test_trim_is_at_current_flight_condition_and_candidate_rpm_recomputes_mu():
+    engine = text("zBETEngine.bas")
+    assert "Public Sub ResolveConditionAtRPM" in engine
+    assert 'If c.HorizontalMode = "vx" Then' in engine
+    assert "c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue / vtip))" in engine
+    assert "ResolveMuZ(c.Mu, c.AxialMode, c.AxialValue, vtip)" in engine
+    assert "Private Sub CandidateResult" in engine
+    assert "Private Sub SolveCollective" in engine
+    assert "Private Sub SolveRPM" in engine
+
+
+def test_numerical_vectorial_profile_drag_is_authoritative():
+    main = text("RotorCalculator.b4a")
+    engine = text("zBETEngine.bas")
+    assert 'lblDragFixed.Text = "Numerical Vectorial"' in main
+    assert "btnProfileDragModel" not in main
+    assert 'c.ProfileDragModel = "numerical_vectorial"' in engine
+    assert 'ProfileDrag(c.Mu, c.MuZ, g, "numerical_vectorial")' in engine
+
+
+def test_kind_is_condition_input():
+    main = text("RotorCalculator.b4a")
+    engine = text("zBETEngine.bas")
+    assert '"Induced Factor Kind"' in main
+    assert "Sub edtKInd_TextChanged" in main
+    assert "ActiveCond.KInd = ClampD" in main
+    assert "c.KInd = Max(1.0, Min(3.0, c.KInd))" in engine
+
+
+def test_results_group_all_coefficients_together():
+    main = text("RotorCalculator.b4a")
+    assert '"AERODYNAMIC COEFFICIENTS"' in main
+    expected = {
+        4: "ActiveRes.CT",
+        5: "ActiveRes.CQ",
+        6: "ActiveRes.CQi",
+        7: "ActiveRes.CQ0",
+        8: "ActiveRes.CH",
+        9: "ActiveRes.CHi",
+        10: "ActiveRes.CH0",
+        11: "ActiveRes.CY",
+        12: "ActiveRes.CMx",
+        13: "ActiveRes.CMy",
+        14: "ActiveRes.CPair",
+    }
+    for index, source in expected.items():
+        assert f"lblResults({index}).Text = FormatOutputValue({source}" in main
+
+
+def test_results_include_operating_solution_and_atmosphere():
+    main = text("RotorCalculator.b4a")
+    engine = text("zBETEngine.bas")
+    assert '"OPERATING STATE & ATMOSPHERE"' in main
+    assert "ActiveRes.TrimmedRPM" in main
+    assert "ActiveRes.TrimmedCollectiveDeg" in main
+    assert "ActiveRes.OperatingMu" in main
+    assert "ActiveRes.OperatingVx" in main
+    assert "ActiveRes.OperatingMuZ" in main
+    assert "ActiveRes.OperatingVz" in main
+    assert "ActiveRes.OperatingAlphaDeg" in main
+    assert "ActiveRes.Density" in main
+    assert "ActiveRes.PressurePa" in main
+    assert "ActiveRes.SpeedOfSound" in main
+    assert "res.TrimmedCollectiveDeg = c.CollectiveDeg" in engine
+
+
+def test_results_precision_is_variable_specific_plus_one():
+    main = text("RotorCalculator.b4a")
+    assert "Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String" in main
+    assert "BaseDigits + ExtraPrecision" in main
+    assert "If Abs(Value) < (0.5 / scale) Then Value = 0" in main
     assert 'btnSettingPrecision.Text = "+1 DECIMAL"' in main
-    assert 'btnSettingPrecision.Text = "STANDARD"' in main
-    assert 'Private Sub RebuildApplicationUI' in main
 
 
-def test_physics_help_is_offline_theme_aware_and_packaged():
+def test_settings_include_geometry_import_export():
     main = text("RotorCalculator.b4a")
-    html = text("Files/physics_help.html")
-    assert "File23=physics_help.html" in main
-    assert "File24=physics_help_light.html" in main
-    assert "NumberOfFiles=24" in main
-    assert "Private wvHelp As WebView" in main
-    assert 'helpAsset = "physics_help_light.html"' in main
-    assert 'wvHelp.LoadUrl("file:///android_asset/" & helpAsset)' in main
-    assert "μz = − μ tan(α)" in html
-    assert "α, Vz and μz are three equivalent ways" in html
-    assert "No dynamic stall" in html
+    storage = text("RotorStorage.bas")
+    assert '"Import Geometries"' in main
+    assert '"Export Geometries"' in main
+    assert "Sub btnSettingImportGeometries_Click" in main
+    assert "Sub btnSettingExportGeometries_Click" in main
+    assert 'intent.Initialize("android.intent.action.OPEN_DOCUMENT", "")' in main
+    assert 'intent.Initialize("android.intent.action.CREATE_DOCUMENT", "")' in main
+    assert "RotorStorage.ExportDatabaseText" in main
+    assert "RotorStorage.ParseDatabaseText" in main
+    assert "RotorStorage.MergeImportedRotors" in main
+    assert "Public Sub MergeImportedRotors" in storage
 
 
-def test_sweep_axis_selector_and_legends_are_nonintrusive():
+def test_import_conflicts_are_explicit():
+    main = text("RotorCalculator.b4a")
+    assert '"Rename imported duplicates"' in main
+    assert '"Replace same-name local geometries"' in main
+    assert '"Skip same-name imported geometries"' in main
+
+
+def test_plot_catalog_contains_results_and_operating_scalars():
+    popup = text("RotorPopups.bas")
+    for key in (
+        "CT", "CP", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy",
+        "CPair", "lambda", "lambda_i", "L_D_eff", "FoM", "Kx", "Ky", "chi",
+        "Mat", "PowerKW", "ThrustN", "TorqueNm", "DragHN", "B", "TipSpeed",
+        "RPM", "Collective", "Mu", "Vx", "MuZ", "Vz", "Alpha", "Altitude",
+        "Temperature", "Density", "Pressure", "SoundSpeed",
+    ):
+        assert f'AddSweepParam("{key}"' in popup
+
+
+def test_plot_supports_custom_family_values():
     main = text("RotorCalculator.b4a")
     popup = text("RotorPopups.bas")
-    assert "Private SweepXAxisMode As Int = 0" in main
-    assert 'btnSweepXAxis.Text = "X: μ"' in main
-    assert 'btnSweepXAxis.Text = "X: Vx"' in main
-    assert 'xAxisTitle = "Forward Speed Vx (m/s)"' in popup
-    assert "Dim mTop As Float = 60dip" in popup
-    assert "Curve legends — reserved above plot rectangle" in popup
-    assert "Dim legendY As Float = 39dip" in popup
-    assert "If lightTheme Then" in popup
-    assert 'cvs.DrawText(SweepPlotTitle(paramKey), mLeft, 16dip' in popup
+    assert 'btnSweepValues.Text = "VALUES"' in main
+    assert "Private Sub ParseSweepFamilyValues" in main
+    assert "Enter 1–9 values separated by commas" in main
+    assert "SweepAlphaValues" in main
+    assert "SweepVzValues" in main
+    assert "SweepMuZValues" in main
+    assert "Public Sub SweepCurveCount" in popup
 
 
-def test_sweep_exports_exact_plot_family_to_csv_and_png_without_storage_permission():
+def test_plot_supports_hover_only_trim_and_per_point_trim():
+    main = text("RotorCalculator.b4a")
+    popup = text("RotorPopups.bas")
+    assert '"☑ TRIM ONLY HOVER"' in main
+    assert '"☐ TRIM ONLY HOVER"' in main
+    assert "SweepTrimOnlyHover = Not(SweepTrimOnlyHover)" in main
+    assert "If trimOnlyHover And PairRequiresTrim(cond.OperatingPair) Then" in popup
+    assert 'hoverCond.HorizontalMode = "mu"' in popup
+    assert 'hoverCond.AxialMode = "muz"' in popup
+    assert 'tempCond.OperatingPair = "rpm_collective"' in popup
+
+
+def test_plot_table_csv_and_canvas_share_one_cached_dataset():
+    main = text("RotorCalculator.b4a")
+    popup = text("RotorPopups.bas")
+    assert "SweepSamplesCache = RotorPopups.BuildSweepSamples" in main
+    assert "DrawSweepPlot" in main and "SweepSamplesCache" in main
+    assert "For rowIndex = 0 To SweepSamplesCache.Size - 1" in main
+    assert "Private Sub BuildSweepCsv As String" in main
+    assert "Public Sub BuildSweepSamples" in popup
+    assert "Type SweepPoint" in popup
+
+
+def test_plot_invalid_samples_are_not_drawn_as_zero():
+    popup = text("RotorPopups.bas")
+    assert "point.Valid = result.SolutionValid" in popup
+    assert "If p1.Valid And p2.Valid Then" in popup
+    assert "No valid operating points in this sweep." in popup
+
+
+def test_plot_uses_actual_solved_vx_for_vx_axis():
+    popup = text("RotorPopups.bas")
+    assert "point.Vx = result.OperatingVx" in popup
+    assert "If xAxisMode = 1 Then xv = sample.Vx" in popup
+    assert "If xAxisMode = 1 Then" in popup
+    assert "x1v = p1.Vx" in popup
+
+
+def test_plot_exports_csv_png_with_saf():
     main = text("RotorCalculator.b4a")
     assert 'Wait For (SaveAs(input, "text/csv"' in main
     assert 'Wait For (SaveAs(input, "image/png"' in main
-    assert 'intent.Initialize("android.intent.action.CREATE_DOCUMENT", "")' in main
-    assert "Private Sub BuildSweepCsv As String" in main
-    assert 'sb.Append("curve,x_axis,x_value,mu,Vx_m_s,axial_mode,axial_input,mu_z,inflow_model,parameter,value,status")' in main
-    assert "Dim nPoints As Int = 25" in main
     assert 'bmp.WriteToStream(out, 100, "PNG")' in main
-    assert 'Return NumberFormat2(value, 1, digits, digits, False).Replace(",", ".")' in main
-    assert "Library4=javaobject" in main
+    assert "trim_strategy" in main
+    assert "per_point_trim" in main
+    assert "hover_trim_then_fixed" in main
 
 
-def test_sweep_table_precision_tracks_variable_and_global_precision_setting():
+def test_themes_help_and_precision_remain_persistent():
     main = text("RotorCalculator.b4a")
-    popup = text("RotorPopups.bas")
-    assert "Public Sub SweepParamDigits(paramKey As String) As Int" in popup
-    assert "RotorPopups.SweepParamDigits(SweepParamSelectedKey) + ExtraPrecision" in main
+    assert 'File.WriteMap(File.DirInternal, "ui_settings.txt", m)' in main
+    assert 'btnSettingTheme.Text = "LIGHT"' in main
+    assert 'btnSettingTheme.Text = "DARK"' in main
+    assert "File23=physics_help.html" in main
+    assert "File24=physics_help_light.html" in main
 
 
-def test_selected_horizontal_representation_stays_authoritative_after_geometry_changes():
-    main = text("RotorCalculator.b4a")
-    assert "Public ConditionHorizontalValue As Double = 0.0" in main
-    assert 'If HorizontalInputMode = "vx" Then' in main
-    assert "ConditionHorizontalValue = ClampD(ConditionHorizontalValue, 0.0, 0.60 * vtip)" in main
-    assert "ActiveCond.Mu = ConditionHorizontalValue / vtip" in main
-    assert "ConditionHorizontalValue = ActiveCond.Mu * vtip" in main
+def test_engine_domain_guards_and_named_failure_status_remain():
+    engine = text("zBETEngine.bas")
+    assert "geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))" in engine
+    assert "geom.NBlades = Max(1, Min(16, geom.NBlades))" in engine
+    assert "If f_lo < 0.0 Then Return -1.0" in engine
+    assert "If f_hi > 0.0 Then Return -1.0" in engine
+    assert '"INVALID: selected operating constraints could not be trimmed"' in engine
+    assert "SolutionValid As Boolean" in engine
 
 
-def test_selected_axial_representation_stays_inside_engine_domain():
-    main = text("RotorCalculator.b4a")
-    assert 'If AxialInputMode = "vz" Then' in main
-    assert "ConditionAxialValue = ClampD(ConditionAxialValue, -0.50 * vtip, 0.50 * vtip)" in main
-    assert 'Else If AxialInputMode = "muz" Then' in main
-    assert "ActiveCond.MuZ = ClampD(zBETEngine.ResolveMuZ" in main
-
-
-def test_result_helpers_match_actual_power_based_metrics():
-    main = text("RotorCalculator.b4a")
-    assert "Power-based effective rotor L/D: (L/D)eff = μ·CT / CPair = T·Vx / Pair" in main
-    assert "imposed axial-flow work" in main
-    assert "derived from resultant aerodynamic forces" not in main
-
-
-def test_export_handles_cancel_and_provider_failure_without_crashing():
-    main = text("RotorCalculator.b4a")
-    assert "If Args.Length > 1 And -1 = Args(0) Then" in main
-    assert 'Log("Export failed: " & LastException.Message)' in main
-    assert 'ToastMessageShow("CSV export canceled or failed."' in main
-    assert 'ToastMessageShow("PNG export canceled or failed."' in main
-
-
-def test_b4a_pg_and_fom_match_python_reference_definitions():
+def test_pg_fom_and_sissingh_reference_contracts_remain():
     engine = text("zBETEngine.bas")
     assert "Sqrt(0.75 * 0.75 + 0.5 * mu * mu)" in engine
     assert "If mEff > 0.85 Then mEff = 0.85" in engine
-    assert "Sqrt(Max(0.01, 1.0 - mEff * mEff))" in engine
     assert "Dim cpFoM As Double = c.KInd * idealHoverPower + res.CQ0" in engine
-    assert "res.FoM = idealHoverPower / cpFoM" in engine
-
-
-def test_sissingh_is_iterated_in_performance_and_rpm_trim():
-    engine = text("zBETEngine.bas")
-    reference = text("tools/zBET.py")
     assert "For iter_tip = 1 To 8" in engine
-    assert "For iter_trim_tip = 1 To 8" in engine
-    assert 'geometry.tip_loss_mode == "sissingh"' in reference
-    assert "def solve_at_b(b_current):" in reference
-    assert "b_override=b_val" in reference
-    assert '"B_tip_loss": b_val' in reference
 
 
-def test_release_source_version_and_no_stale_tracked_binaries():
+def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
+    ref = text("tools/zBET.py")
+    assert "def solve_operating_pair(" in ref
+    for pair in (
+        "rpm_collective", "rpm_ct", "rpm_thrust",
+        "collective_ct", "collective_thrust", "ct_thrust",
+    ):
+        assert f'pair == "{pair}"' in ref
+    assert 'profile_drag_model="numerical_vectorial"' in ref
+
+
+def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
+    ignore = text(".gitignore")
     assert "#VersionCode: 3" in main
     assert "#VersionName: 1.20" in main
     assert not (ROOT / "Objects" / "RotorCalculator.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.aab").exists()
     assert not (ROOT / "Objects" / "classes.dex").exists()
-    assert not (ROOT / "Objects" / "d8_arguments.txt").exists()
-    ignore = text(".gitignore")
     assert "Objects/*.apk" in ignore
     assert "Objects/*.dex" in ignore
-    assert "Objects/d8_arguments.txt" in ignore
 
 
-def test_ui_smoke_operates_grouped_flow_selectors_not_only_labels():
-    qa = text("tools/ci_ui_qa.sh")
-    assert 'python /tmp/tap_text.py "Vx — forward"' in qa
-    assert 'grep -Eq \'"text": "Vx"\'' in qa
-    assert 'python /tmp/tap_text.py "Vz — axial flow"' in qa
-    assert 'grep -Eq \'"text": "Vz"\'' in qa
-    assert 'python /tmp/tap_text.py "μz — axial ratio"' in qa
-    assert 'grep -Eq \'"text": "μz"\'' in qa
-    assert 'python /tmp/tap_text.py "α — rotor angle"' in qa
+def test_github_qa_is_manual_only_and_release_signing_is_externalized():
+    wf = text(".github/workflows/frontend-source-qa.yml")
+    build = text("tools/b4a_build.ps1")
+    assert "workflow_dispatch:" in wf
+    assert "\n  push:" not in wf
+    assert "promote-release:" not in wf
+    assert "$env:B4A_KEY_FILE" in build
+    assert "$env:B4A_KEY_PASSWORD" in build
 
 
-def test_rpm_trim_uses_post_trim_tip_speed_for_dimensional_flow_representations():
-    main = text("RotorCalculator.b4a")
-    popup = text("RotorPopups.bas")
-    engine = text("zBETEngine.bas")
-    assert "Public Sub ResolveOperatingGeometry" in engine
-    assert 'If ActiveCond.HoverTrimMode = "rpm" And ActiveCond.TargetThrustN > 0 Then' in main
-    assert "g = zBETEngine.ResolveOperatingGeometry(ActiveGeom, ActiveCond)" in main
-    assert "RefreshDerivedCondition(False)" in main
-    assert 'If cond.HoverTrimMode = "rpm" And cond.TargetThrustN > 0 Then' in popup
-    assert "tipGeom = zBETEngine.ResolveOperatingGeometry(geom, cond)" in popup
-
-
-def test_results_expose_actual_post_trim_rpm_and_collective():
-    main = text("RotorCalculator.b4a")
-    assert "Private lblTrimSummary As Label" in main
-    assert 'lblTrimSummary.Text = "RPM TRIM · "' in main
-    assert 'lblTrimSummary.Text = "COLLECTIVE TRIM · "' in main
-    assert "ActiveRes.TrimmedRPM" in main
-    assert "ActiveRes.TrimmedTheta0Deg" in main
-    assert 'Msgbox("This line reports the geometry actually used by the aerodynamic calculation after trim."' in main
-
-
-def test_ui_smoke_verifies_resolved_rpm_trim_result():
-    qa = text("tools/ci_ui_qa.sh")
-    assert 'grep -qi "RPM TRIM" "$OUT/07a2-rpm-trim-result.json"' in qa
-    assert 'safe_screencap "$OUT/07a2-rpm-trim-result.png"' in qa
+def test_requirements_and_plan_are_authoritative_for_new_architecture():
+    req = text("docs/software_requirements.md")
+    plan = text("plano.md")
+    assert "**RPM + Collective**" in req
+    assert "**CT + Thrust**" in req
+    assert "**Import Geometries**" in req
+    assert "**Trim only in hover**" in req
+    assert "six operating-input pairs" in plan.lower()
+    assert "old capability + current polish" in plan.lower()
