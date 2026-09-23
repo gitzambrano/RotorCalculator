@@ -70,6 +70,22 @@ assert_app_alive() {
   fi
 }
 
+assert_document_picker() {
+  local OUTDIR="$1"
+  local STEM="$2"
+  local EXPECTED="$3"
+  sleep 0.7
+  adb shell dumpsys window windows | grep -qi "documentsui"
+  safe_screencap "$OUTDIR/$STEM.png"
+  python /tmp/ui_node.py "$OUTDIR/$STEM.xml" > "$OUTDIR/$STEM.json"
+  if [ -n "$EXPECTED" ]; then
+    grep -Fqi "$EXPECTED" "$OUTDIR/$STEM.json"
+  fi
+  adb shell input keyevent 4
+  sleep 0.5
+  assert_app_alive
+}
+
 tap_text_scrolling() {
   local TEXT="$1"
   local W="$2"
