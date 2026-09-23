@@ -764,33 +764,17 @@ Private Sub SolveCollective(baseGeom As RotorGeometry, sourceCond As FlightCondi
 	Return Array(0.5 * (lo + hi), True)
 End Sub
 
-Private Sub SolveRPM(baseGeom As RotorGeometry, sourceCond As FlightCondition, collectiveDeg As Double, targetKind As String, targetValue As Double) As Object()
-	Dim prevRPM As Double = 10.0
-	Dim prevObj() As Object = CandidateResidual(baseGeom, sourceCond, prevRPM, collectiveDeg, targetKind, targetValue)
-	Dim lo As Double = 0.0
-	Dim hi As Double = 0.0
-	Dim fLo As Double = 0.0
-	Dim found As Boolean = False
-	If prevObj(1) Then fLo = prevObj(0)
-	For i = 1 To 80
-		Dim rpm As Double = 10.0 * Power(3000.0, i / 80.0)
-		Dim obj() As Object = CandidateResidual(baseGeom, sourceCond, rpm, collectiveDeg, targetKind, targetValue)
-		If prevObj(1) And obj(1) Then
-			Dim f As Double = obj(0)
-			If Abs(f) < 1.0e-10 Then Return Array(rpm, True)
-			If (fLo <= 0 And f >= 0) Or (fLo >= 0 And f <= 0) Then
-				lo = prevRPM
-				hi = rpm
-				found = True
-				Exit
-			End If
-			fLo = f
-		End If
-		prevRPM = rpm
-		prevObj = obj
+Private Sub AddDistinctRPMRoot(roots As List, candidate As Double)
+	Dim tol As Double = Max(0.05, 1.0e-5 * Max(1.0, Abs(candidate)))
+	For rootIndex = 0 To roots.Size - 1
+		Dim existing As Double = roots.Get(rootIndex)
+		If Abs(existing - candidate) <= tol Then Return
 	Next
-	If found = False Then Return Array(sourceCond.RPM, False)
-	For iter = 1 To 80
+	roots.Add(candidate)
+End Sub
+
+Private Sub BisectRPMBracket(baseGeom As RotorGeometry, sourceCond As FlightCondition, collectiveDeg As Double, targetKind As String, targetValue As Double, lo As Double, hi As Double, fLo As Double) As Object()
+	For iter = 1 To 90
 		Dim mid As Double = 0.5 * (lo + hi)
 		Dim midObj() As Object = CandidateResidual(baseGeom, sourceCond, mid, collectiveDeg, targetKind, targetValue)
 		If midObj(1) = False Then Return Array(sourceCond.RPM, False)
@@ -804,6 +788,59 @@ Private Sub SolveRPM(baseGeom As RotorGeometry, sourceCond As FlightCondition, c
 		End If
 	Next
 	Return Array(0.5 * (lo + hi), True)
+End Sub
+
+Private Sub NearestRPMRoot(roots As List, seedRPM As Double) As Double
+	Dim best As Double = roots.Get(0)
+	Dim bestDistance As Double = Abs(best - seedRPM)
+	For rootIndex = 1 To roots.Size - 1
+		Dim candidate As Double = roots.Get(rootIndex)
+		Dim distance As Double = Abs(candidate - seedRPM)
+		If distance < bestDistance Then
+			best = candidate
+			bestDistance = distance
+		End If
+	Next
+	Return best
+End Sub
+
+' Returns Array(rpm, success, root_status), where root_status is none | unique | multiple.
+Private Sub SolveRPM(baseGeom As RotorGeometry, sourceCond As FlightCondition, collectiveDeg As Double, targetKind As String, targetValue As Double) As Object()
+	Dim roots As List
+	roots.Initialize
+	Dim prevRPM As Double = 10.0
+	Dim prevObj() As Object = CandidateResidual(baseGeom, sourceCond, prevRPM, collectiveDeg, targetKind, targetValue)
+	Dim prevValid As Boolean = prevObj(1)
+	Dim prevF As Double = 0.0
+	If prevValid Then
+		prevF = prevObj(0)
+		If Abs(prevF) < 1.0e-9 Then AddDistinctRPMRoot(roots, prevRPM)
+	End If
+	
+	For i = 1 To 80
+		Dim rpmCandidate As Double = 10.0 * Power(3000.0, i / 80.0)
+		Dim obj() As Object = CandidateResidual(baseGeom, sourceCond, rpmCandidate, collectiveDeg, targetKind, targetValue)
+		Dim currentValid As Boolean = obj(1)
+		If currentValid Then
+			Dim f As Double = obj(0)
+			If Abs(f) < 1.0e-9 Then AddDistinctRPMRoot(roots, rpmCandidate)
+			If prevValid And prevF * f < 0.0 Then
+				Dim bracket() As Object = BisectRPMBracket(baseGeom, sourceCond, collectiveDeg, targetKind, targetValue, prevRPM, rpmCandidate, prevF)
+				If bracket(1) Then AddDistinctRPMRoot(roots, bracket(0))
+			End If
+			prevF = f
+		End If
+		prevRPM = rpmCandidate
+		prevValid = currentValid
+	Next
+	
+	If roots.Size = 0 Then Return Array(sourceCond.RPM, False, "none")
+	If targetKind = "ct" And roots.Size <> 1 Then Return Array(sourceCond.RPM, False, "multiple")
+	
+	Dim selectedRPM As Double = NearestRPMRoot(roots, sourceCond.RPM)
+	Dim status As String = "unique"
+	If roots.Size > 1 Then status = "multiple"
+	Return Array(selectedRPM, True, status)
 End Sub
 
 ' Resolves the selected pair among RPM, collective, CT and thrust at the current flight condition.
@@ -835,9 +872,22 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 		Case "collective_ct"
 			If c.TargetCT <= 0 Then
 				ok = False
+				status = "INVALID: Collective + CT target must be positive"
+			Else If c.HorizontalMode = "mu" And c.AxialMode <> "vz" And baseGeom.UsePrandtlGlauert = False Then
+				' With only nondimensional flow inputs and no RPM-dependent compressibility,
+				' CT is scale-free: collective + CT cannot determine a unique RPM.
+				ok = False
+				status = "INVALID: Collective + CT is non-unique at this flight/model state"
 			Else
 				Dim srCT() As Object = SolveRPM(baseGeom, c, collective, "ct", c.TargetCT)
 				rpm = srCT(0): ok = srCT(1)
+				If ok = False Then
+					If srCT(2) = "multiple" Then
+						status = "INVALID: Collective + CT is non-unique at this flight/model state"
+					Else
+						status = "INVALID: Collective + CT has no RPM solution at this flight/model state"
+					End If
+				End If
 			End If
 		Case "collective_thrust"
 			If c.TargetThrustN <= 0 Then
@@ -860,12 +910,8 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 					collective = scBoth(0): ok = scBoth(1)
 				End If
 		End Select
-	If ok = False Then
-		If c.OperatingPair = "collective_ct" Then
-			status = "INVALID: Collective + CT could not determine a unique RPM at this flight/model state"
-		Else
-			status = "INVALID: selected operating constraints could not be trimmed"
-		End If
+	If ok = False And status = "VALID" Then
+		status = "INVALID: selected operating constraints could not be trimmed"
 	End If
 	Dim resolvedGeom As RotorGeometry = ApplyOperatingGeometry(baseGeom, rpm, collective)
 	Dim resolvedCond As FlightCondition = ResolveConditionAtRPM(c, resolvedGeom)
