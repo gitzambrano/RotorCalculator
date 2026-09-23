@@ -465,10 +465,10 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert "rotorcalculator_out_of_domain.txt" in qa
     assert 'grep -Fqi "No valid RotorCalculator geometries"' in qa
     popup = text("RotorPopups.bas")
-    sweep_labels = re.findall(r\'AddSweepParam\\("[^"]+", "([^"]+)"\\)\', popup)
+    sweep_labels = re.findall(r'AddSweepParam\("[^"]+", "([^"]+)"\)', popup)
     assert len(sweep_labels) == 39
     for label in sweep_labels:
-        assert f\'    "{label}"\' in qa
+        assert f'    "{label}"' in qa
     assert 'for target_y in "${sweep_y_labels[@]}"; do' in qa
     assert 'echo "Verified sweep Y: $target_y"' in qa
 
