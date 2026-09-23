@@ -514,6 +514,16 @@ def test_help_matches_six_pair_final_architecture():
         assert "Vz &gt; 0" in help_text
 
 
+def test_trim_residuals_use_loading_only_path():
+    engine = text("zBETEngine.bas")
+    ref = text("tools/zBET.py")
+    assert "Return CalculateCoreResolvedMode(g, c, False)" in engine
+    assert "If FullResults = False Then" in engine
+    assert "res.ThrustN = ct_val * dynP" in engine
+    assert "loading_only=True" in ref
+    assert "if loading_only:" in ref
+
+
 def test_collective_ct_nonunique_failure_is_explicit():
     engine = text("zBETEngine.bas")
     assert "Collective + CT is non-unique at this flight/model state" in engine
