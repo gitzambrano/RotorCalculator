@@ -186,4 +186,18 @@ Implemented in main:
 - Light/Dark and +1 Decimal;
 - offline help framework.
 
-Remaining release work is verification/polish: source-contract gates, numerical tests, layout/contrast audit, offline-help synchronization, B4A compilation, installed-APK operation, and real screenshot review.
+Verification completed in source/reference:
+- source-contract audit for the current Geometry / Conditions / Results architecture;
+- numerical reference checks for geometry invariants, flow-sign conventions, inflow closure, corrections, and operating-pair behavior;
+- explicit detection of non-unique **Collective + CT** RPM solutions, per COND-18;
+- trim-residual fast path that preserves the authoritative CT/inflow solve while skipping unrelated profile/power work;
+- static responsive-layout and event-handler audit;
+- Dark/Light offline-help synchronization;
+- repository hygiene: only required B4A libraries remain and publishing/signing material stays outside Git.
+
+Remaining release gate:
+1. compile the exact approved `main` source with B4A locally;
+2. install the resulting APK on an emulator/device;
+3. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions);
+4. review real portrait/landscape and Light/Dark screenshots;
+5. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.
