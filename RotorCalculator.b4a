@@ -221,6 +221,12 @@ Sub Globals
 	' Multi-Parameter μ-Sweep Popup
 	Private pnlSweepPopup As Panel
 	Private SweepPopupOpen As Boolean = False
+	Private pnlSweepValuesPopup As Panel
+	Private SweepValuesPopupOpen As Boolean = False
+	Private edtSweepValues As EditText
+	Private pnlSweepTablePopup As Panel
+	Private SweepTablePopupOpen As Boolean = False
+	Private SweepSamplesCache As List
 	Private spnSweepParam As Spinner
 	Private btnSweepMultiModel As Button
 	Private btnSweepXAxis As Button
