@@ -1,348 +1,307 @@
 # RotorCalculator — Software Requirements
 
-> **Status:** DRAFT FOR REVIEW  
-> **Target:** RotorCalculator 1.20+  
-> **Primary references:** `tools/zBET.py`, zBEMT planform conventions, and this document.  
-> After approval, this document becomes the binding product/UI specification. Implementation details in older plans or source comments that conflict with it must be updated.
+> **Status:** Binding implementation specification for RotorCalculator 1.20+  
+> **Physics reference:** `tools/zBET.py` and the zBEMT planform convention.  
+> **UI reference:** AeroCalculator interaction principles, adapted where RotorCalculator can be clearer or more capable.
 
-Each requirement has a stable identifier. Requirements use normative language: **shall**, **must**, or **shall not**.
+Each requirement has a stable identifier. Product screens are specified positively by the data and actions they present.
 
-## 1. Product architecture
+## 1. Product structure
 
 - **ARCH-1** — RotorCalculator shall provide three primary tabs: **Geometry**, **Conditions**, and **Results**.
-- **ARCH-2** — Geometry shall define the rotor/blade model. Conditions shall define the operating state, including RPM and trim targets. Results shall contain computed outputs only.
-- **ARCH-3** — RPM shall **not** be classified or presented as rotor geometry.
-- **ARCH-4** — Every numerical change that defines the current case shall update dependent values and results immediately; a separate RUN button shall not be required for the normal calculator workflow.
-- **ARCH-5** — Equivalent representations of the same physical input shall be mutually exclusive. The application shall never silently add equivalent representations together.
-- **ARCH-6** — The user-facing convention, symbols, equations, and signs shall remain consistent with zBET and zBEMT.
-- **ARCH-7** — The application shall preserve the AeroCalculator interaction principles: compact technical forms, immediate feedback, clear selectors, persistent settings, large touch targets, and contextual help accessible on mobile.
+- **ARCH-2** — Geometry shall define the rotor and blade model.
+- **ARCH-3** — Conditions shall define atmosphere, flight condition, RPM/collective/target constraints, inflow model, and induced-power factor.
+- **ARCH-4** — Results shall present the solved aerodynamic, dimensional, atmospheric, and trim state.
+- **ARCH-5** — Normal calculator edits shall update dependent values and results immediately.
+- **ARCH-6** — Symbols, signs, equations, and equivalent-input conversions shall follow zBET/zBEMT.
+- **ARCH-7** — The interface shall follow AeroCalculator principles: compact engineering rows, immediate feedback, explicit selectors, large mobile touch targets, persistent settings, and contextual help.
 
 ## 2. Geometry
 
-### 2.1 Geometry-tab layout
+### 2.1 Geometry editor and rotor library
 
-- **GEO-1** — The Geometry tab shall be a complete editor. A rotor list shall not be the primary Geometry screen and geometry editing shall not require opening a geometry popup.
-- **GEO-2** — The top of the Geometry tab shall contain a compact strip:
-  **Loaded rotor: <rotor name>**.
-- **GEO-3** — The bottom of the Geometry editor shall expose:
-  **LOAD ROTOR**, **SAVE**, and **SAVE AS NEW**.
-- **GEO-4** — **LOAD ROTOR** shall open the rotor library/preset selector without replacing the Geometry editor itself.
-- **GEO-5** — **SAVE** shall overwrite the currently loaded local rotor definition.
-- **GEO-6** — **SAVE AS NEW** shall create a new local rotor definition and require a unique name.
-- **GEO-7** — If unsaved Geometry changes exist when loading another rotor, the app shall offer Save, Discard, or Cancel.
-- **GEO-8** — Factory presets shall be locally editable. The global menu shall provide **Restore Factory Presets**.
-- **GEO-9** — The rotor name shall not appear in the global app header.
+- **GEO-1** — The Geometry tab shall be a complete in-page editor.
+- **GEO-2** — A compact top strip shall show **Loaded rotor: <name>**.
+- **GEO-3** — The editor shall contain two visually consistent stacked panels using the same row layout:
+  1. **Blade Geometry**;
+  2. **Rotor Aerodynamics**.
+- **GEO-4** — The bottom action row shall contain **LOAD ROTOR**, **SAVE**, and **SAVE AS NEW**.
+- **GEO-5** — **LOAD ROTOR** shall open the rotor library/preset selector.
+- **GEO-6** — **SAVE** shall update the currently loaded local rotor.
+- **GEO-7** — **SAVE AS NEW** shall create a new rotor with a unique name.
+- **GEO-8** — If unsaved edits exist before loading another rotor, the user shall receive **Save / Discard / Cancel**.
+- **GEO-9** — Factory presets shall be editable as local working definitions and recoverable through **Restore Factory Presets**.
 
-### 2.2 Authoritative planform inputs
+### 2.2 Synchronized blade geometry
 
-The synchronized planform shall follow the zBEMT reference-planform convention.
-
-- **GEO-10** — Editable planform inputs shall include:
+- **GEO-10** — Blade Geometry inputs shall include:
   - rotor radius (R) [m];
   - number of blades (N_b) [-];
   - root cutout (x_0=r_0/R) [-];
   - reference root chord (c_0) [m] at (r/R=0);
   - tip chord (c_1) [m] at (r/R=1);
   - reference solidity (sigma_{ref}) [-];
-  - blade reference aspect ratio (AR) [-].
-- **GEO-11** — RPM shall not appear in this Geometry input group.
-- **GEO-12** — For a linear reference planform,
+  - blade reference aspect ratio (AR) [-];
+  - root incidence (	heta_{root}) [deg];
+  - tip incidence (	heta_{tip}) [deg].
+- **GEO-11** — The linear reference chord law shall be
   [
   c(x)=c_0+(c_1-c_0)x,qquad 0le xle1.
   ]
-- **GEO-13** — The reference single-blade planform area shall be
+- **GEO-12** — Reference single-blade area shall be
   [
-  S_{ref,b}=Rint_0^1 c(x),dx
-           =rac{R(c_0+c_1)}{2}.
+  S_{ref,b}=Rint_0^1c(x),dx=rac{R(c_0+c_1)}{2}.
   ]
-- **GEO-14** — Reference aspect ratio shall follow the zBEMT definition
+- **GEO-13** — Reference aspect ratio shall be
   [
-  AR=rac{R^2}{S_{ref,b}}
-    =rac{2R}{c_0+c_1}.
+  AR=rac{R^2}{S_{ref,b}}=rac{2R}{c_0+c_1}.
   ]
-- **GEO-15** — Reference solidity shall be
+- **GEO-14** — Reference solidity shall be
   [
-  sigma_{ref}=rac{N_bS_{ref,b}}{pi R^2}
-              =rac{N_b}{pi AR}.
+  sigma_{ref}=rac{N_bS_{ref,b}}{pi R^2}=rac{N_b}{pi AR}.
   ]
-- **GEO-16** — Editing (c_0), (c_1), or (R) shall immediately recompute (AR) and (sigma_{ref}).
-- **GEO-17** — Editing (sigma_{ref}) shall scale (c_0) and (c_1) by one common factor, preserving taper ratio (c_1/c_0), and shall recompute (AR=N_b/(pisigma_{ref})).
-- **GEO-18** — Editing (AR) shall scale (c_0) and (c_1) by one common factor, preserving taper ratio, and shall recompute (sigma_{ref}=N_b/(pi AR)).
-- **GEO-19** — Editing (N_b) shall change (sigma_{ref}) but shall not change (AR), (c_0), or (c_1).
-- **GEO-20** — Editing root cutout (x_0) shall not change reference (AR), reference (sigma_{ref}), (c_0), or (c_1).
-- **GEO-21** — Root cutout shall affect only active-span/physical metrics and BET integration limits.
+- **GEO-15** — Editing (c_0) or (c_1) shall recompute (AR) and (sigma_{ref}).
+- **GEO-16** — Editing radius shall preserve (sigma_{ref}), (AR), taper ratio, and normalized chord distribution by scaling (c_0) and (c_1) in direct proportion to (R).
+- **GEO-17** — Editing (sigma_{ref}) shall scale both chords by one factor, preserving taper ratio, and shall recompute (AR=N_b/(pisigma_{ref})).
+- **GEO-18** — Editing (AR) shall scale both chords by one factor, preserving taper ratio, and shall recompute (sigma_{ref}=N_b/(pi AR)).
+- **GEO-19** — Editing (N_b) shall update (sigma_{ref}) while preserving (AR), (c_0), and (c_1).
+- **GEO-20** — Editing (x_0) shall preserve the reference planform metrics and shall update active-span metrics and BET integration limits.
+- **GEO-21** — Root and tip incidence define the baseline linear pitch law. Operating collective shall be a uniform increment (Delta	heta) added to both:
+  [
+  	heta_{root,op}=	heta_{root}+Delta	heta,qquad
+  	heta_{tip,op}=	heta_{tip}+Delta	heta.
+  ]
 
-### 2.3 Derived geometry
+### 2.3 Derived blade geometry
 
-- **GEO-22** — The Geometry tab shall show, as read-only derived outputs:
-  - (sigma_{geom});
-  - (sigma_{thrust});
+- **GEO-22** — Read-only derived geometry shall show:
+  - geometric solidity (sigma_{geom});
+  - thrust-weighted solidity (sigma_{thrust});
   - taper ratio (c_1/c_0);
   - disk area (A=pi R^2);
   - reference single-blade area (S_{ref,b});
-  - active physical blade area from (x_0) to 1.
-- **GEO-23** — Geometric solidity shall use only physical blade area on the active span:
+  - active blade area over (x_0le xle1);
+  - total twist (	heta_{tip}-	heta_{root}).
+- **GEO-23** — Geometric solidity shall use active physical blade area:
   [
-  sigma_{geom}=
-  rac{N_b}{pi R}int_{x_0}^{1}c(x),dx.
+  sigma_{geom}=rac{N_b}{pi R}int_{x_0}^{1}c(x),dx.
   ]
 - **GEO-24** — Thrust-weighted solidity shall follow zBET:
   [
-  sigma_{thrust}
-  =3int_{x_0}^{1}x^2sigma(x),dx,qquad
+  sigma_{thrust}=3int_{x_0}^{1}x^2sigma(x),dx,qquad
   sigma(x)=rac{N_bc(x)}{pi R}.
   ]
-- **GEO-25** — Derived fields shall never be editable simultaneously with their authoritative source in a way that creates an over-constrained geometry.
 
-### 2.4 Rotor aerodynamic definition
+### 2.4 Rotor Aerodynamics panel
 
-- **GEO-26** — The rotor definition shall retain the airfoil/section aerodynamic inputs required by zBET: lift-curve slope (a_0), profile drag (C_{d0}), airfoil preset, tip-loss model, and compressibility option.
+- **GEO-25** — Rotor Aerodynamics shall use the same row/panel visual language as Blade Geometry.
+- **GEO-26** — Inputs shall include:
+  - airfoil preset;
+  - lift-curve slope (a_0) [rad⁻¹];
+  - (C_{d0});
+  - tip-loss model;
+  - fixed (B) when Fixed-B tip loss is selected;
+  - Prandtl-Glauert compressibility toggle.
 - **GEO-27** — Tip-loss choices shall be **None**, **Fixed B**, and **Sissingh**.
-- **GEO-28** — Sissingh shall be presented only as a tip-loss model, never as an inflow model.
-- **GEO-29** — Airfoil selection may populate (a_0) and (C_{d0}), but those numerical fields shall remain inspectable.
-- **GEO-30** — All Geometry labels shall have mobile-accessible contextual help.
+- **GEO-28** — Selecting an airfoil preset may populate (a_0) and (C_{d0}), while keeping both numerical values visible and editable.
+- **GEO-29** — Every Geometry row shall expose mobile-accessible contextual help.
 
-### 2.5 Migration of existing saved rotors
+### 2.5 Saved-rotor migration
 
-- **GEO-31** — Existing saved rotors shall be migrated explicitly; the migration shall not silently alter their original active-span chord distribution at the saved root cutout.
-- **GEO-32** — Legacy `ChordRoot`, currently defined at (x_0), shall be converted to the new reference-axis chord:
+- **GEO-30** — Saved rotor data shall use an explicit schema/version marker.
+- **GEO-31** — Legacy saved rotors shall be migrated once while preserving their original active-span chord law at the saved root cutout.
+- **GEO-32** — For a legacy root chord defined at (x_0), the reference-axis chord shall be reconstructed as
   [
-  c_0=
-  c_{root@x_0}
-  -rac{(c_1-c_{root@x_0})x_0}{1-x_0}.
+  c_0=c_{root@x_0}-rac{(c_1-c_{root@x_0})x_0}{1-x_0}.
   ]
-- **GEO-33** — After migration, evaluating the new reference law at the original (x_0) shall reproduce the legacy root-cutout chord within numerical tolerance.
-- **GEO-34** — Legacy constant-chord `sigma_ref` and `sigma_geom` definitions shall be converted without changing the original blade law at the migration point.
-- **GEO-35** — The persisted rotor format shall carry a schema/version identifier so migration is performed once and is testable.
+- **GEO-33** — Migration tests shall confirm that the migrated law reproduces the original chord at (x_0).
 
-## 3. Conditions and operating modes
+## 3. Conditions
 
 ### 3.1 Atmosphere
 
-- **COND-1** — Conditions shall contain altitude and temperature.
-- **COND-2** — Density (ho), ambient pressure (p), and speed of sound (a) shall be derived consistently from the selected atmospheric inputs and shown as derived information/results.
-- **COND-3** — Atmosphere edits shall immediately update dimensional/nondimensional conversions and results.
+- **COND-1** — Conditions shall include **Altitude** [m] and **Temperature** [°C].
+- **COND-2** — Atmospheric outputs shall be derived from these inputs and reported in Results.
 
-### 3.2 Horizontal-flow input
+### 3.2 Horizontal flow
 
-- **COND-4** — Horizontal flow shall have a selector with exactly two equivalent input representations:
-  **(mu)** and **(V_x)**.
-- **COND-5** — Only the selected horizontal representation shall be editable.
-- **COND-6** — The non-selected representation shall remain visible as a read-only derived value.
-- **COND-7** — The relation shall be
+- **COND-3** — Horizontal Flow shall provide a representation selector **(mu) / (V_x)**.
+- **COND-4** — The selected representation shall be editable and the equivalent representation shall be visible as a derived value.
+- **COND-5** — The conversion shall be
   [
   mu=rac{V_x}{Omega R}.
   ]
-- **COND-8** — (+V_x) shall mean forward in-plane flow.
 
-### 3.3 Axial-flow input
+### 3.3 Axial flow
 
-- **COND-9** — Axial flow shall have a selector with exactly three equivalent representations:
-  **rotor angle of attack (alpha)**, **axial velocity (V_z)**, and **(mu_z)**.
-- **COND-10** — Only the selected axial representation shall be editable.
-- **COND-11** — The other two axial representations shall remain visible as read-only derived values when mathematically defined.
-- **COND-12** — The zBET/zBEMT sign convention shall be:
-  - (+z) downward through the rotor disk;
-  - (+V_z) downward through the disk;
-  - (+mu_z) downward;
-  - (alpha>0) means the free stream arrives from below the disk.
-- **COND-13** — The conversion equations shall be
+- **COND-6** — Axial Flow shall provide a representation selector **(alpha) / (V_z) / (mu_z)**.
+- **COND-7** — The selected representation shall be editable and the other equivalent representations shall be shown as derived values when defined.
+- **COND-8** — The sign convention shall be:
+  - (+V_z): positive climb rate, with relative wind from above the rotor and through the disk;
+  - (+mu_z): the corresponding positive downward relative flow through the disk;
+  - (+alpha): relative wind arriving from below the rotor disk.
+- **COND-9** — The equivalent-input relations shall be
   [
-  mu_z=-mu	analpha
+  mu_z=-mu	analpha,qquad
+  mu_z=rac{V_z}{Omega R}.
   ]
-  for angle input,
-  [
-  mu_z=rac{V_z}{Omega R}
-  ]
-  for dimensional axial-speed input, and direct assignment for (mu_z) input.
-- **COND-14** — (alpha), (V_z), and (mu_z) shall never be summed as independent axial contributions.
-- **COND-15** — At (V_x=0), nonzero axial flow shall require (V_z) or (mu_z); the UI shall explain why (alpha) alone is not a unique nonzero axial-flow representation.
+- **COND-10** — At zero forward speed, dimensional axial flow shall be specified through (V_z) or (mu_z).
 
-### 3.4 RPM, pitch, trim, and target modes
+### 3.4 Operating constraint pair: RPM, collective, CT, thrust
 
-RPM is an operating condition. The UI shall expose the same logical modes as zBET.
+The operating state contains four linked quantities:
+**RPM**, **collective increment (Delta	heta)**, **(C_T)**, and **Thrust**.
+The user prescribes any two; RotorCalculator solves the other two at the selected atmosphere and flight condition.
 
-- **COND-16** — Conditions shall contain **Trim Mode** with:
-  1. **Manual / Prescribed** (`none`);
-  2. **Collective Trim** (`collective`);
-  3. **RPM Trim** (`rpm`).
-- **COND-17** — Conditions shall contain **Pitch Mode** with:
-  **Constant** and **Linear Twist**.
-- **COND-18** — In **Manual / Prescribed** mode:
-  - RPM shall be editable;
-  - pitch shall be editable;
-  - no CT/thrust target shall control the solver;
-  - thrust and (C_T) shall be outputs.
-- **COND-19** — In **Collective Trim** mode:
-  - RPM shall be editable and fixed during trim;
-  - the user shall choose target type **(C_T)** or **Thrust**;
-  - only the selected target shall be editable;
-  - collective pitch shall be solved;
-  - for linear twist, the total twist (	heta_{tip}-	heta_{root}) shall remain constant while the pitch distribution is shifted.
-- **COND-20** — In **RPM Trim** mode:
-  - pitch/twist shall be editable and fixed during trim;
-  - target **Thrust [N]** shall be editable;
-  - RPM shall be a derived solved value and shall not be editable;
-  - (C_T) shall be a result, not an RPM-trim target.
-- **COND-21** — The UI shall not offer RPM-to-(C_T) as a trim mode.
-- **COND-22** — When target type is (C_T), target Thrust shall be shown only as a derived equivalent using the current fixed RPM and atmosphere.
-- **COND-23** — When target type is Thrust in Collective Trim, target (C_T) shall be shown as the derived equivalent.
-- **COND-24** — Changing trim mode shall immediately update which controls are editable, derived, hidden, or disabled.
-- **COND-25** — A target that is not applicable to the selected trim mode shall not remain active in solver state.
-- **COND-26** — The resolved post-trim RPM and collective shall be visible in Results.
-- **COND-27** — Any (V_xleftrightarrowmu), (V_zleftrightarrowmu_z), Mach, or dimensional conversion that depends on (Omega R) shall use the **resolved operating RPM** when RPM Trim is active.
+- **COND-11** — **Operating Inputs** shall offer these six explicit pairs:
+  1. **RPM + Collective**;
+  2. **RPM + CT**;
+  3. **RPM + Thrust**;
+  4. **Collective + CT**;
+  5. **Collective + Thrust**;
+  6. **CT + Thrust**.
+- **COND-12** — Conditions shall show only the two editable quantities belonging to the selected pair, plus compact read-only derived previews when useful.
+- **COND-13** — Collective shall mean a constant pitch increment (Delta	heta) along the blade, added equally to root and tip incidence.
+- **COND-14** — **RPM + Collective** shall directly prescribe the operating rotor; (C_T) and Thrust are outputs.
+- **COND-15** — **RPM + CT** shall hold RPM and target (C_T) and solve collective.
+- **COND-16** — **RPM + Thrust** shall hold RPM and target dimensional thrust and solve collective.
+- **COND-17** — **Collective + CT** shall hold collective and target (C_T) and solve RPM.
+- **COND-18** — **Collective + Thrust** shall hold collective and target thrust and solve RPM.
+- **COND-19** — **CT + Thrust** shall solve the RPM required by dimensional scaling and the collective required by the aerodynamic target.
+- **COND-20** — Every trim solution shall be computed at the **current flight condition**, including forward flight and climb/descent, rather than being intrinsically a hover-only trim.
+- **COND-21** — The solved RPM, collective, (C_T), and thrust shall all be reported in Results.
+- **COND-22** — Dimensional/nondimensional flow conversions that depend on (Omega R) shall use the solved operating RPM.
 
-### 3.5 Model selectors
+### 3.5 Aerodynamic-model inputs
 
-- **COND-28** — Inflow Model shall be an explicit selector containing:
-  **Uniform**, **Coleman Simple**, **Coleman-Feingold**, and **Drees**.
-- **COND-29** — Profile Drag Model shall be an explicit selector containing:
-  **Analytical Tangential**, **Analytical Vectorial**, and **Numerical Vectorial**.
-- **COND-30** — Hidden cycling through model choices shall not be used.
-- **COND-31** — Each selector and each field label shall expose a concise popup helper with its physical meaning, governing relation, sign convention, and units.
-- **COND-32** — On mobile, tapping the selector itself may show a one-line convention hint after selection, but this shall not block continued editing.
+- **COND-23** — Conditions shall include the inflow-model selector:
+  **Uniform**, **Coleman Simple**, **Coleman-Feingold**, **Drees**.
+- **COND-24** — Conditions shall include induced-power factor **(K_{ind})**.
+- **COND-25** — Profile drag shall always use the **Numerical Vectorial** formulation.
+- **COND-26** — The Numerical Vectorial profile-drag model shall be documented in help rather than exposed as a user-selectable model.
+- **COND-27** — Each selector/field shall open concise contextual help with definition, equation, sign convention, and units.
 
 ## 4. Results
 
-- **RES-1** — Results shall be grouped by engineering meaning, not by implementation order.
-- **RES-2** — The section order shall be:
+- **RES-1** — Results shall use these sections in order:
   1. **DIMENSIONAL PERFORMANCE**;
   2. **AERODYNAMIC COEFFICIENTS**;
   3. **EFFICIENCY**;
   4. **INFLOW & WAKE**;
-  5. **OPERATING STATE**.
-- **RES-3** — **DIMENSIONAL PERFORMANCE** shall contain dimensional thrust, shaft power, shaft torque, and dimensional rotor forces available from the engine.
-- **RES-4** — **AERODYNAMIC COEFFICIENTS** shall place **all aerodynamic coefficients together**, including:
+  5. **OPERATING STATE & ATMOSPHERE**.
+- **RES-2** — DIMENSIONAL PERFORMANCE shall contain dimensional thrust, shaft power, shaft torque, in-plane force, and other dimensional forces available from the engine.
+- **RES-3** — AERODYNAMIC COEFFICIENTS shall contain **all aerodynamic coefficients together**:
   [
   C_T, C_Q(=C_{P,shaft}), C_{Qi}, C_{Q0},  C_H, C_{Hi}, C_{H0}, C_Y, C_{Mx}, C_{My}, C_{P,air}.
   ]
-- **RES-5** — No coefficient listed in RES-4 shall be separated into a different result section merely because it corresponds to thrust, torque, force, moment, or power.
-- **RES-6** — **EFFICIENCY** shall contain (FoM) and ((L/D)_{eff}).
-- **RES-7** — **INFLOW & WAKE** shall contain (lambda), (lambda_i), (K_x), (K_y), wake-skew angle (chi), and tip-loss factor (B).
-- **RES-8** — **OPERATING STATE** shall contain model status, resolved RPM, resolved collective/pitch state, tip speed, tip Mach, advancing-tip Mach, density, pressure, and speed of sound.
-- **RES-9** — Invalid operating points shall show an explicit invalid status and shall not present placeholder zeros as valid aerodynamic results.
-- **RES-10** — The Prandtl-Glauert model-range caution shall remain explicit.
-- **RES-11** — Greek symbols shall use real Unicode glyphs. Subscripts shall use proper Unicode when available; otherwise the app shall use an unambiguous technical fallback such as `CQi`, never a visually false symbol.
-- **RES-12** — Result precision shall be variable-specific.
-- **RES-13** — The **+1 Decimal** setting shall add exactly one decimal place to each variable's baseline precision.
-- **RES-14** — Every result label shall open contextual help explaining its physical definition and equation.
+- **RES-4** — EFFICIENCY shall contain (FoM) and ((L/D)_{eff}).
+- **RES-5** — INFLOW & WAKE shall contain (lambda), (lambda_i), (K_x), (K_y), (chi), and tip-loss factor (B).
+- **RES-6** — OPERATING STATE & ATMOSPHERE shall contain:
+  - solved RPM;
+  - solved collective (Delta	heta);
+  - solved (C_T);
+  - solved thrust;
+  - operating (mu), (V_x), (mu_z), (V_z), and (alpha) where defined;
+  - tip speed;
+  - tip Mach and advancing-tip Mach;
+  - altitude;
+  - temperature;
+  - density (ho);
+  - ambient pressure (p);
+  - speed of sound (a);
+  - model/trim status.
+- **RES-7** — Variable-specific baseline precision shall be used.
+- **RES-8** — **+1 Decimal** shall add exactly one decimal place to every baseline output format.
+- **RES-9** — Invalid operating points shall be clearly identified.
+- **RES-10** — Every result row shall have contextual physics/equation help.
 
-## 5. Parameter plots and sweeps
+## 5. Parameter plots
 
-The plot tool shall retain the broad engineering functionality of the original RotorCalculator sweep while keeping the cleaner current visual treatment.
+The plot tool shall combine the **broad capability of the original sweep** with the **cleaner appearance of the current implementation**.
 
-### 5.1 Plot variable and axes
+### 5.1 Variables and axes
 
-- **PLOT-1** — The user shall be able to plot **any scalar numerical result variable against (mu)**.
-- **PLOT-2** — The selectable Y-variable catalog shall derive from the same result metadata used by Results so a result cannot silently exist in Results but be unavailable to Plot.
-- **PLOT-3** — At minimum the plot catalog shall include all dimensional performance outputs, every aerodynamic coefficient in RES-4, efficiency metrics, inflow/wake outputs, Mach outputs, tip-loss factor, tip speed, and resolved operating quantities that are meaningful over a (mu) sweep.
-- **PLOT-4** — The primary X-axis shall be advance ratio (mu).
-- **PLOT-5** — The user may switch the equivalent X-axis display to (V_x) [m/s].
-- **PLOT-6** — (V_x) axis values shall use the operating (Omega R), including resolved RPM when RPM Trim is active.
-- **PLOT-7** — Axis labels shall always include the correct symbol and unit.
-- **PLOT-8** — The Y-axis shall autoscale from valid plotted samples and shall include the active operating point when applicable.
+- **PLOT-1** — Any scalar numerical result available in Results shall be selectable as the Y variable.
+- **PLOT-2** — The Y-variable catalog shall derive from shared result metadata so Results and Plot remain synchronized.
+- **PLOT-3** — The primary X variable shall be (mu), with an equivalent display option (V_x) [m/s].
+- **PLOT-4** — The X range shall be user-selectable.
+- **PLOT-5** — The active operating point shall be shown when it lies within the plotted range.
 
 ### 5.2 Curve families
 
-- **PLOT-9** — The plot shall support **Single Active Condition** and multi-curve families.
-- **PLOT-10** — The curve-family selector shall include:
-  - **Inflow Models**: Uniform, Coleman Simple, Coleman-Feingold, Drees;
+- **PLOT-6** — Curve Family shall support:
+  - **Active Only**;
+  - **Inflow Models**;
   - **(alpha) Family**;
   - **(V_z) Family**;
-  - **(mu_z) Family**;
-  - **Active Only**.
-- **PLOT-11** — Default (alpha) family values shall be (-10,-5,0,+5,+10) deg.
-- **PLOT-12** — Default (V_z) family values shall be (-10,-5,0,+5,+10) m/s.
-- **PLOT-13** — Default (mu_z) family values shall be (-0.050,-0.025,0,+0.025,+0.050).
-- **PLOT-14** — Family values shall be editable through a compact family-settings control without changing the live operating condition.
-- **PLOT-15** — A family shall vary only its designated quantity. All non-varied operating inputs shall remain equal to the active condition.
-- **PLOT-16** — (alpha), (V_z), and (mu_z) families shall use one axial representation at a time and shall never add equivalent axial inputs together.
-- **PLOT-17** — Changing plot variable, family, family values, X-axis, or X-range shall redraw immediately without a RUN button.
+  - **(mu_z) Family**.
+- **PLOT-7** — Default family values shall preserve the useful legacy sets:
+  - (alpha): (-10,-5,0,+5,+10) deg;
+  - (V_z): (-10,-5,0,+5,+10) m/s;
+  - (mu_z): (-0.050,-0.025,0,+0.025,+0.050).
+- **PLOT-8** — A small **VALUES** button shall allow family values to be edited as a comma-separated list.
+- **PLOT-9** — Edited family values shall be validated, normalized, and retained for the session.
+- **PLOT-10** — A family shall vary only its designated quantity and shall preserve the remaining active condition.
 
-### 5.3 Plot interaction and presentation
+### 5.3 Trim behavior in plots
 
-- **PLOT-18** — Plot controls shall be explicit dropdowns/buttons rather than hidden cycling.
-- **PLOT-19** — Portrait layout shall keep controls compact and leave the majority of the screen height to the plot.
-- **PLOT-20** — Landscape layout shall maximize plot area.
-- **PLOT-21** — Multi-curve legends shall be complete, readable, and shall not cover the data region.
-- **PLOT-22** — On narrow screens, legends may wrap to multiple rows or use compact labels, but no curve identity may be lost.
-- **PLOT-23** — The active/reference curve or active operating point shall be visually distinguishable without making other curves unreadable.
-- **PLOT-24** — Invalid samples shall create gaps/omissions; they shall not be drawn as zero.
-- **PLOT-25** — Plot title, variable name, family, axes, and units shall remain understandable without opening help.
-- **PLOT-26** — The Light and Dark themes shall both provide sufficient contrast for grid, curves, legends, active marker, and labels.
-- **PLOT-27** — Reopening Plot during the same app session shall preserve the last Y-variable, family, family values, X-axis, and X-range.
+- **PLOT-11** — When the selected operating pair contains fixed (C_T) or fixed Thrust, Plot shall show a checkbox **Trim only in hover**.
+- **PLOT-12** — With **Trim only in hover = OFF**, each sweep point shall solve the selected operating constraint pair at that point's flight condition.
+- **PLOT-13** — With **Trim only in hover = ON**, RotorCalculator shall solve the selected constraints once at hover ((mu=0,mu_z=0)), then hold the resulting RPM and collective constant throughout the sweep.
+- **PLOT-14** — CSV and TABLE shall state whether the sweep used per-point trim or hover-only fixed trim.
 
-### 5.4 Table and exports
+### 5.4 Presentation and export
 
-- **PLOT-28** — **TABLE** shall display the numerical data for **all curves currently plotted**, not only the active condition.
-- **PLOT-29** — Table headers shall identify curve/family value, X variable, (mu), (V_x), axial representation/value, model, selected Y variable, Y value, and validity status as applicable.
-- **PLOT-30** — **CSV** shall export the exact sampled data used by the displayed plot, including every visible family curve and invalid-status records.
-- **PLOT-31** — CSV shall use locale-independent decimal points.
-- **PLOT-32** — **PNG** shall export the plot exactly as presented, including theme, axes, title, legend, and active marker.
-- **PLOT-33** — CSV and PNG shall use Android Storage Access Framework / `ACTION_CREATE_DOCUMENT`; broad storage permission shall not be required.
-- **PLOT-34** — Export cancellation or provider failure shall not crash the application.
+- **PLOT-15** — Plot controls shall use explicit selectors/buttons.
+- **PLOT-16** — Multi-curve legends shall remain outside the data region and shall preserve every curve identity.
+- **PLOT-17** — Narrow screens may wrap legends over multiple rows.
+- **PLOT-18** — Invalid samples shall produce gaps rather than false zeros.
+- **PLOT-19** — TABLE shall contain **all currently plotted curves** and the same sampling grid as the plot.
+- **PLOT-20** — CSV shall export the exact sampled plot dataset.
+- **PLOT-21** — PNG shall export the displayed graph with title, axes, theme, active marker, and legend.
+- **PLOT-22** — CSV/PNG shall use Android Storage Access Framework without broad storage permission.
+- **PLOT-23** — Plot selections shall persist while the app remains open.
 
-## 6. Rotor library and persistence
+## 6. Rotor-library import/export
 
-- **LIB-1** — Factory rotors and user rotors shall be accessible from **LOAD ROTOR**.
-- **LIB-2** — The library shall clearly distinguish factory presets from user-created rotors.
-- **LIB-3** — The currently loaded rotor shall persist across app restart.
-- **LIB-4** — SAVE shall persist the complete rotor definition required to reconstruct Geometry and default rotor-model settings.
-- **LIB-5** — SAVE AS NEW shall never silently overwrite an existing rotor.
-- **LIB-6** — Factory restoration shall restore factory values but shall not silently delete unrelated user-created rotors without explicit confirmation.
-- **LIB-7** — Persistence shall support schema migration and shall retain a version marker.
+- **LIB-1** — Settings shall provide **Import Geometries** and **Export Geometries**.
+- **LIB-2** — Export Geometries shall write the complete saved-rotor database to one portable, versioned text file suitable for backup or sharing.
+- **LIB-3** — Import Geometries shall read that file and present the number of valid rotors before confirmation.
+- **LIB-4** — Import shall merge imported rotors with the local database rather than silently deleting unrelated local rotors.
+- **LIB-5** — Name conflicts shall be resolved explicitly by rename/replace/skip behavior; no unrelated rotor shall be overwritten silently.
+- **LIB-6** — Import shall validate schema and numeric domains before committing any changes.
+- **LIB-7** — Export shall use the Android document picker; import shall use the Android content picker/document provider.
+- **LIB-8** — The interchange file shall preserve geometry, aerodynamic definition, schema version, and rotor names without loss of numeric precision.
 
 ## 7. Settings and help
 
-- **SET-1** — Settings shall expose **Theme: Dark / Light**.
-- **SET-2** — Settings shall expose **Result Units: SI / Imperial**.
-- **SET-3** — Settings shall expose **Output Format: Standard / +1 Decimal**.
-- **SET-4** — All settings shall persist across restart.
-- **SET-5** — Changing theme shall preserve current rotor, conditions, selected tab, and unsaved edits.
-- **SET-6** — The global menu shall expose **Physics & Equations**, **zBET / zBEMT Conventions**, **Quick Unit Converter**, **Restore Factory Presets**, and **About**.
-- **SET-7** — Physics & Equations shall work offline.
-- **SET-8** — The physics help shall document the same equations/sign conventions used by the engine and shall not list unsupported models as available choices.
+- **SET-1** — Settings shall include:
+  - Theme: **Dark / Light**;
+  - Result Units: **SI / Imperial**;
+  - Output Format: **Standard / +1 Decimal**;
+  - **Import Geometries**;
+  - **Export Geometries**.
+- **SET-2** — Theme, units, and precision shall persist across restart.
+- **SET-3** — The global menu shall expose Physics & Equations, zBET/zBEMT Conventions, Quick Unit Converter, Restore Factory Presets, Settings, and About.
+- **SET-4** — Physics & Equations shall be fully offline and shall describe the implemented equations and limitations.
 
-## 8. Numerical and physical consistency
+## 8. Visual and mobile requirements
 
-- **PHY-1** — `tools/zBET.py` shall remain the numerical reference for the Android analytical model.
-- **PHY-2** — The Android engine and reference shall use the same definitions for (mu), (mu_z), inflow gradients, Prandtl-Glauert correction, tip loss, induced/profile torque decomposition, air power, and (FoM).
-- **PHY-3** — Sissingh (Bleftrightarrow C_T) coupling shall iterate to mutual consistency in both normal calculation and RPM trim.
-- **PHY-4** — RPM Trim shall solve the same physical problem as zBET: fixed pitch/twist, target dimensional thrust, solved RPM.
-- **PHY-5** — Collective Trim shall solve the same physical problem as zBET: fixed RPM, target (C_T) or dimensional thrust, solved collective.
-- **PHY-6** — Manual mode shall prescribe RPM and pitch and shall not run hover trim.
-- **PHY-7** — Caller geometry and condition state shall not be mutated by plot/sweep calculations.
-- **PHY-8** — No UI conversion shall use nominal RPM when the solver uses a different resolved RPM.
+- **UX-1** — Geometry and Conditions shall use a consistent AeroCalculator-inspired row system with clear section headers and aligned value/unit columns.
+- **UX-2** — Primary touch targets shall be approximately 48 dp high or larger.
+- **UX-3** — A selector tap on mobile shall be sufficient to reveal its alternatives; hover-only discovery shall never be required.
+- **UX-4** — Labels shall also be tappable for detailed help.
+- **UX-5** — Dark and Light themes shall provide equivalent hierarchy and contrast.
+- **UX-6** — No value, unit, legend, label, or button shall clip at supported portrait widths.
+- **UX-7** — The header shall remain compact; rotor identity is shown in Geometry's Loaded Rotor strip.
 
-## 9. Mobile usability
+## 9. Verification and release
 
-- **UX-1** — All primary touch targets shall be at least approximately 48 dp high.
-- **UX-2** — Labels shall remain clickable to open detailed help.
-- **UX-3** — Selecting a compact selector on mobile shall itself provide enough information to understand the available representations; a separate hover-only interaction shall never be required.
-- **UX-4** — No label, selector, value, unit, legend, or action button shall overlap or clip on supported portrait widths.
-- **UX-5** — Abbreviations may be used on narrow screens only when the full definition is available through the same control/help.
-- **UX-6** — The global header shall remain uncluttered and shall not contain the rotor name.
-- **UX-7** — Back shall close the topmost modal/tool before navigating away from the current primary tab.
-
-## 10. Verification and release
-
-- **QA-1** — Every requirement affecting numerical behavior shall have an automated reference or source-contract test.
-- **QA-2** — Geometry synchronization tests shall independently verify the (AR), (sigma_{ref}), (sigma_{geom}), and (sigma_{thrust}) equations.
-- **QA-3** — Migration tests shall prove that legacy saved rotors retain the same active-span chord law immediately after migration.
-- **QA-4** — Condition tests shall exercise every horizontal representation, every axial representation, and every trim/target mode.
-- **QA-5** — Results tests shall prove that all coefficient outputs are present in the single AERODYNAMIC COEFFICIENTS section.
-- **QA-6** — Plot tests shall iterate through every selectable Y variable and every curve family and shall verify finite/invalid handling, legends, table data, CSV, and PNG.
-- **QA-7** — UI smoke tests shall cover Dark/Light, portrait/landscape, cold restart, scroll reachability, and Back behavior.
-- **QA-8** — The release APK shall be compiled from the exact approved main commit, installed, operated, and visually reviewed before being treated as current.
-- **QA-9** — Stale APK/AAB/DEX artifacts shall not remain versioned as if they represented current source.
-- **QA-10** — GitHub Actions may provide auxiliary QA but shall not replace local compiled-APK release validation.
-
-## 11. Draft decisions to confirm before implementation
-
-The following choices are proposed here so they can be explicitly accepted or changed before implementation:
-
-1. **Pitch ownership:** pitch mode and operating pitch controls are placed in **Conditions**, because zBET treats them together with hover trim; Geometry stores planform and rotor aerodynamic definition.
-2. **Linear-taper root chord:** `Root Chord` means the **reference chord at r/R = 0**, matching zBEMT. The physical chord at the root cutout is derived from the reference law.
-3. **Plot families:** the legacy default families are preserved, but their numerical values become editable.
-4. **Plot TABLE:** table output contains all displayed family curves rather than only the active curve.
-5. **Factory preset edits:** SAVE may change the local copy of a factory preset; Restore Factory Presets recovers the shipped definitions.
+- **QA-1** — Geometry synchronization shall have independent tests for radius scaling, (AR), (sigma_{ref}), (sigma_{geom}), (sigma_{thrust}), and taper preservation.
+- **QA-2** — All six operating-input pairs shall have numerical tests in hover, forward flight, and nonzero axial flow.
+- **QA-3** — Tests shall verify that collective trim adds a constant (Delta	heta) to root and tip incidence.
+- **QA-4** — Plot tests shall iterate through every Y variable, every family, custom family lists, and both trim-only-hover states.
+- **QA-5** — TABLE, CSV, and plotted curves shall be generated from the same sampled data.
+- **QA-6** — Geometry import/export shall round-trip without numeric or naming loss.
+- **QA-7** — UI smoke tests shall cover Light/Dark, portrait/landscape, cold restart, geometry load/save, all six operating pairs, plot export, and help.
+- **QA-8** — Release APK/AAB shall be built from the exact approved main commit, installed, operated, and visually reviewed before being considered current.
