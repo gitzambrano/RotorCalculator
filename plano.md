@@ -195,9 +195,19 @@ Verification completed in source/reference:
 - Dark/Light offline-help synchronization;
 - repository hygiene: only required B4A libraries remain and publishing/signing material stays outside Git.
 
-Remaining release gate:
-1. compile the exact approved `main` source with B4A locally;
-2. install the resulting APK on an emulator/device;
-3. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions);
-4. review real portrait/landscape and Light/Dark screenshots;
-5. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.
+Verification coverage strengthened on 2026-09-23:
+- `tools/ci_ui_qa.sh` is now self-contained for its Python helpers and accepts an explicit local APK path;
+- the runtime matrix now reaches the Android document picker for geometry import/export and sweep CSV/PNG export;
+- both hover-only trim states and every sweep family selector are exercised;
+- the numerical reference tests now include σgeom/σthrust radius-scaling invariants and all six operating-pair paths in hover, forward-flight, and nonzero-axial regimes.
+These additions are committed but are not counted as passed until they are executed locally.
+
+Remaining release / evidence gate:
+1. execute the strengthened numerical/source test suite locally and resolve any new failure;
+2. close the literal QA-4 coverage gap by exercising every sweep Y variable and applying custom family VALUES in a live APK;
+3. close the literal QA-6 coverage gap with a real geometry export/import round-trip, numeric/name preservation check, and malformed/out-of-domain rejection;
+4. compile the exact approved `main` source with B4A locally;
+5. install the resulting APK on an emulator/device;
+6. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions);
+7. review real portrait/landscape and Light/Dark screenshots;
+8. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.
