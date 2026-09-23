@@ -173,7 +173,6 @@ Sub Globals
 	Private scvRotorList As ScrollView
 	Private pnlGeometryPopup As Panel
 	Private GeometryPopupOpen As Boolean = False
-	Private GeometryPopupIndex As Int = -1
 	Private lblGeometryPopupTitle As Label
 	Private scvGeom As ScrollView
 	Private edtRotorName As EditText
@@ -1074,7 +1073,7 @@ Private Sub RefreshRotorLibraryList
 		Dim row As Panel
 		row.Initialize("")
 		If i = RotorStorage.ActiveIndex Then
-			row.Color = ColorPnlTitle
+			row.Color = ColorBut2
 		Else If i Mod 2 = 0 Then
 			row.Color = ColorPnlInput2
 		Else
@@ -1172,7 +1171,6 @@ End Sub
 
 Private Sub OpenGeometryPopup
 	If GeometryPopupOpen Then CloseGeometryPopup(False)
-	GeometryPopupIndex = RotorStorage.ActiveIndex
 	
 	pnlGeometryPopup.Initialize("pnlGeometryPopup")
 	pnlGeometryPopup.Color = 0xB0000000
@@ -1400,7 +1398,6 @@ Private Sub CloseGeometryPopup(AskToSave As Boolean) As Boolean
 	pnlGeometryPopup.RemoveView
 	GeometryPopupOpen = False
 	GeometryEditorRequested = False
-	GeometryPopupIndex = -1
 	RefreshRotorLibraryList
 	Return True
 End Sub
