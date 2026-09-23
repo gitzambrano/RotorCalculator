@@ -262,6 +262,17 @@ functional_smoke() {
   sleep 0.4
   python /tmp/tap_text.py "NACA 0012"
   sleep 0.6
+
+  # SAVE must persist real edits, close the editor, and survive reopening.
+  python /tmp/tap_text.py "SAVE"
+  sleep 0.7
+  python /tmp/ui_node.py "$OUT/02b-after-save-library.xml" > "$OUT/02b-after-save-library.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/02b-after-save-library.json"
+  python /tmp/tap_text.py "UH-60"
+  sleep 0.6
+  assert_text_scrolling_down "$OUT" "Fixed B" 393 873 "02c-saved-fixed-b"
+  assert_text_scrolling_down "$OUT" "NACA 0012" 393 873 "02d-saved-airfoil"
+
   python /tmp/tap_text.py "COPY"
   sleep 0.8
   safe_screencap "$OUT/03-copied-rotor.png"
