@@ -269,6 +269,7 @@ Sub Activity_Create(FirstTime As Boolean)
 		RotorPopups.Initialize
 		ActiveGeom = RotorStorage.GetActiveRotor
 		ActiveCond = zBETEngine.CreateDefaultCondition
+		ActiveRes.Initialize
 		LoadUiSettings
 	End If
 	ApplyThemePalette
@@ -2064,6 +2065,13 @@ Public Sub RecalculateRotor
 			For i = 0 To 42
 				If lblResults(i).IsInitialized Then lblResults(i).Text = "---"
 			Next
+			' Keep equivalent μ/Vx and μz/Vz/α labels synchronized even when trim fails.
+			Dim fallbackGeom As RotorGeometry = zBETEngine.CloneGeometry(ActiveGeom)
+			fallbackGeom.RPM = Max(1.0, Min(30000.0, ActiveCond.RPM))
+			Dim fallbackCond As FlightCondition = zBETEngine.ResolveConditionAtRPM(ActiveCond, fallbackGeom)
+			ActiveCond.Mu = fallbackCond.Mu
+			ActiveCond.MuZ = fallbackCond.MuZ
+			If lblHorizontalDerived.IsInitialized Then RefreshFlowDerivedLabels
 			Return
 		Else If ActiveRes.CompressibilityWarning Then
 			lblResultStatus.Text = "MODEL STATUS · PG CAUTION (Mat ≥ 0.80)"
@@ -2344,8 +2352,9 @@ End Sub
 
 Private Sub RotorTipSpeed As Double
 	If ActiveRes.SolutionValid And ActiveRes.TipSpeed > 0 Then Return ActiveRes.TipSpeed
-	Dim g As RotorGeometry = zBETEngine.ResolveOperatingGeometry(ActiveGeom, ActiveCond)
-	Return g.RPM * cPI / 30.0 * g.Radius
+	Dim rpm As Double = Max(1.0, Min(30000.0, ActiveCond.RPM))
+	Dim radius As Double = Max(0.02, ActiveGeom.Radius)
+	Return rpm * cPI / 30.0 * radius
 End Sub
 
 Private Sub RefreshFlowDerivedLabels
