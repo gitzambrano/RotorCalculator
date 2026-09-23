@@ -603,8 +603,7 @@ Private Sub OpenSettingsPopup
 	
 	Dim cardW As Int = root.Width - 24dip
 	If cardW > 540dip Then cardW = 540dip
-	Dim cardH As Int = 360dip
-	If cardH > root.Height - 24dip Then cardH = root.Height - 24dip
+	Dim cardH As Int = Min(510dip, root.Height - 24dip)
 	Dim cardLeft As Int = (root.Width - cardW) / 2
 	Dim cardTop As Int = (root.Height - cardH) / 2
 	Dim card As Panel
@@ -632,9 +631,15 @@ Private Sub OpenSettingsPopup
 	btnClose.Color = Colors.Transparent
 	titleBar.AddView(btnClose, cardW - 52dip, 2dip, 48dip, 48dip)
 	
-	AddSettingsRow(card, 68dip, "Theme", "Dark or light cockpit palette", "btnSettingTheme")
-	AddSettingsRow(card, 150dip, "Result Units", "Dimensional outputs only", "btnSettingUnits")
-	AddSettingsRow(card, 232dip, "Output Format", "AeroCalculator-style precision", "btnSettingPrecision")
+	Dim scv As ScrollView
+	scv.Initialize(390dip)
+	card.AddView(scv, 0, 52dip, cardW, cardH - 52dip)
+	AddSettingsRow(scv.Panel, 8dip, "Theme", "Dark or light technical palette", "btnSettingTheme")
+	AddSettingsRow(scv.Panel, 82dip, "Result Units", "Dimensional outputs only", "btnSettingUnits")
+	AddSettingsRow(scv.Panel, 156dip, "Output Format", "Standard or +1 decimal", "btnSettingPrecision")
+	AddSettingsRow(scv.Panel, 230dip, "Import Geometries", "Restore or merge a shared backup", "btnSettingImportGeometries")
+	AddSettingsRow(scv.Panel, 304dip, "Export Geometries", "Backup all saved rotor geometries", "btnSettingExportGeometries")
+	scv.Panel.Height = 382dip
 	RefreshSettingsButtons
 End Sub
 
@@ -643,19 +648,21 @@ Private Sub AddSettingsRow(card As Panel, y As Int, title As String, subtitle As
 	lbl.Initialize("")
 	lbl.Text = title & CRLF & subtitle
 	lbl.TextColor = ColorButText1
-	lbl.TextSize = 12
+	lbl.TextSize = 11.5
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	card.AddView(lbl, 16dip, y, card.Width * 0.48, 64dip)
+	card.AddView(lbl, 16dip, y, card.Width * 0.50, 64dip)
 	Dim b As Button
 	b.Initialize(eventName)
 	b.TextColor = ColorAccentCyan
 	b.Typeface = Typeface.DEFAULT_BOLD
-	b.TextSize = 12
+	b.TextSize = 11.5
 	b.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	card.AddView(b, card.Width * 0.53, y + 8dip, card.Width * 0.42, 48dip)
+	card.AddView(b, card.Width * 0.54, y + 8dip, card.Width * 0.41, 48dip)
 	If eventName = "btnSettingTheme" Then btnSettingTheme = b
 	If eventName = "btnSettingUnits" Then btnSettingUnits = b
 	If eventName = "btnSettingPrecision" Then btnSettingPrecision = b
+	If eventName = "btnSettingImportGeometries" Then b.Text = "IMPORT"
+	If eventName = "btnSettingExportGeometries" Then b.Text = "EXPORT"
 End Sub
 
 Private Sub RefreshSettingsButtons
@@ -690,6 +697,76 @@ Sub btnSettingPrecision_Click
 	SaveUiSettings
 	RefreshSettingsButtons
 	RecalculateRotor
+End Sub
+
+Sub btnSettingExportGeometries_Click
+	Dim tempName As String = "rotorcalculator_geometries.txt"
+	File.WriteString(File.DirInternal, tempName, RotorStorage.ExportDatabaseText)
+	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
+	Wait For (SaveAs(input, "text/plain", tempName)) Complete (Success As Boolean)
+	If Success Then
+		ToastMessageShow("Geometry backup exported.", False)
+	Else
+		ToastMessageShow("Geometry export canceled or failed.", False)
+	End If
+End Sub
+
+Sub btnSettingImportGeometries_Click
+	Wait For (ReadTextDocument("text/plain")) Complete (Text As String)
+	If Text = "" Then Return
+	Dim imported As List = RotorStorage.ParseDatabaseText(Text)
+	If imported.Size = 0 Then
+		Msgbox("No valid RotorCalculator geometries were found in this file.", "Import Geometries")
+		Return
+	End If
+	Dim answer As Int = Msgbox2("Found " & imported.Size & " valid geometries." & CRLF & CRLF & _
+		"Import them into the local rotor library?", "Import Geometries", "IMPORT", "Cancel", "", Null)
+	If answer <> DialogResponse.POSITIVE Then Return
+	Dim modes As List
+	modes.Initialize
+	modes.Add("Rename imported duplicates")
+	modes.Add("Replace same-name local geometries")
+	modes.Add("Skip same-name imported geometries")
+	Dim choice As Int = InputList(modes, "Name Conflicts", 0)
+	If choice < 0 Then Return
+	Dim mode As String = "rename"
+	If choice = 1 Then mode = "replace"
+	If choice = 2 Then mode = "skip"
+	Dim added As Int = RotorStorage.MergeImportedRotors(imported, mode)
+	ActiveGeom = RotorStorage.GetActiveRotor
+	GeometryDirty = False
+	LoadRotorDataToFields(ActiveGeom)
+	RefreshLoadedRotorStrip
+	RecalculateRotor
+	ToastMessageShow(added & " geometries imported.", False)
+End Sub
+
+Private Sub ReadTextDocument(MimeType As String) As ResumableSub
+	Dim intent As Intent
+	intent.Initialize("android.intent.action.OPEN_DOCUMENT", "")
+	intent.AddCategory("android.intent.category.OPENABLE")
+	intent.SetType(MimeType)
+	Try
+		StartActivityForResult(intent)
+		Wait For ion_Event (MethodName As String, Args() As Object)
+		If Args.Length > 1 And -1 = Args(0) Then
+			Dim result As Intent = Args(1)
+			Dim jo As JavaObject = result
+			Dim ctxt As JavaObject
+			Dim resolver As JavaObject = ctxt.InitializeContext.RunMethodJO("getContentResolver", Null)
+			Dim input As InputStream = resolver.RunMethod("openInputStream", Array(jo.RunMethod("getData", Null)))
+			If input.IsInitialized = False Then Return ""
+			Dim tempName As String = "geometry_import.txt"
+			Dim output As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
+			File.Copy2(input, output)
+			input.Close
+			output.Close
+			Return File.ReadString(File.DirInternal, tempName)
+		End If
+	Catch
+		Log("Geometry import failed: " & LastException.Message)
+	End Try
+	Return ""
 End Sub
 
 Sub btnCloseSettings_Click
