@@ -1890,7 +1890,10 @@ Private Sub AddTextInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	Dim edt As EditText
 	edt.Initialize(evtName)
 	edt.Tag = lblText
+	Dim wasUpdating As Boolean = UpdatingUI
+	UpdatingUI = True
 	edt.Text = defVal
+	UpdatingUI = wasUpdating
 	edt.TextSize = 13 * sc
 	edt.TextColor = ColorEdtText
 	edt.Color = ColorEdt
@@ -1909,7 +1912,10 @@ Private Sub AddFullInputRow(pnl As Panel, ib As Int, tb As Int, lblText As Strin
 	Dim edt As EditText
 	edt.Initialize(evtName)
 	edt.Tag = lblText
+	Dim wasUpdating As Boolean = UpdatingUI
+	UpdatingUI = True
 	edt.Text = defVal
+	UpdatingUI = wasUpdating
 	edt.TextSize = 13 * sc
 	edt.TextColor = ColorEdtText
 	edt.Color = ColorEdt
