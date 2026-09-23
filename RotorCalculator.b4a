@@ -101,6 +101,7 @@ Sub Process_Globals
 	Public ColorPnlInput3 As Int = 0xFF0A0E15    ' Output Row 1
 	Public ColorPnlInput4 As Int = 0xFF0E131C    ' Output Row 2
 	Public ColorPnlInput5 As Int = 0xFF07090E    ' Page Background
+	Public ColorSelectedRow As Int = 0xFF121925   ' Active library row
 	Public ColorAccentCyan As Int = 0xFF00E5FF   ' Cyan Accent
 	Public ColorAccentGreen As Int = 0xFF00E676  ' Emerald Accent
 	Public ColorAccentAmber As Int = 0xFFFFB300  ' Amber Accent
@@ -596,6 +597,7 @@ Private Sub ApplyThemePalette
 		ColorPnlInput3 = 0xFFF7F9FC
 		ColorPnlInput4 = 0xFFFFFFFF
 		ColorPnlInput5 = 0xFFF1F4F8
+		ColorSelectedRow = 0xFFFFFFFF
 		ColorAccentCyan = 0xFF007F95
 		ColorAccentGreen = 0xFF007A52
 		ColorAccentAmber = 0xFFAA5A00
@@ -621,6 +623,7 @@ Private Sub ApplyThemePalette
 		ColorPnlInput3 = 0xFF0A0E15
 		ColorPnlInput4 = 0xFF0E131C
 		ColorPnlInput5 = 0xFF07090E
+		ColorSelectedRow = 0xFF121925
 		ColorAccentCyan = 0xFF00E5FF
 		ColorAccentGreen = 0xFF00E676
 		ColorAccentAmber = 0xFFFFB300
@@ -1073,7 +1076,7 @@ Private Sub RefreshRotorLibraryList
 		Dim row As Panel
 		row.Initialize("")
 		If i = RotorStorage.ActiveIndex Then
-			row.Color = ColorBut2
+			row.Color = ColorSelectedRow
 		Else If i Mod 2 = 0 Then
 			row.Color = ColorPnlInput2
 		Else
