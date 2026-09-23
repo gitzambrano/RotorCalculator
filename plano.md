@@ -17,12 +17,16 @@ Global menu: Settings, Quick Unit Converter, Physics & Equations, zBET/zBEMT Con
 
 ## 2. Geometry
 
-Geometry is a scrollable in-page editor with:
-- Loaded rotor strip;
-- Blade Geometry;
-- Derived Geometry;
-- Rotor Aerodynamics;
-- LOAD ROTOR / SAVE / SAVE AS NEW.
+Geometry is a **rotor library** rather than a permanently open form:
+- the tab shows all factory and user rotors in a compact list;
+- the active rotor is visibly marked;
+- tapping a rotor selects it, persists that selection, and opens its **Geometry popup**;
+- **NEW ROTOR** creates a new user rotor and opens it immediately;
+- the Geometry popup contains Blade Geometry, Derived Geometry, and Rotor Aerodynamics;
+- contextual actions are **SAVE / COPY / DELETE** inside the popup;
+- the global header never carries the rotor name.
+
+Unsaved edits survive normal Activity recreation/orientation. Closing the editor or selecting a different rotor offers Save / Discard / Cancel. COPY clones the current edited geometry under a unique name. DELETE is confirmed and is disabled when only one rotor remains.
 
 Authoritative planform:
 `c(x)=c0+(c1-c0)x` from x=0 to 1.
@@ -164,7 +168,9 @@ Before release:
 ## 9. Current source status
 
 Implemented in main:
-- in-page synchronized Geometry editor;
+- rotor-library Geometry tab with synchronized contextual Geometry popup;
+- persistent active-rotor selection and SAVE/COPY/DELETE/NEW workflows;
+- unsaved Geometry state preserved across normal Activity recreation;
 - versioned rotor storage and migration;
 - import/export geometry backup;
 - six-pair operating solver;
