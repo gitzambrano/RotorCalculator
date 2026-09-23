@@ -126,6 +126,7 @@ Sub Process_Globals
 	Public AxialInputMode As String = "alpha"     ' alpha | vz | muz
 	Public ConditionAxialValue As Double = 0.0
 	Public GeometryDirty As Boolean = False
+	Public GeometryEditorRequested As Boolean = False
 	Public SweepMultiMode As Int = 0
 	Public SweepXAxisMode As Int = 0
 	Public SweepMaxMuVal As Double = 0.40
@@ -327,6 +328,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	LoadConditionDataToFields
 	RecalculateRotor
 	ShowPage(CurrentPage, False)
+	If CurrentPage = 0 And GeometryEditorRequested Then OpenGeometryPopup
 	
 End Sub
 
@@ -1136,6 +1138,10 @@ Sub rotorRow_Click
 	Dim b As Button = Sender
 	Dim idx As Int = ParseIntDef("" & b.Tag, -1)
 	If idx < 0 Or idx >= RotorStorage.Rotors.Size Then Return
+	If idx = RotorStorage.ActiveIndex And GeometryDirty Then
+		OpenGeometryPopup
+		Return
+	End If
 	If GeometryDirty And idx <> RotorStorage.ActiveIndex Then
 		If ResolveUnsavedGeometry("selecting another rotor") = False Then Return
 	End If
@@ -1168,6 +1174,7 @@ Private Sub OpenGeometryPopup
 	pnlGeometryPopup.Color = 0xB0000000
 	root.AddView(pnlGeometryPopup, 0, 0, root.Width, root.Height)
 	GeometryPopupOpen = True
+	GeometryEditorRequested = True
 	pnlGeometryPopup.BringToFront
 	
 	Dim cardW As Int = root.Width - 16dip
@@ -1388,6 +1395,7 @@ Private Sub CloseGeometryPopup(AskToSave As Boolean) As Boolean
 	End If
 	pnlGeometryPopup.RemoveView
 	GeometryPopupOpen = False
+	GeometryEditorRequested = False
 	GeometryPopupIndex = -1
 	RefreshRotorLibraryList
 	Return True
