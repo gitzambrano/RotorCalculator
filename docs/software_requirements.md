@@ -18,16 +18,16 @@ Each requirement has a stable identifier. Screens are specified positively by th
 
 ## 2. Geometry
 
-### 2.1 In-page editor and rotor library
+### 2.1 Rotor library and contextual editor
 
-- **GEO-1** — Geometry shall be a complete in-page editor.
-- **GEO-2** — A compact strip shall show **Loaded rotor: <name>** and an unsaved indicator when applicable.
-- **GEO-3** — Geometry shall use consistent stacked panels: **Blade Geometry**, **Derived Geometry**, and **Rotor Aerodynamics**.
-- **GEO-4** — The bottom action row shall contain **LOAD ROTOR**, **SAVE**, and **SAVE AS NEW**.
-- **GEO-5** — LOAD ROTOR shall open the saved/factory rotor library and distinguish factory from user entries.
-- **GEO-6** — SAVE shall update the currently loaded rotor.
-- **GEO-7** — SAVE AS NEW shall create a uniquely named rotor.
-- **GEO-8** — Loading another rotor with unsaved edits shall offer Save, Discard, or Cancel.
+- **GEO-1** — The Geometry tab shall be a compact **rotor library** listing all factory and user rotors.
+- **GEO-2** — Each rotor row shall identify the rotor, distinguish factory/user origin, summarize key geometry, and visibly mark the active rotor.
+- **GEO-3** — Tapping a rotor row shall select it, persist the active selection, and open its **Geometry popup**.
+- **GEO-4** — The library shall expose **NEW ROTOR**, which creates a uniquely named user rotor and opens its Geometry popup.
+- **GEO-5** — The Geometry popup shall use consistent stacked panels: **Blade Geometry**, **Derived Geometry**, and **Rotor Aerodynamics**.
+- **GEO-6** — The popup action row shall contain **SAVE**, **COPY**, and **DELETE**. These actions shall not live in the global menu.
+- **GEO-7** — SAVE shall update the selected rotor; COPY shall clone the current edited geometry under a unique name; DELETE shall require confirmation and shall be disabled when only one rotor remains.
+- **GEO-8** — Closing the popup or selecting another rotor with unsaved edits shall offer Save, Discard, or Cancel. Unsaved edited values shall survive normal Activity recreation/orientation within the current app process.
 - **GEO-9** — Restore Factory Presets shall restore shipped preset values while preserving unrelated user rotors.
 
 ### 2.2 Synchronized reference planform
@@ -237,14 +237,14 @@ The plot tool shall combine the broad capability of the original sweep with the 
 
 ## 8. Visual/mobile requirements
 
-- **UX-1** — Geometry and Conditions shall share one AeroCalculator-inspired row system with clear section headers and aligned controls.
+- **UX-1** — The Geometry popup and Conditions shall share one AeroCalculator-inspired row system with clear section headers and aligned controls; the Geometry library shall use the same visual hierarchy and spacing language.
 - **UX-2** — Primary touch targets shall be approximately 48 dp high or larger.
 - **UX-3** — Mobile discovery shall be tap-first; no essential explanation shall require mouse hover.
 - **UX-4** — Equivalent flow values shall remain readable on narrow phones without competing with the editable value.
 - **UX-5** — Dark and Light themes shall provide equivalent hierarchy and contrast.
 - **UX-6** — No value, unit, legend, label, or action shall clip at supported portrait widths.
-- **UX-7** — Rotor identity shall appear in Geometry's Loaded Rotor strip, while the global header stays compact.
-- **UX-8** — Unsaved Geometry edits and sweep selections shall survive normal Activity recreation/orientation within the current app process.
+- **UX-7** — Rotor identity shall appear in the Geometry library and Geometry popup; the global header shall show only the application identity and navigation.
+- **UX-8** — Unsaved Geometry edits, the open Geometry-editor intent, and sweep selections shall survive normal Activity recreation/orientation within the current app process.
 
 ## 9. Verification/release
 
@@ -255,5 +255,5 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **QA-5** — Plot, TABLE, and CSV shall share one authoritative sampled dataset.
 - **QA-6** — Geometry import/export shall round-trip without numeric/naming loss and reject out-of-domain data.
 - **QA-7** — Factory restore shall preserve unrelated user rotors.
-- **QA-8** — UI smoke tests shall cover Light/Dark, portrait/landscape, Activity recreation, geometry load/save, all six pairs, plot export, and help.
+- **QA-8** — UI smoke tests shall cover Light/Dark, portrait/landscape, Activity recreation, rotor selection, Geometry popup SAVE/COPY/DELETE/NEW, all six pairs, plot export, and help.
 - **QA-9** — Release APK/AAB shall be built from the exact approved main commit, installed, operated, and visually reviewed before being considered current.
