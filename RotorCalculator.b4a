@@ -1364,7 +1364,8 @@ Private Sub RefreshLoadedRotorStrip
 	If GeometryPopupOpen = False Or lblGeometryPopupTitle.IsInitialized = False Then Return
 	Dim suffix As String = ""
 	If GeometryDirty Then suffix = "  ·  UNSAVED"
-	lblGeometryPopupTitle.Text = "GEOMETRY · " & RotorListName(ActiveGeom.Name) & suffix
+	lblGeometryPopupTitle.Text = RotorListName(ActiveGeom.Name) & suffix
+	If root.Width <= 340dip Then lblGeometryPopupTitle.TextSize = 11.5 Else lblGeometryPopupTitle.TextSize = 12.5 * sc
 End Sub
 
 Private Sub SaveCurrentRotor
@@ -3095,13 +3096,24 @@ End Sub
 Private Sub UpdateSweepMultiButtonText
 	If btnSweepMultiModel.IsInitialized = False Then Return
 	Dim count As Int = RotorPopups.SweepCurveCount(SweepMultiMode, CurrentSweepFamilyValues)
-	Select SweepMultiMode
-		Case 0: btnSweepMultiModel.Text = "Inflow Models (4)"
-		Case 1: btnSweepMultiModel.Text = "α Family (" & count & ")"
-		Case 2: btnSweepMultiModel.Text = "Vz Family (" & count & ")"
-		Case 3: btnSweepMultiModel.Text = "μz Family (" & count & ")"
-		Case Else: btnSweepMultiModel.Text = "Active Only"
-	End Select
+	Dim compactLandscape As Boolean = (ld = 1 And root.Width <= 700dip)
+	If compactLandscape Then
+		Select SweepMultiMode
+			Case 0: btnSweepMultiModel.Text = "Models (4)"
+			Case 1: btnSweepMultiModel.Text = "α (" & count & ")"
+			Case 2: btnSweepMultiModel.Text = "Vz (" & count & ")"
+			Case 3: btnSweepMultiModel.Text = "μz (" & count & ")"
+			Case Else: btnSweepMultiModel.Text = "Active"
+		End Select
+	Else
+		Select SweepMultiMode
+			Case 0: btnSweepMultiModel.Text = "Inflow Models (4)"
+			Case 1: btnSweepMultiModel.Text = "α Family (" & count & ")"
+			Case 2: btnSweepMultiModel.Text = "Vz Family (" & count & ")"
+			Case 3: btnSweepMultiModel.Text = "μz Family (" & count & ")"
+			Case Else: btnSweepMultiModel.Text = "Active Only"
+		End Select
+	End If
 	If SweepMultiMode = 4 Then btnSweepMultiModel.TextColor = ColorButText2 Else btnSweepMultiModel.TextColor = ColorAccentCyan
 End Sub
 
@@ -3109,11 +3121,12 @@ Private Sub UpdateSweepAuxControls
 	If btnSweepValues.IsInitialized Then btnSweepValues.Visible = (SweepMultiMode >= 1 And SweepMultiMode <= 3)
 	If btnSweepTrimHover.IsInitialized Then
 		btnSweepTrimHover.Visible = (ActiveCond.OperatingPair <> "rpm_collective")
+		Dim compactLandscape As Boolean = (ld = 1 And root.Width <= 700dip)
 		If SweepTrimOnlyHover Then
-			btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
+			If compactLandscape Then btnSweepTrimHover.Text = "HOVER ✓" Else btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorAccentGreen
 		Else
-			btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
+			If compactLandscape Then btnSweepTrimHover.Text = "HOVER" Else btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorButText2
 		End If
 	End If
@@ -3247,7 +3260,11 @@ End Sub
 
 Private Sub UpdateSweepMaxButtonText
 	If btnSweepMaxMu.IsInitialized = False Then Return
-	btnSweepMaxMu.Text = "μ MAX " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
+	If ld = 1 And root.Width <= 700dip Then
+		btnSweepMaxMu.Text = "μ " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
+	Else
+		btnSweepMaxMu.Text = "μ MAX " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
+	End If
 End Sub
 
 Sub btnCloseSweepPlot_Click
