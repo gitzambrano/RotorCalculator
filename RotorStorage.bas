@@ -326,7 +326,7 @@ End Sub
 Public Sub DuplicateRotor(index As Int) As Int
 	If index < 0 Or index >= Rotors.Size Then Return ActiveIndex
 	Dim g As RotorGeometry = zBETEngine.CloneGeometry(Rotors.Get(index))
-	g.Name = MakeUniqueName(g.Name & " Copy")
+	g.Name = MakeCopyName(g.Name)
 	Return AddRotor(g)
 End Sub
 
@@ -345,6 +345,24 @@ Public Sub FindRotorByName(Name As String) As Int
 		If g.Name.Trim.ToLowerCase = Name.Trim.ToLowerCase Then Return i
 	Next
 	Return -1
+End Sub
+
+Public Sub MakeCopyName(SourceName As String) As String
+	Dim base As String = CleanName(SourceName)
+	Dim parts() As String = Regex.Split(" ", base)
+	If parts.Length >= 2 Then
+		Dim lastPart As String = parts(parts.Length - 1)
+		Dim lastLower As String = lastPart.ToLowerCase
+		If lastLower = "copy" Or lastLower = "(copy)" Then
+			base = base.SubString2(0, base.Length - lastPart.Length - 1).Trim
+		Else If parts.Length >= 3 And IsNumber(lastPart) Then
+			Dim previousPart As String = parts(parts.Length - 2)
+			If previousPart.ToLowerCase = "copy" Then
+				base = base.SubString2(0, base.Length - lastPart.Length - previousPart.Length - 2).Trim
+			End If
+		End If
+	End If
+	Return MakeUniqueName(base & " Copy")
 End Sub
 
 Public Sub MakeUniqueName(BaseName As String) As String
