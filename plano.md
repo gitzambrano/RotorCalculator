@@ -1,116 +1,61 @@
 # RotorCalculator — Implementation Plan
 
-> **Authoritative requirements:** `docs/software_requirements.md`  
-> **Target source:** RotorCalculator 1.20+  
+> **Authoritative specification:** `docs/software_requirements.md`  
+> **Target:** RotorCalculator 1.20+  
 > **Numerical reference:** `tools/zBET.py`  
 > **UI reference:** AeroCalculator interaction principles, adapted for RotorCalculator.
 
-This plan describes implementation order. If this document conflicts with `docs/software_requirements.md`, the requirements document wins.
+## 1. Final architecture
 
-## 1. Final product architecture
+RotorCalculator has three primary tabs:
 
-RotorCalculator keeps three primary tabs:
+1. **Geometry** — complete in-page synchronized rotor editor.
+2. **Conditions** — atmosphere, flight state, two prescribed operating constraints, inflow model, and Kind.
+3. **Results** — dimensional performance, all coefficients together, efficiency, inflow/wake, solved operating state, and atmosphere.
 
-1. **Geometry** — complete in-page rotor editor.
-2. **Conditions** — atmosphere, flight condition, operating constraints, inflow model, and induced-power factor.
-3. **Results** — dimensional performance, all aerodynamic coefficients grouped together, efficiency, inflow/wake, and operating state/atmosphere.
+Global menu: Settings, Quick Unit Converter, Physics & Equations, zBET/zBEMT Conventions, Restore Factory Presets, About.
 
-The global menu contains Settings, Physics & Equations, zBET/zBEMT Conventions, Quick Unit Converter, Restore Factory Presets, and About.
+## 2. Geometry
 
-## 2. Geometry redesign
+Geometry is a scrollable in-page editor with:
+- Loaded rotor strip;
+- Blade Geometry;
+- Derived Geometry;
+- Rotor Aerodynamics;
+- LOAD ROTOR / SAVE / SAVE AS NEW.
 
-### 2.1 In-page editor
+Authoritative planform:
+`c(x)=c0+(c1-c0)x` from x=0 to 1.
 
-Replace the current rotor-list + geometry-popup workflow with one scrollable Geometry editor.
+Editing radius scales both chords proportionally, preserving σref, AR, taper and c/R. Editing c0/c1 recomputes σref/AR. Editing σref or AR scales both chords with constant taper. Blade-count changes σref only. Root cutout changes active-span metrics/integrals only.
 
-Top strip:
+Baseline root/tip incidence is stored in Geometry. Operating collective Δθ is added equally to both incidences.
 
-**Loaded rotor: <name>**
+Saved rotors use a versioned schema. Legacy chord-at-cutout data is migrated explicitly. Import validation occurs before sanitization/clamping.
 
-Panels, using the same aligned row design:
+## 3. Conditions and six operating pairs
 
-### Blade Geometry
-
-Editable:
-- Radius (R)
-- Number of blades (N_b)
-- Root cutout (x_0)
-- Reference root chord (c_0)
-- Tip chord (c_1)
-- Reference solidity (sigma_{ref})
-- Aspect ratio (AR)
-- Root incidence (	heta_{root})
-- Tip incidence (	heta_{tip})
-
-Derived:
-- (sigma_{geom})
-- (sigma_{thrust})
-- taper ratio
-- disk area
-- reference blade area
-- active blade area
-- total twist
-
-Synchronization rules:
-- Radius change scales both chords and preserves (sigma_{ref}), (AR), taper, and (c/R).
-- Chord edits recompute (sigma_{ref}) and (AR).
-- Editing (sigma_{ref}) or (AR) scales both chords while preserving taper.
-- Blade-count change changes (sigma_{ref}), not (AR) or chords.
-- Root cutout changes active-span metrics/integrals but not reference planform metrics.
-
-### Rotor Aerodynamics
-
-Editable:
-- Airfoil preset
-- (a_0)
-- (C_{d0})
-- Tip-loss mode
-- Fixed (B) when applicable
-- Prandtl-Glauert toggle
-
-Bottom actions:
-
-**LOAD ROTOR | SAVE | SAVE AS NEW**
-
-Saved rotors use a versioned schema. Legacy chord-at-cutout data is migrated explicitly to the new reference-axis chord definition.
-
-## 3. Conditions redesign
-
-### 3.1 Atmosphere
-
-Inputs:
+Atmosphere inputs:
 - Altitude
 - Temperature
 
-Outputs such as density, pressure, and speed of sound move to Results.
+Equivalent flow inputs:
+- Horizontal: μ or Vx
+- Axial: α, Vz, or μz
 
-### 3.2 Equivalent flow representations
+Conventions:
+- +Vz = positive climb rate, relative wind from above;
+- +μz = positive downward relative flow;
+- +α = wind from below;
+- μz = Vz/(ΩR) = -μ tan(α).
 
-Horizontal Flow:
-- selector (mu) / (V_x)
-- selected quantity editable
-- equivalent quantity shown read-only
-
-Axial Flow:
-- selector (alpha) / (V_z) / (mu_z)
-- selected quantity editable
-- equivalents shown read-only
-- (+V_z) = positive climb rate / relative wind from above
-- (+alpha) = relative wind from below
-- (mu_z=-mu	analpha)
-- (mu_z=V_z/(Omega R))
-
-### 3.3 Six operating-input pairs
-
-The linked quantities are:
-
+Linked operating quantities:
 - RPM
-- collective increment (Delta	heta)
-- (C_T)
+- collective Δθ
+- CT
 - Thrust
 
-The user prescribes any two:
-
+Selectable prescribed pairs:
 1. RPM + Collective
 2. RPM + CT
 3. RPM + Thrust
@@ -118,150 +63,71 @@ The user prescribes any two:
 5. Collective + Thrust
 6. CT + Thrust
 
-Only the selected pair is shown as editable inputs. The solver finds the remaining two at the current flight condition, including forward flight and climb/descent.
-
-Collective is a uniform pitch offset:
-
-[
-	heta_{root,op}=	heta_{root}+Delta	heta,qquad
-	heta_{tip,op}=	heta_{tip}+Delta	heta.
-]
+The solver computes the remaining two at the current forward/axial flight condition. Dimensional Vx/Vz are re-nondimensionalized at each candidate RPM.
 
 Conditions also contains:
 - Inflow Model
-- (K_{ind})
+- Kind
 
-Profile drag is always Numerical Vectorial and is documented, not selectable.
+Profile drag is always Numerical Vectorial.
 
-## 4. Engine work
+## 4. Results
 
-Refactor the B4A engine around one operating-state resolver:
+Section order:
+- DIMENSIONAL PERFORMANCE
+- AERODYNAMIC COEFFICIENTS
+- EFFICIENCY
+- INFLOW & WAKE
+- OPERATING STATE & ATMOSPHERE
 
-1. Resolve atmosphere.
-2. Resolve candidate RPM.
-3. Convert the selected horizontal/axial representation at that RPM.
-4. Add collective (Delta	heta) uniformly to root/tip incidence.
-5. Solve the selected two-input constraint pair.
-6. Evaluate the aerodynamic state.
-7. Return the full solved state without mutating caller data.
+All aerodynamic coefficients remain together.
 
-Required trim paths:
-- direct prescribed RPM + collective;
-- collective solution at fixed RPM for CT;
-- collective solution at fixed RPM for thrust;
-- RPM solution at fixed collective for CT;
-- RPM solution at fixed collective for thrust;
-- CT + thrust solution for RPM plus collective.
+Operating State & Atmosphere explicitly shows:
+- solved RPM;
+- collective Δθ;
+- solved CT;
+- solved thrust;
+- μ, Vx, μz, Vz, α;
+- tip speed, tip Mach, advancing-tip Mach;
+- altitude, temperature, density, pressure, speed of sound;
+- solution/model status.
 
-All paths use the actual (mu,mu_z) corresponding to the current flight condition and candidate RPM.
+## 5. Universal plots
 
-## 5. Results redesign
+Preserve the original broad capability and the new visual polish:
+- any scalar Result as Y;
+- X = μ or equivalent Vx;
+- selectable μ range;
+- families: Active Only, Inflow Models, α, Vz, μz;
+- VALUES button for custom comma-separated families;
+- active marker;
+- responsive non-overlapping legends;
+- invalid gaps;
+- Light/Dark rendering.
 
-Sections:
+When CT or thrust is prescribed, **Trim only in hover**:
+- OFF: retrim every sweep point;
+- ON: solve once at hover, then hold solved RPM and collective.
 
-### DIMENSIONAL PERFORMANCE
-- Thrust
-- Shaft power
-- Torque
-- In-plane force and other dimensional forces implemented by the engine
+Plot, TABLE and CSV use one cached authoritative dataset. PNG exports the rendered plot.
 
-### AERODYNAMIC COEFFICIENTS
-All together:
-- (C_T)
-- (C_Q=C_{P,shaft})
-- (C_{Qi})
-- (C_{Q0})
-- (C_H)
-- (C_{Hi})
-- (C_{H0})
-- (C_Y)
-- (C_{Mx})
-- (C_{My})
-- (C_{P,air})
+## 6. Geometry backup/sharing
 
-### EFFICIENCY
-- FoM
-- effective L/D
+Settings contains Import Geometries and Export Geometries.
 
-### INFLOW & WAKE
-- (lambda)
-- (lambda_i)
-- (K_x)
-- (K_y)
-- (chi)
-- tip-loss factor (B)
-
-### OPERATING STATE & ATMOSPHERE
-- solved RPM
-- solved collective
-- solved CT
-- solved thrust
-- (mu,V_x,mu_z,V_z,alpha)
-- tip speed
-- tip Mach / advancing-tip Mach
-- altitude
-- temperature
-- density
-- pressure
-- speed of sound
-- solution/model status
-
-All rows have variable-specific precision plus the global +1 Decimal option.
-
-## 6. Plot redesign: old capability + current polish
-
-Restore the original universal sweep philosophy:
-
-- any scalar result can be Y;
-- X is (mu), with (V_x) as equivalent display;
-- family selector:
-  - Active Only
-  - Inflow Models
-  - alpha family
-  - Vz family
-  - mu_z family
-- clean current theme, auto-scaling, invalid gaps, active marker, non-intrusive legends.
-
-Add:
-- **VALUES** button for comma-separated custom family values;
-- X-range control;
-- session persistence of plot choices.
-
-### Trim in plots
-
-When CT or thrust is part of the selected operating-input pair, show:
-
-**Trim only in hover**
-
-OFF:
-- retrim at every sweep point using that point's flight condition.
-
-ON:
-- trim once at hover;
-- hold solved RPM and collective constant across the full sweep.
-
-TABLE and CSV use the same complete sampled family dataset as the plot. TABLE therefore shows all plotted curves, not just the active curve.
-
-## 7. Geometry backup and sharing
-
-Settings gains:
-
-- **Import Geometries**
-- **Export Geometries**
-
-Export writes the entire versioned rotor database to one portable text file through Android's document picker.
+Export writes the full versioned rotor database via Android CREATE_DOCUMENT.
 
 Import:
 1. choose file;
-2. validate schema and numeric ranges;
-3. show number of valid geometries;
-4. merge after confirmation;
-5. resolve duplicate names explicitly;
-6. leave unrelated local geometries untouched.
+2. validate schema and numeric domains;
+3. report valid count;
+4. confirm;
+5. choose Rename / Replace / Skip for conflicts;
+6. merge without deleting unrelated local rotors.
 
-This is the RotorCalculator equivalent of AeroCalculator's airplane database interchange, implemented with modern Android document-provider APIs.
+Restore Factory Presets restores factory definitions while preserving user rotors.
 
-## 8. Help and settings
+## 7. Help/settings
 
 Settings:
 - Dark / Light
@@ -271,51 +137,47 @@ Settings:
 - Export Geometries
 
 Help:
-- Physics & Equations offline HTML
-- zBET/zBEMT conventions
-- field-level popup help on all Geometry, Conditions, and Results rows
+- offline Physics & Equations;
+- zBET/zBEMT conventions;
+- tap-accessible row/result explanations.
 
-Mobile discovery is tap-first; no essential explanation depends on mouse hover.
-
-## 9. Verification gates
+## 8. Verification gates
 
 Before release:
+1. geometry synchronization/migration tests;
+2. six operating-pair tests in hover, forward flight and axial flow;
+3. Numerical Vectorial-only profile drag;
+4. Kind tests;
+5. all coefficients grouped together;
+6. explicit solved RPM/collective/CT/thrust Results;
+7. universal plot catalog and all families;
+8. custom family VALUES;
+9. trim-only-hover ON/OFF;
+10. plot/TABLE/CSV dataset parity;
+11. PNG/CSV SAF export;
+12. geometry import/export round-trip and malformed-input rejection;
+13. factory restore preserving user rotors;
+14. Dark/Light portrait/landscape/recreation UI smoke;
+15. compiled APK installed and manually operated;
+16. real screenshots reviewed before APK/AAB is treated as current.
 
-1. geometry synchronization equations and migration tests;
-2. six operating-pair tests in hover, forward flight, and axial flow;
-3. Numerical Vectorial profile drag only;
-4. K_ind tests;
-5. all coefficients grouped in Results;
-6. every result available to Plot;
-7. custom family VALUES;
-8. trim-only-hover ON/OFF;
-9. TABLE/CSV/PNG parity with plotted dataset;
-10. geometry import/export round-trip;
-11. Light/Dark portrait/landscape UI smoke;
-12. compiled APK installed and operated manually;
-13. screenshots reviewed before APK/AAB are treated as current.
+## 9. Current source status
 
-## 10. Implementation status
-
-The pre-existing 1.20 source already contains useful components that will be retained where compatible:
-- zBET analytical engine;
-- four inflow models;
-- Numerical Vectorial profile drag;
-- Sissingh convergence;
-- Light/Dark themes;
-- +1 Decimal;
-- offline physics help;
-- SAF CSV/PNG export;
-- universal sweep Y-variable catalog;
-- multi-curve sweep renderer.
-
-The following are architectural changes and must be completed before release:
+Implemented in main:
 - in-page synchronized Geometry editor;
-- RPM/collective/CT/thrust six-pair operating solver;
-- Conditions redesign;
-- Results regrouping;
-- complete plot dataset/table architecture;
-- editable family values;
-- trim-only-hover plot behavior;
-- geometry import/export;
-- saved-rotor schema migration.
+- versioned rotor storage and migration;
+- import/export geometry backup;
+- six-pair operating solver;
+- current-flight-condition trim;
+- fixed Numerical Vectorial profile drag;
+- Kind input;
+- grouped Results with explicit trim solution;
+- universal sweep Y catalog;
+- multi-curve families and custom VALUES;
+- hover-only trim option;
+- shared plot/table/CSV dataset;
+- PNG/CSV SAF export;
+- Light/Dark and +1 Decimal;
+- offline help framework.
+
+Remaining release work is verification/polish: source-contract gates, numerical tests, layout/contrast audit, offline-help synchronization, B4A compilation, installed-APK operation, and real screenshot review.
