@@ -66,6 +66,45 @@ if candidates:
 print("NOT_FOUND",sys.argv[1]); sys.exit(2)
 PY
 
+cat > /tmp/set_first_edit_text.py <<'PY'
+import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile, time
+value=sys.argv[1]
+xml=tempfile.NamedTemporaryFile(delete=False,suffix='.xml').name
+subprocess.run(['adb','shell','uiautomator','dump','/sdcard/window.xml'],check=False,stdout=subprocess.DEVNULL)
+subprocess.run(['adb','pull','/sdcard/window.xml',xml],check=True,stdout=subprocess.DEVNULL)
+root=ET.parse(xml).getroot()
+target=None
+for n in root.iter('node'):
+    if n.attrib.get('class')!='android.widget.EditText' or n.attrib.get('enabled','true')=='false':
+        continue
+    m=re.match(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]',n.attrib.get('bounds',''))
+    if m:
+        target=tuple(map(int,m.groups())); break
+if not target:
+    raise SystemExit('No enabled EditText found')
+x1,y1,x2,y2=target
+subprocess.run(['adb','shell','input','tap',str((x1+x2)//2),str((y1+y2)//2)],check=True)
+time.sleep(.15)
+subprocess.run(['adb','shell','input','keyevent','123'],check=True)
+for _ in range(96):
+    subprocess.run(['adb','shell','input','keyevent','67'],check=True,stdout=subprocess.DEVNULL)
+subprocess.run(['adb','shell','input','text',value],check=True)
+PY
+
+cat > /tmp/extract_edit_values.py <<'PY'
+import subprocess, sys, xml.etree.ElementTree as ET, tempfile
+out=sys.argv[1]
+xml=tempfile.NamedTemporaryFile(delete=False,suffix='.xml').name
+subprocess.run(['adb','shell','uiautomator','dump','/sdcard/window.xml'],check=False,stdout=subprocess.DEVNULL)
+subprocess.run(['adb','pull','/sdcard/window.xml',xml],check=True,stdout=subprocess.DEVNULL)
+root=ET.parse(xml).getroot()
+vals=[]
+for n in root.iter('node'):
+    if n.attrib.get('class')=='android.widget.EditText' and n.attrib.get('enabled','true')!='false':
+        vals.append(n.attrib.get('text',''))
+open(out,'w',encoding='utf-8').write('\n'.join(vals)+'\n')
+print('EditText values:', vals)
+PY
 cat > /tmp/check_bounds.py <<'PY'
 import sys, json, glob, os, struct
 png=sys.argv[1]
@@ -169,6 +208,55 @@ assert_document_picker() {
   fi
   adb shell input keyevent 4
   sleep 0.5
+  assert_app_alive
+}
+
+wait_for_app_foreground() {
+  local attempt
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    if adb shell dumpsys window windows | grep -E "mCurrentFocus|mFocusedApp" | grep -q "flightdyn.rotorcalculator"; then
+      return 0
+    fi
+    sleep 0.35
+  done
+  echo "RotorCalculator did not regain foreground focus" >&2
+  return 1
+}
+
+navigate_documents_downloads() {
+  if python3 /tmp/tap_text.py "Show roots" >/dev/null 2>&1; then
+    sleep 0.3
+    tap_text_scrolling "Downloads" 393 873
+    sleep 0.5
+  fi
+}
+
+save_document_picker() {
+  local OUTDIR="$1"
+  local STEM="$2"
+  local EXPECTED="$3"
+  sleep 0.7
+  adb shell dumpsys window windows | grep -qi "documentsui"
+  navigate_documents_downloads
+  safe_screencap "$OUTDIR/$STEM.png"
+  python3 /tmp/ui_node.py "$OUTDIR/$STEM.xml" > "$OUTDIR/$STEM.json"
+  grep -Fqi "$EXPECTED" "$OUTDIR/$STEM.json"
+  python3 /tmp/tap_text.py "SAVE"
+  sleep 0.7
+  if adb shell dumpsys window windows | grep -qi "documentsui"; then
+    python3 /tmp/tap_text.py "REPLACE" >/dev/null 2>&1 || true
+  fi
+  wait_for_app_foreground
+  assert_app_alive
+}
+
+open_document_picker_file() {
+  local FILENAME="$1"
+  sleep 0.7
+  adb shell dumpsys window windows | grep -qi "documentsui"
+  navigate_documents_downloads
+  tap_text_scrolling "$FILENAME" 393 873
+  wait_for_app_foreground
   assert_app_alive
 }
 
@@ -546,6 +634,92 @@ functional_smoke() {
   python3 /tmp/tap_text.py "Export Geometries"
   assert_document_picker "$OUT" "14f-export-picker" "rotorcalculator_geometries.txt"
 
+  # QA-6: perform a real geometry export/import round-trip through Android SAF.
+  # A temporary user rotor is exported, deleted locally, imported back, then its
+  # editable numeric fields are compared before/after to prove value preservation.
+  adb shell input keyevent 4
+  sleep 0.4
+  python3 /tmp/tap_text.py "NEW ROTOR"
+  sleep 0.6
+  python3 /tmp/extract_edit_values.py "$OUT/14g-roundtrip-before-top.txt"
+  for _ in 1 2 3 4 5 6; do
+    adb shell input swipe 196 700 196 220 240 || true
+    sleep 0.12
+  done
+  python3 /tmp/extract_edit_values.py "$OUT/14h-roundtrip-before-bottom.txt"
+  python3 /tmp/tap_text.py "SAVE"
+  sleep 0.7
+  adb shell rm -f /sdcard/Download/rotorcalculator_geometries.txt || true
+  adb shell input tap 369 28
+  sleep 0.3
+  python3 /tmp/tap_text.py "Settings"
+  sleep 0.4
+  python3 /tmp/tap_text.py "Export Geometries"
+  save_document_picker "$OUT" "14i-export-roundtrip" "rotorcalculator_geometries.txt"
+  adb shell input keyevent 4
+  sleep 0.4
+  python3 /tmp/tap_text.py "Custom Rotor"
+  sleep 0.5
+  python3 /tmp/tap_text.py "DELETE"
+  sleep 0.3
+  python3 /tmp/tap_text.py "DELETE"
+  sleep 0.6
+  python3 /tmp/ui_node.py "$OUT/14j-after-roundtrip-delete.xml" > "$OUT/14j-after-roundtrip-delete.json"
+  ! grep -Fqi "Custom Rotor" "$OUT/14j-after-roundtrip-delete.json"
+  adb shell input tap 369 28
+  sleep 0.3
+  python3 /tmp/tap_text.py "Settings"
+  sleep 0.4
+  python3 /tmp/tap_text.py "Import Geometries"
+  open_document_picker_file "rotorcalculator_geometries.txt"
+  sleep 0.6
+  python3 /tmp/ui_node.py "$OUT/14k-roundtrip-found.xml" > "$OUT/14k-roundtrip-found.json"
+  grep -Fqi "valid geometries" "$OUT/14k-roundtrip-found.json"
+  python3 /tmp/tap_text.py "IMPORT"
+  sleep 0.4
+  python3 /tmp/tap_text.py "Skip same-name imported geometries"
+  sleep 0.8
+  adb shell input keyevent 4
+  sleep 0.4
+  python3 /tmp/ui_node.py "$OUT/14l-roundtrip-restored.xml" > "$OUT/14l-roundtrip-restored.json"
+  grep -Fqi "Custom Rotor" "$OUT/14l-roundtrip-restored.json"
+  python3 /tmp/tap_text.py "Custom Rotor"
+  sleep 0.5
+  python3 /tmp/extract_edit_values.py "$OUT/14m-roundtrip-after-top.txt"
+  cmp "$OUT/14g-roundtrip-before-top.txt" "$OUT/14m-roundtrip-after-top.txt"
+  for _ in 1 2 3 4 5 6; do
+    adb shell input swipe 196 700 196 220 240 || true
+    sleep 0.12
+  done
+  python3 /tmp/extract_edit_values.py "$OUT/14n-roundtrip-after-bottom.txt"
+  cmp "$OUT/14h-roundtrip-before-bottom.txt" "$OUT/14n-roundtrip-after-bottom.txt"
+  adb shell input keyevent 4
+  sleep 0.4
+
+  # QA-6: live import must reject malformed and syntactically valid out-of-domain files.
+  printf '%s\n' 'not-a-rotorcalculator-database' | adb shell 'cat > /sdcard/Download/rotorcalculator_malformed.txt'
+  printf '%s\n' 'ROTORCALCULATOR_GEOMETRIES|2' 'R|Out Of Domain|75|4|0.10|0.50|0.40|0.20|0.10|6.0|0.01|fixed|0.97|1' | adb shell 'cat > /sdcard/Download/rotorcalculator_out_of_domain.txt'
+  adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Download/rotorcalculator_malformed.txt >/dev/null || true
+  adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Download/rotorcalculator_out_of_domain.txt >/dev/null || true
+  adb shell input tap 369 28
+  sleep 0.3
+  python3 /tmp/tap_text.py "Settings"
+  sleep 0.4
+  python3 /tmp/tap_text.py "Import Geometries"
+  open_document_picker_file "rotorcalculator_malformed.txt"
+  sleep 0.5
+  python3 /tmp/ui_node.py "$OUT/14o-malformed-rejected.xml" > "$OUT/14o-malformed-rejected.json"
+  grep -Fqi "No valid RotorCalculator geometries" "$OUT/14o-malformed-rejected.json"
+  python3 /tmp/tap_text.py "OK"
+  sleep 0.3
+  python3 /tmp/tap_text.py "Import Geometries"
+  open_document_picker_file "rotorcalculator_out_of_domain.txt"
+  sleep 0.5
+  python3 /tmp/ui_node.py "$OUT/14p-domain-rejected.xml" > "$OUT/14p-domain-rejected.json"
+  grep -Fqi "No valid RotorCalculator geometries" "$OUT/14p-domain-rejected.json"
+  python3 /tmp/tap_text.py "OK"
+  sleep 0.3
+
   python3 /tmp/tap_text.py "SI"
   sleep 0.3
   python3 /tmp/tap_text.py "STANDARD"
@@ -627,8 +801,11 @@ functional_smoke() {
   sleep 0.4
   python3 /tmp/ui_node.py "$OUT/16-family-values.xml" > "$OUT/16-family-values.json"
   grep -qi "FAMILY VALUES" "$OUT/16-family-values.json"
-  python3 /tmp/tap_text.py "CANCEL"
-  sleep 0.3
+  python3 /tmp/set_first_edit_text.py "-12,-3,4,11"
+  python3 /tmp/tap_text.py "APPLY"
+  sleep 0.6
+  python3 /tmp/ui_node.py "$OUT/16a-family-values-applied.xml" > "$OUT/16a-family-values-applied.json"
+  grep -Fqi "α Family (4)" "$OUT/16a-family-values-applied.json"
 
   # Every family selector must be reachable without crashing the sweep.
   python3 /tmp/tap_text.py "α Family"
@@ -648,6 +825,67 @@ functional_smoke() {
   python3 /tmp/tap_text.py "Inflow Models"
   sleep 0.5
   assert_app_alive
+
+  # QA-4: exercise every available sweep Y output, not just the default CP.
+  # Keep Active Only during this catalog walk so each selection is a single-curve solve.
+  python3 /tmp/tap_text.py "Inflow Models"
+  sleep 0.3
+  python3 /tmp/tap_text.py "Active Only"
+  sleep 0.5
+  local current_y="CQ / CPshaft — Shaft Power"
+  local sweep_y_labels=(
+    "CT — Thrust"
+    "CQ / CPshaft — Shaft Power"
+    "CQi — Induced Torque"
+    "CQ0 — Profile Torque"
+    "CH — In-Plane Force"
+    "CHi — Induced In-Plane"
+    "CH0 — Profile In-Plane"
+    "CY — Side Force"
+    "CMx — Roll Moment"
+    "CMy — Pitch Moment"
+    "CPair — Air Power"
+    "λ — Total Inflow"
+    "λi — Induced Inflow"
+    "L/D eff — Rotor Efficiency"
+    "FoM — Figure of Merit"
+    "Kx — Longitudinal Inflow"
+    "Ky — Lateral Inflow"
+    "χ — Wake Skew (°)"
+    "Mat — Advancing Tip Mach"
+    "Shaft Power (kW)"
+    "Shaft Power (HP)"
+    "Thrust (N)"
+    "Thrust (kgf)"
+    "Torque (N·m)"
+    "In-Plane Force H (N)"
+    "B — Tip-Loss Factor"
+    "Tip Speed ΩR (m/s)"
+    "Solved RPM"
+    "Solved Collective Δθ (deg)"
+    "μ — Advance Ratio"
+    "Vx — Forward Speed (m/s)"
+    "μz — Axial Ratio"
+    "Vz — Axial Speed (m/s)"
+    "α — Rotor AoA (deg)"
+    "Altitude (m)"
+    "Temperature (°C)"
+    "Air Density ρ (kg/m³)"
+    "Ambient Pressure (Pa)"
+    "Speed of Sound (m/s)"
+  )
+  local target_y
+  for target_y in "${sweep_y_labels[@]}"; do
+    python3 /tmp/tap_text.py "$current_y"
+    sleep 0.2
+    tap_text_scrolling "$target_y" 393 873
+    sleep 0.35
+    assert_app_alive
+    python3 /tmp/ui_node.py "$OUT/16b-sweep-y-current.xml" > "$OUT/16b-sweep-y-current.json"
+    grep -Fqi "$target_y" "$OUT/16b-sweep-y-current.json"
+    echo "Verified sweep Y: $target_y"
+    current_y="$target_y"
+  done
 
   python3 /tmp/tap_text.py "X · μ"
   sleep 0.3
