@@ -216,7 +216,7 @@ Sub Globals
 	Private btnViewPolarPlot As Button
 	Private lblResultStatus As Label
 	Private lblTrimSummary As Label
-	Private lblResults(25) As Label
+	Private lblResults(36) As Label
 	
 	' Multi-Parameter μ-Sweep Popup
 	Private pnlSweepPopup As Panel
@@ -1273,132 +1273,100 @@ End Sub
 Private Sub BuildPageRes
 	pnlBack2.Initialize("")
 	pnlBack2.Color = ColorPnlInput5
-	scvRes.Initialize(2500)
+	scvRes.Initialize(3600)
 	pnlBack2.AddView(scvRes, 0, 0, root.Width, root.Height - HeaderHeight)
 	
-	Dim PanelHeight1 As Int = 48dip * sc
-	
-	' 1. Top Action Button: Open Multi-Parameter μ-Sweep
 	btnViewPolarPlot.Initialize("btnViewPolarPlot")
 	btnViewPolarPlot.Text = "OPEN PARAMETER SWEEP"
-	If root.Width <= 340dip Then btnViewPolarPlot.TextSize = 12 Else btnViewPolarPlot.TextSize = 14 * sc
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextColor = ColorAccentCyan
 	btnViewPolarPlot.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW * 3 / 100, 8dip * sc, UiContentW * 94 / 100, 48dip * sc)
+	If root.Width <= 340dip Then btnViewPolarPlot.TextSize = 12 Else btnViewPolarPlot.TextSize = 14 * sc
+	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW*3/100, 8dip, UiContentW*94/100, 48dip)
 	
 	lblResultStatus.Initialize("lblResultStatus")
-	lblResultStatus.Text = "MODEL STATUS · VALID"
-	lblResultStatus.TextColor = ColorAccentGreen
+	lblResultStatus.Text = "MODEL STATUS · ---"
+	lblResultStatus.TextColor = ColorButText2
 	lblResultStatus.Typeface = Typeface.DEFAULT_BOLD
-	If root.Width <= 340dip Then lblResultStatus.TextSize = 9.5 Else lblResultStatus.TextSize = 10.5 * sc
+	lblResultStatus.TextSize = 10 * sc
 	lblResultStatus.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	lblResultStatus.SingleLine = True
-	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + UiContentW * 4 / 100, 58dip * sc, UiContentW * 92 / 100, 30dip * sc)
+	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + UiContentW*4/100, 58dip, UiContentW*92/100, 28dip)
 	
 	lblTrimSummary.Initialize("lblTrimSummary")
-	lblTrimSummary.Text = "OPERATING · --- RPM · θ0 ---°"
-	lblTrimSummary.TextColor = ColorButText2
+	lblTrimSummary.Text = "TRIM SOLUTION · ---"
+	lblTrimSummary.TextColor = ColorAccentCyan
 	lblTrimSummary.Typeface = Typeface.DEFAULT_BOLD
-	If root.Width <= 340dip Then lblTrimSummary.TextSize = 9 Else lblTrimSummary.TextSize = 10 * sc
+	lblTrimSummary.TextSize = 9.5 * sc
 	lblTrimSummary.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblTrimSummary.SingleLine = True
-	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + UiContentW * 4 / 100, 88dip * sc, UiContentW * 92 / 100, 24dip * sc)
+	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + UiContentW*4/100, 86dip, UiContentW*92/100, 28dip)
 	
-	Dim startY As Int = 118dip * sc
-	
-	Dim outputLabels As List
-	outputLabels.Initialize2(Array As String( _
-		"Total Thrust (T)", _
-		"Thrust Coef (CT)", _
-		"Shaft Power (P)", _
-		"Air Power Coef (CPair)", _
-		"Total Torque (Q)", _
-		"Torque Coef (CQ)", _
-		"Induced Torque (CQi)", _
-		"Profile Drag Torque (CQ0)", _
-		"In-Plane Drag (H)", _
-		"In-Plane Coef (CH)", _
-		"Side Force Coef (CY)", _
-		"Pitch Moment Coef (CMy)", _
-		"Roll Moment Coef (CMx)", _
-		"Figure of Merit (FoM)", _
-		"Effective L/D Ratio", _
-		"Total Inflow Ratio (λ)", _
-		"Induced Inflow Ratio (λi)", _
-		"Longitudinal Inflow (Kx)", _
-		"Lateral Inflow (Ky)", _
-		"Wake Skew Angle (χ)", _
-		"Tip Mach (Hover)", _
-		"Advancing Tip Mach (Mat)", _
-		"Air Density (ρ)", _
-		"Ambient Pressure (p)", _
-		"Speed of Sound (a)" _
+	Dim labels As List
+	labels.Initialize2(Array As String( _
+		"Total Thrust (T)", "Shaft Power (P)", "Total Torque (Q)", "In-Plane Drag (H)", _
+		"Thrust Coef (CT)", "Torque Coef (CQ)", "Induced Torque (CQi)", "Profile Torque (CQ0)", _
+		"In-Plane Coef (CH)", "Induced In-Plane (CHi)", "Profile In-Plane (CH0)", "Side Force Coef (CY)", _
+		"Roll Moment Coef (CMx)", "Pitch Moment Coef (CMy)", "Air Power Coef (CPair)", _
+		"Figure of Merit (FoM)", "Effective L/D Ratio", _
+		"Total Inflow Ratio (λ)", "Induced Inflow Ratio (λi)", "Longitudinal Inflow (Kx)", _
+		"Lateral Inflow (Ky)", "Wake Skew Angle (χ)", "Tip-Loss Factor (B)", _
+		"Advance Ratio (μ)", "Forward Speed (Vx)", "Axial Ratio (μz)", "Axial Speed (Vz)", "Rotor AoA (α)", _
+		"Tip Speed (ΩR)", "Tip Mach", "Advancing Tip Mach (Mat)", _
+		"Altitude", "Temperature", "Air Density (ρ)", "Ambient Pressure (p)", "Speed of Sound (a)" _
 	))
-	
-	Dim i As Int
-	Dim sectionH As Int = 24dip * sc
-	Dim curY As Int = startY
-	For i = 0 To outputLabels.Size - 1
+	Dim y As Int = 120dip
+	Dim rowH As Int = 48dip
+	Dim sectionH As Int = 25dip
+	For i = 0 To labels.Size - 1
 		Dim sectionTitle As String = ""
 		Select i
-			Case 0: sectionTitle = "THRUST & POWER"
-			Case 8: sectionTitle = "FORCES & MOMENTS"
-			Case 13: sectionTitle = "EFFICIENCY"
-			Case 15: sectionTitle = "INFLOW & WAKE"
-			Case 20: sectionTitle = "MACH & ATMOSPHERE"
+			Case 0: sectionTitle = "DIMENSIONAL PERFORMANCE"
+			Case 4: sectionTitle = "AERODYNAMIC COEFFICIENTS"
+			Case 15: sectionTitle = "EFFICIENCY"
+			Case 17: sectionTitle = "INFLOW & WAKE"
+			Case 23: sectionTitle = "OPERATING STATE & ATMOSPHERE"
 		End Select
 		If sectionTitle <> "" Then
-			Dim lblSection As Label
-			lblSection.Initialize("")
-			lblSection.Text = sectionTitle
-			lblSection.TextColor = ColorAccentGreen
-			lblSection.TextSize = 10 * sc
-			lblSection.Typeface = Typeface.DEFAULT_BOLD
-			lblSection.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-			scvRes.Panel.AddView(lblSection, UiContentLeft + UiContentW * 4 / 100, curY, UiContentW * 92 / 100, sectionH)
-			curY = curY + sectionH
+			Dim sh As Label
+			sh.Initialize("")
+			sh.Text = sectionTitle
+			sh.TextColor = ColorAccentGreen
+			sh.Typeface = Typeface.DEFAULT_BOLD
+			sh.TextSize = 10 * sc
+			sh.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+			scvRes.Panel.AddView(sh, UiContentLeft + UiContentW*4/100, y, UiContentW*92/100, sectionH)
+			y = y + sectionH
 		End If
-		
-		Dim pnltest As Panel
-		Dim pnlline As Panel
-		pnltest.Initialize("")
-		pnlline.Initialize("")
-		
-		scvRes.Panel.AddView(pnltest, UiContentLeft, curY, UiContentW, PanelHeight1)
-		scvRes.Panel.AddView(pnlline, UiContentLeft, curY + PanelHeight1 - 1dip, UiContentW, 1dip * sc)
-		pnlline.Color = ColorPnlLine3
-		
-		If (i Mod 2) = 1 Then
-			pnltest.Color = ColorPnlInput3
-		Else
-			pnltest.Color = ColorPnlInput4
-		End If
-		
-		Dim fullLabel As String = outputLabels.Get(i)
-		Dim lblVar As Label
-		lblVar.Initialize("lblResultTip")
-		pnltest.AddView(lblVar, pnltest.Width * 4 / 100, 0, pnltest.Width * 52 / 100, PanelHeight1)
-		lblVar.Text = ResultDisplayLabel(fullLabel)
-		If root.Width <= 340dip Then lblVar.TextSize = 12 Else lblVar.TextSize = 13 * sc
-		lblVar.Typeface = Typeface.DEFAULT_BOLD
-		lblVar.TextColor = ColorTitleText
-		lblVar.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-		lblVar.SingleLine = True
-		lblVar.Tag = fullLabel
-		
+		Dim row As Panel
+		row.Initialize("")
+		If i Mod 2 = 0 Then row.Color = ColorPnlInput4 Else row.Color = ColorPnlInput3
+		scvRes.Panel.AddView(row, UiContentLeft, y, UiContentW, rowH)
+		Dim sep As Panel
+		sep.Initialize("")
+		sep.Color = ColorPnlLine3
+		scvRes.Panel.AddView(sep, UiContentLeft, y + rowH - 1dip, UiContentW, 1dip)
+		Dim fullLabel As String = labels.Get(i)
+		Dim lbl As Label
+		lbl.Initialize("lblResultTip")
+		lbl.Tag = fullLabel
+		lbl.Text = ResultDisplayLabel(fullLabel)
+		lbl.TextColor = ColorTitleText
+		lbl.Typeface = Typeface.DEFAULT_BOLD
+		If root.Width <= 340dip Then lbl.TextSize = 11 Else lbl.TextSize = 12.5 * sc
+		lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+		lbl.SingleLine = True
+		row.AddView(lbl, row.Width*4/100, 0, row.Width*58/100, rowH)
 		lblResults(i).Initialize("")
-		pnltest.AddView(lblResults(i), pnltest.Width * 56 / 100, 0, pnltest.Width * 40 / 100, PanelHeight1)
 		lblResults(i).Text = "---"
-		If root.Width <= 340dip Then lblResults(i).TextSize = 12 Else lblResults(i).TextSize = 13 * sc
-		lblResults(i).Typeface = Typeface.DEFAULT_BOLD
 		lblResults(i).TextColor = ColorAccentCyan
+		lblResults(i).Typeface = Typeface.DEFAULT_BOLD
+		If root.Width <= 340dip Then lblResults(i).TextSize = 11 Else lblResults(i).TextSize = 12.5 * sc
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 		lblResults(i).SingleLine = True
-		curY = curY + PanelHeight1
+		row.AddView(lblResults(i), row.Width*62/100, 0, row.Width*34/100, rowH)
+		y = y + rowH
 	Next
-	
-	scvRes.Panel.Height = curY + 20dip * sc
+	scvRes.Panel.Height = y + 24dip
 End Sub
 
 ' Compact labels are used only when the available width requires them.
