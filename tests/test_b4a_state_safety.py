@@ -7,17 +7,23 @@ def text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_geometry_is_complete_in_page_editor():
+def test_geometry_is_rotor_library_with_contextual_editor():
     main = text("RotorCalculator.b4a")
-    assert 'lblLoadedRotor.Text = "Loaded rotor: "' in main
+    assert '"ROTOR LIBRARY"' in main
+    assert '"Tap a rotor to select it and open its geometry."' in main
+    assert 'CreateRowButton("NEW ROTOR", "btnNewRotor")' in main
+    assert "Private Sub OpenGeometryPopup" in main
+    assert "Private GeometryPopupOpen As Boolean = False" in main
     assert '"BLADE GEOMETRY"' in main
     assert '"DERIVED GEOMETRY"' in main
     assert '"ROTOR AERODYNAMICS"' in main
-    assert 'CreateRowButton("LOAD ROTOR", "btnLoadRotor")' in main
-    assert 'CreateRowButton("SAVE", "btnSaveRotor")' in main
-    assert 'CreateRowButton("SAVE AS NEW", "btnSaveAsNewRotor")' in main
-    assert "OpenGeometryPopup" not in main
-    assert "GeometryPopupOpen" not in main
+    assert 'CreateRowButton("SAVE", "btnGeometrySave")' in main
+    assert 'CreateRowButton("COPY", "btnGeometryCopy")' in main
+    assert 'CreateRowButton("DELETE", "btnGeometryDelete")' in main
+    assert 'CreateRowButton("LOAD ROTOR", "btnLoadRotor")' not in main
+    assert 'CreateRowButton("SAVE AS NEW", "btnSaveAsNewRotor")' not in main
+    assert 'lblAppTitle.Text = "RotorCalculator"' in main
+    assert "lblAppTitle.Text = ActiveGeom.Name" not in main
 
 
 def test_geometry_exposes_all_authoritative_inputs():
@@ -97,13 +103,19 @@ def test_rotor_aerodynamics_share_geometry_panel_language():
     assert 'options.Add("Sissingh")' in main
 
 
-def test_geometry_edits_are_explicitly_saved():
+def test_geometry_edits_are_explicitly_saved_and_contextual_actions_are_local():
     main = text("RotorCalculator.b4a")
+    storage = text("RotorStorage.bas")
     assert "GeometryDirty = True" in main
     assert "Private Sub SaveCurrentRotor" in main
     assert "RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)" in main
-    assert "Sub btnSaveRotor_Click" in main
-    assert "Sub btnSaveAsNewRotor_Click" in main
+    assert "Sub btnGeometrySave_Click" in main
+    assert "Sub btnGeometryCopy_Click" in main
+    assert "Sub btnGeometryDelete_Click" in main
+    assert "RotorStorage.AddRotor(copyGeom)" in main
+    assert "RotorStorage.DeleteRotor(RotorStorage.ActiveIndex)" in main
+    assert "Public Sub DuplicateRotor" in storage
+    assert "Public Sub DeleteRotor" in storage
     assert '"Unsaved Geometry"' in main
 
 
@@ -210,17 +222,17 @@ def test_results_group_all_coefficients_together():
     main = text("RotorCalculator.b4a")
     assert '"AERODYNAMIC COEFFICIENTS"' in main
     expected = {
-        4: "ActiveRes.CT",
-        5: "ActiveRes.CQ",
-        6: "ActiveRes.CQi",
-        7: "ActiveRes.CQ0",
-        8: "ActiveRes.CH",
-        9: "ActiveRes.CHi",
-        10: "ActiveRes.CH0",
-        11: "ActiveRes.CY",
-        12: "ActiveRes.CMx",
-        13: "ActiveRes.CMy",
-        14: "ActiveRes.CPair",
+        7: "ActiveRes.CT",
+        8: "ActiveRes.CQ",
+        9: "ActiveRes.CQi",
+        10: "ActiveRes.CQ0",
+        11: "ActiveRes.CH",
+        12: "ActiveRes.CHi",
+        13: "ActiveRes.CH0",
+        14: "ActiveRes.CY",
+        15: "ActiveRes.CMx",
+        16: "ActiveRes.CMy",
+        17: "ActiveRes.CPair",
     }
     for index, source in expected.items():
         assert f"lblResults({index}).Text = FormatOutputValue({source}" in main
@@ -415,6 +427,8 @@ def test_requirements_and_plan_are_authoritative_for_new_architecture():
     assert "**Trim only in hover**" in req
     assert "six operating pairs" in plan.lower()
     assert "universal plots" in plan.lower()
+    assert "rotor library" in plan.lower()
+    assert "geometry popup" in plan.lower()
 
 
 def test_activity_recreation_preserves_unsaved_geometry_and_sweep_state():
@@ -433,8 +447,8 @@ def test_factory_restore_preserves_user_rotors_and_library_marks_origin():
     assert "Rotors.Set(existing, zBETEngine.CloneGeometry(factoryGeom))" in storage
     assert "Rotors.Add(zBETEngine.CloneGeometry(factoryGeom))" in storage
     assert "RotorStorage.RestoreFactoryPresets" in main
-    assert '"FACTORY · "' in main
-    assert '"USER · "' in main
+    assert 'Dim kind As String = "USER"' in main
+    assert 'kind = "FACTORY"' in main
     assert "custom rotors preserved" in main.lower()
 
 
@@ -452,11 +466,11 @@ def test_results_show_four_operating_solution_variables_as_rows():
     main = text("RotorCalculator.b4a")
     for label in ("Solved RPM", "Collective Increment (Δθ)", "Solved CT", "Solved Thrust"):
         assert f'"{label}"' in main
-    assert "Private lblResults(40) As Label" in main
-    assert "lblResults(23).Text = FormatOutputValue(ActiveRes.TrimmedRPM" in main
-    assert "lblResults(24).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg" in main
-    assert "lblResults(25).Text = FormatOutputValue(ActiveRes.CT" in main
-    assert "lblResults(26).Text = FormatOutputValue(ActiveRes.ThrustN" in main
+    assert "Private lblResults(43) As Label" in main
+    assert "lblResults(26).Text = FormatOutputValue(ActiveRes.TrimmedRPM" in main
+    assert "lblResults(27).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg" in main
+    assert "lblResults(28).Text = FormatOutputValue(ActiveRes.CT" in main
+    assert "lblResults(29).Text = FormatOutputValue(ActiveRes.ThrustN" in main
 
 
 def test_flow_equivalents_get_dedicated_mobile_second_line():
