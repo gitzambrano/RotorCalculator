@@ -107,7 +107,7 @@ def test_equivalent_axial_representations_and_signs():
 
 
 def test_known_operating_state_and_all_six_pairs():
-    """Generate one valid forward/climb state, then reconstruct it from every pair."""
+    """Exercise all six pairs, including the specified non-unique CT case."""
     geom = make_geometry(rpm=430.0, pg=True, tip_loss="fixed")
     known_rpm = 430.0
     known_collective = 4.0
@@ -134,11 +134,11 @@ def test_known_operating_state_and_all_six_pairs():
     target_ct = baseline["CT"]
     target_thrust = baseline["T_N"]
 
+    # These five pairs are dimensionally well posed for this reference state.
     cases = {
         "rpm_collective": dict(rpm=known_rpm, collective_deg=known_collective),
         "rpm_ct": dict(rpm=known_rpm, collective_deg=0.0),
         "rpm_thrust": dict(rpm=known_rpm, collective_deg=0.0),
-        "collective_ct": dict(rpm=300.0, collective_deg=known_collective),
         "collective_thrust": dict(rpm=300.0, collective_deg=known_collective),
         "ct_thrust": dict(rpm=300.0, collective_deg=0.0),
     }
@@ -159,10 +159,58 @@ def test_known_operating_state_and_all_six_pairs():
         assert math.isclose(
             solved["collective_deg"], known_collective, rel_tol=0, abs_tol=2e-3
         ), pair
-        # Vx/Vz dimensional inputs must remain fixed while mu/mu_z track solved RPM.
         assert math.isclose(solved["Vx_m_s"], 45.0, rel_tol=0, abs_tol=1e-10)
         assert math.isclose(solved["Vz_m_s"], 3.0, rel_tol=0, abs_tol=1e-10)
-    print("PASS: all six operating pairs")
+
+    # At this forward/climb condition Collective + CT has multiple RPM roots.
+    try:
+        zBET.solve_operating_pair(
+            geom,
+            pair="collective_ct",
+            rpm=known_rpm,
+            collective_deg=known_collective,
+            target_ct=target_ct,
+            target_thrust_n=target_thrust,
+            **common,
+        )
+    except ValueError as exc:
+        assert "non-unique" in str(exc)
+    else:
+        raise AssertionError("Collective + CT must reject a multi-root RPM solution")
+
+    # In hover with PG enabled, CT gains an RPM-dependent dimensional closure
+    # below the PG cap and the same pair has one unique root.
+    hover_common = dict(
+        theta_root_deg=12.0,
+        theta_tip_deg=2.0,
+        horizontal_mode="mu",
+        horizontal_value=0.0,
+        axial_mode="muz",
+        axial_value=0.0,
+        inflow_model="uniform",
+        k_ind=1.15,
+    )
+    hover = zBET.solve_operating_pair(
+        geom,
+        pair="rpm_collective",
+        rpm=known_rpm,
+        collective_deg=known_collective,
+        target_ct=0.0,
+        target_thrust_n=0.0,
+        **hover_common,
+    )
+    solved_ct = zBET.solve_operating_pair(
+        geom,
+        pair="collective_ct",
+        rpm=known_rpm,
+        collective_deg=known_collective,
+        target_ct=hover["CT"],
+        target_thrust_n=hover["T_N"],
+        **hover_common,
+    )
+    assert math.isclose(solved_ct["rpm"], known_rpm, rel_tol=2e-4, abs_tol=0.1)
+    assert math.isclose(solved_ct["CT"], hover["CT"], rel_tol=2e-5, abs_tol=2e-8)
+    print("PASS: all six operating pairs, including Collective + CT uniqueness")
 
 
 def test_collective_delta_preserves_twist():
