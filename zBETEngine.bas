@@ -1009,6 +1009,13 @@ Private Sub CalculateCoreResolved(geom As RotorGeometry, cond As FlightCondition
 		res.InflowLambdaI = lambda_i
 		res.InflowKx = kx
 		res.InflowKy = ky
+		' Wake skew must use the converged Sissingh inflow, not the pre-iteration value.
+		denom_chi = Sqrt(c.Mu * c.Mu + lambda_total * lambda_total) + Abs(lambda_total)
+		If denom_chi > 1e-15 Then
+			res.WakeSkewChiDeg = 2.0 * ATan(c.Mu / denom_chi) * 180.0 / cPI
+		Else
+			res.WakeSkewChiDeg = 0.0
+		End If
 	End If
 	res.BFactor = b_val
 	
