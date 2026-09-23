@@ -591,7 +591,7 @@ Private Sub ApplyThemePalette
 		ColorButText1 = 0xFF172033
 		ColorEdt = 0xFFFFFFFF
 		ColorEdtText = 0xFF006B7D
-		ColorEdtHint = 0xFF78879A
+		ColorEdtHint = 0xFF667085
 		ColorPnlInput1 = 0xFFF7F9FC
 		ColorPnlInput2 = 0xFFFFFFFF
 		ColorPnlInput3 = 0xFFF7F9FC
@@ -617,7 +617,7 @@ Private Sub ApplyThemePalette
 		ColorButText1 = 0xFFF1F5F9
 		ColorEdt = 0xFF0F141E
 		ColorEdtText = 0xFF00E5FF
-		ColorEdtHint = 0xFF64748B
+		ColorEdtHint = 0xFF94A3B8
 		ColorPnlInput1 = 0xFF0A0E15
 		ColorPnlInput2 = 0xFF0E131C
 		ColorPnlInput3 = 0xFF0A0E15
