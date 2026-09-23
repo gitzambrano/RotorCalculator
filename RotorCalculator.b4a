@@ -1509,8 +1509,11 @@ End Sub
 Private Sub ResultDisplayLabel(fullText As String) As String
 	If root.Width > 380dip Then Return fullText
 	Select fullText
+		Case "Induced Torque (CQi)": Return "Induced (CQi)"
+		Case "Profile Torque (CQ0)": Return "Profile (CQ0)"
+		Case "Induced In-Plane (CHi)": Return "Induced (CHi)"
+		Case "Profile In-Plane (CH0)": Return "Profile (CH0)"
 		Case "Air Power Coef (CPair)": Return "Air Power (CPair)"
-		Case "Profile Drag Torque (CQ0)": Return "Profile Torque (CQ0)"
 		Case "Pitch Moment Coef (CMy)": Return "Pitch Moment (CMy)"
 		Case "Roll Moment Coef (CMx)": Return "Roll Moment (CMx)"
 		Case "Total Inflow Ratio (λ)": Return "Total Inflow (λ)"
@@ -1518,6 +1521,8 @@ Private Sub ResultDisplayLabel(fullText As String) As String
 		Case "Longitudinal Inflow (Kx)": Return "Long. Inflow (Kx)"
 		Case "Lateral Inflow (Ky)": Return "Lat. Inflow (Ky)"
 		Case "Advancing Tip Mach (Mat)": Return "Adv. Tip Mach (Mat)"
+		Case "Forward Speed (Vx)": Return "Forward Vx"
+		Case "Axial Speed (Vz)": Return "Axial Vz"
 		Case "Ambient Pressure (p)": Return "Pressure (p)"
 		Case "Speed of Sound (a)": Return "Sound Speed (a)"
 		Case Else: Return fullText
@@ -1526,9 +1531,10 @@ End Sub
 
 Sub lblResultStatus_Click
 	If ActiveRes.SolutionValid = False Then
-		Msgbox(ActiveRes.StatusMessage & CRLF & CRLF & "Adjust geometry or operating condition before using the reported performance.", "Model Status")
+		Msgbox(ActiveRes.StatusMessage & CRLF & CRLF & "Adjust the prescribed operating pair, flight condition, or rotor definition.", "Model Status")
 	Else If ActiveRes.CompressibilityWarning Then
-		Msgbox("Advancing-tip Mach is at or above 0.80 while Prandtl-Glauert is enabled." & CRLF & CRLF & "The calculation is kept finite for continuity, but this linear compressibility correction is outside its recommended subsonic range.", "Compressibility Caution")
+		Msgbox("Advancing-tip Mach is at or above 0.80 while Prandtl-Glauert is enabled." & CRLF & CRLF & _
+			"The calculation remains finite, but the linear compressibility approximation is outside its preferred range.", "Compressibility Caution")
 	Else
 		ToastMessageShow("Model status: valid operating point.", False)
 	End If
@@ -1536,36 +1542,47 @@ End Sub
 
 Sub lblResultTip_Click
 	Dim l As Label = Sender
-	ToastMessageShow(ResultTooltip(l.Tag), True)
+	ToastMessageShow(ResultTooltip("" & l.Tag), True)
 End Sub
 
 Private Sub ResultTooltip(labelText As String) As String
 	Select labelText
-		Case "Total Thrust (T)": Return "Total rotor thrust T, dimensional force normal to the rotor disk reference."
-		Case "Thrust Coef (CT)": Return "Thrust coefficient CT = T / [ρ A (ΩR)²]."
-		Case "Shaft Power (P)": Return "Mechanical shaft power required by the rotor at the current operating point."
-		Case "Air Power Coef (CPair)": Return "Air-power coefficient from the zBET energy balance: induced power, imposed axial-flow work, profile drag and translational profile work."
-		Case "Total Torque (Q)": Return "Total aerodynamic rotor torque about the shaft."
-		Case "Torque Coef (CQ)": Return "Torque coefficient CQ = Q / [ρ A (ΩR)² R]."
-		Case "Induced Torque (CQi)": Return "Induced component of rotor torque associated with induced power."
-		Case "Profile Drag Torque (CQ0)": Return "Profile-drag contribution to rotor torque from blade section drag."
-		Case "In-Plane Drag (H)": Return "Rotor in-plane H force opposing the forward in-plane velocity component."
-		Case "In-Plane Coef (CH)": Return "Non-dimensional in-plane H-force coefficient."
-		Case "Side Force Coef (CY)": Return "Non-dimensional rotor side-force coefficient."
-		Case "Pitch Moment Coef (CMy)": Return "Non-dimensional rotor pitching-moment coefficient about the y axis."
-		Case "Roll Moment Coef (CMx)": Return "Non-dimensional rotor rolling-moment coefficient about the x axis."
-		Case "Figure of Merit (FoM)": Return "Hover efficiency metric: ideal induced power divided by actual rotor power."
-		Case "Effective L/D Ratio": Return "Power-based effective rotor L/D: (L/D)eff = μ·CT / CPair = T·Vx / Pair in forward flight."
-		Case "Total Inflow Ratio (λ)": Return "Total non-dimensional axial inflow ratio through the rotor disk."
-		Case "Induced Inflow Ratio (λi)": Return "Induced portion of the non-dimensional inflow ratio."
-		Case "Longitudinal Inflow (Kx)": Return "Longitudinal first-harmonic inflow gradient coefficient Kx."
-		Case "Lateral Inflow (Ky)": Return "Lateral first-harmonic inflow gradient coefficient Ky."
-		Case "Wake Skew Angle (χ)": Return "Wake skew angle χ between the rotor wake axis and the rotor shaft reference."
-		Case "Tip Mach (Hover)": Return "Blade-tip Mach number from rotational speed ΩR without forward-flight addition."
-		Case "Advancing Tip Mach (Mat)": Return "Approximate Mach number at the advancing blade tip in forward flight."
-		Case "Air Density (ρ)": Return "Ambient air density used by the aerodynamic calculation."
-		Case "Ambient Pressure (p)": Return "Ambient static pressure from the active atmosphere condition."
-		Case "Speed of Sound (a)": Return "Local speed of sound used for Mach and compressibility calculations."
+		Case "Total Thrust (T)": Return "Solved rotor thrust T at the current flight condition."
+		Case "Shaft Power (P)": Return "Mechanical shaft power P = ΩQ."
+		Case "Total Torque (Q)": Return "Aerodynamic torque about the rotor shaft."
+		Case "In-Plane Drag (H)": Return "Rotor in-plane H force along the longitudinal disk axis."
+		Case "Thrust Coef (CT)": Return "CT = T / [ρ A (ΩR)²]."
+		Case "Torque Coef (CQ)": Return "CQ = Q / [ρ A (ΩR)² R], equal to shaft-power coefficient CPshaft."
+		Case "Induced Torque (CQi)": Return "Induced torque/power contribution from the blade-element torque integral or configured energy balance."
+		Case "Profile Torque (CQ0)": Return "Profile-drag torque from Numerical Vectorial radial/azimuthal integration."
+		Case "In-Plane Coef (CH)": Return "Total longitudinal in-plane force coefficient CH = CHi + CH0."
+		Case "Induced In-Plane (CHi)": Return "Induced contribution to longitudinal in-plane force coefficient."
+		Case "Profile In-Plane (CH0)": Return "Numerical Vectorial profile-drag contribution to CH."
+		Case "Side Force Coef (CY)": Return "Rotor lateral side-force coefficient."
+		Case "Roll Moment Coef (CMx)": Return "Rotor rolling-moment coefficient about the x axis."
+		Case "Pitch Moment Coef (CMy)": Return "Rotor pitching-moment coefficient about the y axis."
+		Case "Air Power Coef (CPair)": Return "Air-power coefficient from induced, axial-flow, profile and translational energy terms."
+		Case "Figure of Merit (FoM)": Return "Hover efficiency metric using ideal induced power divided by Kind·ideal induced power plus profile power."
+		Case "Effective L/D Ratio": Return "(L/D)eff = μ CT / CPair = T Vx / Pair when the forward-power interpretation is applicable."
+		Case "Total Inflow Ratio (λ)": Return "λ = μz + λi."
+		Case "Induced Inflow Ratio (λi)": Return "Positive induced downwash inflow ratio."
+		Case "Longitudinal Inflow (Kx)": Return "Longitudinal first-harmonic inflow-gradient factor."
+		Case "Lateral Inflow (Ky)": Return "Lateral first-harmonic inflow-gradient factor."
+		Case "Wake Skew Angle (χ)": Return "Wake-skew angle derived from in-plane and total inflow components."
+		Case "Tip-Loss Factor (B)": Return "Effective tip-radius factor used by the selected tip-loss model."
+		Case "Advance Ratio (μ)": Return "μ = Vx/(ΩR) at the solved operating RPM."
+		Case "Forward Speed (Vx)": Return "Dimensional forward in-plane relative velocity corresponding to μ."
+		Case "Axial Ratio (μz)": Return "μz = Vz/(ΩR); positive means downward relative flow through the disk."
+		Case "Axial Speed (Vz)": Return "Positive Vz represents positive climb rate: relative wind arrives from above and passes downward through the disk."
+		Case "Rotor AoA (α)": Return "Rotor angle of attack; positive α means relative wind arrives from below. μz = -μ tan α."
+		Case "Tip Speed (ΩR)": Return "Solved rotational tip speed ΩR."
+		Case "Tip Mach": Return "Rotational tip Mach ΩR/a."
+		Case "Advancing Tip Mach (Mat)": Return "Approximate advancing-tip Mach using ΩR(1+μ)/a."
+		Case "Altitude": Return "Pressure altitude used by the atmosphere model."
+		Case "Temperature": Return "Ambient temperature used by density and speed-of-sound calculations."
+		Case "Air Density (ρ)": Return "Ambient density ρ used in dimensional aerodynamic scaling."
+		Case "Ambient Pressure (p)": Return "Ambient static pressure from the active atmosphere."
+		Case "Speed of Sound (a)": Return "Local speed of sound used for Mach and compressibility."
 		Case Else: Return labelText
 	End Select
 End Sub
