@@ -374,23 +374,6 @@ Public Sub BuildSweepSamples( _
 				tempCond.AxialValue = familyValue
 			End If
 			
-			If trimOnlyHover And PairRequiresTrim(cond.OperatingPair) Then
-				If fixedTrimValid Then
-					tempCond.OperatingPair = "rpm_collective"
-					tempCond.RPM = fixedRPM
-					tempCond.CollectiveDeg = fixedCollective
-				Else
-					Dim invalidPoint As SweepPoint
-					invalidPoint.Initialize
-					invalidPoint.CurveLabel = curveLabel
-					invalidPoint.Mu = muValue
-					invalidPoint.Valid = False
-					samples.Add(invalidPoint)
-					Continue
-				End If
-			End If
-			
-			Dim result As RotorResults = zBETEngine.Calculate(geom, tempCond)
 			Dim point As SweepPoint
 			point.Initialize
 			point.CurveLabel = curveLabel
@@ -398,6 +381,19 @@ Public Sub BuildSweepSamples( _
 			point.AxialMode = tempCond.AxialMode
 			point.AxialValue = tempCond.AxialValue
 			point.InflowModel = tempCond.InflowModel
+			If trimOnlyHover And PairRequiresTrim(cond.OperatingPair) Then
+				If fixedTrimValid Then
+					tempCond.OperatingPair = "rpm_collective"
+					tempCond.RPM = fixedRPM
+					tempCond.CollectiveDeg = fixedCollective
+				Else
+					point.Valid = False
+					samples.Add(point)
+					Continue
+				End If
+			End If
+			
+			Dim result As RotorResults = zBETEngine.Calculate(geom, tempCond)
 			point.Valid = result.SolutionValid
 			If result.SolutionValid Then
 				point.Vx = result.OperatingVx
