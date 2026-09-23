@@ -1251,7 +1251,7 @@ Private Sub BuildPageCond
 	lblHorizontalDerived.TextSize = 9.5 * sc
 	lblHorizontalDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblHorizontalDerived.SingleLine = True
-	pnl.AddView(lblHorizontalDerived, pnl.Width*29/100, 50dip, pnl.Width*68/100, 22dip)
+	pnl.AddView(lblHorizontalDerived, pnl.Width*29/100, 52dip, pnl.Width*68/100, 20dip)
 	y=y+flowRowH: rowIndex=rowIndex+1
 	
 	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
@@ -1282,7 +1282,7 @@ Private Sub BuildPageCond
 	lblAxialDerived.TextSize = 9.2 * sc
 	lblAxialDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblAxialDerived.SingleLine = True
-	pnl.AddView(lblAxialDerived, pnl.Width*29/100, 50dip, pnl.Width*68/100, 22dip)
+	pnl.AddView(lblAxialDerived, pnl.Width*29/100, 52dip, pnl.Width*68/100, 20dip)
 	y=y+flowRowH: rowIndex=rowIndex+1
 	
 	y = AddConditionSectionHeader(y + 4dip, "OPERATING CONSTRAINTS")
