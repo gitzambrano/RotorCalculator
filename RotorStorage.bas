@@ -293,6 +293,8 @@ End Sub
 Public Sub UpdateRotor(index As Int, g As RotorGeometry)
 	If index >= 0 And index < Rotors.Size Then
 		g.Name = CleanName(g.Name)
+		Dim sameName As Int = FindRotorByName(g.Name)
+		If sameName >= 0 And sameName <> index Then g.Name = MakeUniqueName(g.Name)
 		g.SolidityMode = "chords"
 		g.PitchMode = "linear_twist"
 		g = zBETEngine.ResolveSolidity(g)
