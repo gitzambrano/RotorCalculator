@@ -1,277 +1,321 @@
-# RotorCalculator — Plano Detalhado de Implementação do Sistema
+# RotorCalculator — Implementation Plan
 
-> **Projeto**: RotorCalculator  
-> **Plataforma**: Android (B4A — Basic4Android)  
-> **Alvo**: Android 5.0 (API 21) até Android 16 (API 36) — Compatibilidade Universal  
-> **Localização**: `C:\Projetos\RotorCalculator`  
-> **Base Científica**: Teoria do Elemento de Pá e Teoria do Momentum (zBET — Wayne Johnson & Leishman)  
-> **Versão de fonte alvo**: 1.20 (versionCode 3)
+> **Authoritative requirements:** `docs/software_requirements.md`  
+> **Target source:** RotorCalculator 1.20+  
+> **Numerical reference:** `tools/zBET.py`  
+> **UI reference:** AeroCalculator interaction principles, adapted for RotorCalculator.
 
----
+This plan describes implementation order. If this document conflicts with `docs/software_requirements.md`, the requirements document wins.
 
-## 1. Visão Geral e Objetivos do Produto
+## 1. Final product architecture
 
-O **RotorCalculator** é um aplicativo móvel avançado para Android projetado para engenheiros aeronáuticos, pesquisadores, projetistas de eVTOLs, helicópteros e drones, bem como estudantes de aerodinâmica de asas rotativas. 
+RotorCalculator keeps three primary tabs:
 
-O sistema oferece um cálculo instantâneo e rigoroso do desempenho aerodinâmico de rotores em voo pairado (*hover*) e voo de avanço (*forward flight*), empregando a formulação semi-analítica do **zBET** com integração de momentos radiais, teoria do momentum global com esteira inclinada, gradientes de influxo harmônico (Uniforme, Coleman, Coleman-Feingold/NDARC e Drees), correções de compressibilidade e perda de ponta, além de quadratura vetorial de arrasto de perfil.
+1. **Geometry** — complete in-page rotor editor.
+2. **Conditions** — atmosphere, flight condition, operating constraints, inflow model, and induced-power factor.
+3. **Results** — dimensional performance, all aerodynamic coefficients grouped together, efficiency, inflow/wake, and operating state/atmosphere.
 
-### Diferenciais em Relação ao AeroCalculator:
-- **Herança de Sucesso**: Mantém o fluxo consagrado do AeroCalculator — tabs fixas de resposta imediata, banco local de rotores salvos e cálculo reativo.
-- **Acabamento "Ultra-Premium"**: temas **Dark** e **Light** selecionáveis e persistentes, ambos com contraste de instrumento técnico, tipografia nítida e acentos funcionais consistentes.
-- **Rigor Físico Auditável**: As equações e convenções são mantidas alinhadas ao `tools/zBET.py` e documentadas com base em Wayne Johnson (*Rotorcraft Aeromechanics*) e J. Gordon Leishman (*Principles of Helicopter Aerodynamics*). A equivalência do binário B4A só é declarada após o gate compilado previsto na seção de release.
-- **Popups de Apoio e Ferramentas**: seleção de aerofólios, conversor rápido, convenções, manual offline de física/equações e gráficos interativos de varredura gerados via `Canvas`, com exportação CSV/PNG.
+The global menu contains Settings, Physics & Equations, zBET/zBEMT Conventions, Quick Unit Converter, Restore Factory Presets, and About.
 
----
+## 2. Geometry redesign
 
-## 2. Estrutura do Diretório e Arquivos Portados
+### 2.1 In-page editor
 
-Todo o código, ferramentas, documentação e bibliotecas residem em `C:\Projetos\RotorCalculator`. Credenciais de assinatura e publicação ficam deliberadamente fora do Git:
+Replace the current rotor-list + geometry-popup workflow with one scrollable Geometry editor.
 
-```text
-C:\Projetos\RotorCalculator\
-├── RotorCalculator.b4a           # Ponto de entrada do aplicativo no B4A
-├── zBETEngine.bas                # Motor de cálculo aerodinâmico zBET (Módulo puro B4A)
-├── RotorStorage.bas              # Módulo de persistência e presets de geometrias de rotores
-├── AGENTS.md                     # Regras de governança de código e integridade física
-├── plano.md                      # Este documento detalhado
-├── Key\                          # Apenas material público/não secreto
-│   ├── README.md                  # Política de chaves externas ao Git
-│   ├── encryption_public_key.pem  # Chave pública
-│   └── pepk.jar                   # Ferramenta PEPK; sem credenciais
-├── Libraries\                    # Bibliotecas adicionais locais B4A
-│   └── RSPopupMenu.jar & .xml    # Única biblioteca externa usada no runtime
-├── Files\                        # Recursos empacotados no APK/AAB
-│   ├── icon.png                  # Ícone de alta definição do aplicativo (96x96 / mipmap)
-│   ├── xenara-bold.ttf           # Fonte técnica aeronáutica
-│   ├── physics_help.html          # Manual offline — tema Dark
-│   ├── physics_help_light.html    # Manual offline — tema Light
-│   └── icon_*.png                # Ícones de ação (editar, duplicar, deletar, mais, etc.)
-├── Icons\                        # Ícones fonte do projeto (512x512, 192x192, etc.)
-├── docs\                         # Documentação teórica e especificações
-│   └── zBET-documentation.md     # Formulação matemática completa do zBET
-├── tools\                        # Ferramentas Python de compilação, teste e publicação
-│   ├── zBET.py                   # Script de referência matemática dourada
-│   ├── process_icons.py          # Gerador e conversor de resoluções de ícones
-│   ├── verify_engine.py          # Harness de validação numérica
-│   ├── ci_ui_qa.sh               # Screenshots e smoke tests do APK real em emulador
-│   └── b4a_build.ps1             # Automação local de compilação B4A
-└── tests\                        # Suíte de casos de teste automatizados
-```
+Top strip:
 
----
+**Loaded rotor: <name>**
 
-## 3. Arquitetura do Motor Aerodinâmico (`zBETEngine.bas`)
+Panels, using the same aligned row design:
 
-O módulo `zBETEngine.bas` é projetado como uma biblioteca pura sem acoplamento com a interface do usuário ou APIs específicas do Android.
+### Blade Geometry
 
-### 3.1 Definições Geométricas
-- **Raio do Rotor $R$**: Raio da ponta da pá em metros.
-- **Recorte de Raiz $x_0 = r_0 / R$**: Posição adimensional onde se inicia a superfície sustentadora ativa ($0 \le x_0 < 1$).
-- **Número de Pás $N$**: Quantidade de pás do rotor.
-- **Distribuição de Corda e Solidez**:
-  - Corda linear: $c(x) = c_{\mathrm{root}} + (c_{\mathrm{tip}} - c_{\mathrm{root}}) \frac{x - x_0}{1 - x_0}$
-  - Solidez local: $\sigma(x) = \frac{N c(x)}{\pi R} = s_0 + s_1 x$
-  - Três definições clássicas reportadas:
-    1. $\sigma_{\mathrm{ref}} = s_0 + \frac{s_1}{2}$ (extrapolada até o centro $r=0$);
-    2. $\sigma_{\mathrm{geom}} = (1 - x_0)[s_0 + \frac{s_1}{2}(1 + x_0)]$ (área física real);
-    3. $\sigma_{\mathrm{thrust}} = 3 [s_0 \frac{1 - x_0^3}{3} + s_1 \frac{1 - x_0^4}{4}]$ (ponderada por $x^2$).
-- **Distribuição de Passo $\theta(x)$**:
-  - Passo uniforme: $\theta(x) = \theta_0$
-  - Torção linear: $\theta(x) = \theta_{\mathrm{root}} + (\theta_{\mathrm{tip}} - \theta_{\mathrm{root}}) \frac{x - x_0}{1 - x_0} = t_0 + t_1 x$
-- **Aerodinâmica de Seção**:
-  - Inclinação da curva de sustentação $a_0 = dC_l/d\alpha$ (padrão: $5.73\text{ rad}^{-1}$).
-  - Coeficiente de arrasto de perfil parasita $C_{d0}$ (padrão: $0.009$).
+Editable:
+- Radius (R)
+- Number of blades (N_b)
+- Root cutout (x_0)
+- Reference root chord (c_0)
+- Tip chord (c_1)
+- Reference solidity (sigma_{ref})
+- Aspect ratio (AR)
+- Root incidence (	heta_{root})
+- Tip incidence (	heta_{tip})
 
-### 3.2 Correções Aerodinâmicas
-1. **Perda de Ponta ($B$)**:
-   - `none`: $B = 1.0$
-   - `fixed`: $B = 0.97$
-   - `sissingh`: $B = 1 - \frac{\sqrt{2 C_T}}{N}$
-2. **Compressibilidade (Prandtl-Glauert)**:
-   - O output $M_{\mathrm{at}} = \frac{\Omega R (1 + \mu)}{a_{\mathrm{som}}}$ é mantido como indicador conservador da ponta avançante e gera caution a partir de 0.80.
-   - A correção do lift slope segue exatamente o zBET de referência com Mach efetivo representativo a 75% do raio:
-     $M_{\mathrm{eff}} = \frac{\Omega R}{a_{\mathrm{som}}}\sqrt{0.75^2 + 0.5\mu^2}$.
-   - $M_{\mathrm{eff}}$ é limitado a 0.85 para manter a aproximação subsonica finita, e $a = \frac{a_0}{\sqrt{\max(0.01,1-M_{\mathrm{eff}}^2)}}$.
+Derived:
+- (sigma_{geom})
+- (sigma_{thrust})
+- taper ratio
+- disk area
+- reference blade area
+- active blade area
+- total twist
 
-### 3.3 Modelos de Influxo Harmônico
-A velocidade induzida adimensional tem a distribuição:
+Synchronization rules:
+- Radius change scales both chords and preserves (sigma_{ref}), (AR), taper, and (c/R).
+- Chord edits recompute (sigma_{ref}) and (AR).
+- Editing (sigma_{ref}) or (AR) scales both chords while preserving taper.
+- Blade-count change changes (sigma_{ref}), not (AR) or chords.
+- Root cutout changes active-span metrics/integrals but not reference planform metrics.
 
-$$\lambda_d(x, \psi) = \lambda + x(\lambda_{1c}\cos\psi + \lambda_{1s}\sin\psi)$$
+### Rotor Aerodynamics
 
-com $\lambda = \mu_z + \lambda_i$, $\lambda_{1c} = K_x \lambda_i$, $\lambda_{1s} = K_y \lambda_i$, e inclinação de esteira:
+Editable:
+- Airfoil preset
+- (a_0)
+- (C_{d0})
+- Tip-loss mode
+- Fixed (B) when applicable
+- Prandtl-Glauert toggle
 
-$$\tan\frac{\chi}{2} = \frac{\mu}{\sqrt{\mu^2 + \lambda^2} + |\lambda|}$$
+Bottom actions:
 
-Os quatro modelos implementados são:
-1. **Uniform**: $K_x = 0$, $K_y = 0$
-2. **Coleman Simple**: $K_x = \tan\frac{\chi}{2}$, $K_y = 0$
-3. **Coleman-Feingold (NDARC)**: $K_x = f_x \frac{15\pi}{32}\tan\frac{\chi}{2}$, $K_y = -f_y 2\mu$
-4. **Drees**: $K_x = \frac{4}{3}(1 - 1.8\mu^2)\tan\frac{\chi}{2}$, $K_y = -2\mu$
+**LOAD ROTOR | SAVE | SAVE AS NEW**
 
-### 3.4 Resolução do Ponto de Operação (Momentum Closure)
-A velocidade induzida média $\lambda_i \ge 0$ é a raiz da equação não-linear que iguala a teoria do momentum global com o empuxo integrado do BET:
+Saved rotors use a versioned schema. Legacy chord-at-cutout data is migrated explicitly to the new reference-axis chord definition.
 
-$$C_T^{\mathrm{BET}}(\lambda_i) = 2 B^2 \lambda_i \sqrt{\mu^2 + (\mu_z + \lambda_i)^2}$$
+## 3. Conditions redesign
 
-Onde $C_T^{\mathrm{BET}}$ é calculado de forma fechada e analítica através dos momentos radiais:
+### 3.1 Atmosphere
 
-$$J_n = \frac{B^{n+1} - x_0^{n+1}}{n+1}$$
+Inputs:
+- Altitude
+- Temperature
 
-$$I_m = s_0 J_m + s_1 J_{m+1}$$
+Outputs such as density, pressure, and speed of sound move to Results.
 
-$$T_m = p_0 J_m + p_1 J_{m+1} + p_2 J_{m+2}$$
+### 3.2 Equivalent flow representations
 
-$$C_T = \frac{a}{2} \left[ T_2 + \frac{\mu^2}{2} T_0 - \left(\lambda + \frac{\mu\lambda_{1s}}{2}\right) I_1 \right]$$
+Horizontal Flow:
+- selector (mu) / (V_x)
+- selected quantity editable
+- equivalent quantity shown read-only
 
-A solução é encontrada via algoritmo de bissecção ultrarrápido (convergindo em menos de 50 iterações com resíduo $< 10^{-13}$).
+Axial Flow:
+- selector (alpha) / (V_z) / (mu_z)
+- selected quantity editable
+- equivalents shown read-only
+- (+V_z) = positive climb rate / relative wind from above
+- (+alpha) = relative wind from below
+- (mu_z=-mu	analpha)
+- (mu_z=V_z/(Omega R))
 
-### 3.5 Forças e Momentos Integrados
-- **Força Longitudinal Induzida**: $C_{Hi} = \frac{a}{4} [\lambda\mu T_0 + \lambda_{1s}(T_2 - 2\lambda I_1)]$
-- **Força Lateral**: $C_Y = -\frac{a \lambda_{1c}}{4}(T_2 - 2\lambda I_1)$
-- **Momento de Rolamento**: $C_{Mx} = -\frac{a\mu}{2}(T_2 - \frac{\lambda I_1}{2}) + \frac{a \lambda_{1s}}{4} I_3$
-- **Momento de Arfagem**: $C_{My} = \frac{a \lambda_{1c}}{4} I_3$
+### 3.3 Six operating-input pairs
 
-### 3.6 Modelos de Arrasto de Perfil ($C_{H0}, C_{Q0}$)
-- **Analítico Tangencial**: $C_{H0} = \frac{C_{d0}\mu}{2}I_1$, $C_{Q0} = \frac{C_{d0}}{2}(I_3 + \frac{\mu^2}{2}I_1)$
-- **Analítico Vetorial**: $C_{H0} = \frac{3 C_{d0}\mu}{4}I_1$, $C_{Q0} = \frac{C_{d0}}{2}[I_3 + (\frac{3}{4}\mu^2 + \frac{1}{2}\mu_z^2)I_1]$
-- **Numérico Vetorial**: Quadratura radial e azimutal considerando a velocidade total resultante $W = \sqrt{u_T^2 + u_R^2 + \mu_z^2}$.
+The linked quantities are:
 
-### 3.7 Potência, Torque e Eficiência
-- **Torque Induzido**:
-  - `energy_balance`: $C_{Qi} = K_{\mathrm{ind}}\lambda_i C_T + \mu_z C_T - \mu C_{Hi}$
-  - `analytical_bet`: integral direta do momento em torno do eixo do mastro.
-- **Torque Total**: $C_Q = C_{Qi} + C_{Q0}$
-- **Potência de Eixo**: $C_{P,\mathrm{shaft}} = C_Q \implies P_{\mathrm{shaft}} = C_Q \rho A (\Omega R)^3$ [W]
-- **Potência do Ar**: $C_{Pair} = K_{\mathrm{ind}}\lambda_i C_T + \mu_z C_T + C_{Q0} + \mu C_{H0}$
-- **Figura de Mérito (Hover)**: $FoM = \frac{C_T^{3/2}/\sqrt{2}}{K_{\mathrm{ind}}C_T^{3/2}/\sqrt{2}+C_{Q0}}$, igual à definição do zBET de referência.
-- **Eficiência Efetiva Sustentação/Arrasto**: $L/D_{\mathrm{eff}} = \frac{C_T \mu}{C_{Pair}} = \frac{T V_\infty}{P_{\mathrm{air}}}$
+- RPM
+- collective increment (Delta	heta)
+- (C_T)
+- Thrust
 
----
+The user prescribes any two:
 
-## 4. Arquitetura do Frontend e Design de Interface
+1. RPM + Collective
+2. RPM + CT
+3. RPM + Thrust
+4. Collective + CT
+5. Collective + Thrust
+6. CT + Thrust
 
-O frontend usa exclusivamente componentes B4A nativos. As três páginas principais — **Geometry**, **Conditions** e **Results** — são painéis independentes controlados pelas tabs fixas do header. Não há `AHViewPager`, `IME`, `RichString`, `RuntimePermissions` ou navegação baseada em bibliotecas legadas.
+Only the selected pair is shown as editable inputs. The solver finds the remaining two at the current flight condition, including forward flight and climb/descent.
 
-O layout é responsivo desde 320dp, possui largura máxima de conteúdo em tablets, mantém alvos acionáveis de pelo menos 48dp e possui tratamento específico para landscape. Labels e unidades são apresentadas como tipografia; superfícies elevadas são reservadas a campos e controles realmente interativos. Em telas compactas apenas os rótulos que precisam são abreviados, mantendo o significado completo por tooltip.
+Collective is a uniform pitch offset:
 
-### 4.1 Geometry
+[
+	heta_{root,op}=	heta_{root}+Delta	heta,qquad
+	heta_{tip,op}=	heta_{tip}+Delta	heta.
+]
 
-- A aba Geometry mostra uma **lista de rotores** no padrão do Aerospace Calculator. O header não exibe o rotor ativo. Tocar em qualquer rotor o torna ativo e abre um popup de geometria; NEW, COPY, rename e DELETE formam um CRUD completo. A seleção ativa é persistida e restaurada após cold restart.
-- Edição direta de nome, raio, RPM, número de pás, root cutout, cordas, pitch/twist, lift slope e Cd0. Entradas são limitadas ao domínio matemático antes do recálculo e normalizadas visualmente ao sair do campo.
-- Biblioteca de aerofólios; quando os coeficientes não correspondem a uma entrada conhecida, a UI mostra **Custom Section**.
-- Tip-loss com seleção explícita entre **Off**, **Fixed B** e **Sissingh**.
-- Compressibilidade Prandtl-Glauert com estado explícito.
-- COPY e DELETE ficam no popup do rotor selecionado; DELETE exige confirmação. NEW ROTOR fica no topo da lista. O menu superior contém apenas ações globais, como unidades de resultados, conversor, reset de presets, convenções e About.
-- Persistência em `File.DirInternal`, sem permissões externas.
+Conditions also contains:
+- Inflow Model
+- (K_{ind})
 
-### 4.2 Conditions
+Profile drag is always Numerical Vectorial and is documented, not selectable.
 
-- Altitude [m] e temperatura [°C].
-- **Horizontal Flow** usa um único seletor de representação: **μ** ou **Vx [m/s]**, com μ = Vx/(ΩR).
-- **Axial Flow** usa um único seletor de representação: **α [deg]**, **Vz [m/s]** ou **μz**, seguindo exatamente zBET/zBEMT: +Vz e +μz apontam para baixo através do disco; α>0 significa escoamento chegando de baixo e, portanto, μz = −μ tan(α).
-- Quando o modo é **RPM to Thrust**, toda conversão dimensional que depende de ΩR usa o **RPM resolvido pelo trim**, não o RPM nominal salvo na geometria. Isso vale para Vx↔μ, Vz↔μz, Mach e eixo Vx do Sweep.
-- α, Vz e μz são representações alternativas da mesma condição axial; nunca são somadas. Em Vx=0 e escoamento axial não nulo, a UI orienta o uso de Vz ou μz.
-- Modelos de inflow: Uniform, Coleman Simple, Coleman-Feingold e Drees.
-- Modelos de profile drag: Analytical Tangential, Analytical Vectorial e Numerical Vectorial.
-- Três modos de trim: **Collective to Target**, **RPM to Thrust** e **Manual Pitch**. No trim coletivo, **Target Thrust** e **Target CT** são mutuamente exclusivos; o trim por RPM usa Target Thrust e mantém Target CT desabilitado.
-- Geometry e Conditions permanecem coerentes durante recriação/rotação da Activity.
+## 4. Engine work
 
-### 4.3 Results
+Refactor the B4A engine around one operating-state resolver:
 
-Os resultados exibem primeiro uma linha compacta de **Operating Geometry** com o RPM e o coletivo efetivamente usados após trim. Em seguida são organizados visualmente em **Thrust & Power**, **Forces & Moments**, **Efficiency**, **Inflow & Wake** e **Mach & Atmosphere**. A tabela reporta grandezas dimensionais e coeficientes, incluindo CT, CPair, CQ, CQi, CQ0, CH, CY, CMy, CMx, FoM, L/D, λ, λi, Kx, Ky, χ e Mach. Um status explícito sinaliza solução inválida ou uso da correção Prandtl-Glauert fora de sua faixa recomendada. Cada variável possui precisão base compatível com sua escala; o setting **+1 Decimal** reproduz o comportamento do AeroCalculator e acrescenta exatamente uma casa decimal a todos os outputs. Units alterna dimensionalmente entre SI e Imperial.
+1. Resolve atmosphere.
+2. Resolve candidate RPM.
+3. Convert the selected horizontal/axial representation at that RPM.
+4. Add collective (Delta	heta) uniformly to root/tip incidence.
+5. Solve the selected two-input constraint pair.
+6. Evaluate the aerodynamic state.
+7. Return the full solved state without mutating caller data.
 
-### 4.4 Parameter Sweep
+Required trim paths:
+- direct prescribed RPM + collective;
+- collective solution at fixed RPM for CT;
+- collective solution at fixed RPM for thrust;
+- RPM solution at fixed collective for CT;
+- RPM solution at fixed collective for thrust;
+- CT + thrust solution for RPM plus collective.
 
-O Sweep trabalha sobre uma cópia independente da condição ativa e nunca altera o ponto de operação. O eixo X pode ser **μ** ou **Vx [m/s]**; a malha interna permanece fisicamente equivalente via Vx=μΩR. O eixo Y pode usar qualquer output do catálogo. As famílias de curvas comparam **4 modelos de inflow**, **5 valores de α**, **5 valores de Vz**, **5 valores de μz** ou apenas a condição ativa. Em cada família existe somente uma representação axial autoritativa. As legendas ocupam uma faixa reservada acima da área dos dados, sem cobrir as curvas. Pontos sem solução física são omitidos e identificados como INVALID na tabela/CSV. O footer oferece **TABLE**, **CSV** e **PNG**; CSV exporta os mesmos 25 pontos e famílias mostrados no gráfico e PNG exporta o canvas atual, incluindo tema e legenda.
+All paths use the actual (mu,mu_z) corresponding to the current flight condition and candidate RPM.
 
----
+## 5. Results redesign
 
-## 5. Popups e Diálogos de Apoio ao Usuário
+Sections:
 
-Para manter a interface ultra fácil, limpa e intuitiva, parâmetros avançados e dados de apoio são apresentados através de popups acionados por toque:
+### DIMENSIONAL PERFORMANCE
+- Thrust
+- Shaft power
+- Torque
+- In-plane force and other dimensional forces implemented by the engine
 
-1. **Popup Biblioteca de Aerofólios**:
-   - Tabela com aerofólios comuns de pás de rotor:
-     - NACA 0012 ($a_0 = 5.73\text{ rad}^{-1}, C_{d0} = 0.009$)
-     - NACA 23012 ($a_0 = 5.85\text{ rad}^{-1}, C_{d0} = 0.0085$)
-     - VR-7 Boeing Vertol ($a_0 = 5.90\text{ rad}^{-1}, C_{d0} = 0.0095$)
-     - Sikorsky SC1095 ($a_0 = 6.00\text{ rad}^{-1}, C_{d0} = 0.0088$)
-     - Clark Y ($a_0 = 5.65\text{ rad}^{-1}, C_{d0} = 0.0100$)
-   - Ao selecionar, preenche automaticamente os campos de sustentação e arrasto do rotor.
-2. **Popup Conversor Rápido de Unidades**:
-   - Conversor interativo no menu global entre unidades aeronáuticas (kW $\leftrightarrow$ hp, N $\leftrightarrow$ kgf, N $\leftrightarrow$ lbf, kt $\leftrightarrow$ km/h, km/h $\leftrightarrow$ m/s, m $\leftrightarrow$ ft, mm $\leftrightarrow$ in).
-3. **Popup Explicativo de Modelos de Influxo**:
-   - Breve cartão explicativo indicando quando usar cada modelo:
-     - *Uniforme*: Estimativas preliminares rápidas.
-     - *Coleman Simples*: Considera o gradiente longitudinal simples da esteira.
-     - *Coleman-Feingold (NDARC)*: Padrão da indústria e NASA para simulações abrangentes.
-     - *Drees*: Formulação clássica com forte validação experimental para gradientes laterais e longitudinais.
-4. **Popup Parameter Sweep (Canvas nativo)**:
-   - Eixo X selecionável μ/Vx, autoescala, legenda não intrusiva, ponto ativo, tabela da condição ativa e export CSV/PNG.
-5. **Physics & Equations (offline)**:
-   - WebView interno carregando `Files/physics_help.html`, sem rede, com convenções zBET/zBEMT, equações essenciais, definição dos outputs, trim, escopo e limitações; acompanha o tema Light/Dark.
-6. **Settings**:
-   - Tema Light/Dark, SI/Imperial e Output Format Standard/+1 Decimal; todas as escolhas são persistidas em `File.DirInternal`.
+### AERODYNAMIC COEFFICIENTS
+All together:
+- (C_T)
+- (C_Q=C_{P,shaft})
+- (C_{Qi})
+- (C_{Q0})
+- (C_H)
+- (C_{Hi})
+- (C_{H0})
+- (C_Y)
+- (C_{Mx})
+- (C_{My})
+- (C_{P,air})
 
----
+### EFFICIENCY
+- FoM
+- effective L/D
 
-## 6. Compatibilidade Universal Android e Especificações Técnicas
+### INFLOW & WAKE
+- (lambda)
+- (lambda_i)
+- (K_x)
+- (K_y)
+- (chi)
+- tip-loss factor (B)
 
-1. **Sistema operacional**:
-   - `android:minSdkVersion="21"` (Android 5.0+).
-   - `android:targetSdkVersion="36"`.
-2. **Runtime B4A**:
-   - Bibliotecas declaradas: `core`, `phone`, `RSPopupMenu` e `JavaObject` (usado somente para o Storage Access Framework de exportação).
-   - `#MultiDex: False`.
-   - Navegação por três painéis nativos, sem ViewPager.
-3. **Responsividade**:
-   - Gate visual em 320×568, 320×568 com font scale 1.3, 360×780, 393×873, 412×915, 600×960, 768×1024, 915×412 e 1024×600.
-   - Uso de `dip`, ScrollViews nativas, largura máxima em tablets e layout próprio do Sweep em landscape.
-   - `android:windowSoftInputMode="stateHidden|adjustPan"`.
-4. **Armazenamento e exportação**:
-   - Presets e settings são gravados em `File.DirInternal`; nenhuma permissão ampla de armazenamento é necessária.
-   - CSV e PNG usam o Android Storage Access Framework (`ACTION_CREATE_DOCUMENT`), deixando o usuário escolher o destino.
-5. **Validação de release**:
-   - `tools/verify_engine.py` executa uma matriz determinística de 100 casos na implementação Python de referência, verifica fechamento de momentum e audita o contrato das equações críticas no fonte B4A; `tests/test_rotor_engine.py` e `tests/test_b4a_state_safety.py` cobrem regressões físicas e de estado.
-   - A validação de integração exige **build B4A local real**, APK instalável, execução em emulador/dispositivo, dumps de hierarquia, bounds e screenshots reais. O workflow do GitHub é apenas manual e não é autoridade de release.
-   - Smoke tests cobrem NEW/rename/cópia/delete, persistência do ativo após cold restart, tip-loss, compressibilidade, airfoil, convenções agrupadas μ/Vx e α/Vz/μz, quatro modelos de inflow, três modos de trim, rotação, Light/Dark, SI/Imperial, +1 Decimal, conversor, help offline, Sweep, controles CSV/PNG e Back sem crash. A matriz responsiva também prova que o último controle de cada conteúdo rolável é alcançável.
+### OPERATING STATE & ATMOSPHERE
+- solved RPM
+- solved collective
+- solved CT
+- solved thrust
+- (mu,V_x,mu_z,V_z,alpha)
+- tip speed
+- tip Mach / advancing-tip Mach
+- altitude
+- temperature
+- density
+- pressure
+- speed of sound
+- solution/model status
 
----
+All rows have variable-specific precision plus the global +1 Decimal option.
 
-## 7. Fases de Execução do Desenvolvimento
+## 6. Plot redesign: old capability + current polish
 
-### Fase 1: Fundação do Projeto e Módulo de Geometrias
-- Criação dos arquivos `.b4a` e manifestos do **RotorCalculator**.
-- Implementação de `RotorStorage.bas` com persistência em arquivo de texto/mapa e biblioteca de 6 presets de fábrica.
-- Criação da tela de gerenciamento de geometrias com lista rolável e operações CRUD.
+Restore the original universal sweep philosophy:
 
-### Fase 2: Implementação e Validação Numérica do Engine
-- Codificação de `zBETEngine.bas` contendo:
-  - Momentos radiais analíticos ($J_n, I_m, T_m$).
-  - Resolução do influxo não-linear $\lambda_i$ por bissecção.
-  - Modelos de influxo Uniforme, Coleman, Coleman-Feingold e Drees.
-  - Correção de compressibilidade e perda de ponta (Sissingh).
-  - Arrasto de perfil analítico e quadratura vetorial.
-  - Modos de trim de hover (Coletivo, RPM, Nenhum).
-- Criação do script de verificação `tools/verify_engine.py` com 100 casos determinísticos na referência Python, fechamento de momentum e contrato explícito das equações críticas do fonte B4A. Equivalência numérica **compilada** B4A↔Python só pode ser declarada quando o B4A real for executado; o plano não confunde inspeção de fonte com execução binária.
+- any scalar result can be Y;
+- X is (mu), with (V_x) as equivalent display;
+- family selector:
+  - Active Only
+  - Inflow Models
+  - alpha family
+  - Vz family
+  - mu_z family
+- clean current theme, auto-scaling, invalid gaps, active marker, non-intrusive legends.
 
-### Fase 3: Desenvolvimento do Frontend (UI/UX Premium)
-- Montagem das 3 páginas nativas (`Geometry`, `Conditions`, `Results`) com tabs responsivas no header.
-- Aba 1: Lista e detalhes dos rotores.
-- Aba 2: Controles de condições atmosféricas (ISA), velocidade de avanço e atitude do disco.
-- Aba 3: Cockpit de telemetria com cartões de empuxo, potência, torque, eficiência e coeficientes adimensionais.
-- Aplicação do estilo visual premium com temas Light/Dark persistentes, fontes técnicas e hierarquia de contraste consistente.
+Add:
+- **VALUES** button for comma-separated custom family values;
+- X-range control;
+- session persistence of plot choices.
 
-### Fase 4: Popups de Apoio, Conversores e Gráficos
-- Implementação dos popups de apoio (Aerofólios, Influxo, Conversores, Convenções e Physics & Equations offline).
-- Desenvolvimento do visualizador gráfico em `Canvas` com eixo μ/Vx, famílias por modelo/α/Vz/μz, legenda reservada e export CSV/PNG.
+### Trim in plots
 
-### Fase 5: Empacotamento, Testes Finais e Release
-- Testes locais em emulador/dispositivo e múltiplos fatores de forma.
-- Assinatura somente com credenciais externas ao repositório, fornecidas por `B4A_KEY_FILE`, `B4A_KEY_PASSWORD` e `B4A_KEY_ALIAS`.
-- Geração local do APK/AAB de lançamento para a Google Play Store; nenhum binário é promovido automaticamente por GitHub Actions.
+When CT or thrust is part of the selected operating-input pair, show:
 
+**Trim only in hover**
 
-### Gate final da versão 1.20
+OFF:
+- retrim at every sweep point using that point's flight condition.
 
-A árvore de fonte não deve carregar APK/AAB de revisões antigas. O binário final entra no repositório somente depois de: compilação B4A do commit exato, instalação, operação do app, smoke matrix completa, screenshots reais em Light/Dark e portrait/landscape, revisão visual e confirmação de que CSV/PNG são exportados pelo Android Storage Access Framework. Até esse gate ser executado, o estado correto do repositório é **source-complete, binary-pending**.
+ON:
+- trim once at hover;
+- hold solved RPM and collective constant across the full sweep.
+
+TABLE and CSV use the same complete sampled family dataset as the plot. TABLE therefore shows all plotted curves, not just the active curve.
+
+## 7. Geometry backup and sharing
+
+Settings gains:
+
+- **Import Geometries**
+- **Export Geometries**
+
+Export writes the entire versioned rotor database to one portable text file through Android's document picker.
+
+Import:
+1. choose file;
+2. validate schema and numeric ranges;
+3. show number of valid geometries;
+4. merge after confirmation;
+5. resolve duplicate names explicitly;
+6. leave unrelated local geometries untouched.
+
+This is the RotorCalculator equivalent of AeroCalculator's airplane database interchange, implemented with modern Android document-provider APIs.
+
+## 8. Help and settings
+
+Settings:
+- Dark / Light
+- SI / Imperial
+- Standard / +1 Decimal
+- Import Geometries
+- Export Geometries
+
+Help:
+- Physics & Equations offline HTML
+- zBET/zBEMT conventions
+- field-level popup help on all Geometry, Conditions, and Results rows
+
+Mobile discovery is tap-first; no essential explanation depends on mouse hover.
+
+## 9. Verification gates
+
+Before release:
+
+1. geometry synchronization equations and migration tests;
+2. six operating-pair tests in hover, forward flight, and axial flow;
+3. Numerical Vectorial profile drag only;
+4. K_ind tests;
+5. all coefficients grouped in Results;
+6. every result available to Plot;
+7. custom family VALUES;
+8. trim-only-hover ON/OFF;
+9. TABLE/CSV/PNG parity with plotted dataset;
+10. geometry import/export round-trip;
+11. Light/Dark portrait/landscape UI smoke;
+12. compiled APK installed and operated manually;
+13. screenshots reviewed before APK/AAB are treated as current.
+
+## 10. Implementation status
+
+The pre-existing 1.20 source already contains useful components that will be retained where compatible:
+- zBET analytical engine;
+- four inflow models;
+- Numerical Vectorial profile drag;
+- Sissingh convergence;
+- Light/Dark themes;
+- +1 Decimal;
+- offline physics help;
+- SAF CSV/PNG export;
+- universal sweep Y-variable catalog;
+- multi-curve sweep renderer.
+
+The following are architectural changes and must be completed before release:
+- in-page synchronized Geometry editor;
+- RPM/collective/CT/thrust six-pair operating solver;
+- Conditions redesign;
+- Results regrouping;
+- complete plot dataset/table architecture;
+- editable family values;
+- trim-only-hover plot behavior;
+- geometry import/export;
+- saved-rotor schema migration.
