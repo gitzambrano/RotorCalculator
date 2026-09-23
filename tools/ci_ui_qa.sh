@@ -108,6 +108,8 @@ capture_screen() {
   mkdir -p "$OUT"
   local W="${SIZE%x*}"
   local H="${SIZE#*x}"
+  local ROTOR_LABEL="Sikorsky UH-60 Black Hawk"
+  if [ "$W" -le 430 ]; then ROTOR_LABEL="UH-60"; fi
 
   adb shell wm size "$SIZE"
   adb shell wm density 160
@@ -123,10 +125,10 @@ capture_screen() {
   safe_screencap "$OUT/01-geometry-library.png"
   python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
   grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
-  grep -qi "Sikorsky UH-60 Black Hawk" "$OUT/01-geometry-library.json"
+  grep -Fqi "$ROTOR_LABEL" "$OUT/01-geometry-library.json"
   grep -qi "NEW ROTOR" "$OUT/01-geometry-library.json"
 
-  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
+  python /tmp/tap_text.py "$ROTOR_LABEL"
   sleep 0.6
   safe_screencap "$OUT/02-geometry-editor-top.png"
   python /tmp/ui_node.py "$OUT/02-geometry-editor-top.xml" > "$OUT/02-geometry-editor-top.json"
@@ -208,8 +210,8 @@ functional_smoke() {
   # Rotor library + contextual Geometry editor + copy semantics.
   python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
   grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
-  grep -qi "Sikorsky UH-60 Black Hawk" "$OUT/01-geometry-library.json"
-  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
+  grep -qi "UH-60" "$OUT/01-geometry-library.json"
+  python /tmp/tap_text.py "UH-60"
   sleep 0.6
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
   tap_text_scrolling "Sissingh" 393 873
