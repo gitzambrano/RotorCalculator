@@ -35,14 +35,23 @@ Sub Process_Globals
 	)
 	
 	Type FlightCondition ( _
+		AltitudeM As Double, _
+		TemperatureC As Double, _
+		PressurePa As Double, _
 		Rho As Double, _
 		SpeedOfSound As Double, _
+		HorizontalMode As String, _
+		HorizontalValue As Double, _
+		AxialMode As String, _
+		AxialValue As Double, _
 		Mu As Double, _
 		MuZ As Double, _
 		InflowModel As String, _
 		ProfileDragModel As String, _
 		InducedTorqueModel As String, _
-		HoverTrimMode As String, _
+		OperatingPair As String, _
+		RPM As Double, _
+		CollectiveDeg As Double, _
 		TargetThrustN As Double, _
 		TargetCT As Double, _
 		KInd As Double, _
@@ -83,7 +92,18 @@ Sub Process_Globals
 		BFactor As Double, _
 		EffectiveLiftSlope As Double, _
 		TrimmedRPM As Double, _
+		TrimmedCollectiveDeg As Double, _
 		TrimmedTheta0Deg As Double, _
+		OperatingMu As Double, _
+		OperatingMuZ As Double, _
+		OperatingVx As Double, _
+		OperatingVz As Double, _
+		OperatingAlphaDeg As Double, _
+		AltitudeM As Double, _
+		TemperatureC As Double, _
+		Density As Double, _
+		PressurePa As Double, _
+		SpeedOfSound As Double, _
 		SolutionValid As Boolean, _
 		CompressibilityWarning As Boolean, _
 		StatusMessage As String _
@@ -158,14 +178,23 @@ End Sub
 Public Sub CreateDefaultCondition As FlightCondition
 	Dim c As FlightCondition
 	c.Initialize
+	c.AltitudeM = 0.0
+	c.TemperatureC = 15.0
+	c.PressurePa = 101325.0
 	c.Rho = 1.225
 	c.SpeedOfSound = 340.3
+	c.HorizontalMode = "mu"
+	c.HorizontalValue = 0.0
+	c.AxialMode = "alpha"
+	c.AxialValue = 0.0
 	c.Mu = 0.0
 	c.MuZ = 0.0
 	c.InflowModel = "coleman_feingold"
 	c.ProfileDragModel = "numerical_vectorial"
 	c.InducedTorqueModel = "energy_balance"
-	c.HoverTrimMode = "collective"
+	c.OperatingPair = "rpm_ct"
+	c.RPM = 390.0
+	c.CollectiveDeg = 0.0
 	c.TargetCT = 0.0065
 	c.TargetThrustN = 0.0
 	c.KInd = 1.15
@@ -234,14 +263,23 @@ End Sub
 Public Sub CloneCondition(src As FlightCondition) As FlightCondition
 	Dim dst As FlightCondition
 	dst.Initialize
+	dst.AltitudeM = src.AltitudeM
+	dst.TemperatureC = src.TemperatureC
+	dst.PressurePa = src.PressurePa
 	dst.Rho = src.Rho
 	dst.SpeedOfSound = src.SpeedOfSound
+	dst.HorizontalMode = src.HorizontalMode
+	dst.HorizontalValue = src.HorizontalValue
+	dst.AxialMode = src.AxialMode
+	dst.AxialValue = src.AxialValue
 	dst.Mu = src.Mu
 	dst.MuZ = src.MuZ
 	dst.InflowModel = src.InflowModel
-	dst.ProfileDragModel = src.ProfileDragModel
+	dst.ProfileDragModel = "numerical_vectorial"
 	dst.InducedTorqueModel = src.InducedTorqueModel
-	dst.HoverTrimMode = src.HoverTrimMode
+	dst.OperatingPair = src.OperatingPair
+	dst.RPM = src.RPM
+	dst.CollectiveDeg = src.CollectiveDeg
 	dst.TargetThrustN = src.TargetThrustN
 	dst.TargetCT = src.TargetCT
 	dst.KInd = src.KInd
@@ -253,8 +291,13 @@ End Sub
 ' Returns a safe condition copy without mutating caller state.
 Public Sub SanitizeCondition(src As FlightCondition) As FlightCondition
 	Dim c As FlightCondition = CloneCondition(src)
+	c.AltitudeM = Max(-500.0, Min(11000.0, c.AltitudeM))
+	c.TemperatureC = Max(-80.0, Min(60.0, c.TemperatureC))
+	c.PressurePa = Max(1000.0, Min(120000.0, c.PressurePa))
 	c.Rho = Max(0.01, Min(5.0, c.Rho))
 	c.SpeedOfSound = Max(100.0, Min(500.0, c.SpeedOfSound))
+	c.RPM = Max(1.0, Min(30000.0, c.RPM))
+	c.CollectiveDeg = Max(-60.0, Min(60.0, c.CollectiveDeg))
 	c.Mu = Max(-0.60, Min(0.60, c.Mu))
 	c.MuZ = Max(-0.50, Min(0.50, c.MuZ))
 	c.TargetThrustN = Max(0.0, Min(1.0e8, c.TargetThrustN))
@@ -262,10 +305,12 @@ Public Sub SanitizeCondition(src As FlightCondition) As FlightCondition
 	c.KInd = Max(1.0, Min(3.0, c.KInd))
 	c.FxColeman = Max(-5.0, Min(5.0, c.FxColeman))
 	c.FyColeman = Max(-5.0, Min(5.0, c.FyColeman))
+	If c.HorizontalMode <> "mu" And c.HorizontalMode <> "vx" Then c.HorizontalMode = "mu"
+	If c.AxialMode <> "alpha" And c.AxialMode <> "vz" And c.AxialMode <> "muz" Then c.AxialMode = "alpha"
 	If c.InflowModel <> "uniform" And c.InflowModel <> "coleman_simple" And c.InflowModel <> "coleman_feingold" And c.InflowModel <> "drees" Then c.InflowModel = "coleman_feingold"
-	If c.ProfileDragModel <> "analytical_tangential" And c.ProfileDragModel <> "analytical_vectorial" And c.ProfileDragModel <> "numerical_vectorial" Then c.ProfileDragModel = "numerical_vectorial"
+	c.ProfileDragModel = "numerical_vectorial"
 	If c.InducedTorqueModel <> "energy_balance" And c.InducedTorqueModel <> "analytical_bet" Then c.InducedTorqueModel = "energy_balance"
-	If c.HoverTrimMode <> "collective" And c.HoverTrimMode <> "rpm" And c.HoverTrimMode <> "none" Then c.HoverTrimMode = "collective"
+	If c.OperatingPair <> "rpm_collective" And c.OperatingPair <> "rpm_ct" And c.OperatingPair <> "rpm_thrust" And c.OperatingPair <> "collective_ct" And c.OperatingPair <> "collective_thrust" And c.OperatingPair <> "ct_thrust" Then c.OperatingPair = "rpm_ct"
 	Return c
 End Sub
 
