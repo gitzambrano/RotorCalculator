@@ -166,19 +166,30 @@ Sub Globals
 	Private scvGeomEditor As ScrollView
 	Private lblGeomPopupTitle As Label
 	Private edtRotorName As EditText
+	Private lblLoadedRotor As Label
 	Private edtRadius As EditText
-	Private edtRPM As EditText
 	Private edtNBlades As EditText
 	Private edtRootCutout As EditText
 	Private edtChordRoot As EditText
 	Private edtChordTip As EditText
+	Private edtSigmaRef As EditText
+	Private edtAspectRatio As EditText
 	Private edtThetaRoot As EditText
 	Private edtThetaTip As EditText
 	Private edtLiftSlope As EditText
 	Private edtCd0 As EditText
 	Private btnSelectAirfoil As Button
 	Private btnTipLoss As Button
+	Private edtTipLossB As EditText
 	Private btnCompressibility As Button
+	Private lblSigmaGeomDerived As Label
+	Private lblSigmaThrustDerived As Label
+	Private lblTaperDerived As Label
+	Private lblDiskAreaDerived As Label
+	Private lblRefBladeAreaDerived As Label
+	Private lblActiveBladeAreaDerived As Label
+	Private lblTwistDerived As Label
+	Private GeometryDirty As Boolean = False
 	
 	' Page 1: Conditions Views
 	Private pnlBack1 As Panel
@@ -188,14 +199,20 @@ Sub Globals
 	Private btnHorizontalInput As Button
 	Private edtHorizontalValue As EditText
 	Private lblHorizontalUnit As Label
+	Private lblHorizontalDerived As Label
 	Private btnAxialInput As Button
 	Private edtAxialValue As EditText
 	Private lblAxialUnit As Label
+	Private lblAxialDerived As Label
 	Private btnInflowModel As Button
-	Private btnProfileDragModel As Button
-	Private btnHoverTrimMode As Button
-	Private edtTargetThrust As EditText
-	Private edtTargetCT As EditText
+	Private btnOperatingPair As Button
+	Private lblOperatingInput1 As Label
+	Private lblOperatingInput2 As Label
+	Private edtOperatingInput1 As EditText
+	Private edtOperatingInput2 As EditText
+	Private lblOperatingUnit1 As Label
+	Private lblOperatingUnit2 As Label
+	Private edtKInd As EditText
 	
 	' Page 2: Results Views
 	Private pnlBack2 As Panel
@@ -212,11 +229,17 @@ Sub Globals
 	Private btnSweepMultiModel As Button
 	Private btnSweepXAxis As Button
 	Private btnSweepMaxMu As Button
+	Private btnSweepValues As Button
+	Private btnSweepTrimHover As Button
 	Private ivSweepPlot As ImageView
 	Private lblSweepCurrentVal As Label
 	Private SweepMultiMode As Int = 0
 	Private SweepXAxisMode As Int = 0 ' 0=mu, 1=Vx
 	Private SweepMaxMuVal As Double = 0.40
+	Private SweepTrimOnlyHover As Boolean = False
+	Private SweepAlphaValues As String = "-10,-5,0,5,10"
+	Private SweepVzValues As String = "-10,-5,0,5,10"
+	Private SweepMuZValues As String = "-0.05,-0.025,0,0.025,0.05"
 	Private SweepParamSelectedKey As String = "CP"
 	Private SweepParamSelectedLabel As String = "CQ / CPshaft — Shaft Power"
 	
