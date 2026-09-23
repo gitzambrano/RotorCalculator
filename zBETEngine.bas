@@ -854,7 +854,13 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 					collective = scBoth(0): ok = scBoth(1)
 				End If
 		End Select
-	If ok = False Then status = "INVALID: selected operating constraints could not be trimmed"
+	If ok = False Then
+		If c.OperatingPair = "collective_ct" Then
+			status = "INVALID: Collective + CT could not determine a unique RPM at this flight/model state"
+		Else
+			status = "INVALID: selected operating constraints could not be trimmed"
+		End If
+	End If
 	Dim resolvedGeom As RotorGeometry = ApplyOperatingGeometry(baseGeom, rpm, collective)
 	Dim resolvedCond As FlightCondition = ResolveConditionAtRPM(c, resolvedGeom)
 	resolvedCond.RPM = resolvedGeom.RPM
