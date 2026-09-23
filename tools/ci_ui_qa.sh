@@ -4,6 +4,8 @@ set -euo pipefail
 APK="ci-apk/RotorCalculator-ci.apk"
 test -f "$APK"
 adb install -r "$APK"
+# Deterministic local QA: never inherit theme/unit/precision or rotor data from an older install.
+adb shell pm clear flightdyn.rotorcalculator >/dev/null
 
 cat > /tmp/check_dark_png.py <<'PY'
 import sys,struct,zlib,math
@@ -407,19 +409,59 @@ functional_smoke() {
   assert_text_scrolling_down "$OUT" "Solved CT" 393 873 "12-solved-ct"
   assert_text_scrolling_down "$OUT" "Solved Thrust" 393 873 "13-solved-thrust"
 
-  # Settings exposes backup/share controls and persistent presentation options.
+  # Settings: exercise all persistent presentation options.
   adb shell input tap 369 28
   sleep 0.4
   python /tmp/tap_text.py "Settings"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/14-settings.xml" > "$OUT/14-settings.json"
-  grep -qi "Import Geometries" "$OUT/14-settings.json"
-  grep -qi "Export Geometries" "$OUT/14-settings.json"
+  python /tmp/ui_node.py "$OUT/14-settings-dark.xml" > "$OUT/14-settings-dark.json"
+  grep -qi "Import Geometries" "$OUT/14-settings-dark.json"
+  grep -qi "Export Geometries" "$OUT/14-settings-dark.json"
+  grep -qi "DARK" "$OUT/14-settings-dark.json"
+  grep -qi "SI" "$OUT/14-settings-dark.json"
+  grep -qi "STANDARD" "$OUT/14-settings-dark.json"
+
+  python /tmp/tap_text.py "SI"
+  sleep 0.3
   python /tmp/tap_text.py "STANDARD"
   sleep 0.3
+  python /tmp/ui_node.py "$OUT/14a-settings-options.xml" > "$OUT/14a-settings-options.json"
+  grep -qi "IMPERIAL" "$OUT/14a-settings-options.json"
+  grep -qi "+1 DECIMAL" "$OUT/14a-settings-options.json"
+
+  # Tapping the current DARK theme switches to LIGHT and rebuilds the UI.
   python /tmp/tap_text.py "DARK"
   sleep 1.2
   assert_app_alive
+  safe_screencap "$OUT/14b-portrait-light.png"
+
+  # Reopen Settings and verify the live state.
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "Settings"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/14c-settings-light.xml" > "$OUT/14c-settings-light.json"
+  grep -qi "LIGHT" "$OUT/14c-settings-light.json"
+  grep -qi "IMPERIAL" "$OUT/14c-settings-light.json"
+  grep -qi "+1 DECIMAL" "$OUT/14c-settings-light.json"
+  adb shell input keyevent 4
+  sleep 0.3
+
+  # Cold restart must preserve theme, units and precision.
+  adb shell am force-stop flightdyn.rotorcalculator
+  adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
+  sleep 1.5
+  assert_app_alive
+  adb shell input tap 369 28
+  sleep 0.3
+  python /tmp/tap_text.py "Settings"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/14d-settings-after-restart.xml" > "$OUT/14d-settings-after-restart.json"
+  grep -qi "LIGHT" "$OUT/14d-settings-after-restart.json"
+  grep -qi "IMPERIAL" "$OUT/14d-settings-after-restart.json"
+  grep -qi "+1 DECIMAL" "$OUT/14d-settings-after-restart.json"
+  adb shell input keyevent 4
+  sleep 0.3
 
   # Universal sweep: explicit Y, family, VALUES, X axis/range, hover-only trim and exports.
   python /tmp/tap_text.py RESULTS
@@ -470,8 +512,8 @@ functional_smoke() {
   adb shell settings put system user_rotation 1
   adb shell wm size 873x393
   sleep 2
-  safe_screencap "$OUT/18-landscape.png"
-  python3 - "$OUT/18-landscape.png" <<'PY'
+  safe_screencap "$OUT/18-landscape-light.png"
+  python3 - "$OUT/18-landscape-light.png" <<'PY'
 import struct,sys
 with open(sys.argv[1],"rb") as f:
     h=f.read(24)
@@ -481,6 +523,16 @@ if w <= hh:
 PY
   assert_text_scrolling_down "$OUT" "RPM + CT" 873 393 "18b-pair"
   assert_text_scrolling_down "$OUT" "Drees" 873 393 "18c-inflow"
+
+  # Switch back to DARK while still landscape and capture the same orientation.
+  adb shell input tap 849 24
+  sleep 0.3
+  python /tmp/tap_text.py "Settings"
+  sleep 0.4
+  python /tmp/tap_text.py "LIGHT"
+  sleep 1.0
+  assert_app_alive
+  safe_screencap "$OUT/18d-landscape-dark.png"
 
   adb shell wm size 393x873
   adb shell settings put system user_rotation 0
