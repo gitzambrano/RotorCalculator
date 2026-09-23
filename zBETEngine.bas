@@ -704,7 +704,7 @@ Private Sub CandidateResult(baseGeom As RotorGeometry, sourceCond As FlightCondi
 	c.OperatingPair = "rpm_collective"
 	c.RPM = g.RPM
 	c.CollectiveDeg = collectiveDeg
-	Return CalculateCoreResolved(g, c)
+	Return CalculateCoreResolvedMode(g, c, False)
 End Sub
 
 Private Sub CandidateResidual(baseGeom As RotorGeometry, sourceCond As FlightCondition, rpm As Double, collectiveDeg As Double, targetKind As String, targetValue As Double) As Object()
@@ -947,6 +947,12 @@ End Sub
 
 ' Núcleo aerodinâmico para geometria/condição já resolvidas.
 Private Sub CalculateCoreResolved(geom As RotorGeometry, cond As FlightCondition) As RotorResults
+	Return CalculateCoreResolvedMode(geom, cond, True)
+End Sub
+
+' FullResults=False is used only by trim residuals. It solves the identical
+' inflow/CT/Sissingh loading state, then returns before profile drag/torque work.
+Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondition, FullResults As Boolean) As RotorResults
 	Dim res As RotorResults
 	res.Initialize
 	res.SolutionValid = True
@@ -1070,6 +1076,14 @@ Private Sub CalculateCoreResolved(geom As RotorGeometry, cond As FlightCondition
 		End If
 	End If
 	res.BFactor = b_val
+	
+	If FullResults = False Then
+		' Trim residuals need only CT and dimensional thrust.
+		res.ThrustN = ct_val * dynP
+		res.ThrustKgf = res.ThrustN / 9.80665
+		res.ThrustLbf = res.ThrustN * 0.224808943
+		Return res
+	End If
 	
 	' Força longitudinal induzida CHi
 	res.CHi = (res.EffectiveLiftSlope / 4.0) * ( _
