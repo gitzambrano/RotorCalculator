@@ -224,7 +224,7 @@ Sub Globals
 	Private btnViewPolarPlot As Button
 	Private lblResultStatus As Label
 	Private lblTrimSummary As Label
-	Private lblResults(40) As Label
+	Private lblResults(43) As Label
 	
 	' Multi-Parameter μ-Sweep Popup
 	Private pnlSweepPopup As Panel
@@ -1426,7 +1426,8 @@ Private Sub BuildPageRes
 	
 	Dim labels As List
 	labels.Initialize2(Array As String( _
-		"Total Thrust (T)", "Shaft Power (P)", "Total Torque (Q)", "In-Plane Drag (H)", _
+		"Total Thrust (T)", "Shaft Power (P)", "Total Torque (Q)", "In-Plane Force (H)", _
+		"Side Force (Y)", "Roll Moment (Mx)", "Pitch Moment (My)", _
 		"Thrust Coef (CT)", "Torque Coef (CQ)", "Induced Torque (CQi)", "Profile Torque (CQ0)", _
 		"In-Plane Coef (CH)", "Induced In-Plane (CHi)", "Profile In-Plane (CH0)", "Side Force Coef (CY)", _
 		"Roll Moment Coef (CMx)", "Pitch Moment Coef (CMy)", "Air Power Coef (CPair)", _
@@ -1445,10 +1446,10 @@ Private Sub BuildPageRes
 		Dim sectionTitle As String = ""
 		Select i
 			Case 0: sectionTitle = "DIMENSIONAL PERFORMANCE"
-			Case 4: sectionTitle = "AERODYNAMIC COEFFICIENTS"
-			Case 15: sectionTitle = "EFFICIENCY"
-			Case 17: sectionTitle = "INFLOW & WAKE"
-			Case 23: sectionTitle = "OPERATING STATE & ATMOSPHERE"
+			Case 7: sectionTitle = "AERODYNAMIC COEFFICIENTS"
+			Case 18: sectionTitle = "EFFICIENCY"
+			Case 20: sectionTitle = "INFLOW & WAKE"
+			Case 26: sectionTitle = "OPERATING STATE & ATMOSPHERE"
 		End Select
 		If sectionTitle <> "" Then
 			Dim sh As Label
@@ -1552,6 +1553,10 @@ End Sub
 Private Sub ResultDisplayLabel(fullText As String) As String
 	If root.Width > 380dip Then Return fullText
 	Select fullText
+		Case "In-Plane Force (H)": Return "In-Plane H"
+		Case "Side Force (Y)": Return "Side Force Y"
+		Case "Roll Moment (Mx)": Return "Roll Mx"
+		Case "Pitch Moment (My)": Return "Pitch My"
 		Case "Induced Torque (CQi)": Return "Induced (CQi)"
 		Case "Profile Torque (CQ0)": Return "Profile (CQ0)"
 		Case "Induced In-Plane (CHi)": Return "Induced (CHi)"
@@ -1597,7 +1602,10 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "Total Thrust (T)": Return "Solved rotor thrust T at the current flight condition."
 		Case "Shaft Power (P)": Return "Mechanical shaft power P = ΩQ."
 		Case "Total Torque (Q)": Return "Aerodynamic torque about the rotor shaft."
-		Case "In-Plane Drag (H)": Return "Rotor in-plane H force along the longitudinal disk axis."
+		Case "In-Plane Force (H)": Return "Dimensional longitudinal in-plane rotor force H."
+		Case "Side Force (Y)": Return "Dimensional lateral rotor side force Y."
+		Case "Roll Moment (Mx)": Return "Dimensional rotor rolling moment Mx."
+		Case "Pitch Moment (My)": Return "Dimensional rotor pitching moment My."
 		Case "Thrust Coef (CT)": Return "CT = T / [ρ A (ΩR)²]."
 		Case "Torque Coef (CQ)": Return "CQ = Q / [ρ A (ΩR)² R], equal to shaft-power coefficient CPshaft."
 		Case "Induced Torque (CQi)": Return "Induced torque/power contribution from the blade-element torque integral or configured energy balance."
@@ -1810,7 +1818,7 @@ Public Sub RecalculateRotor
 		If ActiveRes.SolutionValid = False Then
 			lblResultStatus.Text = "MODEL STATUS · INVALID OPERATING POINT"
 			lblResultStatus.TextColor = ColorAccentRed
-			For i = 0 To 39
+			For i = 0 To 42
 				If lblResults(i).IsInitialized Then lblResults(i).Text = "---"
 			Next
 			Return
@@ -1836,63 +1844,71 @@ Public Sub RecalculateRotor
 		lblResults(1).Text = FormatOutputValue(ActiveRes.PowerShaftKW, 1) & " kW"
 		lblResults(2).Text = FormatOutputValue(ActiveRes.TorqueNm, 1) & " N·m"
 		lblResults(3).Text = FormatOutputValue(ActiveRes.DragHN, 1) & " N"
+		lblResults(4).Text = FormatOutputValue(ActiveRes.SideForceYN, 1) & " N"
+		lblResults(5).Text = FormatOutputValue(ActiveRes.RollMomentNm, 1) & " N·m"
+		lblResults(6).Text = FormatOutputValue(ActiveRes.PitchMomentNm, 1) & " N·m"
 	Else
 		lblResults(0).Text = FormatOutputValue(ActiveRes.ThrustLbf, 0) & " lbf"
 		lblResults(1).Text = FormatOutputValue(ActiveRes.PowerShaftHP, 1) & " hp"
 		lblResults(2).Text = FormatOutputValue(ActiveRes.TorqueLbft, 1) & " lb·ft"
 		lblResults(3).Text = FormatOutputValue(ActiveRes.DragHN * 0.224808943, 1) & " lbf"
+		lblResults(4).Text = FormatOutputValue(ActiveRes.SideForceYLbf, 1) & " lbf"
+		lblResults(5).Text = FormatOutputValue(ActiveRes.RollMomentLbft, 1) & " lb·ft"
+		lblResults(6).Text = FormatOutputValue(ActiveRes.PitchMomentLbft, 1) & " lb·ft"
 	End If
 	
 	' All aerodynamic coefficients stay together.
-	lblResults(4).Text = FormatOutputValue(ActiveRes.CT, 5)
-	lblResults(5).Text = FormatOutputValue(ActiveRes.CQ, 6)
-	lblResults(6).Text = FormatOutputValue(ActiveRes.CQi, 6)
-	lblResults(7).Text = FormatOutputValue(ActiveRes.CQ0, 6)
-	lblResults(8).Text = FormatOutputValue(ActiveRes.CH, 6)
-	lblResults(9).Text = FormatOutputValue(ActiveRes.CHi, 6)
-	lblResults(10).Text = FormatOutputValue(ActiveRes.CH0, 6)
-	lblResults(11).Text = FormatOutputValue(ActiveRes.CY, 6)
-	lblResults(12).Text = FormatOutputValue(ActiveRes.CMx, 6)
-	lblResults(13).Text = FormatOutputValue(ActiveRes.CMy, 6)
-	lblResults(14).Text = FormatOutputValue(ActiveRes.CPair, 6)
-	lblResults(15).Text = FormatOutputValue(ActiveRes.FoM, 4)
-	lblResults(16).Text = FormatOutputValue(ActiveRes.L_D_eff, 2)
-	lblResults(17).Text = FormatOutputValue(ActiveRes.InflowLambda, 5)
-	lblResults(18).Text = FormatOutputValue(ActiveRes.InflowLambdaI, 5)
-	lblResults(19).Text = FormatOutputValue(ActiveRes.InflowKx, 3)
-	lblResults(20).Text = FormatOutputValue(ActiveRes.InflowKy, 3)
-	lblResults(21).Text = FormatOutputValue(ActiveRes.WakeSkewChiDeg, 1) & "°"
-	lblResults(22).Text = FormatOutputValue(ActiveRes.BFactor, 4)
-	' Explicit trim solution, followed by flow and atmosphere state.
-	lblResults(23).Text = FormatOutputValue(ActiveRes.TrimmedRPM, 0) & " rpm"
-	lblResults(24).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg, 2) & "°"
-	lblResults(25).Text = FormatOutputValue(ActiveRes.CT, 5)
-	lblResults(27).Text = FormatOutputValue(ActiveRes.OperatingMu, 4)
-	lblResults(29).Text = FormatOutputValue(ActiveRes.OperatingMuZ, 4)
-	lblResults(31).Text = FormatOutputValue(ActiveRes.OperatingAlphaDeg, 2) & "°"
-	lblResults(33).Text = FormatOutputValue(tipMach, 3)
-	lblResults(34).Text = FormatOutputValue(ActiveRes.AdvancingTipMach, 3)
+	lblResults(7).Text = FormatOutputValue(ActiveRes.CT, 5)
+	lblResults(8).Text = FormatOutputValue(ActiveRes.CQ, 6)
+	lblResults(9).Text = FormatOutputValue(ActiveRes.CQi, 6)
+	lblResults(10).Text = FormatOutputValue(ActiveRes.CQ0, 6)
+	lblResults(11).Text = FormatOutputValue(ActiveRes.CH, 6)
+	lblResults(12).Text = FormatOutputValue(ActiveRes.CHi, 6)
+	lblResults(13).Text = FormatOutputValue(ActiveRes.CH0, 6)
+	lblResults(14).Text = FormatOutputValue(ActiveRes.CY, 6)
+	lblResults(15).Text = FormatOutputValue(ActiveRes.CMx, 6)
+	lblResults(16).Text = FormatOutputValue(ActiveRes.CMy, 6)
+	lblResults(17).Text = FormatOutputValue(ActiveRes.CPair, 6)
+	lblResults(18).Text = FormatOutputValue(ActiveRes.FoM, 4)
+	lblResults(19).Text = FormatOutputValue(ActiveRes.L_D_eff, 2)
+	lblResults(20).Text = FormatOutputValue(ActiveRes.InflowLambda, 5)
+	lblResults(21).Text = FormatOutputValue(ActiveRes.InflowLambdaI, 5)
+	lblResults(22).Text = FormatOutputValue(ActiveRes.InflowKx, 3)
+	lblResults(23).Text = FormatOutputValue(ActiveRes.InflowKy, 3)
+	lblResults(24).Text = FormatOutputValue(ActiveRes.WakeSkewChiDeg, 1) & "°"
+	lblResults(25).Text = FormatOutputValue(ActiveRes.BFactor, 4)
+	
+	Dim tipMach As Double = 0.0
+	If ActiveRes.SpeedOfSound > 0 Then tipMach = ActiveRes.TipSpeed / ActiveRes.SpeedOfSound
+	lblResults(26).Text = FormatOutputValue(ActiveRes.TrimmedRPM, 0) & " rpm"
+	lblResults(27).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg, 2) & "°"
+	lblResults(28).Text = FormatOutputValue(ActiveRes.CT, 5)
+	lblResults(30).Text = FormatOutputValue(ActiveRes.OperatingMu, 4)
+	lblResults(32).Text = FormatOutputValue(ActiveRes.OperatingMuZ, 4)
+	lblResults(34).Text = FormatOutputValue(ActiveRes.OperatingAlphaDeg, 2) & "°"
+	lblResults(36).Text = FormatOutputValue(tipMach, 3)
+	lblResults(37).Text = FormatOutputValue(ActiveRes.AdvancingTipMach, 3)
 	
 	If UnitSystem = 0 Then
-		lblResults(26).Text = FormatOutputValue(ActiveRes.ThrustN, 0) & " N"
-		lblResults(28).Text = FormatOutputValue(ActiveRes.OperatingVx, 1) & " m/s"
-		lblResults(30).Text = FormatOutputValue(ActiveRes.OperatingVz, 1) & " m/s"
-		lblResults(32).Text = FormatOutputValue(ActiveRes.TipSpeed, 1) & " m/s"
-		lblResults(35).Text = FormatOutputValue(ActiveRes.AltitudeM, 0) & " m"
-		lblResults(36).Text = FormatOutputValue(ActiveRes.TemperatureC, 1) & " °C"
-		lblResults(37).Text = FormatOutputValue(ActiveRes.Density, 4) & " kg/m³"
-		lblResults(38).Text = FormatOutputValue(ActiveRes.PressurePa / 100.0, 1) & " hPa"
-		lblResults(39).Text = FormatOutputValue(ActiveRes.SpeedOfSound, 1) & " m/s"
+		lblResults(29).Text = FormatOutputValue(ActiveRes.ThrustN, 0) & " N"
+		lblResults(31).Text = FormatOutputValue(ActiveRes.OperatingVx, 1) & " m/s"
+		lblResults(33).Text = FormatOutputValue(ActiveRes.OperatingVz, 1) & " m/s"
+		lblResults(35).Text = FormatOutputValue(ActiveRes.TipSpeed, 1) & " m/s"
+		lblResults(38).Text = FormatOutputValue(ActiveRes.AltitudeM, 0) & " m"
+		lblResults(39).Text = FormatOutputValue(ActiveRes.TemperatureC, 1) & " °C"
+		lblResults(40).Text = FormatOutputValue(ActiveRes.Density, 4) & " kg/m³"
+		lblResults(41).Text = FormatOutputValue(ActiveRes.PressurePa / 100.0, 1) & " hPa"
+		lblResults(42).Text = FormatOutputValue(ActiveRes.SpeedOfSound, 1) & " m/s"
 	Else
-		lblResults(26).Text = FormatOutputValue(ActiveRes.ThrustLbf, 0) & " lbf"
-		lblResults(28).Text = FormatOutputValue(ActiveRes.OperatingVx * 3.280839895, 1) & " ft/s"
-		lblResults(30).Text = FormatOutputValue(ActiveRes.OperatingVz * 3.280839895, 1) & " ft/s"
-		lblResults(32).Text = FormatOutputValue(ActiveRes.TipSpeed * 3.280839895, 1) & " ft/s"
-		lblResults(35).Text = FormatOutputValue(ActiveRes.AltitudeM * 3.280839895, 0) & " ft"
-		lblResults(36).Text = FormatOutputValue(ActiveRes.TemperatureC * 9.0 / 5.0 + 32.0, 1) & " °F"
-		lblResults(37).Text = FormatOutputValue(ActiveRes.Density * 0.0019403203, 5) & " slug/ft³"
-		lblResults(38).Text = FormatOutputValue(ActiveRes.PressurePa / 3386.389, 2) & " inHg"
-		lblResults(39).Text = FormatOutputValue(ActiveRes.SpeedOfSound * 3.280839895, 0) & " ft/s"
+		lblResults(29).Text = FormatOutputValue(ActiveRes.ThrustLbf, 0) & " lbf"
+		lblResults(31).Text = FormatOutputValue(ActiveRes.OperatingVx * 3.280839895, 1) & " ft/s"
+		lblResults(33).Text = FormatOutputValue(ActiveRes.OperatingVz * 3.280839895, 1) & " ft/s"
+		lblResults(35).Text = FormatOutputValue(ActiveRes.TipSpeed * 3.280839895, 1) & " ft/s"
+		lblResults(38).Text = FormatOutputValue(ActiveRes.AltitudeM * 3.280839895, 0) & " ft"
+		lblResults(39).Text = FormatOutputValue(ActiveRes.TemperatureC * 9.0 / 5.0 + 32.0, 1) & " °F"
+		lblResults(40).Text = FormatOutputValue(ActiveRes.Density * 0.0019403203, 5) & " slug/ft³"
+		lblResults(41).Text = FormatOutputValue(ActiveRes.PressurePa / 3386.389, 2) & " inHg"
+		lblResults(42).Text = FormatOutputValue(ActiveRes.SpeedOfSound * 3.280839895, 0) & " ft/s"
 	End If
 End Sub
 
