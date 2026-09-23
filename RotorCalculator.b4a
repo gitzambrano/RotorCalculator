@@ -125,6 +125,16 @@ Sub Process_Globals
 	Public ConditionHorizontalValue As Double = 0.0
 	Public AxialInputMode As String = "alpha"     ' alpha | vz | muz
 	Public ConditionAxialValue As Double = 0.0
+	Public GeometryDirty As Boolean = False
+	Public SweepMultiMode As Int = 0
+	Public SweepXAxisMode As Int = 0
+	Public SweepMaxMuVal As Double = 0.40
+	Public SweepTrimOnlyHover As Boolean = False
+	Public SweepAlphaValues As String = "-10,-5,0,5,10"
+	Public SweepVzValues As String = "-10,-5,0,5,10"
+	Public SweepMuZValues As String = "-0.05,-0.025,0,0.025,0.05"
+	Public SweepParamSelectedKey As String = "CP"
+	Public SweepParamSelectedLabel As String = "CQ / CPshaft — Shaft Power"
 	Private ion As Object ' Storage Access Framework activity-result callback
 
 End Sub
@@ -184,7 +194,6 @@ Sub Globals
 	Private lblRefBladeAreaDerived As Label
 	Private lblActiveBladeAreaDerived As Label
 	Private lblTwistDerived As Label
-	Private GeometryDirty As Boolean = False
 	
 	' Page 1: Conditions Views
 	Private pnlBack1 As Panel
@@ -234,15 +243,6 @@ Sub Globals
 	Private btnSweepTrimHover As Button
 	Private ivSweepPlot As ImageView
 	Private lblSweepCurrentVal As Label
-	Private SweepMultiMode As Int = 0
-	Private SweepXAxisMode As Int = 0 ' 0=mu, 1=Vx
-	Private SweepMaxMuVal As Double = 0.40
-	Private SweepTrimOnlyHover As Boolean = False
-	Private SweepAlphaValues As String = "-10,-5,0,5,10"
-	Private SweepVzValues As String = "-10,-5,0,5,10"
-	Private SweepMuZValues As String = "-0.05,-0.025,0,0.025,0.05"
-	Private SweepParamSelectedKey As String = "CP"
-	Private SweepParamSelectedLabel As String = "CQ / CPshaft — Shaft Power"
 	
 	Private UpdatingUI As Boolean = False
 	
@@ -318,7 +318,7 @@ Sub Activity_Create(FirstTime As Boolean)
 	' Header stays above page content.
 	BuildUnifiedHeader
 	
-	' Restore persistent condition controls; geometry is edited only inside its modal.
+	' Restore persistent condition controls and in-page geometry state.
 	LoadConditionDataToFields
 	RecalculateRotor
 	ShowPage(CurrentPage, False)
