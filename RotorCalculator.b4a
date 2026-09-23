@@ -1905,11 +1905,7 @@ Private Sub UpdateTrimSummary
 		lblTrimSummary.TextColor = ColorAccentRed
 		Return
 	End If
-	lblTrimSummary.Text = OperatingPairDisplayName(ActiveCond.OperatingPair) & _
-		" · " & FormatOutputValue(ActiveRes.TrimmedRPM, 0) & " RPM" & _
-		" · Δθ " & FormatOutputValue(ActiveRes.TrimmedCollectiveDeg, 2) & "°" & _
-		" · CT " & FormatOutputValue(ActiveRes.CT, 5) & _
-		" · T " & FormatOutputValue(ActiveRes.ThrustN, 0) & " N"
+	lblTrimSummary.Text = "OPERATING SOLUTION · " & OperatingPairDisplayName(ActiveCond.OperatingPair)
 	lblTrimSummary.TextColor = ColorAccentCyan
 End Sub
 
