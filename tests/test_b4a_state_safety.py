@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -453,6 +454,23 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert '"15b-png-picker"' in qa
     assert '"☑ TRIM ONLY HOVER"' in qa
     assert '"☐ TRIM ONLY HOVER"' in qa
+    assert "cat > /tmp/set_first_edit_text.py <<\'PY\'" in qa
+    assert "cat > /tmp/extract_edit_values.py <<\'PY\'" in qa
+    assert '"-12,-3,4,11"' in qa
+    assert '"α Family (4)"' in qa
+    assert 'save_document_picker "$OUT" "14i-export-roundtrip" "rotorcalculator_geometries.txt"' in qa
+    assert 'cmp "$OUT/14g-roundtrip-before-top.txt" "$OUT/14m-roundtrip-after-top.txt"' in qa
+    assert 'cmp "$OUT/14h-roundtrip-before-bottom.txt" "$OUT/14n-roundtrip-after-bottom.txt"' in qa
+    assert "rotorcalculator_malformed.txt" in qa
+    assert "rotorcalculator_out_of_domain.txt" in qa
+    assert 'grep -Fqi "No valid RotorCalculator geometries"' in qa
+    popup = text("RotorPopups.bas")
+    sweep_labels = re.findall(r\'AddSweepParam\\("[^"]+", "([^"]+)"\\)\', popup)
+    assert len(sweep_labels) == 39
+    for label in sweep_labels:
+        assert f\'    "{label}"\' in qa
+    assert 'for target_y in "${sweep_y_labels[@]}"; do' in qa
+    assert 'echo "Verified sweep Y: $target_y"' in qa
 
 
 def test_requirements_and_plan_are_authoritative_for_new_architecture():
