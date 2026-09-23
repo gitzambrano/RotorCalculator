@@ -386,6 +386,7 @@ if __name__ == "__main__":
     test_radius_scaling_preserves_sigma_ar_and_taper()
     test_equivalent_axial_representations_and_signs()
     test_known_operating_state_and_all_six_pairs()
+    test_all_six_pairs_across_hover_forward_and_axial_regimes()
     test_collective_delta_preserves_twist()
     test_forward_flight_inflow_models()
     test_prandtl_glauert_matches_reference_definition()
