@@ -1117,6 +1117,18 @@ Private Sub AddFormRowPanel(scv As ScrollView, y As Int, rowIndex As Int) As Pan
 	Return pnl
 End Sub
 
+Private Sub AddFormRowPanelH(scv As ScrollView, y As Int, rowIndex As Int, h As Int) As Panel
+	Dim pnl As Panel
+	pnl.Initialize("")
+	If rowIndex Mod 2 = 0 Then pnl.Color = ColorPnlInput2 Else pnl.Color = ColorPnlInput1
+	scv.Panel.AddView(pnl, UiContentLeft, y, UiContentW, h)
+	Dim lineRow As Panel
+	lineRow.Initialize("")
+	lineRow.Color = ColorPnlLine3
+	scv.Panel.AddView(lineRow, UiContentLeft, y + h - 1dip, UiContentW, 1dip)
+	Return pnl
+End Sub
+
 Private Sub AddDerivedRow(pnl As Panel, title As String, unit As String) As Label
 	Dim lbl As Label = CreateRowLabel(title, "lblRowTip_Click")
 	pnl.AddView(lbl, pnl.Width*3/100, 4dip, pnl.Width*48/100, 48dip)
@@ -1204,13 +1216,14 @@ Private Sub BuildPageCond
 	Dim y As Int = 8dip
 	Dim rowIndex As Int = 0
 	Dim rowH As Int = 57dip
+	Dim flowRowH As Int = 76dip
 	Dim pnl As Panel
 	
 	y = AddConditionSectionHeader(y, "ATMOSPHERE & FLOW")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtAltitude = AddFullInputRow(pnl, 4dip, 48dip, "Altitude", "0", "m", "edtCond_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtTemperature = AddFullInputRow(pnl, 4dip, 48dip, "Temperature", "15", "°C", "edtCond_TextChanged"): y=y+rowH: rowIndex=rowIndex+1
 	
-	pnl = AddFormRowPanel(scvCond, y, rowIndex)
+	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
 	Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow", "lblRowTip_Click")
 	pnl.AddView(lblHorizontal, pnl.Width*3/100, 4dip, pnl.Width*25/100, 48dip)
 	btnHorizontalInput.Initialize("btnHorizontalInput")
@@ -1235,13 +1248,13 @@ Private Sub BuildPageCond
 	pnl.AddView(lblHorizontalUnit, pnl.Width*68/100, 4dip, pnl.Width*10/100, 48dip)
 	lblHorizontalDerived.Initialize("")
 	lblHorizontalDerived.TextColor = ColorButText2
-	lblHorizontalDerived.TextSize = 9 * sc
-	lblHorizontalDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+	lblHorizontalDerived.TextSize = 9.5 * sc
+	lblHorizontalDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblHorizontalDerived.SingleLine = True
-	pnl.AddView(lblHorizontalDerived, pnl.Width*79/100, 4dip, pnl.Width*18/100, 48dip)
-	y=y+rowH: rowIndex=rowIndex+1
+	pnl.AddView(lblHorizontalDerived, pnl.Width*29/100, 50dip, pnl.Width*68/100, 22dip)
+	y=y+flowRowH: rowIndex=rowIndex+1
 	
-	pnl = AddFormRowPanel(scvCond, y, rowIndex)
+	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
 	Dim lblAxial As Label = CreateRowLabel("Axial Flow", "lblRowTip_Click")
 	pnl.AddView(lblAxial, pnl.Width*3/100, 4dip, pnl.Width*25/100, 48dip)
 	btnAxialInput.Initialize("btnAxialInput")
@@ -1266,11 +1279,11 @@ Private Sub BuildPageCond
 	pnl.AddView(lblAxialUnit, pnl.Width*68/100, 4dip, pnl.Width*10/100, 48dip)
 	lblAxialDerived.Initialize("")
 	lblAxialDerived.TextColor = ColorButText2
-	lblAxialDerived.TextSize = 8.5 * sc
-	lblAxialDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
+	lblAxialDerived.TextSize = 9.2 * sc
+	lblAxialDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblAxialDerived.SingleLine = True
-	pnl.AddView(lblAxialDerived, pnl.Width*79/100, 4dip, pnl.Width*18/100, 48dip)
-	y=y+rowH: rowIndex=rowIndex+1
+	pnl.AddView(lblAxialDerived, pnl.Width*29/100, 50dip, pnl.Width*68/100, 22dip)
+	y=y+flowRowH: rowIndex=rowIndex+1
 	
 	y = AddConditionSectionHeader(y + 4dip, "OPERATING CONSTRAINTS")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
@@ -1472,19 +1485,28 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Case "Rotor Preset": Return "Preset"
 		Case "Rotor Name": Return "Name"
 		Case "Blade Count": Return "Blades"
-		Case "Root Cutout": Return "Root Cut."
-		Case "Root Chord": Return "Root c"
-		Case "Tip Chord": Return "Tip c"
-		Case "θ Root Pitch": Return "θ Root"
-		Case "θ Tip Pitch": Return "θ Tip"
+		Case "Root Cutout": Return "Root cut."
+		Case "Root Chord c0": Return "Root c0"
+		Case "Tip Chord c1": Return "Tip c1"
+		Case "Reference Solidity": Return "σref"
+		Case "Aspect Ratio": Return "AR"
+		Case "Root Incidence": Return "θ root"
+		Case "Tip Incidence": Return "θ tip"
+		Case "Geometric Solidity": Return "σgeom"
+		Case "Thrust Solidity": Return "σthrust"
+		Case "Reference Blade Area": Return "Ref. area"
+		Case "Active Blade Area": Return "Active area"
+		Case "Total Twist": Return "Twist"
 		Case "Lift Slope a0": Return "Lift a0"
 		Case "Profile Cd0": Return "Cd0"
+		Case "Fixed Tip Factor B": Return "Tip factor B"
 		Case "Temperature": Return "Temp."
 		Case "Horizontal Flow": Return "Horizontal"
 		Case "Axial Flow": Return "Axial"
+		Case "Operating Inputs": Return "Operating pair"
+		Case "Induced Factor Kind": Return "Kind"
 		Case "Inflow Model": Return "Inflow"
 		Case "Compressibility": Return "Compress."
-		Case "Target Thrust": Return "Target T"
 		Case Else: Return fullText
 	End Select
 End Sub
