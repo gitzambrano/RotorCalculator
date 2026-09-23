@@ -241,6 +241,34 @@ functional_smoke() {
   grep -qi "Copy" "$OUT/04-after-restart.json"
   grep -qi "ACTIVE" "$OUT/04-after-restart.json"
 
+  # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
+  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk Copy"
+  sleep 0.5
+  tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
+  python /tmp/tap_text.py "Fixed B"
+  sleep 0.3
+  python /tmp/tap_text.py "Sissingh"
+  sleep 0.5
+  adb shell settings put system user_rotation 1
+  adb shell wm size 873x393
+  sleep 2
+  assert_app_alive
+  tap_text_scrolling "ROTOR AERODYNAMICS" 873 393
+  safe_screencap "$OUT/04b-geometry-unsaved-landscape.png"
+  python /tmp/ui_node.py "$OUT/04b-geometry-unsaved-landscape.xml" > "$OUT/04b-geometry-unsaved-landscape.json"
+  grep -qi "Sissingh" "$OUT/04b-geometry-unsaved-landscape.json"
+  grep -qi "UNSAVED" "$OUT/04b-geometry-unsaved-landscape.json"
+  adb shell wm size 393x873
+  adb shell settings put system user_rotation 0
+  sleep 1.5
+  assert_app_alive
+  adb shell input keyevent 4
+  sleep 0.4
+  python /tmp/tap_text.py "Discard"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/04c-after-discard.xml" > "$OUT/04c-after-discard.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/04c-after-discard.json"
+
   python /tmp/tap_text.py CONDITIONS
   sleep 0.8
 
