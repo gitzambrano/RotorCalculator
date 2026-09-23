@@ -4,37 +4,31 @@ ModulesStructureVersion=1
 Type=StaticCode
 Version=13
 @EndOfDesignText@
-' RotorStorage.bas — Módulo de Persistência e Gerenciamento de Rotores
-' Armazena e carrega geometrias salvas pelo usuário e disponibiliza presets de fábrica calibrados.
+' RotorStorage.bas — versioned rotor geometry persistence and interchange.
 
 Sub Process_Globals
-	
 	Private Const FILENAME As String = "rotors_db.txt"
 	Private Const ACTIVE_INDEX_FILENAME As String = "active_rotor.txt"
+	Private Const SCHEMA_TAG As String = "ROTORCALCULATOR_GEOMETRIES"
+	Private Const SCHEMA_VERSION As Int = 2
 	Public Rotors As List
 	Public ActiveIndex As Int = 0
-	
 End Sub
 
-' Retorna o diretório de dados seguro do app
 Private Sub GetDataDir As String
 	Return File.DirInternal
 End Sub
 
-' Inicializa o sistema de armazenamento e carrega a lista de rotores
 Public Sub Initialize
-	If Rotors.IsInitialized = False Then
-		Rotors.Initialize
-	End If
+	If Rotors.IsInitialized = False Then Rotors.Initialize
 	LoadRotors
 	LoadActiveIndex
 End Sub
 
 Private Sub LoadActiveIndex
-	Dim targetDir As String = GetDataDir
-	If File.Exists(targetDir, ACTIVE_INDEX_FILENAME) Then
+	If File.Exists(GetDataDir, ACTIVE_INDEX_FILENAME) Then
 		Try
-			ActiveIndex = File.ReadString(targetDir, ACTIVE_INDEX_FILENAME).Trim
+			ActiveIndex = File.ReadString(GetDataDir, ACTIVE_INDEX_FILENAME).Trim
 		Catch
 			ActiveIndex = 0
 		End Try
@@ -46,188 +40,169 @@ Private Sub SaveActiveIndex
 	File.WriteString(GetDataDir, ACTIVE_INDEX_FILENAME, ActiveIndex)
 End Sub
 
-' Cria a lista de presets de fábrica
+Private Sub NewPreset(Name As String, Radius As Double, NBlades As Int, RootCutout As Double, _
+	ChordAxis As Double, ChordTip As Double, ThetaRootDeg As Double, ThetaTipDeg As Double, _
+	LiftSlope As Double, Cd0 As Double, TipLossMode As String, TipLossB As Double, PG As Boolean) As RotorGeometry
+	Dim g As RotorGeometry
+	g.Initialize
+	g.Name = Name
+	g.Radius = Radius
+	g.RPM = 390.0 ' runtime placeholder; Conditions owns operating RPM.
+	g.NBlades = NBlades
+	g.RootCutout = RootCutout
+	g.SolidityMode = "chords"
+	g.ChordRoot = ChordAxis
+	g.ChordTip = ChordTip
+	g.LiftSlope0 = LiftSlope
+	g.Cd0 = Cd0
+	g.PitchMode = "linear_twist"
+	g.ThetaRoot = ThetaRootDeg * cPI / 180.0
+	g.ThetaTip = ThetaTipDeg * cPI / 180.0
+	g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)
+	g.TipLossMode = TipLossMode
+	g.TipLossB = TipLossB
+	g.UsePrandtlGlauert = PG
+	Return zBETEngine.ResolveSolidity(g)
+End Sub
+
 Public Sub CreateDefaultPresets As List
 	Dim presets As List
 	presets.Initialize
-	
-	' 1. Sikorsky UH-60 Black Hawk
-	Dim uh60 As RotorGeometry
-	uh60.Initialize
-	uh60.Name = "Sikorsky UH-60 Black Hawk"
-	uh60.Radius = 8.18
-	uh60.RPM = 258.0
-	uh60.NBlades = 4
-	uh60.RootCutout = 0.15
-	uh60.SolidityMode = "chords"
-	uh60.ChordRoot = 0.53
-	uh60.ChordTip = 0.53
-	uh60.LiftSlope0 = 5.73
-	uh60.Cd0 = 0.0088
-	uh60.PitchMode = "linear_twist"
-	uh60.ThetaRoot = 14.0 * cPI / 180.0
-	uh60.ThetaTip = -4.0 * cPI / 180.0
-	uh60.Theta0 = 5.0 * cPI / 180.0
-	uh60.TipLossMode = "sissingh"
-	uh60.TipLossB = 0.97
-	uh60.UsePrandtlGlauert = True
-	presets.Add(zBETEngine.ResolveSolidity(uh60))
-	
-	' 2. Bell 206 JetRanger
-	Dim b206 As RotorGeometry
-	b206.Initialize
-	b206.Name = "Bell 206 JetRanger"
-	b206.Radius = 5.08
-	b206.RPM = 394.0
-	b206.NBlades = 2
-	b206.RootCutout = 0.12
-	b206.SolidityMode = "chords"
-	b206.ChordRoot = 0.33
-	b206.ChordTip = 0.33
-	b206.LiftSlope0 = 5.73
-	b206.Cd0 = 0.0090
-	b206.PitchMode = "linear_twist"
-	b206.ThetaRoot = 12.0 * cPI / 180.0
-	b206.ThetaTip = 2.0 * cPI / 180.0
-	b206.Theta0 = 7.0 * cPI / 180.0
-	b206.TipLossMode = "fixed"
-	b206.TipLossB = 0.97
-	b206.UsePrandtlGlauert = False
-	presets.Add(zBETEngine.ResolveSolidity(b206))
-	
-	' 3. Eurocopter Bo 105
-	Dim bo105 As RotorGeometry
-	bo105.Initialize
-	bo105.Name = "Eurocopter Bo 105"
-	bo105.Radius = 4.92
-	bo105.RPM = 424.0
-	bo105.NBlades = 4
-	bo105.RootCutout = 0.14
-	bo105.SolidityMode = "chords"
-	bo105.ChordRoot = 0.27
-	bo105.ChordTip = 0.27
-	bo105.LiftSlope0 = 5.73
-	bo105.Cd0 = 0.0092
-	bo105.PitchMode = "linear_twist"
-	bo105.ThetaRoot = 11.0 * cPI / 180.0
-	bo105.ThetaTip = 3.0 * cPI / 180.0
-	bo105.Theta0 = 7.0 * cPI / 180.0
-	bo105.TipLossMode = "sissingh"
-	bo105.TipLossB = 0.97
-	bo105.UsePrandtlGlauert = True
-	presets.Add(zBETEngine.ResolveSolidity(bo105))
-	
-	' 4. Robinson R44
-	Dim r44 As RotorGeometry
-	r44.Initialize
-	r44.Name = "Robinson R44"
-	r44.Radius = 5.03
-	r44.RPM = 400.0
-	r44.NBlades = 2
-	r44.RootCutout = 0.10
-	r44.SolidityMode = "chords"
-	r44.ChordRoot = 0.25
-	r44.ChordTip = 0.25
-	r44.LiftSlope0 = 5.73
-	r44.Cd0 = 0.0090
-	r44.PitchMode = "linear_twist"
-	r44.ThetaRoot = 10.0 * cPI / 180.0
-	r44.ThetaTip = 4.0 * cPI / 180.0
-	r44.Theta0 = 7.0 * cPI / 180.0
-	r44.TipLossMode = "fixed"
-	r44.TipLossB = 0.97
-	r44.UsePrandtlGlauert = False
-	presets.Add(zBETEngine.ResolveSolidity(r44))
-	
-	' 5. DJI Matrice 300 Drone
-	Dim dji As RotorGeometry
-	dji.Initialize
-	dji.Name = "DJI Matrice 300 Drone"
-	dji.Radius = 0.27
-	dji.RPM = 4800.0
-	dji.NBlades = 2
-	dji.RootCutout = 0.10
-	dji.SolidityMode = "chords"
-	dji.ChordRoot = 0.045
-	dji.ChordTip = 0.025
-	dji.LiftSlope0 = 5.65
-	dji.Cd0 = 0.0120
-	dji.PitchMode = "linear_twist"
-	dji.ThetaRoot = 16.0 * cPI / 180.0
-	dji.ThetaTip = 4.0 * cPI / 180.0
-	dji.Theta0 = 10.0 * cPI / 180.0
-	dji.TipLossMode = "none"
-	dji.TipLossB = 1.0
-	dji.UsePrandtlGlauert = False
-	presets.Add(zBETEngine.ResolveSolidity(dji))
-	
-	' 6. eVTOL Conceptual Rotor
-	Dim evtol As RotorGeometry
-	evtol.Initialize
-	evtol.Name = "eVTOL Conceptual Rotor"
-	evtol.Radius = 1.40
-	evtol.RPM = 1800.0
-	evtol.NBlades = 5
-	evtol.RootCutout = 0.15
-	evtol.SolidityMode = "chords"
-	evtol.ChordRoot = 0.14
-	evtol.ChordTip = 0.09
-	evtol.LiftSlope0 = 5.85
-	evtol.Cd0 = 0.0095
-	evtol.PitchMode = "linear_twist"
-	evtol.ThetaRoot = 18.0 * cPI / 180.0
-	evtol.ThetaTip = 4.0 * cPI / 180.0
-	evtol.Theta0 = 11.0 * cPI / 180.0
-	evtol.TipLossMode = "sissingh"
-	evtol.TipLossB = 0.97
-	evtol.UsePrandtlGlauert = True
-	presets.Add(zBETEngine.ResolveSolidity(evtol))
-	
+	presets.Add(NewPreset("Sikorsky UH-60 Black Hawk", 8.18, 4, 0.15, 0.53, 0.53, 14.0, -4.0, 5.73, 0.0088, "sissingh", 0.97, True))
+	presets.Add(NewPreset("Bell 206 JetRanger", 5.08, 2, 0.12, 0.33, 0.33, 12.0, 2.0, 5.73, 0.0090, "fixed", 0.97, False))
+	presets.Add(NewPreset("Eurocopter Bo 105", 4.92, 4, 0.14, 0.27, 0.27, 11.0, 3.0, 5.73, 0.0092, "sissingh", 0.97, True))
+	presets.Add(NewPreset("Robinson R44", 5.03, 2, 0.10, 0.25, 0.25, 10.0, 4.0, 5.73, 0.0090, "fixed", 0.97, False))
+	' Legacy DJI/eVTOL presets defined root chord at the cutout. These c0 values preserve that active-span law.
+	presets.Add(NewPreset("DJI Matrice 300 Drone", 0.27, 2, 0.10, 0.0472222222, 0.025, 16.0, 4.0, 5.65, 0.0120, "none", 1.0, False))
+	presets.Add(NewPreset("eVTOL Conceptual Rotor", 1.40, 5, 0.15, 0.1488235294, 0.09, 18.0, 4.0, 5.85, 0.0095, "sissingh", 0.97, True))
 	Return presets
 End Sub
 
-' Carrega a lista de rotores a partir do arquivo
+Private Sub CleanName(Name As String) As String
+	Dim n As String = Name.Trim.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
+	If n = "" Then n = "Imported Rotor"
+	If n.Length > 80 Then n = n.SubString2(0, 80)
+	Return n
+End Sub
+
+Private Sub SerializeRotor(g As RotorGeometry) As String
+	Dim pg As String = "0"
+	If g.UsePrandtlGlauert Then pg = "1"
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("R|").Append(CleanName(g.Name)).Append("|")
+	sb.Append(g.Radius).Append("|").Append(g.NBlades).Append("|").Append(g.RootCutout).Append("|")
+	sb.Append(g.ChordRoot).Append("|").Append(g.ChordTip).Append("|")
+	sb.Append(g.ThetaRoot).Append("|").Append(g.ThetaTip).Append("|")
+	sb.Append(g.LiftSlope0).Append("|").Append(g.Cd0).Append("|")
+	sb.Append(g.TipLossMode).Append("|").Append(g.TipLossB).Append("|").Append(pg)
+	Return sb.ToString
+End Sub
+
+Private Sub ParseV2Rotor(parts() As String) As RotorGeometry
+	Dim g As RotorGeometry
+	g.Initialize
+	g.Name = CleanName(parts(1))
+	g.Radius = parts(2)
+	g.RPM = 390.0
+	g.NBlades = parts(3)
+	g.RootCutout = parts(4)
+	g.SolidityMode = "chords"
+	g.ChordRoot = parts(5)
+	g.ChordTip = parts(6)
+	g.PitchMode = "linear_twist"
+	g.ThetaRoot = parts(7)
+	g.ThetaTip = parts(8)
+	g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)
+	g.LiftSlope0 = parts(9)
+	g.Cd0 = parts(10)
+	g.TipLossMode = parts(11)
+	g.TipLossB = parts(12)
+	g.UsePrandtlGlauert = (parts(13) = "1")
+	Return zBETEngine.ResolveSolidity(g)
+End Sub
+
+Private Sub ParseLegacyRotor(parts() As String) As RotorGeometry
+	Dim g As RotorGeometry
+	g.Initialize
+	g.Name = CleanName(parts(0))
+	g.Radius = parts(1)
+	g.RPM = 390.0
+	g.NBlades = parts(3)
+	g.RootCutout = parts(4)
+	g.SolidityMode = "chords"
+	Dim oldRoot As Double = parts(9)
+	Dim tip As Double = parts(10)
+	' Legacy ChordRoot was the physical chord at x0. Recover the zBEMT reference-axis c0.
+	If g.RootCutout < 0.999 Then
+		g.ChordRoot = oldRoot - (tip - oldRoot) * g.RootCutout / (1.0 - g.RootCutout)
+	Else
+		g.ChordRoot = oldRoot
+	End If
+	g.ChordTip = tip
+	g.LiftSlope0 = parts(11)
+	g.Cd0 = parts(12)
+	g.PitchMode = "linear_twist"
+	g.ThetaRoot = parts(15)
+	g.ThetaTip = parts(16)
+	g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)
+	g.TipLossMode = parts(17)
+	If parts.Length >= 19 Then g.TipLossB = parts(18) Else g.TipLossB = 0.97
+	If parts.Length >= 20 Then g.UsePrandtlGlauert = (parts(19) = "1") Else g.UsePrandtlGlauert = False
+	Return zBETEngine.ResolveSolidity(g)
+End Sub
+
+Public Sub ExportDatabaseText As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(SCHEMA_TAG).Append("|").Append(SCHEMA_VERSION).Append(CRLF)
+	For i = 0 To Rotors.Size - 1
+		sb.Append(SerializeRotor(Rotors.Get(i))).Append(CRLF)
+	Next
+	Return sb.ToString
+End Sub
+
+Public Sub ParseDatabaseText(Text As String) As List
+	Dim imported As List
+	imported.Initialize
+	Dim lines() As String = Regex.Split("\r?\n", Text)
+	Dim version As Int = 0
+	For i = 0 To lines.Length - 1
+		Dim line As String = lines(i).Trim
+		If line = "" Then Continue
+		Dim parts() As String = Regex.Split("\|", line)
+		If parts.Length >= 2 And parts(0) = SCHEMA_TAG Then
+			version = parts(1)
+		Else If version = 2 And parts.Length >= 14 And parts(0) = "R" Then
+			Try
+				imported.Add(ParseV2Rotor(parts))
+			Catch
+				Log("Skipping invalid imported rotor line " & i)
+			End Try
+		End If
+	Next
+	Return imported
+End Sub
+
 Public Sub LoadRotors As List
-	Dim targetDir As String = GetDataDir
-	
-	If File.Exists(targetDir, FILENAME) Then
+	If File.Exists(GetDataDir, FILENAME) Then
 		Try
-			Dim rawList As List = File.ReadList(targetDir, FILENAME)
-			Rotors.Initialize
-			
-			For i = 0 To rawList.Size - 1
-				Dim line As String = rawList.Get(i)
-				Dim parts() As String = Regex.Split("\|", line)
-				If parts.Length >= 18 Then
-					Dim g As RotorGeometry
-					g.Initialize
-					g.Name = parts(0)
-					g.Radius = parts(1)
-					g.RPM = parts(2)
-					g.NBlades = parts(3)
-					g.RootCutout = parts(4)
-					g.SolidityMode = parts(5)
-					g.SigmaRef = parts(6)
-					g.SigmaGeom = parts(7)
-					g.SigmaThrust = parts(8)
-					g.ChordRoot = parts(9)
-					g.ChordTip = parts(10)
-					g.LiftSlope0 = parts(11)
-					g.Cd0 = parts(12)
-					g.PitchMode = parts(13)
-					g.Theta0 = parts(14)
-					g.ThetaRoot = parts(15)
-					g.ThetaTip = parts(16)
-					g.TipLossMode = parts(17)
-					If parts.Length >= 19 Then g.TipLossB = parts(18) Else g.TipLossB = 0.97
-					If parts.Length >= 20 Then g.UsePrandtlGlauert = (parts(19) = "1") Else g.UsePrandtlGlauert = False
-					
-					g = zBETEngine.ResolveSolidity(g)
-					Rotors.Add(g)
-				End If
-			Next
+			Dim text As String = File.ReadString(GetDataDir, FILENAME)
+			If text.StartsWith(SCHEMA_TAG & "|") Then
+				Rotors = ParseDatabaseText(text)
+			Else
+				' Legacy v1 line database.
+				Dim rawList As List = File.ReadList(GetDataDir, FILENAME)
+				Rotors.Initialize
+				For i = 0 To rawList.Size - 1
+					Dim parts() As String = Regex.Split("\|", rawList.Get(i))
+					If parts.Length >= 18 Then Rotors.Add(ParseLegacyRotor(parts))
+				Next
+				' Persist migrated data once in v2 format.
+				If Rotors.Size > 0 Then SaveRotors
+			End If
 		Catch
-			Log("Erro ao ler rotors_db.txt. Restaurando padrões...")
+			Log("Rotor database could not be read; restoring factory presets.")
 			Rotors = CreateDefaultPresets
 			SaveRotors
 		End Try
@@ -235,70 +210,24 @@ Public Sub LoadRotors As List
 		Rotors = CreateDefaultPresets
 		SaveRotors
 	End If
-	
 	If Rotors.Size = 0 Then
 		Rotors = CreateDefaultPresets
 		SaveRotors
 	End If
-	
-	If ActiveIndex >= Rotors.Size Then
-		ActiveIndex = 0
-	End If
-	
+	If ActiveIndex < 0 Or ActiveIndex >= Rotors.Size Then ActiveIndex = 0
 	Return Rotors
 End Sub
 
-' Salva a lista de rotores atual no arquivo seguro
 Public Sub SaveRotors
-	Dim targetDir As String = GetDataDir
-	Dim lines As List
-	lines.Initialize
-	
-	For i = 0 To Rotors.Size - 1
-		Dim g As RotorGeometry = Rotors.Get(i)
-		Dim pgStr As String = "0"
-		If g.UsePrandtlGlauert Then pgStr = "1"
-		
-		Dim sb As StringBuilder
-		sb.Initialize
-		sb.Append(g.Name).Append("|")
-		sb.Append(g.Radius).Append("|")
-		sb.Append(g.RPM).Append("|")
-		sb.Append(g.NBlades).Append("|")
-		sb.Append(g.RootCutout).Append("|")
-		sb.Append(g.SolidityMode).Append("|")
-		sb.Append(g.SigmaRef).Append("|")
-		sb.Append(g.SigmaGeom).Append("|")
-		sb.Append(g.SigmaThrust).Append("|")
-		sb.Append(g.ChordRoot).Append("|")
-		sb.Append(g.ChordTip).Append("|")
-		sb.Append(g.LiftSlope0).Append("|")
-		sb.Append(g.Cd0).Append("|")
-		sb.Append(g.PitchMode).Append("|")
-		sb.Append(g.Theta0).Append("|")
-		sb.Append(g.ThetaRoot).Append("|")
-		sb.Append(g.ThetaTip).Append("|")
-		sb.Append(g.TipLossMode).Append("|")
-		sb.Append(g.TipLossB).Append("|")
-		sb.Append(pgStr)
-		lines.Add(sb.ToString)
-	Next
-	
-	File.WriteList(targetDir, FILENAME, lines)
+	File.WriteString(GetDataDir, FILENAME, ExportDatabaseText)
 End Sub
 
-' Obtém o rotor atualmente ativo
 Public Sub GetActiveRotor As RotorGeometry
-	If Rotors.Size = 0 Then
-		Rotors = CreateDefaultPresets
-	End If
-	If ActiveIndex < 0 Or ActiveIndex >= Rotors.Size Then
-		ActiveIndex = 0
-	End If
-	Return Rotors.Get(ActiveIndex)
+	If Rotors.Size = 0 Then Rotors = CreateDefaultPresets
+	If ActiveIndex < 0 Or ActiveIndex >= Rotors.Size Then ActiveIndex = 0
+	Return zBETEngine.CloneGeometry(Rotors.Get(ActiveIndex))
 End Sub
 
-' Define o rotor ativo pelo índice
 Public Sub SetActiveRotor(index As Int)
 	If index >= 0 And index < Rotors.Size Then
 		ActiveIndex = index
@@ -306,111 +235,98 @@ Public Sub SetActiveRotor(index As Int)
 	End If
 End Sub
 
-' Cria uma geometria customizada nova sem alterar presets existentes.
-Public Sub CreateNewRotor As Int
-	Dim g As RotorGeometry = zBETEngine.CreateDefaultGeometry
-	' The Geometry editor exposes chord and root/tip pitch directly, so a new
-	' custom rotor must use those same parameterizations from its first frame.
+Public Sub UpdateRotor(index As Int, g As RotorGeometry)
+	If index >= 0 And index < Rotors.Size Then
+		g.Name = CleanName(g.Name)
+		g.SolidityMode = "chords"
+		g.PitchMode = "linear_twist"
+		g = zBETEngine.ResolveSolidity(g)
+		Rotors.Set(index, zBETEngine.CloneGeometry(g))
+		SaveRotors
+	End If
+End Sub
+
+Public Sub AddRotor(g As RotorGeometry) As Int
+	g.Name = MakeUniqueName(CleanName(g.Name))
 	g.SolidityMode = "chords"
 	g.PitchMode = "linear_twist"
-	g.ThetaRoot = 12.0 * cPI / 180.0
-	g.ThetaTip = 4.0 * cPI / 180.0
-	g.Theta0 = 8.0 * cPI / 180.0
 	g = zBETEngine.ResolveSolidity(g)
-	Dim baseName As String = "Custom Rotor"
-	Dim candidate As String = baseName
-	Dim suffix As Int = 2
-	Do While RotorNameExists(candidate)
-		candidate = baseName & " " & suffix
-		suffix = suffix + 1
-	Loop
-	g.Name = candidate
-	Return AddRotor(g)
-End Sub
-
-Private Sub RotorNameExists(candidate As String) As Boolean
-	For i = 0 To Rotors.Size - 1
-		Dim g As RotorGeometry = Rotors.Get(i)
-		If g.Name.Trim.ToLowerCase = candidate.Trim.ToLowerCase Then Return True
-	Next
-	Return False
-End Sub
-
-' Adiciona um novo rotor e o seleciona
-Public Sub AddRotor(g As RotorGeometry) As Int
-	g = zBETEngine.ResolveSolidity(g)
-	Rotors.Add(g)
-	SaveRotors
+	Rotors.Add(zBETEngine.CloneGeometry(g))
 	ActiveIndex = Rotors.Size - 1
+	SaveRotors
 	SaveActiveIndex
 	Return ActiveIndex
 End Sub
 
-' Atualiza o rotor no índice especificado
-Public Sub UpdateRotor(index As Int, g As RotorGeometry)
-	If index >= 0 And index < Rotors.Size Then
-		g = zBETEngine.ResolveSolidity(g)
-		Rotors.Set(index, g)
-		SaveRotors
-	End If
+Public Sub CreateNewRotor As Int
+	Dim g As RotorGeometry = zBETEngine.CreateDefaultGeometry
+	g.Name = MakeUniqueName("Custom Rotor")
+	g.SolidityMode = "chords"
+	g.PitchMode = "linear_twist"
+	Return AddRotor(g)
 End Sub
 
-' Duplica o rotor atual
 Public Sub DuplicateRotor(index As Int) As Int
-	If index >= 0 And index < Rotors.Size Then
-		Dim src As RotorGeometry = Rotors.Get(index)
-		Dim clone As RotorGeometry
-		clone.Initialize
-		clone.Name = src.Name & " (Copy)"
-		clone.Radius = src.Radius
-		clone.RPM = src.RPM
-		clone.NBlades = src.NBlades
-		clone.RootCutout = src.RootCutout
-		clone.SolidityMode = src.SolidityMode
-		clone.SigmaRef = src.SigmaRef
-		clone.SigmaGeom = src.SigmaGeom
-		clone.SigmaThrust = src.SigmaThrust
-		clone.ChordRoot = src.ChordRoot
-		clone.ChordTip = src.ChordTip
-		clone.LiftSlope0 = src.LiftSlope0
-		clone.Cd0 = src.Cd0
-		clone.PitchMode = src.PitchMode
-		clone.Theta0 = src.Theta0
-		clone.ThetaRoot = src.ThetaRoot
-		clone.ThetaTip = src.ThetaTip
-		clone.TipLossMode = src.TipLossMode
-		clone.TipLossB = src.TipLossB
-		clone.UsePrandtlGlauert = src.UsePrandtlGlauert
-		
-		clone = zBETEngine.ResolveSolidity(clone)
-		Rotors.Add(clone)
-		SaveRotors
-		ActiveIndex = Rotors.Size - 1
-		SaveActiveIndex
-		Return ActiveIndex
-	End If
-	Return ActiveIndex
+	If index < 0 Or index >= Rotors.Size Then Return ActiveIndex
+	Dim g As RotorGeometry = zBETEngine.CloneGeometry(Rotors.Get(index))
+	g.Name = MakeUniqueName(g.Name & " Copy")
+	Return AddRotor(g)
 End Sub
 
-' Deleta o rotor no índice especificado
 Public Sub DeleteRotor(index As Int) As Boolean
-	If Rotors.Size <= 1 Then
-		' Não permite deletar o último rotor remanescente
-		Return False
-	End If
-	If index >= 0 And index < Rotors.Size Then
-		Rotors.RemoveAt(index)
-		If ActiveIndex >= Rotors.Size Then
-			ActiveIndex = Rotors.Size - 1
-		End If
-		SaveRotors
-		SaveActiveIndex
-		Return True
-	End If
-	Return False
+	If Rotors.Size <= 1 Or index < 0 Or index >= Rotors.Size Then Return False
+	Rotors.RemoveAt(index)
+	If ActiveIndex >= Rotors.Size Then ActiveIndex = Rotors.Size - 1
+	SaveRotors
+	SaveActiveIndex
+	Return True
 End Sub
 
-' Restaura os presets de fábrica
+Public Sub FindRotorByName(Name As String) As Int
+	For i = 0 To Rotors.Size - 1
+		Dim g As RotorGeometry = Rotors.Get(i)
+		If g.Name.Trim.ToLowerCase = Name.Trim.ToLowerCase Then Return i
+	Next
+	Return -1
+End Sub
+
+Public Sub MakeUniqueName(BaseName As String) As String
+	Dim clean As String = CleanName(BaseName)
+	If FindRotorByName(clean) < 0 Then Return clean
+	Dim suffix As Int = 2
+	Do While FindRotorByName(clean & " " & suffix) >= 0
+		suffix = suffix + 1
+	Loop
+	Return clean & " " & suffix
+End Sub
+
+' conflictMode: replace | rename | skip. Returns number imported.
+Public Sub MergeImportedRotors(imported As List, conflictMode As String) As Int
+	Dim added As Int = 0
+	For i = 0 To imported.Size - 1
+		Dim g As RotorGeometry = imported.Get(i)
+		Dim existing As Int = FindRotorByName(g.Name)
+		If existing >= 0 Then
+			Select conflictMode
+				Case "replace"
+					UpdateRotor(existing, g)
+					added = added + 1
+				Case "rename"
+					g.Name = MakeUniqueName(g.Name)
+					Rotors.Add(zBETEngine.CloneGeometry(g))
+					added = added + 1
+				Case Else
+					' skip
+			End Select
+		Else
+			Rotors.Add(zBETEngine.CloneGeometry(g))
+			added = added + 1
+		End If
+	Next
+	If added > 0 Then SaveRotors
+	Return added
+End Sub
+
 Public Sub ResetToDefaults
 	Rotors = CreateDefaultPresets
 	ActiveIndex = 0
