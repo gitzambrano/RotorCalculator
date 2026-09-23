@@ -413,5 +413,78 @@ def test_requirements_and_plan_are_authoritative_for_new_architecture():
     assert "**CT + Thrust**" in req
     assert "**Import Geometries**" in req
     assert "**Trim only in hover**" in req
-    assert "six operating-input pairs" in plan.lower()
-    assert "old capability + current polish" in plan.lower()
+    assert "six operating pairs" in plan.lower()
+    assert "universal plots" in plan.lower()
+
+
+def test_activity_recreation_preserves_unsaved_geometry_and_sweep_state():
+    main = text("RotorCalculator.b4a")
+    assert "Public GeometryDirty As Boolean = False" in main
+    assert "Public SweepMultiMode As Int = 0" in main
+    assert 'Public SweepParamSelectedKey As String = "CP"' in main
+    assert "Private GeometryDirty As Boolean" not in main
+    assert "Private SweepMultiMode As Int" not in main
+
+
+def test_factory_restore_preserves_user_rotors_and_library_marks_origin():
+    main = text("RotorCalculator.b4a")
+    storage = text("RotorStorage.bas")
+    assert "Public Sub RestoreFactoryPresets" in storage
+    assert "Rotors.Set(existing, zBETEngine.CloneGeometry(factoryGeom))" in storage
+    assert "Rotors.Add(zBETEngine.CloneGeometry(factoryGeom))" in storage
+    assert "RotorStorage.RestoreFactoryPresets" in main
+    assert '"FACTORY · "' in main
+    assert '"USER · "' in main
+    assert "custom rotors preserved" in main.lower()
+
+
+def test_import_validates_domains_before_resolving_geometry():
+    storage = text("RotorStorage.bas")
+    assert "Private Sub IsImportedGeometryValid" in storage
+    assert "If IsImportedGeometryValid(importedGeom) Then" in storage
+    assert "imported.Add(zBETEngine.ResolveSolidity(importedGeom))" in storage
+    parse_v2 = storage.index("Private Sub ParseV2Rotor")
+    parse_db = storage.index("Public Sub ParseDatabaseText")
+    assert "Return g" in storage[parse_v2:parse_db]
+
+
+def test_results_show_four_operating_solution_variables_as_rows():
+    main = text("RotorCalculator.b4a")
+    for label in ("Solved RPM", "Collective Increment (Δθ)", "Solved CT", "Solved Thrust"):
+        assert f'"{label}"' in main
+    assert "Private lblResults(40) As Label" in main
+    assert "lblResults(23).Text = FormatOutputValue(ActiveRes.TrimmedRPM" in main
+    assert "lblResults(24).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg" in main
+    assert "lblResults(25).Text = FormatOutputValue(ActiveRes.CT" in main
+    assert "lblResults(26).Text = FormatOutputValue(ActiveRes.ThrustN" in main
+
+
+def test_flow_equivalents_get_dedicated_mobile_second_line():
+    main = text("RotorCalculator.b4a")
+    assert "Dim flowRowH As Int = 76dip" in main
+    assert "Private Sub AddFormRowPanelH" in main
+    assert "pnl.AddView(lblHorizontalDerived, pnl.Width*29/100, 52dip" in main
+    assert "pnl.AddView(lblAxialDerived, pnl.Width*29/100, 52dip" in main
+
+
+def test_sweep_axis_and_range_are_explicit_selectors():
+    main = text("RotorCalculator.b4a")
+    assert 'InputList(options, "Sweep X Axis", SweepXAxisMode)' in main
+    assert 'InputList(options, "Sweep Range", selected)' in main
+    assert 'btnSweepMaxMu.Text = "μ MAX "' in main
+
+
+def test_help_matches_six_pair_final_architecture():
+    for path in ("Files/physics_help.html", "Files/physics_help_light.html"):
+        help_text = text(path)
+        assert "RPM + Collective" in help_text
+        assert "Collective + CT" in help_text
+        assert "CT + Thrust" in help_text
+        assert "Numerical Vectorial" in help_text
+        assert "Trim only in hover" in help_text
+        assert "Vz &gt; 0" in help_text
+
+
+def test_collective_ct_nonunique_failure_is_explicit():
+    engine = text("zBETEngine.bas")
+    assert "Collective + CT could not determine a unique RPM" in engine
