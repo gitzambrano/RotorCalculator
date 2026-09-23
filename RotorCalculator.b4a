@@ -2537,166 +2537,174 @@ Sub btnViewPolarPlot_Click
 	SweepPopupOpen = True
 	pnlSweepPopup.BringToFront
 	
-	Dim topBarH As Int
-	If ld = 1 Then topBarH = 48dip Else topBarH = 48dip * sc
+	Dim topBarH As Int = 48dip
 	Dim footerH As Int
 	If ld = 1 Then footerH = 50dip Else footerH = 94dip * sc
+	Dim controlsH As Int
+	If ld = 1 Then controlsH = 58dip Else controlsH = 172dip * sc
 	
-	Dim pnlHeader As Panel: pnlHeader.Initialize("")
+	Dim pnlHeader As Panel
+	pnlHeader.Initialize("")
 	pnlHeader.Color = ColorPnlTitle
 	pnlSweepPopup.AddView(pnlHeader, 0, 0, root.Width, topBarH)
-	
-	Dim lblTitle As Label: lblTitle.Initialize("")
+	Dim lblTitle As Label
+	lblTitle.Initialize("")
 	lblTitle.Text = "PARAMETER SWEEP"
 	lblTitle.TextColor = ColorAccentCyan
-	If root.Width <= 340dip Then lblTitle.TextSize = 12 Else lblTitle.TextSize = 14 * sc
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
-	lblTitle.Gravity = Gravity.CENTER_VERTICAL
-	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 60dip, topBarH)
-	
-	Dim btnClose As Button: btnClose.Initialize("btnCloseSweepPlot")
+	lblTitle.TextSize = 13 * sc
+	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 64dip, topBarH)
+	Dim btnClose As Button
+	btnClose.Initialize("btnCloseSweepPlot")
 	btnClose.Text = "×"
 	btnClose.TextColor = ColorAccentRed
 	btnClose.TextSize = 20
 	btnClose.Color = Colors.Transparent
 	pnlHeader.AddView(btnClose, root.Width - 52dip, 0, 48dip, topBarH)
 	
-	Dim pnlControls As Panel: pnlControls.Initialize("")
+	Dim pnlControls As Panel
+	pnlControls.Initialize("")
 	pnlControls.Color = ColorPnlInput2
-	Dim controlsH As Int
-	If ld = 1 Then controlsH = 58dip Else controlsH = 122dip * sc
 	pnlSweepPopup.AddView(pnlControls, 0, topBarH, root.Width, controlsH)
 	
 	spnSweepParam.Initialize("spnSweepParam")
 	spnSweepParam.DropdownBackgroundColor = ColorPnlTitle
 	spnSweepParam.DropdownTextColor = ColorTitleText
 	spnSweepParam.TextColor = ColorTitleText
-	spnSweepParam.TextSize = 12 * sc
+	spnSweepParam.TextSize = 11 * sc
 	
 	btnSweepMultiModel.Initialize("btnSweepMultiModel")
-	UpdateSweepMultiButtonText
 	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepMultiModel.TextSize = 10.5 Else btnSweepMultiModel.TextSize = 11 * sc
-	
+	btnSweepMultiModel.TextSize = 10.5 * sc
 	btnSweepXAxis.Initialize("btnSweepXAxis")
-	UpdateSweepXAxisButtonText
 	btnSweepXAxis.TextColor = ColorAccentGreen
 	btnSweepXAxis.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepXAxis.TextSize = 10.5 Else btnSweepXAxis.TextSize = 11 * sc
-	
+	btnSweepXAxis.TextSize = 10.5 * sc
 	btnSweepMaxMu.Initialize("btnSweepMaxMu")
-	UpdateSweepMaxButtonText
 	btnSweepMaxMu.TextColor = ColorAccentAmber
 	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	If root.Width <= 340dip Then btnSweepMaxMu.TextSize = 10.5 Else btnSweepMaxMu.TextSize = 11 * sc
-	
-	If ld = 1 Then
-		' Landscape: one compact control row maximizes useful plot height.
-		Dim gap As Int = 6dip
-		Dim usableW As Int = root.Width - 24dip
-		Dim paramW As Int = usableW * 0.32
-		Dim modeW As Int = usableW * 0.32
-		Dim axisW As Int = usableW * 0.16
-		Dim maxW As Int = usableW - paramW - modeW - axisW - 3 * gap
-		pnlControls.AddView(spnSweepParam, 12dip, 5dip, paramW, 48dip)
-		pnlControls.AddView(btnSweepMultiModel, 12dip + paramW + gap, 5dip, modeW, 48dip)
-		pnlControls.AddView(btnSweepXAxis, 12dip + paramW + gap + modeW + gap, 5dip, axisW, 48dip)
-		pnlControls.AddView(btnSweepMaxMu, 12dip + paramW + gap + modeW + gap + axisW + gap, 5dip, maxW, 48dip)
-	Else
-		Dim lblParamH As Label: lblParamH.Initialize("")
-		lblParamH.Text = "Y-AXIS PARAMETER"
-		lblParamH.TextColor = ColorButText2
-		If root.Width <= 340dip Then lblParamH.TextSize = 10 Else lblParamH.TextSize = 11 * sc
-		lblParamH.Typeface = Typeface.DEFAULT_BOLD
-		pnlControls.AddView(lblParamH, 12dip, 4dip, root.Width - 24dip, 16dip * sc)
-		
-		pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 48dip * sc)
-		Dim rowW As Int = root.Width - 30dip
-		Dim modeW As Int = rowW * 0.50
-		Dim axisW As Int = rowW * 0.23
-		Dim maxW As Int = rowW - modeW - axisW - 12dip
-		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, modeW, 48dip * sc)
-		pnlControls.AddView(btnSweepXAxis, 18dip + modeW, 72dip * sc, axisW, 48dip * sc)
-		pnlControls.AddView(btnSweepMaxMu, 24dip + modeW + axisW, 72dip * sc, maxW, 48dip * sc)
-	End If
+	btnSweepMaxMu.TextSize = 10.5 * sc
+	btnSweepValues.Initialize("btnSweepValues")
+	btnSweepValues.Text = "VALUES"
+	btnSweepValues.TextColor = ColorAccentCyan
+	btnSweepValues.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	btnSweepValues.TextSize = 10.5 * sc
+	btnSweepTrimHover.Initialize("btnSweepTrimHover")
+	btnSweepTrimHover.TextColor = ColorAccentGreen
+	btnSweepTrimHover.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	btnSweepTrimHover.TextSize = 9.5 * sc
 	
 	spnSweepParam.Clear
-	For i = 0 To RotorPopups.SweepParamLabels.Size - 1
-		spnSweepParam.Add(RotorPopups.SweepParamLabels.Get(i))
+	For paramIndex = 0 To RotorPopups.SweepParamLabels.Size - 1
+		spnSweepParam.Add(RotorPopups.SweepParamLabels.Get(paramIndex))
 	Next
-	
-	Dim curIdx As Int = 0
-	For i = 0 To RotorPopups.SweepParamKeys.Size - 1
-		If RotorPopups.SweepParamKeys.Get(i) = SweepParamSelectedKey Then
-			curIdx = i
+	Dim selectedParamIndex As Int = 0
+	For paramIndex = 0 To RotorPopups.SweepParamKeys.Size - 1
+		If RotorPopups.SweepParamKeys.Get(paramIndex) = SweepParamSelectedKey Then
+			selectedParamIndex = paramIndex
 			Exit
 		End If
 	Next
-	spnSweepParam.SelectedIndex = curIdx
+	spnSweepParam.SelectedIndex = selectedParamIndex
+	
+	If ld = 1 Then
+		Dim gapL As Int = 5dip
+		Dim usable As Int = root.Width - 24dip
+		Dim wParam As Int = usable * 0.28
+		Dim wFamily As Int = usable * 0.23
+		Dim wValues As Int = usable * 0.10
+		Dim wAxis As Int = usable * 0.10
+		Dim wRange As Int = usable * 0.12
+		Dim wTrim As Int = usable - wParam - wFamily - wValues - wAxis - wRange - 5 * gapL
+		Dim xL As Int = 12dip
+		pnlControls.AddView(spnSweepParam, xL, 5dip, wParam, 48dip): xL=xL+wParam+gapL
+		pnlControls.AddView(btnSweepMultiModel, xL, 5dip, wFamily, 48dip): xL=xL+wFamily+gapL
+		pnlControls.AddView(btnSweepValues, xL, 5dip, wValues, 48dip): xL=xL+wValues+gapL
+		pnlControls.AddView(btnSweepXAxis, xL, 5dip, wAxis, 48dip): xL=xL+wAxis+gapL
+		pnlControls.AddView(btnSweepMaxMu, xL, 5dip, wRange, 48dip): xL=xL+wRange+gapL
+		pnlControls.AddView(btnSweepTrimHover, xL, 5dip, wTrim, 48dip)
+	Else
+		Dim lblY As Label
+		lblY.Initialize("")
+		lblY.Text = "Y-AXIS RESULT"
+		lblY.TextColor = ColorButText2
+		lblY.Typeface = Typeface.DEFAULT_BOLD
+		lblY.TextSize = 9.5 * sc
+		pnlControls.AddView(lblY, 12dip, 4dip, root.Width - 24dip, 16dip)
+		pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 46dip * sc)
+		Dim rowWidth As Int = root.Width - 30dip
+		Dim familyW As Int = rowWidth * 0.68
+		Dim valuesW As Int = rowWidth - familyW - 6dip
+		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, familyW, 44dip * sc)
+		pnlControls.AddView(btnSweepValues, 18dip + familyW, 72dip * sc, valuesW, 44dip * sc)
+		Dim thirdGap As Int = 6dip
+		Dim axisW2 As Int = rowWidth * 0.22
+		Dim rangeW2 As Int = rowWidth * 0.27
+		Dim trimW2 As Int = rowWidth - axisW2 - rangeW2 - 2 * thirdGap
+		pnlControls.AddView(btnSweepXAxis, 12dip, 120dip * sc, axisW2, 44dip * sc)
+		pnlControls.AddView(btnSweepMaxMu, 12dip + axisW2 + thirdGap, 120dip * sc, rangeW2, 44dip * sc)
+		pnlControls.AddView(btnSweepTrimHover, 12dip + axisW2 + rangeW2 + 2 * thirdGap, 120dip * sc, trimW2, 44dip * sc)
+	End If
+	
+	UpdateSweepMultiButtonText
+	UpdateSweepXAxisButtonText
+	UpdateSweepMaxButtonText
+	UpdateSweepAuxControls
 	
 	Dim plotTop As Int = topBarH + controlsH + 2dip
 	Dim plotW As Int = root.Width - 16dip
 	Dim plotH As Int = root.Height - plotTop - footerH - 2dip
 	If plotH < 120dip Then plotH = 120dip
-	
 	ivSweepPlot.Initialize("")
 	pnlSweepPopup.AddView(ivSweepPlot, 8dip, plotTop, plotW, plotH)
 	
-	Dim pnlFooter As Panel: pnlFooter.Initialize("")
+	Dim pnlFooter As Panel
+	pnlFooter.Initialize("")
 	pnlFooter.Color = ColorPnlTitle
 	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - footerH, root.Width, footerH)
-	
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
-	If root.Width <= 340dip Then lblSweepCurrentVal.TextSize = 9.5 Else lblSweepCurrentVal.TextSize = 10.5 * sc
+	lblSweepCurrentVal.TextSize = 9.5 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblSweepCurrentVal.SingleLine = True
-	
-	Dim btnTable As Button: btnTable.Initialize("btnSweepTable")
+	Dim btnTable As Button
+	btnTable.Initialize("btnSweepTable")
 	btnTable.Text = "TABLE"
 	btnTable.TextColor = ColorAccentCyan
 	btnTable.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnTable.Typeface = Typeface.DEFAULT_BOLD
-	Dim btnCsv As Button: btnCsv.Initialize("btnSweepExportCsv")
+	Dim btnCsv As Button
+	btnCsv.Initialize("btnSweepExportCsv")
 	btnCsv.Text = "CSV"
 	btnCsv.TextColor = ColorAccentGreen
 	btnCsv.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnCsv.Typeface = Typeface.DEFAULT_BOLD
-	Dim btnPng As Button: btnPng.Initialize("btnSweepExportPng")
+	Dim btnPng As Button
+	btnPng.Initialize("btnSweepExportPng")
 	btnPng.Text = "PNG"
 	btnPng.TextColor = ColorAccentGreen
 	btnPng.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnPng.Typeface = Typeface.DEFAULT_BOLD
-	If root.Width <= 340dip Then
-		btnTable.TextSize = 10
-		btnCsv.TextSize = 10
-		btnPng.TextSize = 10
-	Else
-		btnTable.TextSize = 11 * sc
-		btnCsv.TextSize = 11 * sc
-		btnPng.TextSize = 11 * sc
-	End If
+	btnTable.Typeface = Typeface.DEFAULT_BOLD: btnCsv.Typeface = Typeface.DEFAULT_BOLD: btnPng.Typeface = Typeface.DEFAULT_BOLD
+	btnTable.TextSize = 10 * sc: btnCsv.TextSize = 10 * sc: btnPng.TextSize = 10 * sc
 	
 	If ld = 1 Then
-		Dim infoW As Int = root.Width * 0.38
-		pnlFooter.AddView(lblSweepCurrentVal, 10dip, 0, infoW - 12dip, footerH)
-		Dim actionLeft As Int = infoW
+		Dim infoWidth As Int = root.Width * 0.38
+		pnlFooter.AddView(lblSweepCurrentVal, 10dip, 0, infoWidth - 12dip, footerH)
+		Dim actionLeft As Int = infoWidth
 		Dim actionGap As Int = 5dip
-		Dim actionW As Int = (root.Width - actionLeft - 16dip - 2 * actionGap) / 3
-		pnlFooter.AddView(btnTable, actionLeft, 1dip, actionW, 48dip)
-		pnlFooter.AddView(btnCsv, actionLeft + actionW + actionGap, 1dip, actionW, 48dip)
-		pnlFooter.AddView(btnPng, actionLeft + 2 * (actionW + actionGap), 1dip, actionW, 48dip)
+		Dim actionWidth As Int = (root.Width - actionLeft - 16dip - 2 * actionGap) / 3
+		pnlFooter.AddView(btnTable, actionLeft, 1dip, actionWidth, 48dip)
+		pnlFooter.AddView(btnCsv, actionLeft + actionWidth + actionGap, 1dip, actionWidth, 48dip)
+		pnlFooter.AddView(btnPng, actionLeft + 2 * (actionWidth + actionGap), 1dip, actionWidth, 48dip)
 	Else
 		pnlFooter.AddView(lblSweepCurrentVal, 12dip, 0, root.Width - 24dip, 34dip * sc)
-		Dim actionGap As Int = 6dip
-		Dim actionW As Int = (root.Width - 24dip - 2 * actionGap) / 3
-		Dim actionY As Int = 36dip * sc
-		pnlFooter.AddView(btnTable, 12dip, actionY, actionW, 48dip * sc)
-		pnlFooter.AddView(btnCsv, 12dip + actionW + actionGap, actionY, actionW, 48dip * sc)
-		pnlFooter.AddView(btnPng, 12dip + 2 * (actionW + actionGap), actionY, actionW, 48dip * sc)
+		Dim footerGap As Int = 6dip
+		Dim footerButtonW As Int = (root.Width - 24dip - 2 * footerGap) / 3
+		Dim footerButtonY As Int = 36dip * sc
+		pnlFooter.AddView(btnTable, 12dip, footerButtonY, footerButtonW, 48dip * sc)
+		pnlFooter.AddView(btnCsv, 12dip + footerButtonW + footerGap, footerButtonY, footerButtonW, 48dip * sc)
+		pnlFooter.AddView(btnPng, 12dip + 2 * (footerButtonW + footerGap), footerButtonY, footerButtonW, 48dip * sc)
 	End If
-	
 	UpdateSweepPlotView
 End Sub
 
