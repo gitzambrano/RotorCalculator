@@ -516,4 +516,6 @@ def test_help_matches_six_pair_final_architecture():
 
 def test_collective_ct_nonunique_failure_is_explicit():
     engine = text("zBETEngine.bas")
-    assert "Collective + CT could not determine a unique RPM" in engine
+    assert "Collective + CT is non-unique at this flight/model state" in engine
+    assert 'If targetKind = "ct" And roots.Size <> 1 Then' in engine
+    assert 'Return Array(sourceCond.RPM, False, "multiple")' in engine
