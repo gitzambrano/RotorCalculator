@@ -119,21 +119,31 @@ capture_screen() {
   sleep 2
   assert_app_alive
 
-  # Geometry is the real in-page editor, not a list or popup.
-  safe_screencap "$OUT/01-geometry-top.png"
-  python /tmp/ui_node.py "$OUT/01-geometry-top.xml" > "$OUT/01-geometry-top.json"
-  grep -qi "Loaded rotor:" "$OUT/01-geometry-top.json"
-  grep -qi "BLADE GEOMETRY" "$OUT/01-geometry-top.json"
+  # Geometry starts as a rotor library; selecting a row opens the contextual editor.
+  safe_screencap "$OUT/01-geometry-library.png"
+  python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
+  grep -qi "Sikorsky UH-60 Black Hawk" "$OUT/01-geometry-library.json"
+  grep -qi "NEW ROTOR" "$OUT/01-geometry-library.json"
+
+  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
+  sleep 0.6
+  safe_screencap "$OUT/02-geometry-editor-top.png"
+  python /tmp/ui_node.py "$OUT/02-geometry-editor-top.xml" > "$OUT/02-geometry-editor-top.json"
+  grep -qi "BLADE GEOMETRY" "$OUT/02-geometry-editor-top.json"
+  grep -qi "SAVE" "$OUT/02-geometry-editor-top.json"
+  grep -qi "COPY" "$OUT/02-geometry-editor-top.json"
+  grep -qi "DELETE" "$OUT/02-geometry-editor-top.json"
 
   for _ in 1 2 3 4 5 6; do
     adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
     sleep 0.15
   done
-  safe_screencap "$OUT/02-geometry-bottom.png"
-  python /tmp/ui_node.py "$OUT/02-geometry-bottom.xml" > "$OUT/02-geometry-bottom.json"
-  grep -qi "ROTOR AERODYNAMICS" "$OUT/02-geometry-bottom.json"
-  grep -qi "LOAD ROTOR" "$OUT/02-geometry-bottom.json"
-  grep -qi "SAVE AS NEW" "$OUT/02-geometry-bottom.json"
+  safe_screencap "$OUT/03-geometry-editor-bottom.png"
+  python /tmp/ui_node.py "$OUT/03-geometry-editor-bottom.xml" > "$OUT/03-geometry-editor-bottom.json"
+  grep -qi "ROTOR AERODYNAMICS" "$OUT/03-geometry-editor-bottom.json"
+  adb shell input keyevent 4
+  sleep 0.4
 
   python /tmp/tap_text.py CONDITIONS
   sleep 0.8
@@ -177,7 +187,8 @@ capture_screen() {
   sleep 0.5
   assert_app_alive
 
-  python /tmp/check_bounds.py "$OUT/01-geometry-top.png" "$OUT"
+  python /tmp/check_bounds.py "$OUT/01-geometry-library.png" "$OUT"
+  python /tmp/check_bounds.py "$OUT/02-geometry-editor-top.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
 }
 
@@ -194,9 +205,12 @@ functional_smoke() {
   sleep 2
   assert_app_alive
 
-  # Geometry editor and explicit save semantics.
-  python /tmp/ui_node.py "$OUT/01-geometry.xml" > "$OUT/01-geometry.json"
-  grep -qi "Loaded rotor: Sikorsky UH-60 Black Hawk" "$OUT/01-geometry.json"
+  # Rotor library + contextual Geometry editor + copy semantics.
+  python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
+  grep -qi "Sikorsky UH-60 Black Hawk" "$OUT/01-geometry-library.json"
+  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
+  sleep 0.6
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
   tap_text_scrolling "Sissingh" 393 873
   sleep 0.4
@@ -209,19 +223,23 @@ functional_smoke() {
   sleep 0.4
   python /tmp/tap_text.py "NACA 0012"
   sleep 0.6
-  tap_text_scrolling "SAVE AS NEW" 393 873
+  python /tmp/tap_text.py "COPY"
   sleep 0.8
-  safe_screencap "$OUT/03-saved-copy.png"
-  python /tmp/ui_node.py "$OUT/03-saved-copy.xml" > "$OUT/03-saved-copy.json"
-  grep -qi "Loaded rotor:" "$OUT/03-saved-copy.json"
+  safe_screencap "$OUT/03-copied-rotor.png"
+  python /tmp/ui_node.py "$OUT/03-copied-rotor.xml" > "$OUT/03-copied-rotor.json"
+  grep -qi "Copy" "$OUT/03-copied-rotor.json"
+  adb shell input keyevent 4
+  sleep 0.4
 
-  # Cold restart: the active saved rotor remains loaded.
+  # Cold restart: the copied rotor remains the active saved selection.
   adb shell am force-stop flightdyn.rotorcalculator
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 1.5
   assert_app_alive
   python /tmp/ui_node.py "$OUT/04-after-restart.xml" > "$OUT/04-after-restart.json"
-  grep -qi "Loaded rotor:" "$OUT/04-after-restart.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/04-after-restart.json"
+  grep -qi "Copy" "$OUT/04-after-restart.json"
+  grep -qi "ACTIVE" "$OUT/04-after-restart.json"
 
   python /tmp/tap_text.py CONDITIONS
   sleep 0.8
