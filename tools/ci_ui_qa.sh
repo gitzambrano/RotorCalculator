@@ -86,8 +86,7 @@ x1,y1,x2,y2=target
 subprocess.run(['adb','shell','input','tap',str((x1+x2)//2),str((y1+y2)//2)],check=True)
 time.sleep(.15)
 subprocess.run(['adb','shell','input','keyevent','123'],check=True)
-for _ in range(96):
-    subprocess.run(['adb','shell','input','keyevent','67'],check=True,stdout=subprocess.DEVNULL)
+subprocess.run(['adb','shell','input','keyevent'] + ['67'] * 96,check=True,stdout=subprocess.DEVNULL)
 subprocess.run(['adb','shell','input','text',value],check=True)
 PY
 
@@ -801,7 +800,9 @@ functional_smoke() {
   sleep 0.4
   python3 /tmp/ui_node.py "$OUT/16-family-values.xml" > "$OUT/16-family-values.json"
   grep -qi "FAMILY VALUES" "$OUT/16-family-values.json"
-  python3 /tmp/set_first_edit_text.py "-12,-3,4,11"
+  python3 /tmp/set_first_edit_text.py "1,2,4,8"
+  adb shell input keyevent 4
+  sleep 0.2
   python3 /tmp/tap_text.py "APPLY"
   sleep 0.6
   python3 /tmp/ui_node.py "$OUT/16a-family-values-applied.xml" > "$OUT/16a-family-values-applied.json"
