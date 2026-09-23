@@ -421,6 +421,7 @@ Public Sub DrawSweepPlot( _
 	maxMu As Double, _
 	xAxisMode As Int, _
 	lightTheme As Boolean, _
+	extraPrecision As Int, _
 	samples As List _
 ) As Bitmap
 	Dim bmp As Bitmap
@@ -452,7 +453,11 @@ Public Sub DrawSweepPlot( _
 	Dim nCurves As Int = Max(1, samples.Size / nPoints)
 	Dim legendCols As Int = nCurves
 	If widthPx < 390dip Then
-		legendCols = Min(2, nCurves)
+		If multiCurveMode = 0 Then
+			legendCols = Min(2, nCurves)
+		Else
+			legendCols = Min(3, nCurves)
+		End If
 	Else If nCurves > 5 Then
 		legendCols = Min(4, nCurves)
 	End If
@@ -518,7 +523,8 @@ Public Sub DrawSweepPlot( _
 		Dim gy As Float = mTop + plotH - gridY / 5.0 * plotH
 		cvs.DrawLine(mLeft, gy, mLeft + plotW, gy, colGrid, 1dip)
 		Dim yGridValue As Double = yMin + gridY / 5.0 * (yMax - yMin)
-		Dim yText As String = NumberFormat2(yGridValue, 1, SweepParamDigits(paramKey), SweepParamDigits(paramKey), False)
+		Dim yDigits As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
+		Dim yText As String = NumberFormat2(yGridValue, 1, yDigits, yDigits, False)
 		cvs.DrawText(yText, mLeft - 6dip, gy + 4dip, Typeface.MONOSPACE, 9, colText, "RIGHT")
 	Next
 	For gridX = 0 To 5
