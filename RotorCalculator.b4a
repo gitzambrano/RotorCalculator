@@ -150,7 +150,6 @@ Sub Globals
 	Private pnlHelpPopup As Panel
 	Private HelpPopupOpen As Boolean = False
 	Private wvHelp As WebView
-	Private ion As Object
 	Private btnSettingTheme As Button
 	Private btnSettingUnits As Button
 	Private btnSettingPrecision As Button
