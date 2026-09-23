@@ -82,6 +82,8 @@ def test_radius_scaling_preserves_sigma_ar_and_taper():
     ar1 = 2.0 * radius1 / (c0 + c1)
     ar2 = 2.0 * radius2 / ((c0 + c1) * scale)
     assert math.isclose(s1.sigma_ref, s2.sigma_ref, rel_tol=0, abs_tol=1e-14)
+    assert math.isclose(s1.sigma_geom, s2.sigma_geom, rel_tol=0, abs_tol=1e-14)
+    assert math.isclose(s1.sigma_thrust, s2.sigma_thrust, rel_tol=0, abs_tol=1e-14)
     assert math.isclose(ar1, ar2, rel_tol=0, abs_tol=1e-14)
     assert math.isclose(c1 / c0, (c1 * scale) / (c0 * scale), rel_tol=0, abs_tol=1e-14)
     print("PASS: radius scaling invariants")
@@ -211,6 +213,78 @@ def test_known_operating_state_and_all_six_pairs():
     assert math.isclose(solved_ct["rpm"], known_rpm, rel_tol=2e-4, abs_tol=0.1)
     assert math.isclose(solved_ct["CT"], hover["CT"], rel_tol=2e-5, abs_tol=2e-8)
     print("PASS: all six operating pairs, including Collective + CT uniqueness")
+
+
+def test_all_six_pairs_across_hover_forward_and_axial_regimes():
+    """Exercise every operating-pair path in each QA-2 flight regime."""
+    geom = make_geometry(rpm=430.0, pg=True, tip_loss="fixed")
+    known_rpm = 430.0
+    known_collective = 4.0
+    regimes = {
+        "hover": dict(
+            horizontal_mode="mu", horizontal_value=0.0,
+            axial_mode="muz", axial_value=0.0,
+            inflow_model="uniform", k_ind=1.15,
+        ),
+        "forward": dict(
+            horizontal_mode="vx", horizontal_value=45.0,
+            axial_mode="muz", axial_value=0.0,
+            inflow_model="coleman_feingold", k_ind=1.15,
+        ),
+        "axial": dict(
+            horizontal_mode="mu", horizontal_value=0.0,
+            axial_mode="vz", axial_value=3.0,
+            inflow_model="uniform", k_ind=1.15,
+        ),
+    }
+    pairs = (
+        "rpm_collective", "rpm_ct", "rpm_thrust",
+        "collective_ct", "collective_thrust", "ct_thrust",
+    )
+
+    for regime, common in regimes.items():
+        baseline = zBET.solve_operating_pair(
+            geom,
+            pair="rpm_collective",
+            rpm=known_rpm,
+            collective_deg=known_collective,
+            target_ct=0.0,
+            target_thrust_n=0.0,
+            theta_root_deg=12.0,
+            theta_tip_deg=2.0,
+            **common,
+        )
+        target_ct = baseline["CT"]
+        target_thrust = baseline["T_N"]
+
+        for pair in pairs:
+            rpm_seed = known_rpm if pair.startswith("rpm_") else 300.0
+            collective_seed = known_collective if pair in ("rpm_collective", "collective_ct", "collective_thrust") else 0.0
+            try:
+                solved = zBET.solve_operating_pair(
+                    geom,
+                    pair=pair,
+                    rpm=rpm_seed,
+                    collective_deg=collective_seed,
+                    target_ct=target_ct,
+                    target_thrust_n=target_thrust,
+                    theta_root_deg=12.0,
+                    theta_tip_deg=2.0,
+                    **common,
+                )
+            except ValueError as exc:
+                # Collective + CT is allowed to be mathematically non-unique;
+                # rejecting it explicitly is the required behavior.
+                assert pair == "collective_ct", (regime, pair, str(exc))
+                assert "non-unique" in str(exc), (regime, pair, str(exc))
+                continue
+
+            assert math.isclose(solved["CT"], target_ct, rel_tol=2e-5, abs_tol=2e-8), (regime, pair)
+            assert math.isclose(solved["T_N"], target_thrust, rel_tol=2e-5, abs_tol=1e-3), (regime, pair)
+            assert math.isclose(solved["rpm"], known_rpm, rel_tol=2e-4, abs_tol=0.1), (regime, pair)
+            assert math.isclose(solved["collective_deg"], known_collective, rel_tol=0, abs_tol=2e-3), (regime, pair)
+
+    print("PASS: all six operating pairs exercised in hover, forward and axial regimes")
 
 
 def test_collective_delta_preserves_twist():

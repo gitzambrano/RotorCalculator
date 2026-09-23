@@ -1,8 +1,94 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APK="ci-apk/RotorCalculator-ci.apk"
+APK="${1:-${APK:-ci-apk/RotorCalculator-ci.apk}}"
+command -v adb >/dev/null
+command -v python3 >/dev/null
 test -f "$APK"
+mkdir -p qa-results
+
+cat > /tmp/ui_node.py <<'PY'
+import subprocess, sys, xml.etree.ElementTree as ET, re, json
+out = sys.argv[1]
+subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
+subprocess.run(["adb","pull","/sdcard/window.xml",out], check=True, stdout=subprocess.DEVNULL)
+root = ET.parse(out).getroot()
+def bounds(s):
+    m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",s or "")
+    return tuple(map(int,m.groups())) if m else None
+nodes=[]
+for n in root.iter("node"):
+    text=(n.attrib.get("text") or "").strip()
+    desc=(n.attrib.get("content-desc") or "").strip()
+    if text or desc:
+        nodes.append({
+          "text":text, "desc":desc, "bounds":bounds(n.attrib.get("bounds")),
+          "clickable":n.attrib.get("clickable"), "enabled":n.attrib.get("enabled")
+        })
+print(json.dumps(nodes,ensure_ascii=False,indent=2))
+PY
+
+cat > /tmp/tap_text.py <<'PY'
+import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile
+needle=sys.argv[1].strip().lower()
+xml=tempfile.NamedTemporaryFile(delete=False,suffix=".xml").name
+subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
+subprocess.run(["adb","pull","/sdcard/window.xml",xml], check=True, stdout=subprocess.DEVNULL)
+root=ET.parse(xml).getroot()
+candidates=[]
+for order,n in enumerate(root.iter("node")):
+    text=(n.attrib.get("text") or "").strip()
+    desc=(n.attrib.get("content-desc") or "").strip()
+    values=[v for v in (text,desc) if v]
+    if not values:
+        continue
+    m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib.get("bounds",""))
+    if not m:
+        continue
+    x1,y1,x2,y2=map(int,m.groups())
+    if x2<=x1 or y2<=y1:
+        continue
+    exact=any(v.lower()==needle for v in values)
+    partial=any(needle in v.lower() for v in values)
+    if not partial:
+        continue
+    clickable=n.attrib.get("clickable","false")=="true"
+    enabled=n.attrib.get("enabled","true")!="false"
+    if not enabled:
+        continue
+    priority=(0 if exact and clickable else 1 if exact else 2 if clickable else 3)
+    candidates.append((priority,order,x1,y1,x2,y2,text,desc))
+if candidates:
+    candidates.sort(key=lambda c:(c[0],c[1]))
+    _,_,x1,y1,x2,y2,_,_=candidates[0]
+    subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
+    sys.exit(0)
+print("NOT_FOUND",sys.argv[1]); sys.exit(2)
+PY
+
+cat > /tmp/check_bounds.py <<'PY'
+import sys, json, glob, os, struct
+png=sys.argv[1]
+with open(png,"rb") as fh:
+    header=fh.read(24)
+if header[:8] != b"\x89PNG\r\n\x1a\n":
+    raise SystemExit("Invalid PNG: "+png)
+w,h=struct.unpack(">II",header[16:24])
+issues=[]
+for jf in glob.glob(os.path.join(sys.argv[2],"*.json")):
+    for n in json.load(open(jf,encoding="utf-8")):
+        b=n.get("bounds")
+        if not b: continue
+        x1,y1,x2,y2=b
+        if x1<0 or y1<0 or x2>w or y2>h or x2<=x1 or y2<=y1:
+            issues.append({"file":os.path.basename(jf),"text":n.get("text"),"bounds":b})
+json.dump(issues,open(os.path.join(sys.argv[2],"bounds-issues.json"),"w"),ensure_ascii=False,indent=2)
+print("bounds issues:",len(issues))
+if issues:
+    print(json.dumps(issues[:30],ensure_ascii=False))
+    sys.exit(1)
+PY
+
 adb install -r "$APK"
 # Deterministic local QA: never inherit theme/unit/precision or rotor data from an older install.
 adb shell pm clear flightdyn.rotorcalculator >/dev/null
@@ -77,7 +163,7 @@ assert_document_picker() {
   sleep 0.7
   adb shell dumpsys window windows | grep -qi "documentsui"
   safe_screencap "$OUTDIR/$STEM.png"
-  python /tmp/ui_node.py "$OUTDIR/$STEM.xml" > "$OUTDIR/$STEM.json"
+  python3 /tmp/ui_node.py "$OUTDIR/$STEM.xml" > "$OUTDIR/$STEM.json"
   if [ -n "$EXPECTED" ]; then
     grep -Fqi "$EXPECTED" "$OUTDIR/$STEM.json"
   fi
@@ -92,7 +178,7 @@ tap_text_scrolling() {
   local H="$3"
   local attempt
   for attempt in 1 2 3 4; do
-    if python /tmp/tap_text.py "$TEXT"; then return 0; fi
+    if python3 /tmp/tap_text.py "$TEXT"; then return 0; fi
     adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 250 || true
     sleep 1
   done
@@ -108,7 +194,7 @@ assert_text_scrolling_down() {
   local STEM="$5"
   local attempt
   for attempt in 0 1 2 3 4 5 6; do
-    python /tmp/ui_node.py "$OUTDIR/$STEM-$attempt.xml" > "$OUTDIR/$STEM-$attempt.json"
+    python3 /tmp/ui_node.py "$OUTDIR/$STEM-$attempt.xml" > "$OUTDIR/$STEM-$attempt.json"
     if grep -Fqi "$TEXT" "$OUTDIR/$STEM-$attempt.json"; then
       echo "Verified after live resize: $TEXT"
       return 0
@@ -147,15 +233,15 @@ capture_screen() {
 
   # Geometry starts as a rotor library; selecting a row opens the contextual editor.
   safe_screencap "$OUT/01-geometry-library.png"
-  python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
+  python3 /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
   grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
   grep -Fqi "$ROTOR_LABEL" "$OUT/01-geometry-library.json"
   grep -qi "NEW ROTOR" "$OUT/01-geometry-library.json"
 
-  python /tmp/tap_text.py "$ROTOR_LABEL"
+  python3 /tmp/tap_text.py "$ROTOR_LABEL"
   sleep 0.6
   safe_screencap "$OUT/02-geometry-editor-top.png"
-  python /tmp/ui_node.py "$OUT/02-geometry-editor-top.xml" > "$OUT/02-geometry-editor-top.json"
+  python3 /tmp/ui_node.py "$OUT/02-geometry-editor-top.xml" > "$OUT/02-geometry-editor-top.json"
   grep -qi "BLADE GEOMETRY" "$OUT/02-geometry-editor-top.json"
   grep -qi "SAVE" "$OUT/02-geometry-editor-top.json"
   grep -qi "COPY" "$OUT/02-geometry-editor-top.json"
@@ -166,15 +252,15 @@ capture_screen() {
     sleep 0.15
   done
   safe_screencap "$OUT/03-geometry-editor-bottom.png"
-  python /tmp/ui_node.py "$OUT/03-geometry-editor-bottom.xml" > "$OUT/03-geometry-editor-bottom.json"
+  python3 /tmp/ui_node.py "$OUT/03-geometry-editor-bottom.xml" > "$OUT/03-geometry-editor-bottom.json"
   grep -qi "ROTOR AERODYNAMICS" "$OUT/03-geometry-editor-bottom.json"
   adb shell input keyevent 4
   sleep 0.4
 
-  python /tmp/tap_text.py CONDITIONS
+  python3 /tmp/tap_text.py CONDITIONS
   sleep 0.8
   safe_screencap "$OUT/03-conditions-top.png"
-  python /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
+  python3 /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
   grep -qi "Horizontal" "$OUT/03-conditions-top.json"
   grep -qi "Axial" "$OUT/03-conditions-top.json"
 
@@ -183,14 +269,14 @@ capture_screen() {
     sleep 0.15
   done
   safe_screencap "$OUT/04-conditions-bottom.png"
-  python /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
+  python3 /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
   grep -qi "Operating" "$OUT/04-conditions-bottom.json"
   grep -qi "Numerical Vectorial" "$OUT/04-conditions-bottom.json"
 
-  python /tmp/tap_text.py RESULTS
+  python3 /tmp/tap_text.py RESULTS
   sleep 0.8
   safe_screencap "$OUT/05-results-top.png"
-  python /tmp/ui_node.py "$OUT/05-results-top.xml" > "$OUT/05-results-top.json"
+  python3 /tmp/ui_node.py "$OUT/05-results-top.xml" > "$OUT/05-results-top.json"
   grep -qi "DIMENSIONAL PERFORMANCE" "$OUT/05-results-top.json"
 
   assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" "$W" "$H" "06-coefficients"
@@ -199,12 +285,12 @@ capture_screen() {
   assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"
 
   # Reopen Results from the top and inspect the universal sweep.
-  python /tmp/tap_text.py RESULTS || true
+  python3 /tmp/tap_text.py RESULTS || true
   sleep 0.3
   tap_text_scrolling "OPEN PARAMETER SWEEP" "$W" "$H"
   sleep 1
   safe_screencap "$OUT/10-sweep.png"
-  python /tmp/ui_node.py "$OUT/10-sweep.xml" > "$OUT/10-sweep.json"
+  python3 /tmp/ui_node.py "$OUT/10-sweep.xml" > "$OUT/10-sweep.json"
   grep -qi "PARAMETER SWEEP" "$OUT/10-sweep.json"
   grep -qi "TABLE" "$OUT/10-sweep.json"
   grep -qi "CSV" "$OUT/10-sweep.json"
@@ -213,8 +299,8 @@ capture_screen() {
   sleep 0.5
   assert_app_alive
 
-  python /tmp/check_bounds.py "$OUT/01-geometry-library.png" "$OUT"
-  python /tmp/check_bounds.py "$OUT/02-geometry-editor-top.png" "$OUT"
+  python3 /tmp/check_bounds.py "$OUT/01-geometry-library.png" "$OUT"
+  python3 /tmp/check_bounds.py "$OUT/02-geometry-editor-top.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
 }
 
@@ -232,58 +318,58 @@ functional_smoke() {
   assert_app_alive
 
   # Rotor library + contextual Geometry editor + NEW/DELETE semantics.
-  python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
+  python3 /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
   grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
   grep -qi "UH-60" "$OUT/01-geometry-library.json"
-  python /tmp/tap_text.py "NEW ROTOR"
+  python3 /tmp/tap_text.py "NEW ROTOR"
   sleep 0.6
-  python /tmp/ui_node.py "$OUT/01b-new-rotor.xml" > "$OUT/01b-new-rotor.json"
+  python3 /tmp/ui_node.py "$OUT/01b-new-rotor.xml" > "$OUT/01b-new-rotor.json"
   grep -qi "Custom Rotor" "$OUT/01b-new-rotor.json"
   grep -qi "BLADE GEOMETRY" "$OUT/01b-new-rotor.json"
-  python /tmp/tap_text.py "DELETE"
+  python3 /tmp/tap_text.py "DELETE"
   sleep 0.4
-  python /tmp/tap_text.py "DELETE"
+  python3 /tmp/tap_text.py "DELETE"
   sleep 0.6
-  python /tmp/ui_node.py "$OUT/01c-after-new-delete.xml" > "$OUT/01c-after-new-delete.json"
+  python3 /tmp/ui_node.py "$OUT/01c-after-new-delete.xml" > "$OUT/01c-after-new-delete.json"
   grep -qi "ROTOR LIBRARY" "$OUT/01c-after-new-delete.json"
   grep -qi "UH-60" "$OUT/01c-after-new-delete.json"
 
-  python /tmp/tap_text.py "UH-60"
+  python3 /tmp/tap_text.py "UH-60"
   sleep 0.6
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
   tap_text_scrolling "Sissingh" 393 873
   sleep 0.4
-  python /tmp/tap_text.py "Fixed B"
+  python3 /tmp/tap_text.py "Fixed B"
   sleep 0.6
-  python /tmp/ui_node.py "$OUT/02-fixed-b.xml" > "$OUT/02-fixed-b.json"
+  python3 /tmp/ui_node.py "$OUT/02-fixed-b.xml" > "$OUT/02-fixed-b.json"
   grep -qi "Fixed B" "$OUT/02-fixed-b.json"
 
   tap_text_scrolling "Sikorsky SC1095" 393 873
   sleep 0.4
-  python /tmp/tap_text.py "NACA 0012"
+  python3 /tmp/tap_text.py "NACA 0012"
   sleep 0.6
 
   # SAVE must persist real edits, close the editor, and survive reopening.
-  python /tmp/tap_text.py "SAVE"
+  python3 /tmp/tap_text.py "SAVE"
   sleep 0.7
-  python /tmp/ui_node.py "$OUT/02b-after-save-library.xml" > "$OUT/02b-after-save-library.json"
+  python3 /tmp/ui_node.py "$OUT/02b-after-save-library.xml" > "$OUT/02b-after-save-library.json"
   grep -qi "ROTOR LIBRARY" "$OUT/02b-after-save-library.json"
-  python /tmp/tap_text.py "UH-60"
+  python3 /tmp/tap_text.py "UH-60"
   sleep 0.6
   assert_text_scrolling_down "$OUT" "Fixed B" 393 873 "02c-saved-fixed-b"
   assert_text_scrolling_down "$OUT" "NACA 0012" 393 873 "02d-saved-airfoil"
 
-  python /tmp/tap_text.py "COPY"
+  python3 /tmp/tap_text.py "COPY"
   sleep 0.8
   safe_screencap "$OUT/03-copied-rotor.png"
-  python /tmp/ui_node.py "$OUT/03-copied-rotor.xml" > "$OUT/03-copied-rotor.json"
+  python3 /tmp/ui_node.py "$OUT/03-copied-rotor.xml" > "$OUT/03-copied-rotor.json"
   grep -Fqi "UH-60 (Copy)" "$OUT/03-copied-rotor.json"
 
   # Copying a copy must produce Copy 2, never "Copy Copy".
-  python /tmp/tap_text.py "COPY"
+  python3 /tmp/tap_text.py "COPY"
   sleep 0.8
   safe_screencap "$OUT/03b-copied-rotor-2.png"
-  python /tmp/ui_node.py "$OUT/03b-copied-rotor-2.xml" > "$OUT/03b-copied-rotor-2.json"
+  python3 /tmp/ui_node.py "$OUT/03b-copied-rotor-2.xml" > "$OUT/03b-copied-rotor-2.json"
   grep -Fqi "UH-60 (Copy 2)" "$OUT/03b-copied-rotor-2.json"
   ! grep -Fqi "Copy Copy" "$OUT/03b-copied-rotor-2.json"
   adb shell input keyevent 4
@@ -294,18 +380,18 @@ functional_smoke() {
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 1.5
   assert_app_alive
-  python /tmp/ui_node.py "$OUT/04-after-restart.xml" > "$OUT/04-after-restart.json"
+  python3 /tmp/ui_node.py "$OUT/04-after-restart.xml" > "$OUT/04-after-restart.json"
   grep -qi "ROTOR LIBRARY" "$OUT/04-after-restart.json"
   grep -Fqi "UH-60 (Copy 2)" "$OUT/04-after-restart.json"
   grep -qi "ACTIVE" "$OUT/04-after-restart.json"
 
   # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
-  python /tmp/tap_text.py "UH-60 (Copy 2)"
+  python3 /tmp/tap_text.py "UH-60 (Copy 2)"
   sleep 0.5
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
-  python /tmp/tap_text.py "Fixed B"
+  python3 /tmp/tap_text.py "Fixed B"
   sleep 0.3
-  python /tmp/tap_text.py "Sissingh"
+  python3 /tmp/tap_text.py "Sissingh"
   sleep 0.5
   adb shell settings put system user_rotation 1
   adb shell wm size 873x393
@@ -313,7 +399,7 @@ functional_smoke() {
   assert_app_alive
   tap_text_scrolling "ROTOR AERODYNAMICS" 873 393
   safe_screencap "$OUT/04b-geometry-unsaved-landscape.png"
-  python /tmp/ui_node.py "$OUT/04b-geometry-unsaved-landscape.xml" > "$OUT/04b-geometry-unsaved-landscape.json"
+  python3 /tmp/ui_node.py "$OUT/04b-geometry-unsaved-landscape.xml" > "$OUT/04b-geometry-unsaved-landscape.json"
   grep -qi "Sissingh" "$OUT/04b-geometry-unsaved-landscape.json"
   grep -qi "UNSAVED" "$OUT/04b-geometry-unsaved-landscape.json"
   adb shell wm size 393x873
@@ -322,17 +408,17 @@ functional_smoke() {
   assert_app_alive
   adb shell input keyevent 4
   sleep 0.4
-  python /tmp/tap_text.py "Discard"
+  python3 /tmp/tap_text.py "Discard"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/04c-after-discard.xml" > "$OUT/04c-after-discard.json"
+  python3 /tmp/ui_node.py "$OUT/04c-after-discard.xml" > "$OUT/04c-after-discard.json"
   grep -qi "ROTOR LIBRARY" "$OUT/04c-after-discard.json"
 
   # Global menu: converter, help, conventions, about and factory restore.
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "Quick Unit Converter"
+  python3 /tmp/tap_text.py "Quick Unit Converter"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/04d-unit-converter.xml" > "$OUT/04d-unit-converter.json"
+  python3 /tmp/ui_node.py "$OUT/04d-unit-converter.xml" > "$OUT/04d-unit-converter.json"
   grep -qi "QUICK UNIT CONVERTER" "$OUT/04d-unit-converter.json"
   grep -qi "hp" "$OUT/04d-unit-converter.json"
   adb shell input keyevent 4
@@ -340,101 +426,101 @@ functional_smoke() {
 
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "Physics & Equations"
+  python3 /tmp/tap_text.py "Physics & Equations"
   sleep 0.8
-  python /tmp/ui_node.py "$OUT/04e-physics-help.xml" > "$OUT/04e-physics-help.json"
+  python3 /tmp/ui_node.py "$OUT/04e-physics-help.xml" > "$OUT/04e-physics-help.json"
   grep -qi "PHYSICS & EQUATIONS" "$OUT/04e-physics-help.json"
   adb shell input keyevent 4
   sleep 0.3
 
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "zBET Conventions & Physical Axes"
+  python3 /tmp/tap_text.py "zBET Conventions & Physical Axes"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/04f-conventions.xml" > "$OUT/04f-conventions.json"
+  python3 /tmp/ui_node.py "$OUT/04f-conventions.xml" > "$OUT/04f-conventions.json"
   grep -qi "zBET / zBEMT Conventions" "$OUT/04f-conventions.json"
   adb shell input keyevent 4
   sleep 0.3
 
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "About RotorCalculator"
+  python3 /tmp/tap_text.py "About RotorCalculator"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/04g-about.xml" > "$OUT/04g-about.json"
+  python3 /tmp/ui_node.py "$OUT/04g-about.xml" > "$OUT/04g-about.json"
   grep -qi "About RotorCalculator" "$OUT/04g-about.json"
   adb shell input keyevent 4
   sleep 0.3
 
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "Restore Factory Rotor Presets"
+  python3 /tmp/tap_text.py "Restore Factory Rotor Presets"
   sleep 0.5
-  python /tmp/tap_text.py "RESTORE"
+  python3 /tmp/tap_text.py "RESTORE"
   sleep 0.8
-  python /tmp/ui_node.py "$OUT/04h-after-factory-restore.xml" > "$OUT/04h-after-factory-restore.json"
+  python3 /tmp/ui_node.py "$OUT/04h-after-factory-restore.xml" > "$OUT/04h-after-factory-restore.json"
   grep -qi "ROTOR LIBRARY" "$OUT/04h-after-factory-restore.json"
   grep -Fqi "UH-60 (Copy 2)" "$OUT/04h-after-factory-restore.json"
 
-  python /tmp/tap_text.py CONDITIONS
+  python3 /tmp/tap_text.py CONDITIONS
   sleep 0.8
 
   # Explicit equivalent-flow selectors.
-  python /tmp/tap_text.py "μ"
+  python3 /tmp/tap_text.py "μ"
   sleep 0.3
-  python /tmp/tap_text.py "Vx — forward speed"
+  python3 /tmp/tap_text.py "Vx — forward speed"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/05-horizontal-vx.xml" > "$OUT/05-horizontal-vx.json"
+  python3 /tmp/ui_node.py "$OUT/05-horizontal-vx.xml" > "$OUT/05-horizontal-vx.json"
   grep -Eq '"text": "Vx"' "$OUT/05-horizontal-vx.json"
 
-  python /tmp/tap_text.py "α"
+  python3 /tmp/tap_text.py "α"
   sleep 0.3
-  python /tmp/tap_text.py "Vz — climb rate"
+  python3 /tmp/tap_text.py "Vz — climb rate"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/06-axial-vz.xml" > "$OUT/06-axial-vz.json"
+  python3 /tmp/ui_node.py "$OUT/06-axial-vz.xml" > "$OUT/06-axial-vz.json"
   grep -Eq '"text": "Vz"' "$OUT/06-axial-vz.json"
-  python /tmp/tap_text.py "Vz"
+  python3 /tmp/tap_text.py "Vz"
   sleep 0.3
-  python /tmp/tap_text.py "μz — axial ratio"
+  python3 /tmp/tap_text.py "μz — axial ratio"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/07-axial-muz.xml" > "$OUT/07-axial-muz.json"
+  python3 /tmp/ui_node.py "$OUT/07-axial-muz.xml" > "$OUT/07-axial-muz.json"
   grep -Eq '"text": "μz"' "$OUT/07-axial-muz.json"
 
   # All six operating pairs are reachable from one explicit selector.
   tap_text_scrolling "RPM + CT" 393 873
   sleep 0.3
-  python /tmp/tap_text.py "RPM + Collective"
+  python3 /tmp/tap_text.py "RPM + Collective"
   sleep 0.4
-  python /tmp/tap_text.py "RPM + Collective"
+  python3 /tmp/tap_text.py "RPM + Collective"
   sleep 0.3
-  python /tmp/tap_text.py "RPM + Thrust"
+  python3 /tmp/tap_text.py "RPM + Thrust"
   sleep 0.4
-  python /tmp/tap_text.py "RPM + Thrust"
+  python3 /tmp/tap_text.py "RPM + Thrust"
   sleep 0.3
-  python /tmp/tap_text.py "Collective + CT"
+  python3 /tmp/tap_text.py "Collective + CT"
   sleep 0.4
-  python /tmp/tap_text.py "Collective + CT"
+  python3 /tmp/tap_text.py "Collective + CT"
   sleep 0.3
-  python /tmp/tap_text.py "Collective + Thrust"
+  python3 /tmp/tap_text.py "Collective + Thrust"
   sleep 0.4
-  python /tmp/tap_text.py "Collective + Thrust"
+  python3 /tmp/tap_text.py "Collective + Thrust"
   sleep 0.3
-  python /tmp/tap_text.py "CT + Thrust"
+  python3 /tmp/tap_text.py "CT + Thrust"
   sleep 0.4
-  python /tmp/tap_text.py "CT + Thrust"
+  python3 /tmp/tap_text.py "CT + Thrust"
   sleep 0.3
-  python /tmp/tap_text.py "RPM + CT"
+  python3 /tmp/tap_text.py "RPM + CT"
   sleep 0.7
 
   tap_text_scrolling "Coleman-Feingold" 393 873
   sleep 0.3
-  python /tmp/tap_text.py "Drees"
+  python3 /tmp/tap_text.py "Drees"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/08-models.xml" > "$OUT/08-models.json"
+  python3 /tmp/ui_node.py "$OUT/08-models.xml" > "$OUT/08-models.json"
   grep -qi "Drees" "$OUT/08-models.json"
   grep -qi "Numerical Vectorial" "$OUT/08-models.json"
 
   # Results exposes all coefficients together and the complete operating solution.
-  python /tmp/tap_text.py RESULTS
+  python3 /tmp/tap_text.py RESULTS
   sleep 0.8
   assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" 393 873 "09-coefficients"
   assert_text_scrolling_down "$OUT" "Solved RPM" 393 873 "10-solved-rpm"
@@ -445,25 +531,31 @@ functional_smoke() {
   # Settings: exercise all persistent presentation options.
   adb shell input tap 369 28
   sleep 0.4
-  python /tmp/tap_text.py "Settings"
+  python3 /tmp/tap_text.py "Settings"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/14-settings-dark.xml" > "$OUT/14-settings-dark.json"
+  python3 /tmp/ui_node.py "$OUT/14-settings-dark.xml" > "$OUT/14-settings-dark.json"
   grep -qi "Import Geometries" "$OUT/14-settings-dark.json"
   grep -qi "Export Geometries" "$OUT/14-settings-dark.json"
   grep -qi "DARK" "$OUT/14-settings-dark.json"
   grep -qi "SI" "$OUT/14-settings-dark.json"
   grep -qi "STANDARD" "$OUT/14-settings-dark.json"
 
-  python /tmp/tap_text.py "SI"
+  # SAF geometry backup/sharing must open the real Android document picker.
+  python3 /tmp/tap_text.py "Import Geometries"
+  assert_document_picker "$OUT" "14e-import-picker" ""
+  python3 /tmp/tap_text.py "Export Geometries"
+  assert_document_picker "$OUT" "14f-export-picker" "rotorcalculator_geometries.txt"
+
+  python3 /tmp/tap_text.py "SI"
   sleep 0.3
-  python /tmp/tap_text.py "STANDARD"
+  python3 /tmp/tap_text.py "STANDARD"
   sleep 0.3
-  python /tmp/ui_node.py "$OUT/14a-settings-options.xml" > "$OUT/14a-settings-options.json"
+  python3 /tmp/ui_node.py "$OUT/14a-settings-options.xml" > "$OUT/14a-settings-options.json"
   grep -qi "IMPERIAL" "$OUT/14a-settings-options.json"
   grep -qi "+1 DECIMAL" "$OUT/14a-settings-options.json"
 
   # Tapping the current DARK theme switches to LIGHT and rebuilds the UI.
-  python /tmp/tap_text.py "DARK"
+  python3 /tmp/tap_text.py "DARK"
   sleep 1.2
   assert_app_alive
   safe_screencap "$OUT/14b-portrait-light.png"
@@ -471,9 +563,9 @@ functional_smoke() {
   # Reopen Settings and verify the live state.
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "Settings"
+  python3 /tmp/tap_text.py "Settings"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/14c-settings-light.xml" > "$OUT/14c-settings-light.json"
+  python3 /tmp/ui_node.py "$OUT/14c-settings-light.xml" > "$OUT/14c-settings-light.json"
   grep -qi "LIGHT" "$OUT/14c-settings-light.json"
   grep -qi "IMPERIAL" "$OUT/14c-settings-light.json"
   grep -qi "+1 DECIMAL" "$OUT/14c-settings-light.json"
@@ -487,9 +579,9 @@ functional_smoke() {
   assert_app_alive
   adb shell input tap 369 28
   sleep 0.3
-  python /tmp/tap_text.py "Settings"
+  python3 /tmp/tap_text.py "Settings"
   sleep 0.5
-  python /tmp/ui_node.py "$OUT/14d-settings-after-restart.xml" > "$OUT/14d-settings-after-restart.json"
+  python3 /tmp/ui_node.py "$OUT/14d-settings-after-restart.xml" > "$OUT/14d-settings-after-restart.json"
   grep -qi "LIGHT" "$OUT/14d-settings-after-restart.json"
   grep -qi "IMPERIAL" "$OUT/14d-settings-after-restart.json"
   grep -qi "+1 DECIMAL" "$OUT/14d-settings-after-restart.json"
@@ -497,11 +589,11 @@ functional_smoke() {
   sleep 0.3
 
   # Universal sweep: explicit Y, family, VALUES, X axis/range, hover-only trim and exports.
-  python /tmp/tap_text.py RESULTS
+  python3 /tmp/tap_text.py RESULTS
   sleep 0.3
   tap_text_scrolling "OPEN PARAMETER SWEEP" 393 873
   sleep 1
-  python /tmp/ui_node.py "$OUT/15-sweep.xml" > "$OUT/15-sweep.json"
+  python3 /tmp/ui_node.py "$OUT/15-sweep.xml" > "$OUT/15-sweep.json"
   grep -qi "VALUES" "$OUT/15-sweep.json"
   grep -qi "X · μ" "$OUT/15-sweep.json"
   grep -qi "μ MAX" "$OUT/15-sweep.json"
@@ -511,28 +603,63 @@ functional_smoke() {
   grep -qi "PNG" "$OUT/15-sweep.json"
   safe_screencap "$OUT/15-sweep.png"
 
-  python /tmp/tap_text.py "Inflow Models"
-  sleep 0.3
-  python /tmp/tap_text.py "Rotor α Family"
-  sleep 0.5
-  python /tmp/tap_text.py "VALUES"
+  # Plot export must reach the real CREATE_DOCUMENT picker, not just expose buttons.
+  python3 /tmp/tap_text.py "CSV"
+  assert_document_picker "$OUT" "15a-csv-picker" ""
+  python3 /tmp/tap_text.py "PNG"
+  assert_document_picker "$OUT" "15b-png-picker" ""
+
+  # Exercise both hover-only trim states while a trim-requiring pair is active.
+  python3 /tmp/tap_text.py "TRIM ONLY HOVER"
   sleep 0.4
-  python /tmp/ui_node.py "$OUT/16-family-values.xml" > "$OUT/16-family-values.json"
+  python3 /tmp/ui_node.py "$OUT/15c-trim-hover-on.xml" > "$OUT/15c-trim-hover-on.json"
+  grep -Fqi "☑ TRIM ONLY HOVER" "$OUT/15c-trim-hover-on.json"
+  python3 /tmp/tap_text.py "TRIM ONLY HOVER"
+  sleep 0.4
+  python3 /tmp/ui_node.py "$OUT/15d-trim-hover-off.xml" > "$OUT/15d-trim-hover-off.json"
+  grep -Fqi "☐ TRIM ONLY HOVER" "$OUT/15d-trim-hover-off.json"
+
+  python3 /tmp/tap_text.py "Inflow Models"
+  sleep 0.3
+  python3 /tmp/tap_text.py "Rotor α Family"
+  sleep 0.5
+  python3 /tmp/tap_text.py "VALUES"
+  sleep 0.4
+  python3 /tmp/ui_node.py "$OUT/16-family-values.xml" > "$OUT/16-family-values.json"
   grep -qi "FAMILY VALUES" "$OUT/16-family-values.json"
-  python /tmp/tap_text.py "CANCEL"
+  python3 /tmp/tap_text.py "CANCEL"
   sleep 0.3
 
-  python /tmp/tap_text.py "X · μ"
+  # Every family selector must be reachable without crashing the sweep.
+  python3 /tmp/tap_text.py "α Family"
   sleep 0.3
-  python /tmp/tap_text.py "Vx — forward speed"
+  python3 /tmp/tap_text.py "Axial Vz Family"
   sleep 0.5
-  python /tmp/tap_text.py "μ MAX"
+  python3 /tmp/tap_text.py "Vz Family"
   sleep 0.3
-  python /tmp/tap_text.py "μ max = 0.60"
+  python3 /tmp/tap_text.py "Axial μz Family"
   sleep 0.5
-  python /tmp/tap_text.py "TABLE"
+  python3 /tmp/tap_text.py "μz Family"
+  sleep 0.3
+  python3 /tmp/tap_text.py "Active Only"
+  sleep 0.5
+  python3 /tmp/tap_text.py "Active Only"
+  sleep 0.3
+  python3 /tmp/tap_text.py "Inflow Models"
+  sleep 0.5
+  assert_app_alive
+
+  python3 /tmp/tap_text.py "X · μ"
+  sleep 0.3
+  python3 /tmp/tap_text.py "Vx — forward speed"
+  sleep 0.5
+  python3 /tmp/tap_text.py "μ MAX"
+  sleep 0.3
+  python3 /tmp/tap_text.py "μ max = 0.60"
+  sleep 0.5
+  python3 /tmp/tap_text.py "TABLE"
   sleep 0.7
-  python /tmp/ui_node.py "$OUT/17-sweep-table.xml" > "$OUT/17-sweep-table.json"
+  python3 /tmp/ui_node.py "$OUT/17-sweep-table.xml" > "$OUT/17-sweep-table.json"
   grep -qi "SWEEP DATA" "$OUT/17-sweep-table.json"
   adb shell input keyevent 4
   adb shell input keyevent 4
@@ -540,7 +667,7 @@ functional_smoke() {
   assert_app_alive
 
   # Live resize/orientation must retain operating pair and session state.
-  python /tmp/tap_text.py CONDITIONS
+  python3 /tmp/tap_text.py CONDITIONS
   sleep 0.5
   adb shell settings put system user_rotation 1
   adb shell wm size 873x393
@@ -560,9 +687,9 @@ PY
   # Switch back to DARK while still landscape and capture the same orientation.
   adb shell input tap 849 24
   sleep 0.3
-  python /tmp/tap_text.py "Settings"
+  python3 /tmp/tap_text.py "Settings"
   sleep 0.4
-  python /tmp/tap_text.py "LIGHT"
+  python3 /tmp/tap_text.py "LIGHT"
   sleep 1.0
   assert_app_alive
   safe_screencap "$OUT/18d-landscape-dark.png"

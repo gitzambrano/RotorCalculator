@@ -442,6 +442,17 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert 'assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"' in qa
     assert 'assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"' in qa
     assert 'assert_text_scrolling_down "$OUT" "Collective Increment (Δθ)" 393 873 "11-solved-collective"' in qa
+    assert 'APK="${1:-${APK:-ci-apk/RotorCalculator-ci.apk}}"' in qa
+    assert "cat > /tmp/ui_node.py <<'PY'" in qa
+    assert "cat > /tmp/tap_text.py <<'PY'" in qa
+    assert "cat > /tmp/check_bounds.py <<'PY'" in qa
+    assert qa.count('assert_document_picker "$OUT"') >= 4
+    assert '"14e-import-picker"' in qa
+    assert '"14f-export-picker"' in qa
+    assert '"15a-csv-picker"' in qa
+    assert '"15b-png-picker"' in qa
+    assert '"☑ TRIM ONLY HOVER"' in qa
+    assert '"☐ TRIM ONLY HOVER"' in qa
 
 
 def test_requirements_and_plan_are_authoritative_for_new_architecture():
