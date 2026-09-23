@@ -1241,7 +1241,7 @@ Private Sub OpenGeometryPopup
 	actionBar.AddView(bDelete, gap * 3 + bw * 2, 11dip, bw, 48dip)
 	
 	LoadRotorDataToFields(ActiveGeom)
-	RefreshLoadedRotorStrip
+	RefreshGeometryPopupTitle
 End Sub
 
 Private Sub BuildGeometryEditorContent
@@ -1360,7 +1360,7 @@ Private Sub AddDerivedRow(pnl As Panel, title As String, unit As String) As Labe
 	Return value
 End Sub
 
-Private Sub RefreshLoadedRotorStrip
+Private Sub RefreshGeometryPopupTitle
 	If GeometryPopupOpen = False Or lblGeometryPopupTitle.IsInitialized = False Then Return
 	Dim suffix As String = ""
 	If GeometryDirty Then suffix = "  ·  UNSAVED"
@@ -1373,7 +1373,7 @@ Private Sub SaveCurrentRotor
 	ActiveGeom = RotorStorage.GetActiveRotor
 	GeometryDirty = False
 	If GeometryPopupOpen Then LoadRotorDataToFields(ActiveGeom)
-	RefreshLoadedRotorStrip
+	RefreshGeometryPopupTitle
 	RefreshRotorLibraryList
 	RecalculateRotor
 	ToastMessageShow("Rotor saved.", False)
@@ -2209,7 +2209,7 @@ Public Sub LoadRotorDataToFields(geom As RotorGeometry)
 	End If
 	UpdatingUI = False
 	RefreshGeometryDerivedFields
-	RefreshLoadedRotorStrip
+	RefreshGeometryPopupTitle
 End Sub
 
 Private Sub RefreshGeometryDerivedFields
@@ -2463,7 +2463,7 @@ Sub btnTipLoss_Click
 	GeometryDirty = True
 	RefreshTipLossButton(ActiveGeom)
 	RefreshGeometryDerivedFields
-	RefreshLoadedRotorStrip
+	RefreshGeometryPopupTitle
 	RecalculateRotor
 End Sub
 
@@ -2703,7 +2703,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	GeometryDirty = True
 	RefreshGeometryDependentInputs(field)
 	RefreshGeometryDerivedFields
-	RefreshLoadedRotorStrip
+	RefreshGeometryPopupTitle
 	RecalculateRotor
 End Sub
 
