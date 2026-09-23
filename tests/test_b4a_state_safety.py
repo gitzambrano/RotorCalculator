@@ -18,7 +18,7 @@ def test_geometry_is_rotor_library_with_contextual_editor():
     assert '"BLADE GEOMETRY"' in main
     assert '"DERIVED GEOMETRY"' in main
     assert '"ROTOR AERODYNAMICS"' in main
-    assert 'lowerName.Contains(" copy")' in main
+    assert 'Dim copyPos As Int = lowerName.IndexOf(" copy")' in main
     assert 'compactLandscape As Boolean = (ld = 1 And root.Width <= 700dip)' in main
     assert 'btnSweepMultiModel.Text = "Models (4)"' in main
     assert 'btnSweepTrimHover.Text = "HOVER ✓"' in main
