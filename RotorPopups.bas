@@ -243,7 +243,7 @@ Public Sub ExtractParamValue(res As RotorResults, paramKey As String) As Double
 		Case "Alpha": Return res.OperatingAlphaDeg
 		Case "Altitude": Return res.AltitudeM
 		Case "Temperature": Return res.TemperatureC
-		Case "Density": Return res.Density
+		Case "Density": Return res.DensityRho
 		Case "Pressure": Return res.PressurePa
 		Case "SoundSpeed": Return res.SpeedOfSound
 		Case Else: Return res.CT

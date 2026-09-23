@@ -129,7 +129,7 @@ Private Sub IsImportedGeometryValid(g As RotorGeometry) As Boolean
 End Sub
 
 Private Sub CleanName(Name As String) As String
-	Dim n As String = Name.Trim.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
+	Dim n As String = Name.Trim.Replace("|", "/").Replace(Chr(13), " ").Replace(Chr(10), " ")
 	If n = "" Then n = "Imported Rotor"
 	If n.Length > 80 Then n = n.SubString2(0, 80)
 	Return n

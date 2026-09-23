@@ -1128,7 +1128,6 @@ Private Sub RefreshRotorLibraryList
 		hit.Text = ""
 		hit.TextColor = Colors.Transparent
 		hit.Color = Colors.Transparent
-		hit.Elevation = 0
 		row.AddView(hit, 0, 0, UiContentW, 76dip)
 		
 		Dim sep As Panel
@@ -1182,6 +1181,7 @@ Private Sub OpenGeometryPopup
 	GeometryPopupOpen = True
 	GeometryEditorRequested = True
 	pnlGeometryPopup.BringToFront
+	UpdatingUI = True
 	
 	Dim cardW As Int = root.Width - 16dip
 	If cardW > 620dip Then cardW = 620dip
@@ -1243,6 +1243,7 @@ Private Sub OpenGeometryPopup
 	
 	LoadRotorDataToFields(ActiveGeom)
 	RefreshGeometryPopupTitle
+	UpdatingUI = False
 End Sub
 
 Private Sub BuildGeometryEditorContent
@@ -1776,12 +1777,14 @@ Private Sub RotorListName(fullName As String) As String
 	Dim lowerName As String = fullName.ToLowerCase
 	Dim shortName As String = HeaderRotorName(fullName)
 	If shortName.ToLowerCase.Contains("copy") = False Then
-		Dim copyPos As Int = lowerName.IndexOf(" copy")
-		If copyPos >= 0 Then
-			Dim copySuffix As String = fullName.SubString(copyPos + 1).Trim
-			Dim suffixLower As String = copySuffix.ToLowerCase
-			If suffixLower = "copy" Or (suffixLower.StartsWith("copy ") And IsNumber(copySuffix.SubString(5).Trim)) Then
-				shortName = shortName & " (" & copySuffix & ")"
+		If lowerName.Contains(" copy") Then
+			Dim copyPos As Int = lowerName.IndexOf(" copy")
+			If copyPos >= 0 Then
+				Dim copySuffix As String = fullName.SubString(copyPos + 1).Trim
+				Dim suffixLower As String = copySuffix.ToLowerCase
+				If suffixLower = "copy" Or (suffixLower.StartsWith("copy ") And IsNumber(copySuffix.SubString(5).Trim)) Then
+					shortName = shortName & " (" & copySuffix & ")"
+				End If
 			End If
 		Else If lowerName.Contains("(copy)") Then
 			shortName = shortName & " (Copy)"
@@ -2148,7 +2151,7 @@ Public Sub RecalculateRotor
 		lblResults(35).Text = FormatOutputValue(ActiveRes.TipSpeed, 1) & " m/s"
 		lblResults(38).Text = FormatOutputValue(ActiveRes.AltitudeM, 0) & " m"
 		lblResults(39).Text = FormatOutputValue(ActiveRes.TemperatureC, 1) & " °C"
-		lblResults(40).Text = FormatOutputValue(ActiveRes.Density, 4) & " kg/m³"
+		lblResults(40).Text = FormatOutputValue(ActiveRes.DensityRho, 4) & " kg/m³"
 		lblResults(41).Text = FormatOutputValue(ActiveRes.PressurePa / 100.0, 1) & " hPa"
 		lblResults(42).Text = FormatOutputValue(ActiveRes.SpeedOfSound, 1) & " m/s"
 	Else
@@ -2158,7 +2161,7 @@ Public Sub RecalculateRotor
 		lblResults(35).Text = FormatOutputValue(ActiveRes.TipSpeed * 3.280839895, 1) & " ft/s"
 		lblResults(38).Text = FormatOutputValue(ActiveRes.AltitudeM * 3.280839895, 0) & " ft"
 		lblResults(39).Text = FormatOutputValue(ActiveRes.TemperatureC * 9.0 / 5.0 + 32.0, 1) & " °F"
-		lblResults(40).Text = FormatOutputValue(ActiveRes.Density * 0.0019403203, 5) & " slug/ft³"
+		lblResults(40).Text = FormatOutputValue(ActiveRes.DensityRho * 0.0019403203, 5) & " slug/ft³"
 		lblResults(41).Text = FormatOutputValue(ActiveRes.PressurePa / 3386.389, 2) & " inHg"
 		lblResults(42).Text = FormatOutputValue(ActiveRes.SpeedOfSound * 3.280839895, 0) & " ft/s"
 	End If
@@ -2683,12 +2686,12 @@ Sub btnUnit_Click
 End Sub
 
 Sub edtGeom_TextChanged (Old As String, New As String)
-	If UpdatingUI Then Return
+	If UpdatingUI Or GeometryPopupOpen = False Or edtRadius.IsInitialized = False Or edtAspectRatio.IsInitialized = False Then Return
 	Dim edt As EditText = Sender
 	Dim field As String = "" & edt.Tag
 	Select field
 		Case "Rotor Name"
-			Dim n As String = edt.Text.Trim.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
+			Dim n As String = edt.Text.Trim.Replace("|", "/").Replace(Chr(13), " ").Replace(Chr(10), " ")
 			If n <> "" Then ActiveGeom.Name = n
 		Case "Radius R"
 			Dim newR As Double = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.Radius), 0.02, 50.0)
@@ -2733,6 +2736,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 End Sub
 
 Private Sub RefreshGeometryDependentInputs(sourceField As String)
+	If GeometryPopupOpen = False Or edtRadius.IsInitialized = False Or edtAspectRatio.IsInitialized = False Then Return
 	Dim wasUpdating As Boolean = UpdatingUI
 	UpdatingUI = True
 	If sourceField <> "Radius R" Then edtRadius.Text = NumberFormat2(ActiveGeom.Radius, 1, 2, 2, False)

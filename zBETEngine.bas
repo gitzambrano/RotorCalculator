@@ -31,8 +31,7 @@ Sub Process_Globals
 		ThetaTip As Double, _
 		TipLossMode As String, _
 		TipLossB As Double, _
-		UsePrandtlGlauert As Boolean _
-	)
+		UsePrandtlGlauert As Boolean)
 	
 	Type FlightCondition ( _
 		AltitudeM As Double, _
@@ -56,64 +55,18 @@ Sub Process_Globals
 		TargetCT As Double, _
 		KInd As Double, _
 		FxColeman As Double, _
-		FyColeman As Double _
-	)
+		FyColeman As Double)
 	
-	Type RotorResults ( _
-		CT As Double, _
-		CQ As Double, _
-		CQi As Double, _
-		CQ0 As Double, _
-		CH As Double, _
-		CHi As Double, _
-		CH0 As Double, _
-		CY As Double, _
-		CMx As Double, _
-		CMy As Double, _
-		CPair As Double, _
-		InflowLambda As Double, _
-		InflowLambdaI As Double, _
-		L_D_eff As Double, _
-		FoM As Double, _
-		ThrustN As Double, _
-		ThrustKgf As Double, _
-		ThrustLbf As Double, _
-		PowerShaftW As Double, _
-		PowerShaftKW As Double, _
-		PowerShaftHP As Double, _
-		TorqueNm As Double, _
-		TorqueLbft As Double, _
-		DragHN As Double, _
-		SideForceYN As Double, _
-		SideForceYLbf As Double, _
-		RollMomentNm As Double, _
-		RollMomentLbft As Double, _
-		PitchMomentNm As Double, _
-		PitchMomentLbft As Double, _
-		TipSpeed As Double, _
-		AdvancingTipMach As Double, _
-		InflowKx As Double, _
-		InflowKy As Double, _
-		WakeSkewChiDeg As Double, _
-		BFactor As Double, _
-		EffectiveLiftSlope As Double, _
-		TrimmedRPM As Double, _
-		TrimmedCollectiveDeg As Double, _
-		TrimmedTheta0Deg As Double, _
-		OperatingMu As Double, _
-		OperatingMuZ As Double, _
-		OperatingVx As Double, _
-		OperatingVz As Double, _
-		OperatingAlphaDeg As Double, _
-		AltitudeM As Double, _
-		TemperatureC As Double, _
-		Density As Double, _
-		PressurePa As Double, _
-		SpeedOfSound As Double, _
-		SolutionValid As Boolean, _
-		CompressibilityWarning As Boolean, _
-		StatusMessage As String _
-	)
+	Type RotorResults (CT As Double, CQ As Double, CQi As Double, CQ0 As Double, CH As Double, CHi As Double, CH0 As Double, CY As Double, _
+		CMx As Double, CMy As Double, CPair As Double, InflowLambda As Double, InflowLambdaI As Double, L_D_eff As Double, FoM As Double, _
+		ThrustN As Double, ThrustKgf As Double, ThrustLbf As Double, PowerShaftW As Double, PowerShaftKW As Double, PowerShaftHP As Double, _
+		TorqueNm As Double, TorqueLbft As Double, DragHN As Double, SideForceYN As Double, SideForceYLbf As Double, _
+		RollMomentNm As Double, RollMomentLbft As Double, PitchMomentNm As Double, PitchMomentLbft As Double, TipSpeed As Double, _
+		AdvancingTipMach As Double, InflowKx As Double, InflowKy As Double, WakeSkewChiDeg As Double, BFactor As Double, _
+		EffectiveLiftSlope As Double, TrimmedRPM As Double, TrimmedCollectiveDeg As Double, TrimmedTheta0Deg As Double, _
+		OperatingMu As Double, OperatingMuZ As Double, OperatingVx As Double, OperatingVz As Double, OperatingAlphaDeg As Double, _
+		AltitudeM As Double, TemperatureC As Double, DensityRho As Double, PressurePa As Double, SpeedOfSound As Double, _
+		SolutionValid As Boolean, CompressibilityWarning As Boolean, StatusMessage As String)
 
 	' Nós e pesos de quadratura de Gauss-Legendre (16 nós radiais, 24 nós azimutais)
 	Private GL_X16() As Double
@@ -909,6 +862,7 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 					Dim scBoth() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
 					collective = scBoth(0): ok = scBoth(1)
 				End If
+			End If
 		End Select
 	If ok = False And status = "VALID" Then
 		status = "INVALID: selected operating constraints could not be trimmed"
@@ -980,7 +934,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.OperatingAlphaDeg = AlphaFromMuZ(c.Mu, c.MuZ)
 	res.AltitudeM = c.AltitudeM
 	res.TemperatureC = c.TemperatureC
-	res.Density = c.Rho
+	res.DensityRho = c.Rho
 	res.PressurePa = c.PressurePa
 	res.SpeedOfSound = c.SpeedOfSound
 	

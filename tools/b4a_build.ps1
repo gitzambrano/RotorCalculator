@@ -6,7 +6,8 @@ param(
     [string]$AdditionalLibrariesFolder = (Join-Path $PSScriptRoot "..\Libraries"),
     [string]$KeyFile = $env:B4A_KEY_FILE,
     [string]$KeyPassword = $env:B4A_KEY_PASSWORD,
-    [string]$KeyAlias = $env:B4A_KEY_ALIAS
+    [string]$KeyAlias = $env:B4A_KEY_ALIAS,
+    [string]$Output = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -85,8 +86,9 @@ try {
     $NoSignArg = if ($NoSign) { "True" } else { "False" }
     Push-Location $BaseFolder
     try {
-        Write-Host "Iniciando compilação do RotorCalculator ($Task)..." -ForegroundColor Cyan
-        & $B4ABuilder "-Task=$Task" "-NoSign=$NoSignArg" "-ShowWarnings=True" "-INI=$BuildIni"
+        $buildArgs = @("-Task=$Task", "-NoSign=$NoSignArg", "-ShowWarnings=True", "-INI=$BuildIni")
+        if ($Output) { $buildArgs += "-Output=$Output" }
+        & $B4ABuilder @buildArgs
         if ($LASTEXITCODE -ne 0) {
             throw "B4A build falhou com código de saída $LASTEXITCODE."
         }
