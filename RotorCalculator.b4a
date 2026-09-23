@@ -412,7 +412,7 @@ Private Sub BuildUnifiedHeader
 	PopupMenu.AddMenuItem(1, 1, "Quick Unit Converter")
 	PopupMenu.AddMenuItem(2, 2, "Physics & Equations")
 	PopupMenu.AddMenuItem(3, 3, "zBET Conventions & Physical Axes")
-	PopupMenu.AddMenuItem(4, 4, "Reset to Factory Rotor Presets")
+	PopupMenu.AddMenuItem(4, 4, "Restore Factory Rotor Presets")
 	PopupMenu.AddMenuItem(5, 5, "About RotorCalculator")
 	
 	' 3. App title uses the whole header between app icon and menu.
@@ -499,16 +499,18 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 		Case 3
 			ShowConventionDialog
 		Case 4
-			Dim resetAnswer As Int = Msgbox2("Restore all factory rotor presets? Custom copies and edits will be removed.", "Reset Rotor Presets", "RESET", "Cancel", "", Null)
+			Dim resetAnswer As Int = Msgbox2("Restore the shipped factory rotor definitions?" & CRLF & CRLF & _
+				"Custom user rotors are preserved. Same-name factory presets are replaced by their original values.", _
+				"Restore Factory Presets", "RESTORE", "Cancel", "", Null)
 			If resetAnswer = DialogResponse.POSITIVE Then
-				RotorStorage.ResetToDefaults
+				RotorStorage.RestoreFactoryPresets
 				ActiveGeom = RotorStorage.GetActiveRotor
 				GeometryDirty = False
 				LoadRotorDataToFields(ActiveGeom)
 				RefreshLoadedRotorStrip
 				RefreshDerivedCondition(True)
 				RecalculateRotor
-				ToastMessageShow("Factory presets restored.", False)
+				ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
 			End If
 		Case 5
 			Dim pm As PackageManager
@@ -1160,7 +1162,9 @@ Sub btnLoadRotor_Click
 	options.Initialize
 	For i = 0 To RotorStorage.Rotors.Size - 1
 		Dim g As RotorGeometry = RotorStorage.Rotors.Get(i)
-		options.Add(g.Name)
+		Dim prefix As String = "USER · "
+		If RotorStorage.IsFactoryPresetName(g.Name) Then prefix = "FACTORY · "
+		options.Add(prefix & g.Name)
 	Next
 	Dim idx As Int = InputList(options, "Load Rotor", RotorStorage.ActiveIndex)
 	If idx < 0 Then Return
