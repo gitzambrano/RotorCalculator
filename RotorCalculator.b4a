@@ -505,6 +505,7 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 		Case 3
 			ShowConventionDialog
 		Case 4
+			If ResolveUnsavedGeometry("restoring factory presets") = False Then Return
 			Dim resetAnswer As Int = Msgbox2("Restore the shipped factory rotor definitions?" & CRLF & CRLF & _
 				"Custom user rotors are preserved. Same-name factory presets are replaced by their original values.", _
 				"Restore Factory Presets", "RESTORE", "Cancel", "", Null)
@@ -733,6 +734,7 @@ Sub btnSettingExportGeometries_Click
 End Sub
 
 Sub btnSettingImportGeometries_Click
+	If ResolveUnsavedGeometry("importing geometries") = False Then Return
 	Wait For (ReadTextDocument("text/plain")) Complete (Text As String)
 	If Text = "" Then Return
 	Dim imported As List = RotorStorage.ParseDatabaseText(Text)
@@ -1165,17 +1167,25 @@ End Sub
 
 Private Sub SaveCurrentRotor
 	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
+	ActiveGeom = RotorStorage.GetActiveRotor
 	GeometryDirty = False
+	LoadRotorDataToFields(ActiveGeom)
 	RefreshLoadedRotorStrip
+	RecalculateRotor
 	ToastMessageShow("Rotor saved.", False)
 End Sub
 
+Private Sub ResolveUnsavedGeometry(ActionText As String) As Boolean
+	If GeometryDirty = False Then Return True
+	Dim answer As Int = Msgbox2("Geometry has unsaved changes." & CRLF & CRLF & _
+		"Save them before " & ActionText & "?", "Unsaved Geometry", "SAVE", "Cancel", "Discard", Null)
+	If answer = DialogResponse.CANCEL Then Return False
+	If answer = DialogResponse.POSITIVE Then SaveCurrentRotor
+	Return True
+End Sub
+
 Sub btnLoadRotor_Click
-	If GeometryDirty Then
-		Dim answer As Int = Msgbox2("Save current geometry changes before loading another rotor?", "Unsaved Geometry", "SAVE", "Cancel", "Discard", Null)
-		If answer = DialogResponse.CANCEL Then Return
-		If answer = DialogResponse.POSITIVE Then SaveCurrentRotor
-	End If
+	If ResolveUnsavedGeometry("loading another rotor") = False Then Return
 	Dim options As List
 	options.Initialize
 	For i = 0 To RotorStorage.Rotors.Size - 1
