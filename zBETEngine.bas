@@ -518,15 +518,17 @@ Public Sub InflowGradients(mu As Double, lam As Double, model As String, fx As D
 	Dim tan_chi_half As Double = 0.0
 	If denom > 1e-15 Then tan_chi_half = mu / denom
 	
+	Dim kx As Double = 0.0
+	Dim ky As Double = 0.0
 	If model = "coleman_simple" Then
 		Return Array As Double(tan_chi_half, 0.0)
 	Else If model = "coleman_feingold" Or model = "coleman" Then
-		Dim kx As Double = fx * (15.0 * cPI / 32.0) * tan_chi_half
-		Dim ky As Double = -fy * 2.0 * mu
+		kx = fx * (15.0 * cPI / 32.0) * tan_chi_half
+		ky = -fy * 2.0 * mu
 		Return Array As Double(kx, ky)
 	Else If model = "drees" Then
-		Dim kx As Double = (4.0 / 3.0) * (1.0 - 1.8 * mu * mu) * tan_chi_half
-		Dim ky As Double = -2.0 * mu
+		kx = (4.0 / 3.0) * (1.0 - 1.8 * mu * mu) * tan_chi_half
+		ky = -2.0 * mu
 		Return Array As Double(kx, ky)
 	End If
 	
@@ -619,13 +621,15 @@ Public Sub ProfileDrag(mu As Double, mu_z As Double, geom As RotorGeometry, mode
 	Dim i3 As Double = s_coeffs(0) * j(3) + s_coeffs(1) * j(4)
 	Dim cd0 As Double = geom.Cd0
 	
+	Dim ch0 As Double = 0.0
+	Dim cq0 As Double = 0.0
 	If model = "analytical_tangential" Then
-		Dim ch0 As Double = cd0 * mu * i1 / 2.0
-		Dim cq0 As Double = cd0 / 2.0 * (i3 + 0.5 * mu * mu * i1)
+		ch0 = cd0 * mu * i1 / 2.0
+		cq0 = cd0 / 2.0 * (i3 + 0.5 * mu * mu * i1)
 		Return Array As Double(ch0, cq0)
 	Else If model = "analytical_vectorial" Then
-		Dim ch0 As Double = 0.75 * cd0 * mu * i1
-		Dim cq0 As Double = 0.5 * cd0 * (i3 + (0.75 * mu * mu + 0.5 * mu_z * mu_z) * i1)
+		ch0 = 0.75 * cd0 * mu * i1
+		cq0 = 0.5 * cd0 * (i3 + (0.75 * mu * mu + 0.5 * mu_z * mu_z) * i1)
 		Return Array As Double(ch0, cq0)
 	End If
 	
