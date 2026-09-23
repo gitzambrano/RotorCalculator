@@ -335,12 +335,11 @@ Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
 	Dim rad As Double = geom.Radius
 	
 	If geom.SolidityMode = "chords" Then
-		Dim sig_root As Double = nb * geom.ChordRoot / (cPI * rad)
-		Dim sig_tip As Double = nb * geom.ChordTip / (cPI * rad)
-		Dim s1 As Double = (sig_tip - sig_root) / (1.0 - x0)
-		Dim s0 As Double = sig_root - s1 * x0
+		' ChordRoot is the reference-axis chord c0 at x=0; ChordTip is c1 at x=1.
+		Dim s0 As Double = nb * geom.ChordRoot / (cPI * rad)
+		Dim s1 As Double = nb * (geom.ChordTip - geom.ChordRoot) / (cPI * rad)
 		geom.SigmaRef = s0 + 0.5 * s1
-		geom.SigmaGeom = (1.0 - x0) * (s0 + 0.5 * s1 * (1.0 + x0))
+		geom.SigmaGeom = s0 * (1.0 - x0) + 0.5 * s1 * (1.0 - x0 * x0)
 		geom.SigmaThrust = 3.0 * (s0 * (1.0 - Power(x0, 3)) / 3.0 + s1 * (1.0 - Power(x0, 4)) / 4.0)
 	Else If geom.SolidityMode = "sigma_geom" Then
 		geom.SigmaRef = geom.SigmaGeom / (1.0 - x0)
@@ -358,15 +357,68 @@ End Sub
 
 ' Obtém os coeficientes lineares da solidez s0 e s1: sigma(x) = s0 + s1 * x
 Public Sub GetSolidityCoeffs(geom As RotorGeometry) As Double()
-	Dim x0 As Double = geom.RootCutout
-	If geom.ChordRoot == geom.ChordTip Then
-		Return Array As Double(geom.SigmaRef, 0.0)
-	End If
-	Dim sig_root As Double = geom.NBlades * geom.ChordRoot / (cPI * geom.Radius)
-	Dim sig_tip As Double = geom.NBlades * geom.ChordTip / (cPI * geom.Radius)
-	Dim s1 As Double = (sig_tip - sig_root) / (1.0 - x0)
-	Dim s0 As Double = sig_root - s1 * x0
+	' Reference planform is linear from x=0 to x=1.
+	Dim s0 As Double = geom.NBlades * geom.ChordRoot / (cPI * geom.Radius)
+	Dim s1 As Double = geom.NBlades * (geom.ChordTip - geom.ChordRoot) / (cPI * geom.Radius)
 	Return Array As Double(s0, s1)
+End Sub
+
+Public Sub ReferenceBladeArea(geom As RotorGeometry) As Double
+	Return 0.5 * geom.Radius * (geom.ChordRoot + geom.ChordTip)
+End Sub
+
+Public Sub ActiveBladeArea(geom As RotorGeometry) As Double
+	Dim x0 As Double = geom.RootCutout
+	Dim c0 As Double = geom.ChordRoot
+	Dim c1 As Double = geom.ChordTip
+	Dim integral As Double = c0 * (1.0 - x0) + 0.5 * (c1 - c0) * (1.0 - x0 * x0)
+	Return geom.Radius * integral
+End Sub
+
+Public Sub ReferenceAspectRatio(geom As RotorGeometry) As Double
+	Dim area As Double = ReferenceBladeArea(geom)
+	If area <= 1.0e-12 Then Return 0.0
+	Return geom.Radius * geom.Radius / area
+End Sub
+
+Public Sub TaperRatio(geom As RotorGeometry) As Double
+	If Abs(geom.ChordRoot) < 1.0e-12 Then Return 0.0
+	Return geom.ChordTip / geom.ChordRoot
+End Sub
+
+Public Sub ScaleRadiusPreserveReference(geom As RotorGeometry, newRadius As Double) As RotorGeometry
+	Dim g As RotorGeometry = CloneGeometry(geom)
+	Dim oldRadius As Double = Max(0.02, g.Radius)
+	newRadius = Max(0.02, Min(50.0, newRadius))
+	Dim scale As Double = newRadius / oldRadius
+	g.Radius = newRadius
+	g.ChordRoot = g.ChordRoot * scale
+	g.ChordTip = g.ChordTip * scale
+	g.SolidityMode = "chords"
+	Return ResolveSolidity(g)
+End Sub
+
+Public Sub ScaleChordsToSigmaRef(geom As RotorGeometry, targetSigma As Double) As RotorGeometry
+	Dim g As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	targetSigma = Max(1.0e-5, Min(1.0, targetSigma))
+	If g.SigmaRef <= 1.0e-12 Then Return g
+	Dim scale As Double = targetSigma / g.SigmaRef
+	g.ChordRoot = g.ChordRoot * scale
+	g.ChordTip = g.ChordTip * scale
+	g.SolidityMode = "chords"
+	Return ResolveSolidity(g)
+End Sub
+
+Public Sub ScaleChordsToAspectRatio(geom As RotorGeometry, targetAR As Double) As RotorGeometry
+	Dim g As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	targetAR = Max(0.1, Min(1000.0, targetAR))
+	Dim currentAR As Double = ReferenceAspectRatio(g)
+	If currentAR <= 1.0e-12 Then Return g
+	Dim scale As Double = currentAR / targetAR
+	g.ChordRoot = g.ChordRoot * scale
+	g.ChordTip = g.ChordTip * scale
+	g.SolidityMode = "chords"
+	Return ResolveSolidity(g)
 End Sub
 
 ' Retorna a solidez local sigma(x)
