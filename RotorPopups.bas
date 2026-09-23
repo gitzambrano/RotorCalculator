@@ -425,8 +425,7 @@ Public Sub DrawSweepPlot( _
 	maxMu As Double, _
 	xAxisMode As Int, _
 	lightTheme As Boolean, _
-	familyValues As List, _
-	trimOnlyHover As Boolean _
+	samples As List _
 ) As Bitmap
 	Dim bmp As Bitmap
 	bmp.InitializeMutable(widthPx, heightPx)
@@ -453,9 +452,8 @@ Public Sub DrawSweepPlot( _
 	End If
 	cvs.DrawColor(colBg)
 	
-	Dim samples As List = BuildSweepSamples(geom, cond, paramKey, multiCurveMode, maxMu, familyValues, trimOnlyHover)
-	Dim nCurves As Int = SweepCurveCount(multiCurveMode, familyValues)
 	Dim nPoints As Int = 25
+	Dim nCurves As Int = Max(1, samples.Size / nPoints)
 	Dim legendCols As Int = nCurves
 	If widthPx < 390dip Then
 		legendCols = Min(2, nCurves)
