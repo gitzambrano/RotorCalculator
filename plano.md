@@ -199,15 +199,16 @@ Verification coverage strengthened on 2026-09-23:
 - `tools/ci_ui_qa.sh` is now self-contained for its Python helpers and accepts an explicit local APK path;
 - the runtime matrix now reaches the Android document picker for geometry import/export and sweep CSV/PNG export;
 - both hover-only trim states and every sweep family selector are exercised;
+- QA-4 automation now applies custom family VALUES and walks the complete 39-variable sweep-Y catalog, checking the selected output after every live change;
+- QA-6 automation now performs a real Android-SAF geometry export/import round-trip, compares editable numeric fields before/after, verifies name restoration, and rejects both malformed and syntactically valid out-of-domain files;
+- static QA cross-checks the runtime sweep list against the authoritative `RotorPopups.SweepParamLabels` catalog so the two cannot silently diverge;
 - the numerical reference tests now include σgeom/σthrust radius-scaling invariants and all six operating-pair paths in hover, forward-flight, and nonzero-axial regimes.
 These additions are committed but are not counted as passed until they are executed locally.
 
 Remaining release / evidence gate:
 1. execute the strengthened numerical/source test suite locally and resolve any new failure;
-2. close the literal QA-4 coverage gap by exercising every sweep Y variable and applying custom family VALUES in a live APK;
-3. close the literal QA-6 coverage gap with a real geometry export/import round-trip, numeric/name preservation check, and malformed/out-of-domain rejection;
-4. compile the exact approved `main` source with B4A locally;
-5. install the resulting APK on an emulator/device;
-6. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions);
-7. review real portrait/landscape and Light/Dark screenshots;
-8. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.
+2. compile the exact approved `main` source with B4A locally;
+3. install the resulting APK on an emulator/device;
+4. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions), including the 39 Y variables, applied VALUES, SAF round-trip, invalid-import rejection and export flows;
+5. review the real portrait/landscape and Light/Dark screenshots produced by that exact APK;
+6. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.
