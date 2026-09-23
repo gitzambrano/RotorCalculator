@@ -207,10 +207,23 @@ functional_smoke() {
   sleep 2
   assert_app_alive
 
-  # Rotor library + contextual Geometry editor + copy semantics.
+  # Rotor library + contextual Geometry editor + NEW/DELETE semantics.
   python /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
   grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
   grep -qi "UH-60" "$OUT/01-geometry-library.json"
+  python /tmp/tap_text.py "NEW ROTOR"
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/01b-new-rotor.xml" > "$OUT/01b-new-rotor.json"
+  grep -qi "Custom Rotor" "$OUT/01b-new-rotor.json"
+  grep -qi "BLADE GEOMETRY" "$OUT/01b-new-rotor.json"
+  python /tmp/tap_text.py "DELETE"
+  sleep 0.4
+  python /tmp/tap_text.py "DELETE"
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/01c-after-new-delete.xml" > "$OUT/01c-after-new-delete.json"
+  grep -qi "ROTOR LIBRARY" "$OUT/01c-after-new-delete.json"
+  grep -qi "UH-60" "$OUT/01c-after-new-delete.json"
+
   python /tmp/tap_text.py "UH-60"
   sleep 0.6
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
@@ -229,22 +242,30 @@ functional_smoke() {
   sleep 0.8
   safe_screencap "$OUT/03-copied-rotor.png"
   python /tmp/ui_node.py "$OUT/03-copied-rotor.xml" > "$OUT/03-copied-rotor.json"
-  grep -qi "Copy" "$OUT/03-copied-rotor.json"
+  grep -Fqi "UH-60 (Copy)" "$OUT/03-copied-rotor.json"
+
+  # Copying a copy must produce Copy 2, never "Copy Copy".
+  python /tmp/tap_text.py "COPY"
+  sleep 0.8
+  safe_screencap "$OUT/03b-copied-rotor-2.png"
+  python /tmp/ui_node.py "$OUT/03b-copied-rotor-2.xml" > "$OUT/03b-copied-rotor-2.json"
+  grep -Fqi "UH-60 (Copy 2)" "$OUT/03b-copied-rotor-2.json"
+  ! grep -Fqi "Copy Copy" "$OUT/03b-copied-rotor-2.json"
   adb shell input keyevent 4
   sleep 0.4
 
-  # Cold restart: the copied rotor remains the active saved selection.
+  # Cold restart: the second copied rotor remains the active saved selection.
   adb shell am force-stop flightdyn.rotorcalculator
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 1.5
   assert_app_alive
   python /tmp/ui_node.py "$OUT/04-after-restart.xml" > "$OUT/04-after-restart.json"
   grep -qi "ROTOR LIBRARY" "$OUT/04-after-restart.json"
-  grep -qi "Copy" "$OUT/04-after-restart.json"
+  grep -Fqi "UH-60 (Copy 2)" "$OUT/04-after-restart.json"
   grep -qi "ACTIVE" "$OUT/04-after-restart.json"
 
   # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
-  python /tmp/tap_text.py "UH-60 (Copy)"
+  python /tmp/tap_text.py "UH-60 (Copy 2)"
   sleep 0.5
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
   python /tmp/tap_text.py "Fixed B"
