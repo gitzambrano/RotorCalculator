@@ -3030,7 +3030,7 @@ Sub UpdateSweepPlotView
 	Dim familyValues As List = CurrentSweepFamilyValues
 	SweepSamplesCache = RotorPopups.BuildSweepSamples(ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepMultiMode, SweepMaxMuVal, familyValues, SweepTrimOnlyHover)
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot(plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, _
-		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, ThemeMode = 1, SweepSamplesCache)
+		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, ThemeMode = 1, ExtraPrecision, SweepSamplesCache)
 	ivSweepPlot.Bitmap = bmp
 	If ActiveRes.SolutionValid Then
 		lblSweepCurrentVal.Text = "ACTIVE · μ=" & NumberFormat2(ActiveRes.OperatingMu, 1, 2, 2, False) & _
