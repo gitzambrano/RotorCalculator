@@ -1771,8 +1771,17 @@ Private Sub RotorListName(fullName As String) As String
 	If root.Width > 430dip Then Return fullName
 	Dim lowerName As String = fullName.ToLowerCase
 	Dim shortName As String = HeaderRotorName(fullName)
-	If (lowerName.Contains(" copy") Or lowerName.Contains("(copy)")) And shortName.ToLowerCase.Contains("copy") = False Then
-		shortName = shortName & " (Copy)"
+	If shortName.ToLowerCase.Contains("copy") = False Then
+		Dim copyPos As Int = lowerName.IndexOf(" copy")
+		If copyPos >= 0 Then
+			Dim copySuffix As String = fullName.SubString(copyPos + 1).Trim
+			Dim suffixLower As String = copySuffix.ToLowerCase
+			If suffixLower = "copy" Or (suffixLower.StartsWith("copy ") And IsNumber(copySuffix.SubString(5).Trim)) Then
+				shortName = shortName & " (" & copySuffix & ")"
+			End If
+		Else If lowerName.Contains("(copy)") Then
+			shortName = shortName & " (Copy)"
+		End If
 	End If
 	If shortName.Length > 24 Then shortName = shortName.SubString2(0, 21) & "…"
 	Return shortName
