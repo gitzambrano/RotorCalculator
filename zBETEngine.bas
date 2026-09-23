@@ -760,29 +760,29 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 			If c.TargetCT <= 0 Then
 				ok = False
 			Else
-				Dim sc() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
-				collective = sc(0): ok = sc(1)
+				Dim scCT() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
+				collective = scCT(0): ok = scCT(1)
 			End If
 		Case "rpm_thrust"
 			If c.TargetThrustN <= 0 Then
 				ok = False
 			Else
-				Dim sc() As Object = SolveCollective(baseGeom, c, rpm, "thrust", c.TargetThrustN)
-				collective = sc(0): ok = sc(1)
+				Dim scThrust() As Object = SolveCollective(baseGeom, c, rpm, "thrust", c.TargetThrustN)
+				collective = scThrust(0): ok = scThrust(1)
 			End If
 		Case "collective_ct"
 			If c.TargetCT <= 0 Then
 				ok = False
 			Else
-				Dim sr() As Object = SolveRPM(baseGeom, c, collective, "ct", c.TargetCT)
-				rpm = sr(0): ok = sr(1)
+				Dim srCT() As Object = SolveRPM(baseGeom, c, collective, "ct", c.TargetCT)
+				rpm = srCT(0): ok = srCT(1)
 			End If
 		Case "collective_thrust"
 			If c.TargetThrustN <= 0 Then
 				ok = False
 			Else
-				Dim sr() As Object = SolveRPM(baseGeom, c, collective, "thrust", c.TargetThrustN)
-				rpm = sr(0): ok = sr(1)
+				Dim srThrust() As Object = SolveRPM(baseGeom, c, collective, "thrust", c.TargetThrustN)
+				rpm = srThrust(0): ok = srThrust(1)
 			End If
 		Case "ct_thrust"
 			If c.TargetCT <= 0 Or c.TargetThrustN <= 0 Then
@@ -794,8 +794,8 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 				If rpm < 1.0 Or rpm > 30000.0 Then
 					ok = False
 				Else
-					Dim sc() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
-					collective = sc(0): ok = sc(1)
+					Dim scBoth() As Object = SolveCollective(baseGeom, c, rpm, "ct", c.TargetCT)
+					collective = scBoth(0): ok = scBoth(1)
 				End If
 		End Select
 	If ok = False Then status = "INVALID: selected operating constraints could not be trimmed"
