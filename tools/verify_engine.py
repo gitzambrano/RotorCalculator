@@ -258,7 +258,6 @@ def verify_operating_pairs() -> None:
         "rpm_collective": (known_rpm, known_collective),
         "rpm_ct": (known_rpm, 0.0),
         "rpm_thrust": (known_rpm, 0.0),
-        "collective_ct": (300.0, known_collective),
         "collective_thrust": (300.0, known_collective),
         "ct_thrust": (300.0, 0.0),
     }
@@ -284,6 +283,53 @@ def verify_operating_pairs() -> None:
             raise AssertionError(f"{pair}: Vx did not stay dimensional")
         if not math.isclose(solved["Vz_m_s"], 3.0, rel_tol=0, abs_tol=1e-10):
             raise AssertionError(f"{pair}: Vz did not stay dimensional")
+
+    try:
+        zBET.solve_operating_pair(
+            geom,
+            pair="collective_ct",
+            rpm=known_rpm,
+            collective_deg=known_collective,
+            target_ct=target_ct,
+            target_thrust_n=target_thrust,
+            **common,
+        )
+    except ValueError as exc:
+        if "non-unique" not in str(exc):
+            raise
+    else:
+        raise AssertionError("Collective + CT must reject the multi-root reference state")
+
+    hover_common = dict(
+        theta_root_deg=12.0,
+        theta_tip_deg=2.0,
+        horizontal_mode="mu",
+        horizontal_value=0.0,
+        axial_mode="muz",
+        axial_value=0.0,
+        inflow_model="uniform",
+        k_ind=1.15,
+    )
+    hover = zBET.solve_operating_pair(
+        geom,
+        pair="rpm_collective",
+        rpm=known_rpm,
+        collective_deg=known_collective,
+        target_ct=0.0,
+        target_thrust_n=0.0,
+        **hover_common,
+    )
+    unique = zBET.solve_operating_pair(
+        geom,
+        pair="collective_ct",
+        rpm=known_rpm,
+        collective_deg=known_collective,
+        target_ct=hover["CT"],
+        target_thrust_n=hover["T_N"],
+        **hover_common,
+    )
+    if not math.isclose(unique["rpm"], known_rpm, rel_tol=2e-4, abs_tol=0.1):
+        raise AssertionError("Collective + CT unique hover RPM mismatch")
 
 
 def verify_reference_matrix() -> tuple[int, float]:
