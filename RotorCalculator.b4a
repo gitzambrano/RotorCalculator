@@ -1749,6 +1749,9 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Case "Horizontal Flow": Return "Horizontal"
 		Case "Axial Flow": Return "Axial"
 		Case "Operating Inputs": Return "Operating pair"
+		Case "Collective Δθ": Return "Collective"
+		Case "Target CT": Return "Target CT"
+		Case "Target Thrust": Return "Target T"
 		Case "Induced Factor Kind": Return "Kind"
 		Case "Inflow Model": Return "Inflow"
 		Case "Compressibility": Return "Compress."
@@ -2416,9 +2419,9 @@ Private Sub RefreshOperatingControls
 	btnOperatingPair.Text = OperatingPairDisplayName(ActiveCond.OperatingPair)
 	Dim n1 As String = PairInputName(ActiveCond.OperatingPair, 1)
 	Dim n2 As String = PairInputName(ActiveCond.OperatingPair, 2)
-	lblOperatingInput1.Text = n1
+	lblOperatingInput1.Text = InputDisplayLabel(n1)
 	lblOperatingInput1.Tag = n1
-	lblOperatingInput2.Text = n2
+	lblOperatingInput2.Text = InputDisplayLabel(n2)
 	lblOperatingInput2.Tag = n2
 	lblOperatingUnit1.Text = PairInputUnit(n1)
 	lblOperatingUnit2.Text = PairInputUnit(n2)
