@@ -2024,66 +2024,49 @@ Private Sub RefreshRotorSpinner
 End Sub
 
 Sub btnSelectAirfoil_Click
-	Dim options As List: options.Initialize
+	Dim options As List
+	options.Initialize
 	For i = 0 To RotorPopups.Airfoils.Size - 1
 		Dim af As AirfoilData = RotorPopups.Airfoils.Get(i)
-		options.Add(af.Name & " (a0=" & af.A0 & ", Cd0=" & af.Cd0 & ")")
+		options.Add(af.Name & "  ·  a0=" & af.A0 & "  Cd0=" & af.Cd0)
 	Next
-	Dim resIndex As Int = InputList(options, "Select Airfoil Section:", -1)
-	If resIndex >= 0 Then
-		Dim selAf As AirfoilData = RotorPopups.Airfoils.Get(resIndex)
-		ActiveGeom.LiftSlope0 = selAf.A0
-		ActiveGeom.Cd0 = selAf.Cd0
-		Dim wasUpdating As Boolean = UpdatingUI
-		UpdatingUI = True
-		edtLiftSlope.Text = NumberFormat(selAf.A0, 1, 2)
-		edtCd0.Text = NumberFormat(selAf.Cd0, 1, 4)
-		UpdatingUI = wasUpdating
-		btnSelectAirfoil.Text = selAf.Name
-		RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
-		RecalculateRotor
-	End If
+	Dim resIndex As Int = InputList(options, "Airfoil Section", -1)
+	If resIndex < 0 Then Return
+	Dim selAf As AirfoilData = RotorPopups.Airfoils.Get(resIndex)
+	ActiveGeom.LiftSlope0 = selAf.A0
+	ActiveGeom.Cd0 = selAf.Cd0
+	GeometryDirty = True
+	LoadRotorDataToFields(ActiveGeom)
+	RecalculateRotor
 End Sub
 
 Sub btnTipLoss_Click
 	Dim options As List
 	options.Initialize
-	options.Add("Off (B = 1.00)")
-	options.Add("Fixed B = " & NumberFormat(ActiveGeom.TipLossB, 1, 2))
+	options.Add("None")
+	options.Add("Fixed B")
 	options.Add("Sissingh")
-	
 	Dim selected As Int = 0
 	If ActiveGeom.TipLossMode = "fixed" Then selected = 1
 	If ActiveGeom.TipLossMode = "sissingh" Then selected = 2
-	
-	Dim resIndex As Int = InputList(options, "Tip-Loss Model:", selected)
-	If resIndex < 0 Then Return
-	
-	Select resIndex
-		Case 0
-			ActiveGeom.TipLossMode = "none"
-		Case 1
-			ActiveGeom.TipLossMode = "fixed"
-			If ActiveGeom.TipLossB <= ActiveGeom.RootCutout Or ActiveGeom.TipLossB > 1.0 Then ActiveGeom.TipLossB = 0.97
-		Case 2
-			ActiveGeom.TipLossMode = "sissingh"
+	Dim idx As Int = InputList(options, "Tip-Loss Model", selected)
+	If idx < 0 Then Return
+	Select idx
+		Case 0: ActiveGeom.TipLossMode = "none"
+		Case 1: ActiveGeom.TipLossMode = "fixed"
+		Case 2: ActiveGeom.TipLossMode = "sissingh"
 	End Select
-	
+	GeometryDirty = True
 	RefreshTipLossButton(ActiveGeom)
-	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
+	RefreshGeometryDerivedFields
+	RefreshLoadedRotorStrip
 	RecalculateRotor
 End Sub
 
 Sub btnCompressibility_Click
 	ActiveGeom.UsePrandtlGlauert = Not(ActiveGeom.UsePrandtlGlauert)
-	If ActiveGeom.UsePrandtlGlauert Then
-		btnCompressibility.Text = "Prandtl-Glauert: ON"
-		btnCompressibility.TextColor = ColorAccentGreen
-	Else
-		btnCompressibility.Text = "Prandtl-Glauert: OFF"
-		btnCompressibility.TextColor = ColorButText2
-	End If
-	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
+	GeometryDirty = True
+	LoadRotorDataToFields(ActiveGeom)
 	RecalculateRotor
 End Sub
 
@@ -2112,44 +2095,63 @@ Sub btnInflowModel_Click
 	RecalculateRotor
 End Sub
 
-Sub btnProfileDragModel_Click
+Sub btnOperatingPair_Click
+	' Seed every possible new pair with the current solved state so mode changes are continuous.
+	If ActiveRes.SolutionValid Then
+		ActiveCond.RPM = ActiveRes.TrimmedRPM
+		ActiveCond.CollectiveDeg = ActiveRes.TrimmedCollectiveDeg
+		ActiveCond.TargetCT = Max(1.0e-8, ActiveRes.CT)
+		ActiveCond.TargetThrustN = Max(1.0e-6, ActiveRes.ThrustN)
+	End If
 	Dim options As List
 	options.Initialize
-	options.Add("Analytical Tangential — low-order")
-	options.Add("Analytical Vectorial — low-order vector speed")
-	options.Add("Numerical Vectorial — azimuth/radius quadrature")
-	Dim selected As Int = 2
-	If ActiveCond.ProfileDragModel = "analytical_tangential" Then selected = 0
-	If ActiveCond.ProfileDragModel = "analytical_vectorial" Then selected = 1
-	Dim idx As Int = InputList(options, "Profile Drag Model", selected)
+	options.Add("RPM + Collective")
+	options.Add("RPM + CT")
+	options.Add("RPM + Thrust")
+	options.Add("Collective + CT")
+	options.Add("Collective + Thrust")
+	options.Add("CT + Thrust")
+	Dim selected As Int = 1
+	Select ActiveCond.OperatingPair
+		Case "rpm_collective": selected = 0
+		Case "rpm_ct": selected = 1
+		Case "rpm_thrust": selected = 2
+		Case "collective_ct": selected = 3
+		Case "collective_thrust": selected = 4
+		Case "ct_thrust": selected = 5
+	End Select
+	Dim idx As Int = InputList(options, "Operating Inputs · prescribe any two", selected)
 	If idx < 0 Then Return
 	Select idx
-		Case 0: ActiveCond.ProfileDragModel = "analytical_tangential"
-		Case 1: ActiveCond.ProfileDragModel = "analytical_vectorial"
-		Case 2: ActiveCond.ProfileDragModel = "numerical_vectorial"
+		Case 0: ActiveCond.OperatingPair = "rpm_collective"
+		Case 1: ActiveCond.OperatingPair = "rpm_ct"
+		Case 2: ActiveCond.OperatingPair = "rpm_thrust"
+		Case 3: ActiveCond.OperatingPair = "collective_ct"
+		Case 4: ActiveCond.OperatingPair = "collective_thrust"
+		Case 5: ActiveCond.OperatingPair = "ct_thrust"
 	End Select
-	LoadConditionDataToFields
+	UpdatingUI = True
+	RefreshOperatingControls
+	UpdatingUI = False
 	RecalculateRotor
 End Sub
 
-Sub btnHoverTrimMode_Click
-	Dim options As List
-	options.Initialize
-	options.Add("Manual Pitch — no trim")
-	options.Add("Collective to Target — fixed RPM")
-	options.Add("RPM to Thrust — fixed pitch")
-	Dim selected As Int = 1
-	If ActiveCond.HoverTrimMode = "none" Then selected = 0
-	If ActiveCond.HoverTrimMode = "rpm" Then selected = 2
-	Dim idx As Int = InputList(options, "Trim Mode", selected)
-	If idx < 0 Then Return
-	Select idx
-		Case 0: ActiveCond.HoverTrimMode = "none"
-		Case 1: ActiveCond.HoverTrimMode = "collective"
-		Case 2: ActiveCond.HoverTrimMode = "rpm"
-	End Select
-	RefreshTrimControls
-	RefreshDerivedCondition(True)
+Sub edtOperatingInput_TextChanged (Old As String, New As String)
+	If UpdatingUI Then Return
+	Dim edt As EditText = Sender
+	Dim position As Int = ParseIntDef("" & edt.Tag, 1)
+	Dim name As String = PairInputName(ActiveCond.OperatingPair, position)
+	Dim value As Double = ParseDoubleDef(edt.Text, PairInputValue(name))
+	If name = "RPM" Then ActiveCond.RPM = ClampD(value, 1.0, 30000.0)
+	If name.Contains("Collective") Then ActiveCond.CollectiveDeg = ClampD(value, -60.0, 60.0)
+	If name.Contains("CT") Then ActiveCond.TargetCT = ClampD(value, 0.000001, 0.20)
+	If name.Contains("Thrust") Then ActiveCond.TargetThrustN = ClampD(value, 0.001, 1.0e8)
+	RecalculateRotor
+End Sub
+
+Sub edtKInd_TextChanged (Old As String, New As String)
+	If UpdatingUI Then Return
+	ActiveCond.KInd = ClampD(ParseDoubleDef(edtKInd.Text, ActiveCond.KInd), 1.0, 3.0)
 	RecalculateRotor
 End Sub
 
@@ -2158,71 +2160,90 @@ Sub lblRowTip_Click
 	Dim tipMsg As String = ""
 	Select b.Tag
 		Case "Rotor Name"
-			tipMsg = "Editable name stored with this rotor geometry."
+			tipMsg = "Name stored with this rotor geometry."
 		Case "Radius R"
-			tipMsg = "Rotor radius R measured from hub centerline to blade tip in meters."
-		Case "Rotor RPM"
-			tipMsg = "Rotational speed of rotor in revolutions per minute (RPM)."
+			tipMsg = "Rotor radius R. Editing R scales c0 and c1 proportionally, preserving reference solidity, aspect ratio and taper."
 		Case "Blade Count"
-			tipMsg = "Number of blades Nb forming the rotor disk."
+			tipMsg = "Number of blades Nb. Changing Nb changes reference solidity while preserving the blade planform and aspect ratio."
 		Case "Root Cutout"
-			tipMsg = "Non-dimensional radius r0/R where blade aerodynamic profile starts."
-		Case "Root Chord", "Tip Chord"
-			tipMsg = "Blade chord c in meters at root and tip stations (linear taper)."
-		Case "θ Root Pitch", "θ Tip Pitch"
-			tipMsg = "Blade pitch angle theta at root and tip stations (linear twist)."
+			tipMsg = "x0 = r0/R, the first active aerodynamic station. It changes active-span metrics, not the reference planform."
+		Case "Root Chord c0"
+			tipMsg = "Reference-axis chord c0 at r/R = 0. The active blade starts at root cutout x0."
+		Case "Tip Chord c1"
+			tipMsg = "Reference tip chord c1 at r/R = 1. Chord varies linearly between c0 and c1."
+		Case "Reference Solidity"
+			tipMsg = "σref = Nb/(π AR). Editing σref scales both chords by one factor and preserves taper ratio."
+		Case "Aspect Ratio"
+			tipMsg = "Reference blade AR = R²/Sref,b = 2R/(c0+c1). Editing AR scales both chords while preserving taper."
+		Case "Root Incidence", "Tip Incidence"
+			tipMsg = "Baseline blade incidence. Operating collective Δθ is added equally to root and tip, preserving total twist."
+		Case "Geometric Solidity"
+			tipMsg = "Physical-area solidity over the active blade span x0 ≤ r/R ≤ 1."
+		Case "Thrust Solidity"
+			tipMsg = "Thrust-weighted solidity: 3∫x²σ(x)dx over the active aerodynamic span."
+		Case "Taper Ratio"
+			tipMsg = "Reference taper ratio c1/c0."
+		Case "Disk Area"
+			tipMsg = "Rotor disk area A = πR²."
+		Case "Reference Blade Area"
+			tipMsg = "Single-blade reference planform area from the rotor axis to the tip."
+		Case "Active Blade Area"
+			tipMsg = "Single-blade physical planform area from root cutout x0 to the tip."
+		Case "Total Twist"
+			tipMsg = "Baseline linear twist θtip − θroot. Collective trim preserves this difference."
 		Case "Lift Slope a0"
-			tipMsg = "Sectional 2D lift curve slope dCl/dalpha (nominal 5.73 1/rad)."
+			tipMsg = "Section lift-curve slope dCl/dα before optional compressibility correction."
 		Case "Profile Cd0"
-			tipMsg = "Baseline profile drag coefficient at zero angle of attack."
+			tipMsg = "Baseline section profile-drag coefficient used by the Numerical Vectorial integration."
+		Case "Fixed Tip Factor B"
+			tipMsg = "Fixed effective tip radius factor B. Editable only when Fixed B tip loss is selected."
 		Case "Altitude"
-			tipMsg = "Pressure altitude above mean sea level according to standard ISA."
+			tipMsg = "Pressure altitude used by the atmosphere model."
 		Case "Temperature"
-			tipMsg = "Ambient air temperature in degrees Celsius (ISA default 15°C)."
+			tipMsg = "Ambient temperature used for density and speed of sound."
 		Case "Horizontal Flow"
-			Msgbox("Choose one equivalent horizontal-flow representation:" & CRLF & CRLF & _
-				"μ = Vx/(ΩR), dimensionless advance ratio." & CRLF & _
-				"Vx > 0 is forward in-plane free-stream velocity." & CRLF & CRLF & _
-				"The selected representation is authoritative; the other is derived from the current rotor tip speed ΩR.", "Horizontal Flow Convention")
+			Msgbox("Choose μ or Vx as equivalent horizontal inputs." & CRLF & CRLF & _
+				"μ = Vx/(ΩR)." & CRLF & _
+				"+Vx is forward in-plane flow." & CRLF & _
+				"The non-selected representation is shown as a derived value.", "Horizontal Flow")
 			Return
 		Case "Axial Flow"
-			Msgbox("zBET / zBEMT axial convention:" & CRLF & CRLF & _
-				"+z and +Vz are downward through the rotor disk." & CRLF & _
-				"μz = Vz/(ΩR), so μz > 0 is also downward." & CRLF & _
-				"Rotor angle of attack α is positive when the stream arrives from below." & CRLF & _
-				"Therefore μz = -μ·tan(α)." & CRLF & CRLF & _
-				"At Vx = 0, use Vz or μz for nonzero axial flow.", "Axial Flow Convention")
+			Msgbox("Choose α, Vz or μz as one equivalent axial input." & CRLF & CRLF & _
+				"+Vz means positive climb rate: the relative wind comes from above and passes downward through the disk." & CRLF & _
+				"+μz is the corresponding positive downward relative flow." & CRLF & _
+				"+α means relative wind arriving from below." & CRLF & _
+				"μz = Vz/(ΩR) = -μ tan(α).", "Axial Flow")
 			Return
-		Case "Target Thrust"
-			tipMsg = "Desired total thrust T in Newtons for hover/forward trim."
+		Case "Operating Inputs"
+			Msgbox("RPM, collective Δθ, CT and thrust form one operating solution." & CRLF & CRLF & _
+				"Choose any two as prescribed inputs. RotorCalculator solves the other two at the current forward/axial flight condition.", "Operating Constraints")
+			Return
+		Case "RPM"
+			tipMsg = "Prescribed rotational speed for the selected operating pair."
+		Case "Collective Δθ"
+			tipMsg = "Uniform pitch increment added equally to root and tip incidence."
 		Case "Target CT"
-			tipMsg = "Desired thrust coefficient CT = T / (ρ·A·(ΩR)²)."
-		Case "Rotor Preset"
-			tipMsg = "Stored rotor geometry preset. Select a factory rotor or a duplicated custom configuration."
+			tipMsg = "Prescribed CT = T/[ρA(ΩR)²] for the selected operating pair."
+		Case "Target Thrust"
+			tipMsg = "Prescribed dimensional rotor thrust for the selected operating pair."
+		Case "Induced Factor Kind"
+			tipMsg = "Induced-power factor Kind used in induced power and air-power calculations. Typical ideal value is 1; practical values are greater than 1."
 		Case "Airfoil"
-			tipMsg = "Blade section aerodynamic model. Selecting an airfoil updates the sectional lift slope and profile drag data."
+			tipMsg = "Section preset. Selecting it populates a0 and Cd0; the numerical values remain visible."
 		Case "Tip Loss"
-			tipMsg = "Finite-blade tip-loss correction. Sissingh reduces the ideal loading near the blade tip."
+			tipMsg = "Finite-blade tip-loss model: None, Fixed B, or Sissingh."
 		Case "Compressibility"
-			tipMsg = "Compressibility correction applied to sectional aerodynamics as local Mach number increases."
+			tipMsg = "Optional Prandtl-Glauert correction using the zBET representative subsonic Mach definition."
 		Case "Inflow Model"
-			Msgbox("Uniform: uniform induced velocity; useful as the baseline model." & CRLF & CRLF & _
-				"Coleman Simple: adds a longitudinal first-harmonic inflow gradient from wake skew." & CRLF & CRLF & _
-				"Coleman-Feingold (NDARC): longitudinal plus lateral harmonic gradients; appropriate for broad forward-flight trade studies." & CRLF & CRLF & _
-				"Drees: classical longitudinal and lateral gradients with explicit μ dependence.", "Inflow Models")
+			Msgbox("Uniform: no harmonic gradient." & CRLF & CRLF & _
+				"Coleman Simple: longitudinal first harmonic." & CRLF & CRLF & _
+				"Coleman-Feingold: longitudinal and lateral harmonics." & CRLF & CRLF & _
+				"Drees: classical longitudinal and lateral gradients.", "Inflow Models")
 			Return
 		Case "Profile Drag"
-			Msgbox("Analytical Tangential: lowest-order tangential drag approximation." & CRLF & CRLF & _
-				"Analytical Vectorial: low-order expansion using the local velocity magnitude." & CRLF & CRLF & _
-				"Numerical Vectorial: radial/azimuthal quadrature of vector profile drag; highest-fidelity option in this model.", "Profile Drag Models")
-			Return
-		Case "Hover Trim"
-			Msgbox("Manual Pitch: RPM and blade pitch are prescribed." & CRLF & CRLF & _
-				"Collective to Target: fixed RPM; collective shifts to meet Target Thrust or Target CT." & CRLF & CRLF & _
-				"RPM to Thrust: fixed pitch; RPM changes to meet dimensional Target Thrust.", "Trim Modes")
-			Return
+			tipMsg = "Profile drag is always evaluated with Numerical Vectorial radial/azimuthal quadrature."
 		Case Else
-			tipMsg = b.Tag
+			tipMsg = "" & b.Tag
 	End Select
 	ToastMessageShow(tipMsg, True)
 End Sub
@@ -2234,89 +2255,85 @@ End Sub
 
 Sub edtGeom_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	If edtRotorName.IsInitialized And edtRotorName.Text.Trim <> "" Then
-		Dim newName As String = edtRotorName.Text.Trim
-		newName = newName.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
-		If newName.Length > 40 Then newName = newName.SubString2(0, 40)
-		ActiveGeom.Name = newName
-	End If
-	ActiveGeom.Radius = ClampD(ParseDoubleDef(edtRadius.Text, ActiveGeom.Radius), 0.02, 50.0)
-	ActiveGeom.RPM = ClampD(ParseDoubleDef(edtRPM.Text, ActiveGeom.RPM), 1.0, 30000.0)
-	ActiveGeom.NBlades = Max(1, Min(16, ParseIntDef(edtNBlades.Text, ActiveGeom.NBlades)))
-	ActiveGeom.RootCutout = ClampD(ParseDoubleDef(edtRootCutout.Text, ActiveGeom.RootCutout), 0.0, 0.95)
-	ActiveGeom.ChordRoot = ClampD(ParseDoubleDef(edtChordRoot.Text, ActiveGeom.ChordRoot), 0.0001, 2.0 * ActiveGeom.Radius)
-	ActiveGeom.ChordTip = ClampD(ParseDoubleDef(edtChordTip.Text, ActiveGeom.ChordTip), 0.0001, 2.0 * ActiveGeom.Radius)
-	ActiveGeom.SolidityMode = "chords"
-	
-	Dim thRootDeg As Double = ClampD(ParseDoubleDef(edtThetaRoot.Text, 12.0), -90.0, 90.0)
-	Dim thTipDeg As Double = ClampD(ParseDoubleDef(edtThetaTip.Text, 4.0), -90.0, 90.0)
-	ActiveGeom.ThetaRoot = thRootDeg * cPI / 180.0
-	ActiveGeom.ThetaTip = thTipDeg * cPI / 180.0
+	Dim edt As EditText = Sender
+	Dim field As String = "" & edt.Tag
+	Select field
+		Case "Rotor Name"
+			Dim n As String = edt.Text.Trim.Replace("|", "/").Replace(CR, " ").Replace(LF, " ")
+			If n <> "" Then ActiveGeom.Name = n
+		Case "Radius R"
+			Dim newR As Double = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.Radius), 0.02, 50.0)
+			ActiveGeom = zBETEngine.ScaleRadiusPreserveReference(ActiveGeom, newR)
+		Case "Blade Count"
+			ActiveGeom.NBlades = Max(1, Min(16, ParseIntDef(edt.Text, ActiveGeom.NBlades)))
+			ActiveGeom.SolidityMode = "chords"
+			ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+		Case "Root Cutout"
+			ActiveGeom.RootCutout = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.RootCutout), 0.0, 0.95)
+			ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+		Case "Root Chord c0"
+			ActiveGeom.ChordRoot = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.ChordRoot), 0.0001, 2.0 * ActiveGeom.Radius)
+			ActiveGeom.SolidityMode = "chords"
+			ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+		Case "Tip Chord c1"
+			ActiveGeom.ChordTip = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.ChordTip), 0.0001, 2.0 * ActiveGeom.Radius)
+			ActiveGeom.SolidityMode = "chords"
+			ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
+		Case "Reference Solidity"
+			ActiveGeom = zBETEngine.ScaleChordsToSigmaRef(ActiveGeom, ParseDoubleDef(edt.Text, ActiveGeom.SigmaRef))
+		Case "Aspect Ratio"
+			ActiveGeom = zBETEngine.ScaleChordsToAspectRatio(ActiveGeom, ParseDoubleDef(edt.Text, zBETEngine.ReferenceAspectRatio(ActiveGeom)))
+		Case "Root Incidence"
+			ActiveGeom.ThetaRoot = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.ThetaRoot*180/cPI), -90.0, 90.0) * cPI / 180.0
+		Case "Tip Incidence"
+			ActiveGeom.ThetaTip = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.ThetaTip*180/cPI), -90.0, 90.0) * cPI / 180.0
+		Case "Lift Slope a0"
+			ActiveGeom.LiftSlope0 = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.LiftSlope0), 0.1, 10.0)
+		Case "Profile Cd0"
+			ActiveGeom.Cd0 = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.Cd0), 0.0, 0.5)
+		Case "Fixed Tip Factor B"
+			ActiveGeom.TipLossB = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.TipLossB), ActiveGeom.RootCutout + 0.001, 1.0)
+	End Select
 	ActiveGeom.PitchMode = "linear_twist"
-	
-	ActiveGeom.LiftSlope0 = ClampD(ParseDoubleDef(edtLiftSlope.Text, ActiveGeom.LiftSlope0), 0.1, 10.0)
-	ActiveGeom.Cd0 = ClampD(ParseDoubleDef(edtCd0.Text, ActiveGeom.Cd0), 0.0, 0.5)
-	ActiveGeom = zBETEngine.ResolveSolidity(ActiveGeom)
-	If lblGeomPopupTitle.IsInitialized Then lblGeomPopupTitle.Text = ActiveGeom.Name
-	btnSelectAirfoil.Text = AirfoilDisplayName(ActiveGeom)
-	RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)
-	RefreshDerivedCondition(True)
+	ActiveGeom.Theta0 = 0.5 * (ActiveGeom.ThetaRoot + ActiveGeom.ThetaTip)
+	GeometryDirty = True
+	RefreshGeometryDependentInputs(field)
+	RefreshGeometryDerivedFields
+	RefreshLoadedRotorStrip
 	RecalculateRotor
 End Sub
 
+Private Sub RefreshGeometryDependentInputs(sourceField As String)
+	Dim wasUpdating As Boolean = UpdatingUI
+	UpdatingUI = True
+	If sourceField <> "Radius R" Then edtRadius.Text = NumberFormat2(ActiveGeom.Radius, 1, 2, 2, False)
+	If sourceField <> "Blade Count" Then edtNBlades.Text = ActiveGeom.NBlades
+	If sourceField <> "Root Cutout" Then edtRootCutout.Text = NumberFormat2(ActiveGeom.RootCutout, 1, 3, 3, False)
+	If sourceField <> "Root Chord c0" Then edtChordRoot.Text = NumberFormat2(ActiveGeom.ChordRoot, 1, 4, 4, False)
+	If sourceField <> "Tip Chord c1" Then edtChordTip.Text = NumberFormat2(ActiveGeom.ChordTip, 1, 4, 4, False)
+	If sourceField <> "Reference Solidity" Then edtSigmaRef.Text = NumberFormat2(ActiveGeom.SigmaRef, 1, 5, 5, False)
+	If sourceField <> "Aspect Ratio" Then edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(ActiveGeom), 1, 3, 3, False)
+	UpdatingUI = wasUpdating
+End Sub
+
 Sub edtGeom_FocusChanged (HasFocus As Boolean)
-	If HasFocus = False And UpdatingUI = False Then
-		LoadRotorDataToFields(ActiveGeom)
-		RefreshLoadedRotorStrip
-	End If
+	If HasFocus = False And UpdatingUI = False Then LoadRotorDataToFields(ActiveGeom)
 End Sub
 
 Sub edtCond_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
 	ConditionAltitudeM = ClampD(ParseDoubleDef(edtAltitude.Text, ConditionAltitudeM), -500.0, 11000.0)
 	ConditionTemperatureC = ClampD(ParseDoubleDef(edtTemperature.Text, ConditionTemperatureC), -80.0, 60.0)
-	
-	Dim pRatio As Double = Power(1.0 - 0.0065 * ConditionAltitudeM / 288.15, 5.2561)
-	AmbientPressureHPa = 1013.25 * pRatio
-	Dim tKelvin As Double = ConditionTemperatureC + 273.15
-	ActiveCond.Rho = (AmbientPressureHPa * 100.0) / (287.058 * tKelvin)
-	ActiveCond.SpeedOfSound = Sqrt(1.4 * 287.058 * tKelvin)
-	
-	ActiveCond.TargetThrustN = ClampD(ParseDoubleDef(edtTargetThrust.Text, ActiveCond.TargetThrustN), 0.0, 1.0e8)
-	ActiveCond.TargetCT = ClampD(ParseDoubleDef(edtTargetCT.Text, ActiveCond.TargetCT), 0.0, 0.20)
-	
-	Dim changedField As String = ""
-	Try
-		Dim changedEdit As EditText = Sender
-		changedField = changedEdit.Tag
-	Catch
-	End Try
-	If changedField = "Target Thrust" And ActiveCond.TargetThrustN > 0 Then
-		ActiveCond.TargetCT = 0
-		UpdatingUI = True
-		edtTargetCT.Text = "0"
-		UpdatingUI = False
-	Else If changedField = "Target CT" And ActiveCond.TargetCT > 0 Then
-		ActiveCond.TargetThrustN = 0
-		UpdatingUI = True
-		edtTargetThrust.Text = "0"
-		UpdatingUI = False
-	End If
-	If changedField = "Target Thrust" Or changedField = "Target CT" Then RefreshTrimControls
-	RefreshDerivedCondition(False)
+	UpdateAtmosphere
 	RecalculateRotor
 End Sub
 
 Sub edtHorizontalValue_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
-	Dim raw As Double = ParseDoubleDef(edtHorizontalValue.Text, ConditionHorizontalValue)
-	If HorizontalInputMode = "vx" Then
-		Dim vtip As Double = RotorTipSpeed
-		ConditionHorizontalValue = ClampD(raw, 0.0, 0.60 * Max(1.0, vtip))
-	Else
-		ConditionHorizontalValue = ClampD(raw, 0.0, 0.60)
-	End If
-	RefreshDerivedCondition(False)
+	ConditionHorizontalValue = ParseDoubleDef(edtHorizontalValue.Text, ConditionHorizontalValue)
+	If HorizontalInputMode = "mu" Then ConditionHorizontalValue = ClampD(ConditionHorizontalValue, -0.60, 0.60)
+	ActiveCond.HorizontalMode = HorizontalInputMode
+	ActiveCond.HorizontalValue = ConditionHorizontalValue
 	RecalculateRotor
 End Sub
 
@@ -2324,77 +2341,85 @@ Sub edtAxialValue_TextChanged (Old As String, New As String)
 	If UpdatingUI Then Return
 	Dim raw As Double = ParseDoubleDef(edtAxialValue.Text, ConditionAxialValue)
 	Select AxialInputMode
-		Case "alpha": ConditionAxialValue = ClampD(raw, -30.0, 30.0)
-		Case "vz": ConditionAxialValue = ClampD(raw, -80.0, 80.0)
+		Case "alpha": ConditionAxialValue = ClampD(raw, -89.0, 89.0)
+		Case "vz": ConditionAxialValue = ClampD(raw, -200.0, 200.0)
 		Case "muz": ConditionAxialValue = ClampD(raw, -0.50, 0.50)
 	End Select
-	RefreshDerivedCondition(False)
+	ActiveCond.AxialMode = AxialInputMode
+	ActiveCond.AxialValue = ConditionAxialValue
 	RecalculateRotor
 End Sub
 
 Sub btnHorizontalInput_Click
 	Dim options As List
 	options.Initialize
-	options.Add("μ — advance ratio = Vx/(ΩR)")
-	options.Add("Vx — forward in-plane speed [m/s]")
+	options.Add("μ — advance ratio")
+	options.Add("Vx — forward speed [m/s]")
 	Dim selected As Int = 0
 	If HorizontalInputMode = "vx" Then selected = 1
-	Dim idx As Int = InputList(options, "Horizontal Flow · zBET convention", selected)
+	Dim idx As Int = InputList(options, "Horizontal Flow", selected)
 	If idx < 0 Then Return
-	Dim vtip As Double = RotorTipSpeed
+	Dim mu As Double = ActiveCond.Mu
+	Dim vx As Double = 0.0
+	If ActiveRes.SolutionValid Then vx = ActiveRes.OperatingVx Else vx = mu * RotorTipSpeed
 	If idx = 0 Then
 		HorizontalInputMode = "mu"
-		ConditionHorizontalValue = ActiveCond.Mu
+		ConditionHorizontalValue = mu
 	Else
 		HorizontalInputMode = "vx"
-		ConditionHorizontalValue = ActiveCond.Mu * vtip
+		ConditionHorizontalValue = vx
 	End If
+	ActiveCond.HorizontalMode = HorizontalInputMode
+	ActiveCond.HorizontalValue = ConditionHorizontalValue
 	UpdatingUI = True
 	RefreshHorizontalInputDisplay
 	UpdatingUI = False
-	ToastMessageShow("Horizontal flow: +Vx is forward; μ = Vx/(ΩR).", False)
+	RecalculateRotor
+	ToastMessageShow("+Vx is forward; μ = Vx/(ΩR).", False)
 End Sub
 
 Sub btnAxialInput_Click
 	Dim options As List
 	options.Initialize
-	options.Add("α — rotor angle of attack [+ stream from below]")
-	options.Add("Vz — axial flow [+ downward through disk] [m/s]")
-	options.Add("μz — axial ratio [+ downward through disk]")
+	options.Add("α — wind from below when positive")
+	options.Add("Vz — climb rate; positive means wind from above")
+	options.Add("μz — axial ratio; positive downward relative flow")
 	Dim selected As Int = 0
 	If AxialInputMode = "vz" Then selected = 1
 	If AxialInputMode = "muz" Then selected = 2
-	Dim idx As Int = InputList(options, "Axial Flow · zBET / zBEMT convention", selected)
+	Dim idx As Int = InputList(options, "Axial Flow", selected)
 	If idx < 0 Then Return
-	Dim oldMuZ As Double = ActiveCond.MuZ
+	Dim mu As Double = ActiveCond.Mu
+	Dim muz As Double = ActiveCond.MuZ
 	Dim vtip As Double = RotorTipSpeed
 	If idx = 0 Then
-		If Abs(ActiveCond.Mu) < 1e-8 And Abs(oldMuZ) > 1e-10 Then
-			ToastMessageShow("α is undefined at Vx = 0 for nonzero axial flow. Use Vz or μz.", True)
+		If Abs(mu) < 1.0e-8 And Abs(muz) > 1.0e-10 Then
+			ToastMessageShow("At Vx = 0, use Vz or μz for nonzero axial flow.", True)
 			Return
 		End If
 		AxialInputMode = "alpha"
-		ConditionAxialValue = zBETEngine.AlphaFromMuZ(ActiveCond.Mu, oldMuZ)
+		ConditionAxialValue = zBETEngine.AlphaFromMuZ(mu, muz)
 	Else If idx = 1 Then
 		AxialInputMode = "vz"
-		ConditionAxialValue = zBETEngine.VzFromMuZ(oldMuZ, vtip)
+		ConditionAxialValue = zBETEngine.VzFromMuZ(muz, vtip)
 	Else
 		AxialInputMode = "muz"
-		ConditionAxialValue = oldMuZ
+		ConditionAxialValue = muz
 	End If
+	ActiveCond.AxialMode = AxialInputMode
+	ActiveCond.AxialValue = ConditionAxialValue
 	UpdatingUI = True
 	RefreshAxialInputDisplay
 	UpdatingUI = False
-	RefreshDerivedCondition(False)
 	RecalculateRotor
 	ShowAxialConventionHint
 End Sub
 
 Private Sub ShowAxialConventionHint
 	Select AxialInputMode
-		Case "alpha": ToastMessageShow("α > 0: stream arrives from below; μz = -μ·tan(α).", True)
-		Case "vz": ToastMessageShow("Vz > 0 is downward through the disk; μz = Vz/(ΩR).", True)
-		Case Else: ToastMessageShow("μz > 0 is imposed flow downward through the disk.", True)
+		Case "alpha": ToastMessageShow("α > 0: relative wind arrives from below.", True)
+		Case "vz": ToastMessageShow("Vz > 0: positive climb rate, relative wind from above.", True)
+		Case Else: ToastMessageShow("μz > 0: relative flow downward through the disk.", True)
 	End Select
 End Sub
 
@@ -2407,12 +2432,7 @@ Sub edtHorizontalValue_FocusChanged (HasFocus As Boolean)
 End Sub
 
 Sub edtAxialValue_FocusChanged (HasFocus As Boolean)
-	If HasFocus = False And UpdatingUI = False Then
-		LoadConditionDataToFields
-		If AxialInputMode = "alpha" And Abs(ActiveCond.Mu) < 1e-8 And Abs(ConditionAxialValue) > 1e-8 Then
-			ToastMessageShow("At Vx = 0, α does not define nonzero axial flow; use Vz or μz.", True)
-		End If
-	End If
+	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
 ' ====================================================================
