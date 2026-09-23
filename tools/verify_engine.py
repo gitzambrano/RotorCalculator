@@ -9,6 +9,7 @@ remains the final integration/release target.
 from __future__ import annotations
 
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -60,6 +61,97 @@ def verify_b4a_source_contract() -> None:
     missing = [token for token in required if token not in src]
     if missing:
         raise AssertionError("B4A source contract missing: " + " | ".join(missing))
+
+
+def verify_ui_source_contract() -> None:
+    """Lock the current Android architecture without requiring B4A or an emulator."""
+    main = (ROOT / "RotorCalculator.b4a").read_text(encoding="utf-8")
+    storage = (ROOT / "RotorStorage.bas").read_text(encoding="utf-8")
+    plan = (ROOT / "plano.md").read_text(encoding="utf-8").lower()
+    requirements = (ROOT / "docs" / "software_requirements.md").read_text(
+        encoding="utf-8"
+    ).lower()
+
+    required_main = [
+        '"ROTOR LIBRARY"',
+        'CreateRowButton("NEW ROTOR", "btnNewRotor")',
+        "Private Sub OpenGeometryPopup",
+        "Public GeometryEditorRequested As Boolean = False",
+        'CreateRowButton("SAVE", "btnGeometrySave")',
+        'CreateRowButton("COPY", "btnGeometryCopy")',
+        'CreateRowButton("DELETE", "btnGeometryDelete")',
+        "Sub rotorRow_Click",
+        "If idx = RotorStorage.ActiveIndex And GeometryDirty Then",
+        "If CurrentPage = 0 And GeometryEditorRequested Then OpenGeometryPopup",
+        '"BLADE GEOMETRY"',
+        '"DERIVED GEOMETRY"',
+        '"ROTOR AERODYNAMICS"',
+        "Private lblResults(43) As Label",
+        '"DIMENSIONAL PERFORMANCE"',
+        '"AERODYNAMIC COEFFICIENTS"',
+        '"EFFICIENCY"',
+        '"INFLOW & WAKE"',
+        '"OPERATING STATE & ATMOSPHERE"',
+        'btnTable.Initialize("btnSweepTable")',
+        'btnCsv.Initialize("btnSweepExportCsv")',
+        'btnPng.Initialize("btnSweepExportPng")',
+        "SweepSamplesCache = RotorPopups.BuildSweepSamples",
+        "Private Sub BuildSweepCsv As String",
+    ]
+    missing = [token for token in required_main if token not in main]
+    if missing:
+        raise AssertionError("Android UI contract missing: " + " | ".join(missing))
+
+    forbidden_main = [
+        'CreateRowButton("LOAD ROTOR", "btnLoadRotor")',
+        'CreateRowButton("SAVE AS NEW", "btnSaveAsNewRotor")',
+        "Private lblLoadedRotor As Label",
+    ]
+    stale = [token for token in forbidden_main if token in main]
+    if stale:
+        raise AssertionError("Obsolete Geometry UI returned: " + " | ".join(stale))
+
+    required_storage = [
+        "Public Sub SetActiveRotor",
+        "Public Sub UpdateRotor",
+        "Public Sub AddRotor",
+        "Public Sub DeleteRotor",
+        "Public Sub RestoreFactoryPresets",
+        "Public Sub ExportDatabaseText",
+        "Public Sub ParseDatabaseText",
+        "Public Sub MergeImportedRotors",
+    ]
+    missing = [token for token in required_storage if token not in storage]
+    if missing:
+        raise AssertionError("Rotor storage contract missing: " + " | ".join(missing))
+
+    for token in ("rotor library", "geometry popup", "six operating pairs", "universal plots"):
+        if token not in plan:
+            raise AssertionError(f"plan contract missing: {token}")
+    for token in ("rotor library", "geometry popup", "**geo-6**", "**ux-7**", "**qa-9**"):
+        if token not in requirements:
+            raise AssertionError(f"requirements contract missing: {token}")
+
+    # Every Results row must receive a value somewhere in the valid-results path.
+    assigned = {int(x) for x in re.findall(r"lblResults\((\d+)\)\.Text\s*=", main)}
+    expected = set(range(43))
+    if assigned != expected:
+        missing_indices = sorted(expected - assigned)
+        extra_indices = sorted(assigned - expected)
+        raise AssertionError(
+            f"Results index coverage mismatch: missing={missing_indices}, extra={extra_indices}"
+        )
+
+    # Cheap structural sanity: no duplicate Sub names in the edited Android main.
+    sub_names = [
+        name.lower()
+        for name in re.findall(
+            r"(?im)^\s*(?:public\s+|private\s+)?sub\s+([a-z0-9_]+)", main
+        )
+    ]
+    duplicates = sorted({name for name in sub_names if sub_names.count(name) > 1})
+    if duplicates:
+        raise AssertionError("Duplicate B4A Sub names: " + ", ".join(duplicates))
 
 
 def make_geometry(*, rpm=430.0, radius=5.0, blades=4, c0=0.30, c1=0.22,
@@ -263,7 +355,9 @@ def main() -> None:
     print("RotorCalculator offline verification")
     print("=" * 72)
     verify_b4a_source_contract()
-    print("PASS: B4A source contract")
+    print("PASS: B4A engine source contract")
+    verify_ui_source_contract()
+    print("PASS: Android UI/storage/docs source contract")
     verify_reference_planform()
     print("PASS: zBEMT reference-planform metrics")
     verify_axial_representations()
