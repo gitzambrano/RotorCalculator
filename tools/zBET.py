@@ -752,18 +752,34 @@ def solve_operating_pair(
             prev_x, prev_f = float(x), fval
         raise ValueError("could not bracket collective for selected operating constraints")
 
-    def bracket_bisect_rpm(fixed_collective, target_kind, target_value):
+    def bracket_bisect_rpm(fixed_collective, target_kind, target_value, *, require_unique=False):
+        """Find RPM roots over the supported domain.
+
+        Collective + CT requires a unique dimensional RPM solution. Other pairs
+        keep continuity by choosing the root nearest the current RPM seed.
+        """
+        roots = []
+
+        def add_root(candidate):
+            candidate = float(candidate)
+            tol = max(0.05, 1e-5 * max(1.0, abs(candidate)))
+            if all(abs(existing - candidate) > tol for existing in roots):
+                roots.append(candidate)
+
         rpms = np.geomspace(10.0, 30000.0, 81)
         prev_rpm = None
         prev_f = None
         for candidate in rpms:
+            candidate = float(candidate)
             fval = residual(candidate, fixed_collective, target_kind, target_value)
             if fval is None:
+                prev_rpm = None
+                prev_f = None
                 continue
-            if abs(fval) < 1e-10:
-                return float(candidate)
-            if prev_f is not None and fval * prev_f <= 0.0:
-                lo, hi = prev_rpm, float(candidate)
+            if abs(fval) < 1e-9:
+                add_root(candidate)
+            if prev_f is not None and prev_f * fval < 0.0:
+                lo, hi = prev_rpm, candidate
                 flo = prev_f
                 for _ in range(100):
                     mid = 0.5 * (lo + hi)
@@ -771,14 +787,23 @@ def solve_operating_pair(
                     if fm is None:
                         raise ValueError("RPM trim entered an invalid operating point")
                     if abs(fm) < 1e-9 or hi - lo < 1e-7:
-                        return mid
+                        add_root(mid)
+                        break
                     if flo * fm <= 0.0:
                         hi = mid
                     else:
                         lo, flo = mid, fm
-                return 0.5 * (lo + hi)
-            prev_rpm, prev_f = float(candidate), fval
-        raise ValueError("could not bracket RPM for selected operating constraints")
+                else:
+                    add_root(0.5 * (lo + hi))
+            prev_rpm, prev_f = candidate, fval
+
+        if not roots:
+            raise ValueError("could not bracket RPM for selected operating constraints")
+        if require_unique and len(roots) != 1:
+            raise ValueError(
+                "Collective + CT is non-unique at this flight/model state"
+            )
+        return min(roots, key=lambda candidate: abs(candidate - float(rpm)))
 
     solved_rpm = float(rpm)
     solved_collective = float(collective_deg)
@@ -794,8 +819,16 @@ def solve_operating_pair(
             solved_rpm, "thrust", target_thrust_n
         )
     elif pair == "collective_ct":
+        if (
+            horizontal_mode == "mu"
+            and axial_mode != "vz"
+            and not geometry.use_prandtl_glauert
+        ):
+            raise ValueError(
+                "Collective + CT is non-unique at this flight/model state"
+            )
         solved_rpm = bracket_bisect_rpm(
-            solved_collective, "ct", target_ct
+            solved_collective, "ct", target_ct, require_unique=True
         )
     elif pair == "collective_thrust":
         solved_rpm = bracket_bisect_rpm(
