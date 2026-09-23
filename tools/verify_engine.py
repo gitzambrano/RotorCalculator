@@ -86,6 +86,8 @@ def verify_ui_source_contract() -> None:
         '"BLADE GEOMETRY"',
         '"DERIVED GEOMETRY"',
         '"ROTOR AERODYNAMICS"',
+        'lowerName.Contains(" copy")',
+        'shortName = shortName & " (Copy)"',
         "Private lblResults(43) As Label",
         '"DIMENSIONAL PERFORMANCE"',
         '"AERODYNAMIC COEFFICIENTS"',
