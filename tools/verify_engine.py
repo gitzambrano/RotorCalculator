@@ -26,6 +26,8 @@ def verify_b4a_source_contract() -> None:
         "Public Sub ResolveOperatingState",
         "Private Sub SolveCollective",
         "Private Sub SolveRPM",
+        "Return CalculateCoreResolvedMode(g, c, False)",
+        "If FullResults = False Then",
         "Private Sub ApplyOperatingGeometry",
         "Public Sub ResolveConditionAtRPM",
         'Case "rpm_collective"',
