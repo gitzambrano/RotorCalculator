@@ -698,7 +698,7 @@ def solve_operating_pair(
     Profile drag is always numerical-vectorial in this RotorCalculator reference path.
     """
 
-    def evaluate(candidate_rpm, candidate_collective):
+    def evaluate(candidate_rpm, candidate_collective, *, loading_only=False):
         geom = geometry.with_rpm(float(candidate_rpm))
         mu, mu_z = _operating_flow(
             geom, horizontal_mode, horizontal_value, axial_mode, axial_value
@@ -717,12 +717,13 @@ def solve_operating_pair(
             k_ind=k_ind,
             fx=fx,
             fy=fy,
+            loading_only=loading_only,
         )
         return geom, pitch, mu, mu_z, result
 
     def residual(candidate_rpm, candidate_collective, target_kind, target_value):
         try:
-            state = evaluate(candidate_rpm, candidate_collective)
+            state = evaluate(candidate_rpm, candidate_collective, loading_only=True)
         except ValueError:
             return None
         result = state[-1]
@@ -1098,6 +1099,7 @@ def coefficients(
     k_ind=K_IND,
     fx=FX_COLEMAN,
     fy=FY_COLEMAN,
+    loading_only=False,
 ):
     """Calculates rotor coefficients using selectable torque/profile closures.
 
@@ -1178,6 +1180,15 @@ def coefficients(
         lambda_1s,
         ct,
     ) = state
+
+    if loading_only:
+        return {
+            "CT": ct,
+            "T_N": geometry.thrust_from_ct(ct),
+            "lambda": lam,
+            "lambda_i": lambda_i,
+            "B_tip_loss": b_val,
+        }
 
     ch0, cq0 = profile_drag_coefficients(mu, mu_z, geometry, profile_drag_model)
 
