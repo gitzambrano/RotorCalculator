@@ -30,6 +30,8 @@ Desktop.ini
 
 # Signing / publishing secrets (never version)
 Key/*.keystore
+Key/pepk.jar
+Key/encryption_public_key.pem
 Key/*.jks
 Key/*.pepk
 Key/*.b64.txt
