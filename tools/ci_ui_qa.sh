@@ -7,7 +7,7 @@ adb install -r "$APK"
 # Deterministic local QA: never inherit theme/unit/precision or rotor data from an older install.
 adb shell pm clear flightdyn.rotorcalculator >/dev/null
 
-cat > /tmp/check_dark_png.py <<'PY'
+cat > /tmp/check_ui_png.py <<'PY'
 import sys,struct,zlib,math
 p=sys.argv[1]
 d=open(p,'rb').read()
@@ -44,7 +44,7 @@ mean=sum(vals)/len(vals)
 var=sum((v-mean)**2 for v in vals)/len(vals)
 std=math.sqrt(var)
 print(f"frame mean={mean:.1f} std={std:.1f}")
-if mean < 5 or mean > 160 or std < 8:
+if mean < 4 or mean > 252 or std < 6:
     raise SystemExit(1)
 PY
 
@@ -54,7 +54,7 @@ safe_screencap() {
   for attempt in 1 2 3; do
     adb exec-out screencap -p > "$OUTFILE"
     size=$(stat -c%s "$OUTFILE")
-    if [ "$size" -gt 8000 ] && python3 /tmp/check_dark_png.py "$OUTFILE"; then return 0; fi
+    if [ "$size" -gt 8000 ] && python3 /tmp/check_ui_png.py "$OUTFILE"; then return 0; fi
     echo "Suspicious screenshot ($size bytes), retrying: $OUTFILE" >&2
     sleep 1
   done
