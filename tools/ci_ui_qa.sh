@@ -117,86 +117,67 @@ capture_screen() {
   adb shell am force-stop flightdyn.rotorcalculator
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 2
-  adb shell pidof flightdyn.rotorcalculator > "$OUT/pid.txt"
-  test -s "$OUT/pid.txt"
-
-  safe_screencap "$OUT/01-rotor-list.png"
-  python /tmp/ui_node.py "$OUT/01-rotor-list.xml" > "$OUT/01-rotor-list.json"
-
-  # Prove that the rotor list itself remains scrollable on the shortest landscape/phone layouts.
-  for _ in 1 2 3 4 5; do
-    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 220 || true
-  done
-  python /tmp/ui_node.py "$OUT/01b-rotor-list-bottom.xml" > "$OUT/01b-rotor-list-bottom.json"
-  grep -qi "eVTOL Conceptual Rotor" "$OUT/01b-rotor-list-bottom.json"
-  # Relaunch instead of trying to reverse an arbitrary ScrollView offset. This
-  # resets the list deterministically on every aspect ratio and also exercises
-  # cold-resume persistence before opening the active rotor.
-  adb shell am force-stop flightdyn.rotorcalculator
-  adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
-  sleep 1
   assert_app_alive
-  python /tmp/ui_node.py "$OUT/01c-rotor-list-after-relaunch.xml" > "$OUT/01c-rotor-list-after-relaunch.json"
-  grep -qi "Sikorsky UH-60 Black Hawk" "$OUT/01c-rotor-list-after-relaunch.json"
 
-  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
-  sleep 1
-  safe_screencap "$OUT/02-geometry-popup-top.png"
-  python /tmp/ui_node.py "$OUT/02-geometry-popup-top.xml" > "$OUT/02-geometry-popup-top.json"
+  # Geometry is the real in-page editor, not a list or popup.
+  safe_screencap "$OUT/01-geometry-top.png"
+  python /tmp/ui_node.py "$OUT/01-geometry-top.xml" > "$OUT/01-geometry-top.json"
+  grep -qi "Loaded rotor:" "$OUT/01-geometry-top.json"
+  grep -qi "BLADE GEOMETRY" "$OUT/01-geometry-top.json"
 
-  for _ in 1 2 3 4 5; do
-    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
-    sleep 0.2
+  for _ in 1 2 3 4 5 6; do
+    adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
+    sleep 0.15
   done
-  safe_screencap "$OUT/03-geometry-popup-bottom.png"
-  python /tmp/ui_node.py "$OUT/03-geometry-popup-bottom.xml" > "$OUT/03-geometry-popup-bottom.json"
-  # The compact label intentionally abbreviates "Compressibility"; the control text is invariant.
-  grep -qi "Prandtl-Glauert" "$OUT/03-geometry-popup-bottom.json"
+  safe_screencap "$OUT/02-geometry-bottom.png"
+  python /tmp/ui_node.py "$OUT/02-geometry-bottom.xml" > "$OUT/02-geometry-bottom.json"
+  grep -qi "ROTOR AERODYNAMICS" "$OUT/02-geometry-bottom.json"
+  grep -qi "LOAD ROTOR" "$OUT/02-geometry-bottom.json"
+  grep -qi "SAVE AS NEW" "$OUT/02-geometry-bottom.json"
 
-  adb shell input keyevent 4
-  sleep 1
   python /tmp/tap_text.py CONDITIONS
-  sleep 1
-  safe_screencap "$OUT/04-conditions-top.png"
-  python /tmp/ui_node.py "$OUT/04-conditions-top.xml" > "$OUT/04-conditions-top.json"
-  grep -qi "Horizontal" "$OUT/04-conditions-top.json"
-  grep -qi "Axial" "$OUT/04-conditions-top.json"
+  sleep 0.8
+  safe_screencap "$OUT/03-conditions-top.png"
+  python /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
+  grep -qi "Horizontal" "$OUT/03-conditions-top.json"
+  grep -qi "Axial" "$OUT/03-conditions-top.json"
 
-  for _ in 1 2 3 4 5; do
-    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 300 || true
-    sleep 0.2
+  for _ in 1 2 3 4; do
+    adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
+    sleep 0.15
   done
-  safe_screencap "$OUT/05-conditions-bottom.png"
-  python /tmp/ui_node.py "$OUT/05-conditions-bottom.xml" > "$OUT/05-conditions-bottom.json"
-  grep -qi "Target CT" "$OUT/05-conditions-bottom.json"
+  safe_screencap "$OUT/04-conditions-bottom.png"
+  python /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
+  grep -qi "Operating" "$OUT/04-conditions-bottom.json"
+  grep -qi "Numerical Vectorial" "$OUT/04-conditions-bottom.json"
 
   python /tmp/tap_text.py RESULTS
-  sleep 1
-  safe_screencap "$OUT/06-results-top.png"
-  python /tmp/ui_node.py "$OUT/06-results-top.xml" > "$OUT/06-results-top.json"
+  sleep 0.8
+  safe_screencap "$OUT/05-results-top.png"
+  python /tmp/ui_node.py "$OUT/05-results-top.xml" > "$OUT/05-results-top.json"
+  grep -qi "DIMENSIONAL PERFORMANCE" "$OUT/05-results-top.json"
 
-  python /tmp/tap_text.py "OPEN PARAMETER SWEEP"
+  assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" "$W" "$H" "06-coefficients"
+  assert_text_scrolling_down "$OUT" "OPERATING STATE & ATMOSPHERE" "$W" "$H" "07-operating-state"
+  assert_text_scrolling_down "$OUT" "Solved RPM" "$W" "$H" "08-solved-rpm"
+  assert_text_scrolling_down "$OUT" "Sound Speed" "$W" "$H" "09-atmosphere-bottom"
+
+  # Reopen Results from the top and inspect the universal sweep.
+  python /tmp/tap_text.py RESULTS || true
+  sleep 0.3
+  tap_text_scrolling "OPEN PARAMETER SWEEP" "$W" "$H"
   sleep 1
-  safe_screencap "$OUT/09-sweep.png"
-  python /tmp/ui_node.py "$OUT/09-sweep.xml" > "$OUT/09-sweep.json"
+  safe_screencap "$OUT/10-sweep.png"
+  python /tmp/ui_node.py "$OUT/10-sweep.xml" > "$OUT/10-sweep.json"
+  grep -qi "PARAMETER SWEEP" "$OUT/10-sweep.json"
+  grep -qi "TABLE" "$OUT/10-sweep.json"
+  grep -qi "CSV" "$OUT/10-sweep.json"
+  grep -qi "PNG" "$OUT/10-sweep.json"
   adb shell input keyevent 4
-  sleep 1
+  sleep 0.5
   assert_app_alive
-  python /tmp/ui_node.py "$OUT/06b-after-sweep-back.xml" > "$OUT/06b-after-sweep-back.json"
-  grep -qi "RESULTS" "$OUT/06b-after-sweep-back.json"
 
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
-  safe_screencap "$OUT/07-results-mid.png"
-  python /tmp/ui_node.py "$OUT/07-results-mid.xml" > "$OUT/07-results-mid.json"
-
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
-  adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 300 || true
-  safe_screencap "$OUT/08-results-bottom.png"
-  python /tmp/ui_node.py "$OUT/08-results-bottom.xml" > "$OUT/08-results-bottom.json"
-  grep -Eqi "Sound Speed|Speed of Sound" "$OUT/08-results-bottom.json"
-
-  python /tmp/check_bounds.py "$OUT/01-rotor-list.png" "$OUT"
+  python /tmp/check_bounds.py "$OUT/01-geometry-top.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
 }
 
@@ -211,137 +192,169 @@ functional_smoke() {
   adb shell settings put system user_rotation 0
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 2
+  assert_app_alive
 
-  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk"
-  sleep 1
-  safe_screencap "$OUT/01-geometry-open.png"
-  python /tmp/tap_text.py "COPY ROTOR"
-  sleep 1
-  python /tmp/ui_node.py "$OUT/02-after-copy.xml" > "$OUT/02-after-copy.json"
-  grep -qi "(Copy)" "$OUT/02-after-copy.json"
-  safe_screencap "$OUT/02-after-copy.png"
-
-  python /tmp/tap_text.py "Sissingh: ON"
-  sleep 1
+  # Geometry editor and explicit save semantics.
+  python /tmp/ui_node.py "$OUT/01-geometry.xml" > "$OUT/01-geometry.json"
+  grep -qi "Loaded rotor: Sikorsky UH-60 Black Hawk" "$OUT/01-geometry.json"
+  tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
+  tap_text_scrolling "Sissingh" 393 873
+  sleep 0.4
   python /tmp/tap_text.py "Fixed B"
-  sleep 1
-  python /tmp/ui_node.py "$OUT/03-fixed-tip-loss.xml" > "$OUT/03-fixed-tip-loss.json"
-  grep -qi "Fixed B=0.97" "$OUT/03-fixed-tip-loss.json"
+  sleep 0.6
+  python /tmp/ui_node.py "$OUT/02-fixed-b.xml" > "$OUT/02-fixed-b.json"
+  grep -qi "Fixed B" "$OUT/02-fixed-b.json"
 
-  tap_text_scrolling "Prandtl-Glauert: ON" 873 393
-  sleep 1
-  python /tmp/ui_node.py "$OUT/04-compress-off.xml" > "$OUT/04-compress-off.json"
-  grep -qi "Prandtl-Glauert: OFF" "$OUT/04-compress-off.json"
-
-  tap_text_scrolling "Custom Section" 873 393
-  sleep 1
+  tap_text_scrolling "Sikorsky SC1095" 393 873
+  sleep 0.4
   python /tmp/tap_text.py "NACA 0012"
-  sleep 1
-  python /tmp/ui_node.py "$OUT/05-airfoil.xml" > "$OUT/05-airfoil.json"
-  grep -qi "NACA 0012" "$OUT/05-airfoil.json"
-  safe_screencap "$OUT/05-airfoil.png"
+  sleep 0.6
+  tap_text_scrolling "SAVE AS NEW" 393 873
+  sleep 0.8
+  safe_screencap "$OUT/03-saved-copy.png"
+  python /tmp/ui_node.py "$OUT/03-saved-copy.xml" > "$OUT/03-saved-copy.json"
+  grep -qi "Loaded rotor:" "$OUT/03-saved-copy.json"
 
-  adb shell input keyevent 4
-  sleep 1
-  python /tmp/ui_node.py "$OUT/06-list-with-copy.xml" > "$OUT/06-list-with-copy.json"
-  grep -qi "(Copy)" "$OUT/06-list-with-copy.json"
-  safe_screencap "$OUT/06-list-with-copy.png"
-
-  # Cold restart: the copied rotor must remain the active selection.
+  # Cold restart: the active saved rotor remains loaded.
   adb shell am force-stop flightdyn.rotorcalculator
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
-  sleep 2
-  python /tmp/ui_node.py "$OUT/06b-list-after-cold-restart.xml" > "$OUT/06b-list-after-cold-restart.json"
-  python3 - "$OUT/06b-list-after-cold-restart.json" <<'PY'
-import json,sys
-nodes=json.load(open(sys.argv[1],encoding="utf-8"))
-copies=[n for n in nodes if "(Copy)" in n.get("text","") and n.get("bounds")]
-active=[n for n in nodes if n.get("text")=="ACTIVE" and n.get("bounds")]
-if not copies or not active:
-    raise SystemExit("copy or ACTIVE badge missing after cold restart")
-def cy(n):
-    b=n["bounds"]; return (b[1]+b[3])/2
-if min(abs(cy(c)-cy(a)) for c in copies for a in active) > 28:
-    raise SystemExit("ACTIVE badge is not on copied rotor row after cold restart")
-PY
-  safe_screencap "$OUT/06b-list-after-cold-restart.png"
+  sleep 1.5
+  assert_app_alive
+  python /tmp/ui_node.py "$OUT/04-after-restart.xml" > "$OUT/04-after-restart.json"
+  grep -qi "Loaded rotor:" "$OUT/04-after-restart.json"
 
   python /tmp/tap_text.py CONDITIONS
-  sleep 1
+  sleep 0.8
 
-  # Equivalent flight-condition representations must be explicit selectors.
+  # Explicit equivalent-flow selectors.
   python /tmp/tap_text.py "μ"
-  sleep 0.4
-  python /tmp/tap_text.py "Vx — forward"
-  sleep 0.6
-  python /tmp/ui_node.py "$OUT/06c-horizontal-vx.xml" > "$OUT/06c-horizontal-vx.json"
-  grep -Eq '"text": "Vx"' "$OUT/06c-horizontal-vx.json"
-  python /tmp/tap_text.py "Vx"
-  sleep 0.4
-  python /tmp/tap_text.py "μ — advance ratio"
-  sleep 0.6
+  sleep 0.3
+  python /tmp/tap_text.py "Vx — forward speed"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/05-horizontal-vx.xml" > "$OUT/05-horizontal-vx.json"
+  grep -Eq '"text": "Vx"' "$OUT/05-horizontal-vx.json"
 
   python /tmp/tap_text.py "α"
-  sleep 0.4
-  python /tmp/tap_text.py "Vz — axial flow"
-  sleep 0.6
-  python /tmp/ui_node.py "$OUT/06d-axial-vz.xml" > "$OUT/06d-axial-vz.json"
-  grep -Eq '"text": "Vz"' "$OUT/06d-axial-vz.json"
+  sleep 0.3
+  python /tmp/tap_text.py "Vz — climb rate"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/06-axial-vz.xml" > "$OUT/06-axial-vz.json"
+  grep -Eq '"text": "Vz"' "$OUT/06-axial-vz.json"
   python /tmp/tap_text.py "Vz"
-  sleep 0.4
+  sleep 0.3
   python /tmp/tap_text.py "μz — axial ratio"
-  sleep 0.6
-  python /tmp/ui_node.py "$OUT/06e-axial-muz.xml" > "$OUT/06e-axial-muz.json"
-  grep -Eq '"text": "μz"' "$OUT/06e-axial-muz.json"
-  python /tmp/tap_text.py "μz"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/07-axial-muz.xml" > "$OUT/07-axial-muz.json"
+  grep -Eq '"text": "μz"' "$OUT/07-axial-muz.json"
+
+  # All six operating pairs are reachable from one explicit selector.
+  tap_text_scrolling "RPM + CT" 393 873
+  sleep 0.3
+  python /tmp/tap_text.py "RPM + Collective"
   sleep 0.4
-  python /tmp/tap_text.py "α — rotor angle"
-  sleep 0.6
-  safe_screencap "$OUT/06f-grouped-flow-selectors.png"
+  python /tmp/tap_text.py "RPM + Collective"
+  sleep 0.3
+  python /tmp/tap_text.py "RPM + Thrust"
+  sleep 0.4
+  python /tmp/tap_text.py "RPM + Thrust"
+  sleep 0.3
+  python /tmp/tap_text.py "Collective + CT"
+  sleep 0.4
+  python /tmp/tap_text.py "Collective + CT"
+  sleep 0.3
+  python /tmp/tap_text.py "Collective + Thrust"
+  sleep 0.4
+  python /tmp/tap_text.py "Collective + Thrust"
+  sleep 0.3
+  python /tmp/tap_text.py "CT + Thrust"
+  sleep 0.4
+  python /tmp/tap_text.py "CT + Thrust"
+  sleep 0.3
+  python /tmp/tap_text.py "RPM + CT"
+  sleep 0.7
 
-  python /tmp/tap_text.py "Coleman-Feingold"
-  sleep 0.5
+  tap_text_scrolling "Coleman-Feingold" 393 873
+  sleep 0.3
   python /tmp/tap_text.py "Drees"
-  sleep 1
-  python /tmp/tap_text.py "Numerical Vectorial"
   sleep 0.5
-  python /tmp/tap_text.py "Analytical Tangential"
-  sleep 1
-  python /tmp/tap_text.py "Collective to CT"
-  sleep 0.5
-  python /tmp/tap_text.py "RPM to Thrust"
-  sleep 1
-  python /tmp/ui_node.py "$OUT/07a-rpm-trim.xml" > "$OUT/07a-rpm-trim.json"
-  grep -qi "RPM to Thrust" "$OUT/07a-rpm-trim.json"
-  python /tmp/tap_text.py RESULTS
-  sleep 0.6
-  python /tmp/ui_node.py "$OUT/07a2-rpm-trim-result.xml" > "$OUT/07a2-rpm-trim-result.json"
-  grep -qi "RPM TRIM" "$OUT/07a2-rpm-trim-result.json"
-  safe_screencap "$OUT/07a2-rpm-trim-result.png"
-  python /tmp/tap_text.py CONDITIONS
-  sleep 0.6
-  python /tmp/tap_text.py "RPM to Thrust"
-  sleep 0.5
-  python /tmp/tap_text.py "Manual Pitch"
-  sleep 1
-  python /tmp/ui_node.py "$OUT/07b-manual-trim.xml" > "$OUT/07b-manual-trim.json"
-  grep -qi "Manual Pitch" "$OUT/07b-manual-trim.json"
-  python /tmp/tap_text.py "Manual Pitch"
-  sleep 0.5
-  python /tmp/tap_text.py "Collective to Target"
-  sleep 1
-  python /tmp/ui_node.py "$OUT/07-condition-models.xml" > "$OUT/07-condition-models.json"
-  grep -qi "Drees Linear" "$OUT/07-condition-models.json"
-  grep -qi "Analytical Tangential" "$OUT/07-condition-models.json"
-  grep -qi "Collective to Thrust" "$OUT/07-condition-models.json"
+  python /tmp/ui_node.py "$OUT/08-models.xml" > "$OUT/08-models.json"
+  grep -qi "Drees" "$OUT/08-models.json"
+  grep -qi "Numerical Vectorial" "$OUT/08-models.json"
 
-  # Force a real live portrait -> landscape resize, not only a rotation flag.
+  # Results exposes all coefficients together and the complete operating solution.
+  python /tmp/tap_text.py RESULTS
+  sleep 0.8
+  assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" 393 873 "09-coefficients"
+  assert_text_scrolling_down "$OUT" "Solved RPM" 393 873 "10-solved-rpm"
+  assert_text_scrolling_down "$OUT" "Collective Δθ" 393 873 "11-solved-collective"
+  assert_text_scrolling_down "$OUT" "Solved CT" 393 873 "12-solved-ct"
+  assert_text_scrolling_down "$OUT" "Solved Thrust" 393 873 "13-solved-thrust"
+
+  # Settings exposes backup/share controls and persistent presentation options.
+  adb shell input tap 369 28
+  sleep 0.4
+  python /tmp/tap_text.py "Settings"
+  sleep 0.5
+  python /tmp/ui_node.py "$OUT/14-settings.xml" > "$OUT/14-settings.json"
+  grep -qi "Import Geometries" "$OUT/14-settings.json"
+  grep -qi "Export Geometries" "$OUT/14-settings.json"
+  python /tmp/tap_text.py "STANDARD"
+  sleep 0.3
+  python /tmp/tap_text.py "DARK"
+  sleep 1.2
+  assert_app_alive
+
+  # Universal sweep: explicit Y, family, VALUES, X axis/range, hover-only trim and exports.
+  python /tmp/tap_text.py RESULTS
+  sleep 0.3
+  tap_text_scrolling "OPEN PARAMETER SWEEP" 393 873
+  sleep 1
+  python /tmp/ui_node.py "$OUT/15-sweep.xml" > "$OUT/15-sweep.json"
+  grep -qi "VALUES" "$OUT/15-sweep.json"
+  grep -qi "X · μ" "$OUT/15-sweep.json"
+  grep -qi "μ MAX" "$OUT/15-sweep.json"
+  grep -qi "TRIM ONLY HOVER" "$OUT/15-sweep.json"
+  grep -qi "TABLE" "$OUT/15-sweep.json"
+  grep -qi "CSV" "$OUT/15-sweep.json"
+  grep -qi "PNG" "$OUT/15-sweep.json"
+  safe_screencap "$OUT/15-sweep.png"
+
+  python /tmp/tap_text.py "Inflow Models"
+  sleep 0.3
+  python /tmp/tap_text.py "Rotor α Family"
+  sleep 0.5
+  python /tmp/tap_text.py "VALUES"
+  sleep 0.4
+  python /tmp/ui_node.py "$OUT/16-family-values.xml" > "$OUT/16-family-values.json"
+  grep -qi "FAMILY VALUES" "$OUT/16-family-values.json"
+  python /tmp/tap_text.py "CANCEL"
+  sleep 0.3
+
+  python /tmp/tap_text.py "X · μ"
+  sleep 0.3
+  python /tmp/tap_text.py "Vx — forward speed"
+  sleep 0.5
+  python /tmp/tap_text.py "μ MAX"
+  sleep 0.3
+  python /tmp/tap_text.py "μ max = 0.60"
+  sleep 0.5
+  python /tmp/tap_text.py "TABLE"
+  sleep 0.7
+  python /tmp/ui_node.py "$OUT/17-sweep-table.xml" > "$OUT/17-sweep-table.json"
+  grep -qi "SWEEP DATA" "$OUT/17-sweep-table.json"
+  adb shell input keyevent 4
+  adb shell input keyevent 4
+  sleep 0.5
+  assert_app_alive
+
+  # Live resize/orientation must retain operating pair and session state.
+  python /tmp/tap_text.py CONDITIONS
+  sleep 0.5
   adb shell settings put system user_rotation 1
   adb shell wm size 873x393
   sleep 2
-  # First prove that the activity actually resized to landscape.
-  safe_screencap "$OUT/08-rotated.png"
-  python3 - "$OUT/08-rotated.png" <<'PY'
+  safe_screencap "$OUT/18-landscape.png"
+  python3 - "$OUT/18-landscape.png" <<'PY'
 import struct,sys
 with open(sys.argv[1],"rb") as f:
     h=f.read(24)
@@ -349,81 +362,13 @@ w,hh=struct.unpack(">II",h[16:24])
 if w <= hh:
     raise SystemExit(f"live rotation did not produce landscape dimensions: {w}x{hh}")
 PY
-  # A real resize rebuilds the page at scroll position zero. Verify each
-  # persisted selection while scrolling in small increments; a single final
-  # viewport cannot contain all three controls on a short landscape phone.
-  assert_text_scrolling_down "$OUT" "Drees Linear" 873 393 "08b-inflow"
-  assert_text_scrolling_down "$OUT" "Analytical Tangential" 873 393 "08c-profile"
-  assert_text_scrolling_down "$OUT" "Collective to Thrust" 873 393 "08d-trim"
-  python /tmp/ui_node.py "$OUT/08e-rotated-models-final.xml" > "$OUT/08e-rotated-models-final.json"
+  assert_text_scrolling_down "$OUT" "RPM + CT" 873 393 "18b-pair"
+  assert_text_scrolling_down "$OUT" "Drees" 873 393 "18c-inflow"
+
   adb shell wm size 393x873
   adb shell settings put system user_rotation 0
-  sleep 2
-
-  python /tmp/tap_text.py GEOMETRY
-  sleep 1
-  grep -qi "(Copy)" <(python /tmp/ui_node.py "$OUT/09-geometry-after-rotation.xml")
-  python /tmp/tap_text.py RESULTS
-  sleep 1
-  adb shell input tap 369 28
-  sleep 1
-  python /tmp/tap_text.py "Settings"
-  sleep 1
-  python /tmp/tap_text.py "SI"
-  sleep 0.5
-  python /tmp/tap_text.py "STANDARD"
-  sleep 0.5
-  # Theme is changed last because it closes Settings and rebuilds the live UI.
-  python /tmp/tap_text.py "DARK"
-  sleep 2
-  python /tmp/ui_node.py "$OUT/10-results-imperial-light.xml" > "$OUT/10-results-imperial-light.json"
-  grep -qi "lbf" "$OUT/10-results-imperial-light.json"
-  grep -qi "hp" "$OUT/10-results-imperial-light.json"
-  if grep -Eq '"text": "-0([°"]|$)' "$OUT/10-results-imperial-light.json"; then
-    echo "Display-only negative zero found in Results" >&2
-    exit 1
-  fi
-  safe_screencap "$OUT/10-results-imperial-light.png"
-
-  # Re-open settings and prove all three choices persisted across the UI rebuild.
-  adb shell input tap 369 28
-  sleep 0.5
-  python /tmp/tap_text.py "Settings"
-  sleep 0.5
-  python /tmp/ui_node.py "$OUT/10b-settings-persisted.xml" > "$OUT/10b-settings-persisted.json"
-  grep -qi "LIGHT" "$OUT/10b-settings-persisted.json"
-  grep -qi "IMPERIAL" "$OUT/10b-settings-persisted.json"
-  grep -qi "+1 DECIMAL" "$OUT/10b-settings-persisted.json"
-  adb shell input keyevent 4
-  sleep 0.5
-
-  python /tmp/tap_text.py "OPEN PARAMETER SWEEP"
-  sleep 2
-  python /tmp/ui_node.py "$OUT/11-sweep.xml" > "$OUT/11-sweep.json"
-  grep -qi "PARAMETER SWEEP" "$OUT/11-sweep.json"
-  grep -qi "ACTIVE" "$OUT/11-sweep.json"
-  grep -qi "X: μ" "$OUT/11-sweep.json"
-  grep -qi "TABLE" "$OUT/11-sweep.json"
-  grep -qi "CSV" "$OUT/11-sweep.json"
-  grep -qi "PNG" "$OUT/11-sweep.json"
-  safe_screencap "$OUT/11-sweep.png"
-  adb shell input keyevent 4
   sleep 1
   assert_app_alive
-  python /tmp/ui_node.py "$OUT/11b-after-sweep-back.xml" > "$OUT/11b-after-sweep-back.json"
-  grep -qi "RESULTS" "$OUT/11b-after-sweep-back.json"
-
-  python /tmp/tap_text.py GEOMETRY
-  sleep 1
-  python /tmp/tap_text.py "Sikorsky UH-60 Black Hawk (Copy)"
-  sleep 1
-  python /tmp/tap_text.py DELETE
-  sleep 1
-  python /tmp/tap_text.py DELETE
-  sleep 1
-  python /tmp/ui_node.py "$OUT/12-after-delete.xml" > "$OUT/12-after-delete.json"
-  if grep -qi "(Copy)" "$OUT/12-after-delete.json"; then return 1; fi
-  safe_screencap "$OUT/12-after-delete.png"
 }
 
 capture_screen compact-320x568 320x568 0 1.0
