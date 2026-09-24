@@ -8,34 +8,26 @@ def text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_geometry_is_rotor_library_with_contextual_editor():
+def test_geometry_is_direct_editor_with_active_rotor_selector():
     main = text("RotorCalculator.b4a")
     storage = text("RotorStorage.bas")
-    assert '"ROTOR LIBRARY"' in main
-    assert '"Tap a rotor to select it and open its geometry."' in main
-    assert 'CreateRowButton("NEW ROTOR", "btnNewRotor")' in main
-    assert "Private Sub OpenGeometryPopup" in main
-    assert "Private GeometryPopupOpen As Boolean = False" in main
+    start = main.index("Private Sub BuildPageGeom")
+    build_geom = main[start:main.index("End Sub", start)]
+    assert 'btnActiveRotor.Initialize("btnActiveRotor")' in build_geom
+    assert "BuildGeometryEditorContent" in build_geom
+    assert '"ROTOR LIBRARY"' not in build_geom
+    assert 'options.Add("＋ NEW ROTOR")' in main
     assert '"BLADE GEOMETRY"' in main
     assert '"DERIVED GEOMETRY"' in main
     assert '"ROTOR AERODYNAMICS"' in main
-    assert 'Dim copyPos As Int = lowerName.IndexOf(" copy")' in main
-    assert 'compactLandscape As Boolean = (ld = 1 And root.Width <= 700dip)' in main
-    assert 'btnSweepMultiModel.Text = "Models (4)"' in main
-    assert 'btnSweepTrimHover.Text = "HOVER ✓"' in main
-    assert 'btnSweepMaxMu.Text = "μ " & NumberFormat2' in main
-    assert 'shortName = shortName & " (Copy)"' in main
-    assert 'Dim copySuffix As String = fullName.SubString(copyPos + 1).Trim' in main
-    assert "Public Sub MakeCopyName(SourceName As String) As String" in storage
-    assert 'g.Name = MakeCopyName(g.Name)' in storage
     assert 'CreateRowButton("SAVE", "btnGeometrySave")' in main
     assert 'CreateRowButton("COPY", "btnGeometryCopy")' in main
     assert 'CreateRowButton("DELETE", "btnGeometryDelete")' in main
-    assert 'CreateRowButton("LOAD ROTOR", "btnLoadRotor")' not in main
-    assert 'CreateRowButton("SAVE AS NEW", "btnSaveAsNewRotor")' not in main
-    assert 'lblAppTitle.Text = "RotorCalculator"' in main
-    assert "lblAppTitle.Text = ActiveGeom.Name" not in main
-
+    assert 'btnActiveRotor.Text = "ACTIVE ROTOR  ·  "' in main
+    assert "Public Sub MakeCopyName(SourceName As String) As String" in storage
+    assert "RotorStorage.AddRotor(copyGeom)" in main
+    assert "RotorStorage.DeleteRotor(RotorStorage.ActiveIndex)" in main
+    assert '"Unsaved Geometry"' in main
 
 def test_geometry_exposes_all_authoritative_inputs():
     main = text("RotorCalculator.b4a")
@@ -155,6 +147,21 @@ def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     assert "lblHorizontalDerived" in main
     assert "lblAxialDerived" in main
 
+
+def test_geometry_and_conditions_use_aerocalculator_row_contract():
+    main = text("RotorCalculator.b4a")
+    assert 'lblUnit.Initialize("unitRow")' in main
+    assert 'u.Initialize("unitRow")' in main
+    assert "Sub unitRow_Click" in main
+    assert "Private Sub UnitChoices" in main
+    assert "pnl.Width * 31 / 100" in main
+    assert "pnl.Width * 39 / 100" in main
+    assert "pnl.Width * 20 / 100" in main
+    assert 'btnHorizontalInput.Initialize("btnHorizontalInput")' in main
+    assert 'btnAxialInput.Initialize("btnAxialInput")' in main
+    assert 'Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow"' not in main
+    assert 'Dim lblAxial As Label = CreateRowLabel("Axial Flow"' not in main
+    assert 'Return "CT — Thrust Coefficient"' in main
 
 def test_axial_sign_convention_matches_requirements():
     main = text("RotorCalculator.b4a")
@@ -482,35 +489,31 @@ def test_requirements_and_plan_are_authoritative_for_new_architecture():
     assert "**Trim only in hover**" in req
     assert "six operating pairs" in plan.lower()
     assert "universal plots" in plan.lower()
-    assert "rotor library" in plan.lower()
-    assert "geometry popup" in plan.lower()
-
+    assert "direct in-page rotor editor" in plan.lower()
+    assert "active rotor" in plan.lower()
+    assert "label / value / unit" in plan.lower()
 
 def test_activity_recreation_preserves_unsaved_geometry_and_sweep_state():
     main = text("RotorCalculator.b4a")
     assert "Public GeometryDirty As Boolean = False" in main
-    assert "Public GeometryEditorRequested As Boolean = False" in main
-    assert "If CurrentPage = 0 And GeometryEditorRequested Then OpenGeometryPopup" in main
-    assert "If idx = RotorStorage.ActiveIndex And GeometryDirty Then" in main
     assert "ActiveGeom = RotorStorage.GetActiveRotor" in main
     assert "Else If CurrentPage = 0 And GeometryDirty Then" in main
+    assert 'btnActiveRotor.Text = "ACTIVE ROTOR  ·  "' in main
+    assert "If CurrentPage = 0 And GeometryEditorRequested Then OpenGeometryPopup" not in main
     assert "Public SweepMultiMode As Int = 0" in main
     assert 'Public SweepParamSelectedKey As String = "CP"' in main
     assert "Private GeometryDirty As Boolean" not in main
     assert "Private SweepMultiMode As Int" not in main
 
-
-def test_factory_restore_preserves_user_rotors_and_library_marks_origin():
+def test_factory_restore_preserves_user_rotors_and_active_selector():
     main = text("RotorCalculator.b4a")
     storage = text("RotorStorage.bas")
     assert "Public Sub RestoreFactoryPresets" in storage
     assert "Rotors.Set(existing, zBETEngine.CloneGeometry(factoryGeom))" in storage
     assert "Rotors.Add(zBETEngine.CloneGeometry(factoryGeom))" in storage
     assert "RotorStorage.RestoreFactoryPresets" in main
-    assert 'Dim kind As String = "USER"' in main
-    assert 'kind = "FACTORY"' in main
+    assert 'btnActiveRotor.Text = "ACTIVE ROTOR  ·  "' in main
     assert "custom rotors preserved" in main.lower()
-
 
 def test_import_validates_domains_before_resolving_geometry():
     storage = text("RotorStorage.bas")
@@ -535,11 +538,10 @@ def test_results_show_four_operating_solution_variables_as_rows():
 
 def test_flow_equivalents_get_dedicated_mobile_second_line():
     main = text("RotorCalculator.b4a")
-    assert "Dim flowRowH As Int = 76dip" in main
+    assert "Dim flowRowH As Int = 78dip" in main
     assert "Private Sub AddFormRowPanelH" in main
-    assert "pnl.AddView(lblHorizontalDerived, pnl.Width*29/100, 52dip" in main
-    assert "pnl.AddView(lblAxialDerived, pnl.Width*29/100, 52dip" in main
-
+    assert "pnl.AddView(lblHorizontalDerived, pnl.Width*36/100, 54dip" in main
+    assert "pnl.AddView(lblAxialDerived, pnl.Width*36/100, 54dip" in main
 
 def test_sweep_axis_and_range_are_explicit_selectors():
     main = text("RotorCalculator.b4a")

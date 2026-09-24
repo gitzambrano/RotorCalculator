@@ -17,17 +17,16 @@ Global menu: Settings, Quick Unit Converter, Physics & Equations, zBET/zBEMT Con
 
 ## 2. Geometry
 
-Geometry is a **rotor library** rather than a permanently open form:
-- the tab shows all factory and user rotors in a compact list;
-- the active rotor is visibly marked;
-- tapping a rotor selects it, persists that selection, and opens its **Geometry popup**;
-- **NEW ROTOR** creates a new user rotor and opens it immediately;
-- the Geometry popup contains Blade Geometry, Derived Geometry, and Rotor Aerodynamics;
-- contextual actions are **SAVE / COPY / DELETE** inside the popup;
-- the global header never carries the rotor name.
+Geometry is a **direct in-page rotor editor**, following the AeroCalculator interaction model:
+- entering the Geometry tab immediately exposes the complete editable geometry;
+- a persistent **ACTIVE ROTOR** bar occupies the top selector position and shows the current rotor;
+- tapping that bar selects any saved rotor or creates a **NEW ROTOR**;
+- **SAVE / COPY / DELETE** remain visible on the Geometry page and SAVE does not close the editor;
+- Blade Geometry, Derived Geometry, and Rotor Aerodynamics use one rigid three-column grid: **label / value / unit**;
+- labels are tap-accessible help/selector surfaces; units are tap-accessible selectors when alternate units are valid;
+- changing displayed units never changes the SI state passed to zBETEngine.
 
-Unsaved edits survive normal Activity recreation/orientation. Closing the editor or selecting a different rotor offers Save / Discard / Cancel. COPY clones the current edited geometry under a unique name. DELETE is confirmed and is disabled when only one rotor remains.
-
+Unsaved edits survive normal Activity recreation/orientation. Selecting a different rotor or leaving with unsaved changes offers Save / Discard / Cancel. COPY clones the current edited geometry under a unique name. DELETE is confirmed and is disabled when only one rotor remains.
 Authoritative planform:
 `c(x)=c0+(c1-c0)x` from x=0 to 1.
 
@@ -168,8 +167,8 @@ Before release:
 ## 9. Current source status
 
 Implemented in main:
-- rotor-library Geometry tab with synchronized contextual Geometry popup;
-- persistent active-rotor selection and SAVE/COPY/DELETE/NEW workflows;
+- direct in-page Geometry editor with a persistent Active Rotor selector;
+- SAVE/COPY/DELETE/NEW workflows without a mandatory geometry popup;
 - unsaved Geometry state preserved across normal Activity recreation;
 - versioned rotor storage and migration;
 - import/export geometry backup;
@@ -191,7 +190,7 @@ Verification completed in source/reference:
 - numerical reference checks for geometry invariants, flow-sign conventions, inflow closure, corrections, and operating-pair behavior;
 - explicit detection of non-unique **Collective + CT** RPM solutions, per COND-18;
 - trim-residual fast path that preserves the authoritative CT/inflow solve while skipping unrelated profile/power work;
-- static responsive-layout and event-handler audit;
+- static responsive-layout and event-handler audit, including aligned label/value/unit columns;
 - Dark/Light offline-help synchronization;
 - repository hygiene: only required B4A libraries remain and publishing/signing material stays outside Git.
 
@@ -209,6 +208,6 @@ Remaining release / evidence gate:
 1. execute the strengthened numerical/source test suite locally and resolve any new failure;
 2. compile the exact approved `main` source with B4A locally;
 3. install the resulting APK on an emulator/device;
-4. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions), including the 39 Y variables, applied VALUES, SAF round-trip, invalid-import rejection and export flows;
+4. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions), including the direct Geometry editor, Active Rotor selector, selectable units, flow-variable selectors, the 39 Y variables, applied VALUES, SAF round-trip, invalid-import rejection and export flows;
 5. review the real portrait/landscape and Light/Dark screenshots produced by that exact APK;
 6. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.

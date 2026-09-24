@@ -318,21 +318,15 @@ capture_screen() {
   sleep 2
   assert_app_alive
 
-  # Geometry starts as a rotor library; selecting a row opens the contextual editor.
-  safe_screencap "$OUT/01-geometry-library.png"
-  python3 /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
-  grep -Fqi "$ROTOR_LABEL" "$OUT/01-geometry-library.json"
-  grep -qi "NEW ROTOR" "$OUT/01-geometry-library.json"
-
-  python3 /tmp/tap_text.py "$ROTOR_LABEL"
-  sleep 0.6
-  safe_screencap "$OUT/02-geometry-editor-top.png"
-  python3 /tmp/ui_node.py "$OUT/02-geometry-editor-top.xml" > "$OUT/02-geometry-editor-top.json"
-  grep -qi "BLADE GEOMETRY" "$OUT/02-geometry-editor-top.json"
-  grep -qi "SAVE" "$OUT/02-geometry-editor-top.json"
-  grep -qi "COPY" "$OUT/02-geometry-editor-top.json"
-  grep -qi "DELETE" "$OUT/02-geometry-editor-top.json"
+  # Geometry opens directly in the editor; the active rotor is selected from the fixed top bar.
+  safe_screencap "$OUT/01-geometry-editor-top.png"
+  python3 /tmp/ui_node.py "$OUT/01-geometry-editor-top.xml" > "$OUT/01-geometry-editor-top.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/01-geometry-editor-top.json"
+  grep -Fqi "$ROTOR_LABEL" "$OUT/01-geometry-editor-top.json"
+  grep -qi "BLADE GEOMETRY" "$OUT/01-geometry-editor-top.json"
+  grep -qi "SAVE" "$OUT/01-geometry-editor-top.json"
+  grep -qi "COPY" "$OUT/01-geometry-editor-top.json"
+  grep -qi "DELETE" "$OUT/01-geometry-editor-top.json"
 
   for _ in 1 2 3 4 5 6; do
     adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
@@ -341,15 +335,13 @@ capture_screen() {
   safe_screencap "$OUT/03-geometry-editor-bottom.png"
   python3 /tmp/ui_node.py "$OUT/03-geometry-editor-bottom.xml" > "$OUT/03-geometry-editor-bottom.json"
   grep -qi "ROTOR AERODYNAMICS" "$OUT/03-geometry-editor-bottom.json"
-  adb shell input keyevent 4
-  sleep 0.4
 
   python3 /tmp/tap_text.py CONDITIONS
   sleep 0.8
   safe_screencap "$OUT/03-conditions-top.png"
   python3 /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
-  grep -qi "Horizontal" "$OUT/03-conditions-top.json"
-  grep -qi "Axial" "$OUT/03-conditions-top.json"
+  grep -Eq '"text": "(μ|Vx)"' "$OUT/03-conditions-top.json"
+  grep -Eq '"text": "(α|Vz|μz)"' "$OUT/03-conditions-top.json"
 
   for _ in 1 2 3 4; do
     adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
@@ -386,7 +378,7 @@ capture_screen() {
   sleep 0.5
   assert_app_alive
 
-  python3 /tmp/check_bounds.py "$OUT/01-geometry-library.png" "$OUT"
+  python3 /tmp/check_bounds.py "$OUT/01-geometry-editor-top.png" "$OUT"
   python3 /tmp/check_bounds.py "$OUT/02-geometry-editor-top.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
 }
@@ -404,10 +396,12 @@ functional_smoke() {
   sleep 2
   assert_app_alive
 
-  # Rotor library + contextual Geometry editor + NEW/DELETE semantics.
-  python3 /tmp/ui_node.py "$OUT/01-geometry-library.xml" > "$OUT/01-geometry-library.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/01-geometry-library.json"
-  grep -qi "UH-60" "$OUT/01-geometry-library.json"
+  # Direct Geometry editor + Active Rotor selector + NEW/DELETE semantics.
+  python3 /tmp/ui_node.py "$OUT/01-geometry-editor-top.xml" > "$OUT/01-geometry-editor-top.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/01-geometry-editor-top.json"
+  grep -qi "UH-60" "$OUT/01-geometry-editor-top.json"
+  python3 /tmp/tap_text.py "ACTIVE ROTOR"
+  sleep 0.3
   python3 /tmp/tap_text.py "NEW ROTOR"
   sleep 0.6
   python3 /tmp/ui_node.py "$OUT/01b-new-rotor.xml" > "$OUT/01b-new-rotor.json"
@@ -418,9 +412,10 @@ functional_smoke() {
   python3 /tmp/tap_text.py "DELETE"
   sleep 0.6
   python3 /tmp/ui_node.py "$OUT/01c-after-new-delete.xml" > "$OUT/01c-after-new-delete.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/01c-after-new-delete.json"
-  grep -qi "UH-60" "$OUT/01c-after-new-delete.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/01c-after-new-delete.json"
 
+  python3 /tmp/tap_text.py "ACTIVE ROTOR"
+  sleep 0.3
   python3 /tmp/tap_text.py "UH-60"
   sleep 0.6
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
@@ -436,13 +431,12 @@ functional_smoke() {
   python3 /tmp/tap_text.py "NACA 0012"
   sleep 0.6
 
-  # SAVE must persist real edits, close the editor, and survive reopening.
+  # SAVE must persist real edits while keeping the direct editor open.
   python3 /tmp/tap_text.py "SAVE"
   sleep 0.7
-  python3 /tmp/ui_node.py "$OUT/02b-after-save-library.xml" > "$OUT/02b-after-save-library.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/02b-after-save-library.json"
-  python3 /tmp/tap_text.py "UH-60"
-  sleep 0.6
+  python3 /tmp/ui_node.py "$OUT/02b-after-save-editor.xml" > "$OUT/02b-after-save-editor.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/02b-after-save-editor.json"
+  grep -qi "UH-60" "$OUT/02b-after-save-editor.json"
   assert_text_scrolling_down "$OUT" "Fixed B" 393 873 "02c-saved-fixed-b"
   assert_text_scrolling_down "$OUT" "NACA 0012" 393 873 "02d-saved-airfoil"
 
@@ -468,13 +462,11 @@ functional_smoke() {
   sleep 1.5
   assert_app_alive
   python3 /tmp/ui_node.py "$OUT/04-after-restart.xml" > "$OUT/04-after-restart.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/04-after-restart.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/04-after-restart.json"
   grep -Fqi "UH-60 (Copy 2)" "$OUT/04-after-restart.json"
-  grep -qi "ACTIVE" "$OUT/04-after-restart.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/04-after-restart.json"
 
   # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
-  python3 /tmp/tap_text.py "UH-60 (Copy 2)"
-  sleep 0.5
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
   python3 /tmp/tap_text.py "Fixed B"
   sleep 0.3
@@ -498,7 +490,7 @@ functional_smoke() {
   python3 /tmp/tap_text.py "Discard"
   sleep 0.5
   python3 /tmp/ui_node.py "$OUT/04c-after-discard.xml" > "$OUT/04c-after-discard.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/04c-after-discard.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/04c-after-discard.json"
 
   # Global menu: converter, help, conventions, about and factory restore.
   adb shell input tap 369 28
@@ -545,7 +537,7 @@ functional_smoke() {
   python3 /tmp/tap_text.py "RESTORE"
   sleep 0.8
   python3 /tmp/ui_node.py "$OUT/04h-after-factory-restore.xml" > "$OUT/04h-after-factory-restore.json"
-  grep -qi "ROTOR LIBRARY" "$OUT/04h-after-factory-restore.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/04h-after-factory-restore.json"
   grep -Fqi "UH-60 (Copy 2)" "$OUT/04h-after-factory-restore.json"
 
   python3 /tmp/tap_text.py CONDITIONS
@@ -638,6 +630,8 @@ functional_smoke() {
   # editable numeric fields are compared before/after to prove value preservation.
   adb shell input keyevent 4
   sleep 0.4
+  python3 /tmp/tap_text.py "ACTIVE ROTOR"
+  sleep 0.3
   python3 /tmp/tap_text.py "NEW ROTOR"
   sleep 0.6
   python3 /tmp/extract_edit_values.py "$OUT/14g-roundtrip-before-top.txt"
@@ -681,7 +675,9 @@ functional_smoke() {
   adb shell input keyevent 4
   sleep 0.4
   python3 /tmp/ui_node.py "$OUT/14l-roundtrip-restored.xml" > "$OUT/14l-roundtrip-restored.json"
-  grep -Fqi "Custom Rotor" "$OUT/14l-roundtrip-restored.json"
+  grep -qi "ACTIVE ROTOR" "$OUT/14l-roundtrip-restored.json"
+  python3 /tmp/tap_text.py "ACTIVE ROTOR"
+  sleep 0.3
   python3 /tmp/tap_text.py "Custom Rotor"
   sleep 0.5
   python3 /tmp/extract_edit_values.py "$OUT/14m-roundtrip-after-top.txt"

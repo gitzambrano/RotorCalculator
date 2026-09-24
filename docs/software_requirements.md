@@ -14,22 +14,21 @@ Each requirement has a stable identifier. Screens are specified positively by th
 - **ARCH-4** — Results shall present dimensional performance, all aerodynamic coefficients, efficiency, inflow/wake, atmosphere, and the complete solved operating state.
 - **ARCH-5** — Normal calculator edits shall update dependent values and results immediately.
 - **ARCH-6** — Symbols, signs, equations, and equivalent-input conversions shall follow zBET/zBEMT.
-- **ARCH-7** — The UI shall use compact engineering rows, explicit selectors, large mobile touch targets, persistent settings, immediate feedback, and tap-accessible contextual help.
+- **ARCH-7** — The UI shall use AeroCalculator-style engineering rows with readable typography, explicit selectors, large mobile touch targets, persistent settings, immediate feedback, tap-accessible contextual help, and a consistent aligned label/value/unit grid.
 
 ## 2. Geometry
 
-### 2.1 Rotor library and contextual editor
+### 2.1 Direct Geometry editor and active rotor
 
-- **GEO-1** — The Geometry tab shall be a compact **rotor library** listing all factory and user rotors.
-- **GEO-2** — Each rotor row shall identify the rotor, distinguish factory/user origin, summarize key geometry, and visibly mark the active rotor.
-- **GEO-3** — Tapping a rotor row shall select it, persist the active selection, and open its **Geometry popup**.
-- **GEO-4** — The library shall expose **NEW ROTOR**, which creates a uniquely named user rotor and opens its Geometry popup.
-- **GEO-5** — The Geometry popup shall use consistent stacked panels: **Blade Geometry**, **Derived Geometry**, and **Rotor Aerodynamics**.
-- **GEO-6** — The popup action row shall contain **SAVE**, **COPY**, and **DELETE**. These actions shall not live in the global menu.
-- **GEO-7** — SAVE shall update the selected rotor; COPY shall clone the current edited geometry under a unique name; DELETE shall require confirmation and shall be disabled when only one rotor remains.
-- **GEO-8** — Closing the popup or selecting another rotor with unsaved edits shall offer Save, Discard, or Cancel. Unsaved edited values shall survive normal Activity recreation/orientation within the current app process.
+- **GEO-1** — Opening **Geometry** shall immediately show the complete editable rotor definition; editing shall not require opening a rotor row or a modal Geometry popup.
+- **GEO-2** — A persistent **Active Rotor** bar at the top of Geometry shall identify the current saved rotor and visually indicate unsaved changes.
+- **GEO-3** — Tapping the Active Rotor bar shall open the saved-rotor selector and shall also expose **NEW ROTOR**.
+- **GEO-4** — NEW ROTOR shall create a uniquely named user rotor and make it the current inline geometry without changing tabs.
+- **GEO-5** — The in-page editor shall contain **Blade Geometry**, **Derived Geometry**, and **Rotor Aerodynamics**.
+- **GEO-6** — Geometry shall expose **SAVE**, **COPY**, and **DELETE** directly on the page. SAVE shall keep the editor open.
+- **GEO-7** — SAVE shall update the active rotor; COPY shall clone the current edited geometry under a unique name; DELETE shall require confirmation and shall be disabled when only one rotor remains.
+- **GEO-8** — Selecting another rotor with unsaved edits or leaving the application shall offer Save, Discard, or Cancel. Unsaved edited values shall survive normal Activity recreation/orientation within the current app process.
 - **GEO-9** — Restore Factory Presets shall restore shipped preset values while preserving unrelated user rotors.
-
 ### 2.2 Synchronized reference planform
 
 Editable inputs:
@@ -91,7 +90,7 @@ Definitions:
 - **GEO-20** — Inputs shall include airfoil preset, lift-curve slope a0 [rad⁻¹], Cd0, tip-loss model, fixed B when applicable, and Prandtl-Glauert toggle.
 - **GEO-21** — Tip-loss choices shall be **None**, **Fixed B**, and **Sissingh**.
 - **GEO-22** — Selecting an airfoil preset may populate a0 and Cd0 while leaving both values visible.
-- **GEO-23** — Every Geometry row shall expose tap-accessible contextual help.
+- **GEO-23** — Every Geometry label shall be a tap-accessible help/selector surface. Every displayed unit shall be tap-accessible and selectable when valid alternate units exist; unit changes shall preserve the canonical SI value.
 
 ### 2.5 Persistence and migration
 
@@ -154,7 +153,7 @@ The user prescribes any two; RotorCalculator solves the remaining two at the cur
 - **COND-24** — Inflow Model shall offer Uniform, Coleman Simple, Coleman-Feingold, and Drees.
 - **COND-25** — Conditions shall include induced-power factor **Kind**.
 - **COND-26** — Profile drag shall always use **Numerical Vectorial** radial/azimuthal integration.
-- **COND-27** — Every selector/field shall expose concise contextual help with physical meaning, equation, sign convention, and units.
+- **COND-27** — Every Conditions label shall be a tap-accessible help/selector surface, and every displayed unit shall be tap-accessible/selectable when alternate units exist. Horizontal and axial representation selection shall each use one variable button in the label column.
 
 ## 4. Results
 
@@ -237,14 +236,14 @@ The plot tool shall combine the broad capability of the original sweep with the 
 
 ## 8. Visual/mobile requirements
 
-- **UX-1** — The Geometry popup and Conditions shall share one AeroCalculator-inspired row system with clear section headers and aligned controls; the Geometry library shall use the same visual hierarchy and spacing language.
-- **UX-2** — Primary touch targets shall be approximately 48 dp high or larger.
+- **UX-1** — Geometry and Conditions shall share one AeroCalculator-inspired three-column row system: **label / value / unit**. Column edges and row baselines shall align throughout each page.
+- **UX-2** — Primary touch targets shall be approximately 48 dp high or larger. Input labels, editable values, units, and Results shall use legible mobile typography rather than compressed caption-sized text.
 - **UX-3** — Mobile discovery shall be tap-first; no essential explanation shall require mouse hover.
 - **UX-4** — Equivalent flow values shall remain readable on narrow phones without competing with the editable value.
 - **UX-5** — Dark and Light themes shall provide equivalent hierarchy and contrast.
 - **UX-6** — No value, unit, legend, label, or action shall clip at supported portrait widths.
-- **UX-7** — Rotor identity shall appear in the Geometry library and Geometry popup; the global header shall show only the application identity and navigation.
-- **UX-8** — Unsaved Geometry edits, the open Geometry-editor intent, and sweep selections shall survive normal Activity recreation/orientation within the current app process.
+- **UX-7** — Rotor identity shall appear in the Geometry Active Rotor bar; the global header shall show only the application identity and navigation.
+- **UX-8** — Unsaved inline Geometry edits and sweep selections shall survive normal Activity recreation/orientation within the current app process.
 
 ## 9. Verification/release
 
@@ -255,5 +254,5 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **QA-5** — Plot, TABLE, and CSV shall share one authoritative sampled dataset.
 - **QA-6** — Geometry import/export shall round-trip without numeric/naming loss and reject out-of-domain data.
 - **QA-7** — Factory restore shall preserve unrelated user rotors.
-- **QA-8** — UI smoke tests shall cover Light/Dark, portrait/landscape, Activity recreation, rotor selection, Geometry popup SAVE/COPY/DELETE/NEW, all six pairs, plot export, and help.
+- **QA-8** — UI smoke tests shall cover Light/Dark, portrait/landscape, Activity recreation, Active Rotor selection, inline Geometry SAVE/COPY/DELETE/NEW, label/unit selectors, both flow-variable selectors, all six pairs, plot export, and help.
 - **QA-9** — Release APK/AAB shall be built from the exact approved main commit, installed, operated, and visually reviewed before being considered current.

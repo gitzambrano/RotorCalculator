@@ -82,7 +82,7 @@ Antes de concluir qualquer entrega de desenvolvimento:
 - A navegação principal usa três painéis B4A nativos (`Geometry`, `Conditions`, `Results`) controlados pelas tabs do header; `AHViewPager` não faz parte do runtime atual.
 - As bibliotecas B4A declaradas são `core`, `phone`, `RSPopupMenu` e `JavaObject`; JavaObject é restrito à integração Android necessária para exportação SAF.
 - O manifesto suporta Android 5.0+ (`minSdkVersion=21`) e usa `targetSdkVersion=36`.
-- Labels e unidades são tipografia, não botões falsos. Superfícies elevadas ficam reservadas para controles realmente acionáveis.
+- Em Geometry e Conditions, o padrão visual segue o AeroCalculator: a coluna esquerda é uma superfície acionável de label/ajuda, a coluna central é o valor, e a coluna direita é uma superfície acionável de unidade. Trocar unidade altera apenas apresentação/conversão; o engine permanece em SI.
 - `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.
 - Horizontal Flow deve oferecer μ/Vx como representações alternativas. Axial Flow deve oferecer α/Vz/μz como representações alternativas; é proibido somá-las. A convenção é +Vz/+μz para baixo e α>0 para escoamento chegando de baixo.
 - Settings Light/Dark, SI/Imperial e +1 Decimal devem persistir. Sweep deve oferecer eixo μ/Vx, legendas fora da área de dados e export CSV/PNG via Storage Access Framework sem permissão ampla de armazenamento.
@@ -94,11 +94,13 @@ Antes de concluir qualquer entrega de desenvolvimento:
 ## 7. Gestão de Rotores na UI
 
 - O header global não deve exibir o nome do rotor ativo.
-- A página `Geometry` é uma lista de rotores. Tocar em uma linha seleciona o rotor e abre seu popup de geometria.
-- COPY e DELETE são ações contextuais do popup do rotor; não pertencem ao menu global.
-- A seleção do rotor ativo deve persistir entre cold restarts.
-- Popups devem usar estado explícito para Back/close; não consultar `.Parent` de views já removidas.
-
+- Geometry abre diretamente no editor completo; não existe etapa obrigatória de biblioteca/popup antes de editar.
+- No topo de Geometry, uma barra persistente mostra o rotor ativo. Tocar nessa barra abre a seleção de rotores salvos e a ação NEW ROTOR.
+- SAVE, COPY e DELETE ficam disponíveis na própria página Geometry. SAVE não fecha nem troca de tela.
+- O editor usa um grid rígido e comum com Conditions: **label / valor / unidade**, com as três colunas alinhadas em todas as linhas.
+- Labels de Geometry e Conditions são superfícies tocáveis para ajuda ou seleção contextual; unidades são superfícies tocáveis para seleção quando houver conversões válidas.
+- Horizontal Flow usa um único botão de variável para alternar **μ / Vx**. Axial Flow usa um único botão de variável para alternar **α / Vz / μz**.
+- A seleção do rotor ativo deve persistir entre cold restarts, e edições não salvas devem sobreviver à recriação normal da Activity.
 
 ## Release artifact hygiene
 
