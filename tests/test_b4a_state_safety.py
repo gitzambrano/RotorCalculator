@@ -161,7 +161,7 @@ def test_geometry_and_conditions_use_aerocalculator_row_contract():
     assert 'btnAxialInput.Initialize("btnAxialInput")' in main
     assert 'Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow"' not in main
     assert 'Dim lblAxial As Label = CreateRowLabel("Axial Flow"' not in main
-    assert 'Return "CT — Thrust Coefficient"' in main
+    assert 'Return "CT — Thrust"' in main
 
 def test_axial_sign_convention_matches_requirements():
     main = text("RotorCalculator.b4a")
