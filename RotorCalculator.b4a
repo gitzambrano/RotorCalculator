@@ -1574,7 +1574,7 @@ Private Sub AddGeometrySectionHeader(y As Int, title As String) As Int
 	lbl.Text = title
 	lbl.TextColor = ColorAccentGreen
 	lbl.Typeface = Typeface.DEFAULT_BOLD
-	lbl.TextSize = 10 * sc
+	lbl.TextSize = 12.5 * sc
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	scvGeom.Panel.AddView(lbl, UiContentLeft + 12dip, y, UiContentW - 24dip, 26dip)
 	Return y + 28dip
@@ -1763,7 +1763,7 @@ Private Sub BuildPageCond
 	pnl.AddView(lblHorizontalUnit, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	lblHorizontalDerived.Initialize("")
 	lblHorizontalDerived.TextColor = ColorButText2
-	lblHorizontalDerived.TextSize = 11.5 * sc
+	lblHorizontalDerived.TextSize = 12.5 * sc
 	lblHorizontalDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblHorizontalDerived.SingleLine = True
 	pnl.AddView(lblHorizontalDerived, pnl.Width*36/100, 54dip, pnl.Width*61/100, 20dip)
@@ -1795,7 +1795,7 @@ Private Sub BuildPageCond
 	pnl.AddView(lblAxialUnit, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	lblAxialDerived.Initialize("")
 	lblAxialDerived.TextColor = ColorButText2
-	lblAxialDerived.TextSize = 11.2 * sc
+	lblAxialDerived.TextSize = 12.5 * sc
 	lblAxialDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblAxialDerived.SingleLine = True
 	pnl.AddView(lblAxialDerived, pnl.Width*36/100, 54dip, pnl.Width*61/100, 20dip)
@@ -1880,7 +1880,7 @@ Private Sub AddConditionSectionHeader(y As Int, title As String) As Int
 	lbl.Text = title
 	lbl.TextColor = ColorAccentGreen
 	lbl.Typeface = Typeface.DEFAULT_BOLD
-	lbl.TextSize = 10 * sc
+	lbl.TextSize = 12.5 * sc
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	scvCond.Panel.AddView(lbl, UiContentLeft + 12dip, y, UiContentW - 24dip, 26dip)
 	Return y + 28dip
@@ -2010,7 +2010,7 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Case "Reference Blade Area": Return "Ref. area"
 		Case "Active Blade Area": Return "Active area"
 		Case "Total Twist": Return "Twist"
-		Case "Lift Slope a0": Return "Lift a0"
+		Case "Lift Slope a0": Return "a0"
 		Case "Profile Cd0": Return "Cd0"
 		Case "Fixed Tip Factor B": Return "Tip factor B"
 		Case "Temperature": Return "Temp."
@@ -2020,7 +2020,7 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Case "Collective Δθ": Return "Collective"
 		Case "Target CT": Return "Target CT"
 		Case "Target Thrust": Return "Target T"
-		Case "Induced Factor Kind": Return "Kind"
+		Case "Induced Factor Kind": Return "K_ind"
 		Case "Inflow Model": Return "Inflow"
 		Case "Compressibility": Return "Compress."
 		Case Else: Return fullText
