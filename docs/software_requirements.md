@@ -21,11 +21,11 @@ Each requirement has a stable identifier. Screens are specified positively by th
 ### 2.1 Direct Geometry editor and active rotor
 
 - **GEO-1** — Opening **Geometry** shall immediately show the complete editable rotor definition; editing shall not require opening a rotor row or a modal Geometry popup.
-- **GEO-2** — A persistent **Active Rotor** bar at the top of Geometry shall identify the current saved rotor and visually indicate unsaved changes.
+- **GEO-2** — Geometry shall reserve the top selector position formerly occupied by NEW ROTOR for a persistent **Active Rotor** bar. The bar shall identify the current rotor at all times and visually indicate unsaved changes.
 - **GEO-3** — Tapping the Active Rotor bar shall open the saved-rotor selector and shall also expose **NEW ROTOR**.
 - **GEO-4** — NEW ROTOR shall create a uniquely named user rotor and make it the current inline geometry without changing tabs.
 - **GEO-5** — The in-page editor shall contain **Blade Geometry**, **Derived Geometry**, and **Rotor Aerodynamics**.
-- **GEO-6** — Geometry shall expose **SAVE**, **COPY**, and **DELETE** directly on the page. SAVE shall keep the editor open.
+- **GEO-6** — Geometry shall expose **SAVE**, **COPY**, and **DELETE** directly on the page. SAVE shall keep the editor open and shall immediately refresh the **Active Rotor** bar so the saved current rotor remains unambiguous.
 - **GEO-7** — SAVE shall update the active rotor; COPY shall clone the current edited geometry under a unique name; DELETE shall require confirmation and shall be disabled when only one rotor remains.
 - **GEO-8** — Selecting another rotor with unsaved edits or leaving the application shall offer Save, Discard, or Cancel. Unsaved edited values shall survive normal Activity recreation/orientation within the current app process.
 - **GEO-9** — Restore Factory Presets shall restore shipped preset values while preserving unrelated user rotors.
@@ -90,7 +90,7 @@ Definitions:
 - **GEO-20** — Inputs shall include airfoil preset, lift-curve slope a0 [rad⁻¹], Cd0, tip-loss model, fixed B when applicable, and Prandtl-Glauert toggle.
 - **GEO-21** — Tip-loss choices shall be **None**, **Fixed B**, and **Sissingh**.
 - **GEO-22** — Selecting an airfoil preset may populate a0 and Cd0 while leaving both values visible.
-- **GEO-23** — Every Geometry label shall be a tap-accessible help/selector surface. Every displayed unit shall be tap-accessible and selectable when valid alternate units exist; unit changes shall preserve the canonical SI value.
+- **GEO-23** — Every Geometry label shall be rendered as an AeroCalculator-style button/control, not passive text. Pressing it shall open the field help or the relevant variable/parameter selector. Every displayed Geometry unit shall also be rendered as a button/control; when alternate units exist it shall open the unit selector, and when the quantity is dimensionless or has only one valid unit it shall retain the same button alignment/style. Unit changes shall preserve the canonical SI value.
 
 ### 2.5 Persistence and migration
 
@@ -151,9 +151,9 @@ The user prescribes any two; RotorCalculator solves the remaining two at the cur
 ### 3.5 Aerodynamic-model inputs
 
 - **COND-24** — Inflow Model shall offer Uniform, Coleman Simple, Coleman-Feingold, and Drees.
-- **COND-25** — Conditions shall include induced-power factor **Kind**.
+- **COND-25** — Conditions shall include induced-power factor **K_ind**. The same symbol/name shall be used consistently in Conditions, Results/help, plots, and documentation.
 - **COND-26** — Profile drag shall always use **Numerical Vectorial** radial/azimuthal integration.
-- **COND-27** — Every Conditions label shall be a tap-accessible help/selector surface, and every displayed unit shall be tap-accessible/selectable when alternate units exist. Horizontal and axial representation selection shall each use one variable button in the label column.
+- **COND-27** — Every Conditions label shall be rendered as an AeroCalculator-style button/control, not passive text. Every displayed Conditions unit shall also be rendered as a button/control; when alternate units exist it shall open the unit selector, and otherwise it shall retain the same aligned button style. Horizontal and axial representation selection shall each use exactly one variable-selector button in the label column.
 
 ## 4. Results
 
@@ -166,7 +166,7 @@ Sections shall appear in this order:
 5. **OPERATING STATE & ATMOSPHERE**
 
 - **RES-1** — Dimensional Performance shall contain thrust, shaft power, shaft torque, in-plane force, and other dimensional forces implemented by the engine.
-- **RES-2** — Aerodynamic Coefficients shall keep all coefficients together: CT, CQ (= CPshaft), CQi, CQ0, CH, CHi, CH0, CY, CMx, CMy, and CPair.
+- **RES-2** — Aerodynamic Coefficients shall keep all coefficients together: CT, CQ (= CPshaft), CQi, CQ0, CH, CHi, CH0, CY, CMx, CMy, and CPair. Result labels shall use one consistent symbol-first nomenclature, for example **CT — Thrust**, **CQ — Torque**, **CQi — Induced Torque**, **CQ0 — Profile Torque**, **CH — In-Plane**, **CY — Side Force**, **CMx — Roll Moment**, **CMy — Pitch Moment**, and **CPair — Air Power**.
 - **RES-3** — Efficiency shall contain FoM and effective L/D.
 - **RES-4** — Inflow & Wake shall contain λ, λi, Kx, Ky, wake-skew angle χ, and tip-loss factor B.
 - **RES-5** — Operating State & Atmosphere shall explicitly show solved RPM, solved collective Δθ, solved CT, solved thrust, μ, Vx, μz, Vz, α, tip speed, tip Mach, advancing-tip Mach, altitude, temperature, density ρ, ambient pressure p, speed of sound a, and model/trim status.
@@ -245,6 +245,23 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **UX-7** — Rotor identity shall appear in the Geometry Active Rotor bar; the global header shall show only the application identity and navigation.
 - **UX-8** — Unsaved inline Geometry edits and sweep selections shall survive normal Activity recreation/orientation within the current app process.
 
+### 8.1 Binding AeroCalculator interaction contract
+
+The following requirements are mandatory and take precedence over older Geometry-library/popup patterns.
+
+- **UX-9** — **Geometry shall open directly as the editable rotor definition.** The user shall not have to open, tap, or select a rotor merely to see or edit Geometry.
+- **UX-10** — The top of Geometry shall contain one persistent **Active Rotor** bar in the selector position. After SAVE, this bar shall continue to show the current saved rotor. Pressing the bar shall select another saved rotor or create a NEW ROTOR.
+- **UX-11** — Typography in Geometry, Conditions, and Results shall be comparable in visual size/readability to AeroCalculator. Primary editable values shall use approximately **16 sp or larger**, primary labels/results approximately **15 sp or larger**, units approximately **14 sp or larger**, and section headings approximately **12 sp or larger**, subject only to responsive scaling that does not make them visually smaller than the AeroCalculator reference at the same phone width.
+- **UX-12** — Geometry and Conditions shall use one rigid three-column form grid: **label button | value field | unit button**. All label controls shall share the same left/right column edges, all editable/value fields shall share the same left/right column edges, and all unit controls shall share the same left/right column edges throughout the page.
+- **UX-13** — Rows shall also be vertically aligned: within each row the label button, value field, and unit button shall share the same baseline/vertical center and control height. No individual field may drift horizontally or vertically relative to the common grid.
+- **UX-14** — Geometry shall apply the same **label button | value field | unit button** alignment to Blade Geometry, Derived Geometry, and Rotor Aerodynamics. Derived/read-only values shall occupy the same value column as editable fields.
+- **UX-15** — **Horizontal Flow shall use one and only one variable-selector button** in the label column. Pressing it shall choose between **μ** and **Vx**; the selected variable shall remain in that same button, with its value in the common value column and its unit in the common unit-button column.
+- **UX-16** — **Axial Flow shall use one and only one variable-selector button** in the label column. Pressing it shall choose between **α**, **Vz**, and **μz**; the selected variable shall remain in that same button, with its value in the common value column and its unit in the common unit-button column.
+- **UX-17** — Every label in Geometry and Conditions shall be a visible button/control as in AeroCalculator. It shall provide field help or, where the label represents a selectable variable/model, open the relevant selector. Passive text styled differently from the other label controls shall not be used for normal form rows.
+- **UX-18** — Every unit in Geometry and Conditions shall occupy the unit-button column and use the same button/control styling as AeroCalculator. Pressing a unit with valid alternatives shall open a unit selector and convert only the displayed value; the canonical calculation value shall remain unchanged. Dimensionless/single-unit quantities shall retain the same aligned unit-control footprint.
+- **UX-19** — Input and output nomenclature shall use the zBET/zBEMT symbols consistently across Geometry, Conditions, Results, plots, help, and exported tables. Established symbols such as **R, Nb, x0, c0, c1, σref, AR, θroot, θtip, a0, Cd0, K_ind, μ, Vx, α, Vz, μz, CT, CQ, CQi, CQ0, CH, CY, CMx, CMy, CPair, λ, λi, Kx, Ky, χ, B** shall not be replaced by inconsistent ad-hoc abbreviations.
+- **UX-20** — Results shall use a consistent symbol-first naming pattern and readable font size. The same physical quantity shall not appear under conflicting names such as a mixture of “Coef”, “Coefficient”, unexplained abbreviations, or different symbols in different screens.
+
 ## 9. Verification/release
 
 - **QA-1** — Geometry tests shall verify radius scaling, AR, σref, σgeom, σthrust, and taper preservation.
@@ -256,3 +273,8 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **QA-7** — Factory restore shall preserve unrelated user rotors.
 - **QA-8** — UI smoke tests shall cover Light/Dark, portrait/landscape, Activity recreation, Active Rotor selection, inline Geometry SAVE/COPY/DELETE/NEW, label/unit selectors, both flow-variable selectors, all six pairs, plot export, and help.
 - **QA-9** — Release APK/AAB shall be built from the exact approved main commit, installed, operated, and visually reviewed before being considered current.
+- **QA-10** — Runtime UI QA shall explicitly verify the three-column alignment in Geometry and Conditions by comparing the x-positions and vertical centers of label, value, and unit controls across multiple rows in portrait and landscape.
+- **QA-11** — Runtime UI QA shall verify that every normal Geometry/Conditions label is an actionable button/control, every unit occupies the aligned unit-control column, and alternate-unit controls actually change displayed units without changing the canonical physical state.
+- **QA-12** — Runtime UI QA shall verify that Horizontal Flow exposes a single μ/Vx selector button and Axial Flow exposes a single α/Vz/μz selector button, with no duplicated variable controls.
+- **QA-13** — Runtime UI QA shall verify readable typography against the AeroCalculator reference and shall fail if normal inputs, labels, units, or Results regress to caption-sized/minuscule text.
+- **QA-14** — Runtime/static QA shall verify the standardized symbol-first nomenclature in Results and the use of the same symbols across Conditions, plots, help, and exports.
