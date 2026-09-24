@@ -1042,8 +1042,11 @@ End Sub
 ' AEROCALCULATOR-STYLE INPUT UNITS
 ' ====================================================================
 Private Sub InitializeInputUnitMaps
-	If InputUnits.IsInitialized And InputUnits.Size > 0 Then Return
-	InputUnits.Initialize
+	If InputUnits.IsInitialized Then
+		If InputUnits.Size > 0 Then Return
+	Else
+		InputUnits.Initialize
+	End If
 	Dim lenUnit As String = "m"
 	Dim areaUnit As String = "m²"
 	Dim speedUnit As String = "m/s"
@@ -1092,7 +1095,9 @@ End Sub
 Private Sub UnitForField(field As String, fallback As String) As String
 	Dim key As String = UnitKeyForField(field)
 	If key = "Horizontal Mu" Or key = "Axial MuZ" Then Return "[-]"
-	If InputUnits.IsInitialized And InputUnits.ContainsKey(key) Then Return "" & InputUnits.Get(key)
+	If InputUnits.IsInitialized Then
+		If InputUnits.ContainsKey(key) Then Return "" & InputUnits.Get(key)
+	End If
 	Return fallback
 End Sub
 
@@ -1988,7 +1993,7 @@ End Sub
 ' Compact labels are used only when the available width requires them.
 ' The full engineering meaning remains available through the row/result tooltip.
 Private Sub InputDisplayLabel(fullText As String) As String
-	If root.Width > 340dip Then Return fullText
+	If root.Width > 430dip Then Return fullText
 	Select fullText
 		Case "Rotor Preset": Return "Preset"
 		Case "Rotor Name": Return "Name"
@@ -2065,17 +2070,17 @@ Sub ResultDisplayLabel(fullText As String) As String
 		Case "Side Force (Y)": Return "Y — Side Force"
 		Case "Roll Moment (Mx)": Return "Mx — Roll Moment"
 		Case "Pitch Moment (My)": Return "My — Pitch Moment"
-		Case "Thrust Coef (CT)": Return "CT — Thrust Coefficient"
-		Case "Torque Coef (CQ)": Return "CQ — Shaft-Power Coefficient"
-		Case "Induced Torque (CQi)": Return "CQi — Induced Power"
-		Case "Profile Torque (CQ0)": Return "CQ0 — Profile Power"
-		Case "In-Plane Coef (CH)": Return "CH — In-Plane Coefficient"
+		Case "Thrust Coef (CT)": Return "CT — Thrust"
+		Case "Torque Coef (CQ)": Return "CQ — Torque"
+		Case "Induced Torque (CQi)": Return "CQi — Induced Torque"
+		Case "Profile Torque (CQ0)": Return "CQ0 — Profile Torque"
+		Case "In-Plane Coef (CH)": Return "CH — In-Plane"
 		Case "Induced In-Plane (CHi)": Return "CHi — Induced In-Plane"
 		Case "Profile In-Plane (CH0)": Return "CH0 — Profile In-Plane"
-		Case "Side Force Coef (CY)": Return "CY — Side-Force Coefficient"
-		Case "Roll Moment Coef (CMx)": Return "CMx — Roll-Moment Coefficient"
-		Case "Pitch Moment Coef (CMy)": Return "CMy — Pitch-Moment Coefficient"
-		Case "Air Power Coef (CPair)": Return "CPair — Air-Power Coefficient"
+		Case "Side Force Coef (CY)": Return "CY — Side Force"
+		Case "Roll Moment Coef (CMx)": Return "CMx — Roll Moment"
+		Case "Pitch Moment Coef (CMy)": Return "CMy — Pitch Moment"
+		Case "Air Power Coef (CPair)": Return "CPair — Air Power"
 		Case "Figure of Merit (FoM)": Return "FoM — Figure of Merit"
 		Case "Effective L/D Ratio": Return "L/D eff — Effective L/D"
 		Case "Total Inflow Ratio (λ)": Return "λ — Total Inflow"
