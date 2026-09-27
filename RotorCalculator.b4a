@@ -1959,7 +1959,7 @@ Private Sub BuildPageRes
 		lbl.TextSize = 15 * sc
 		lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 		lbl.SingleLine = True
-		row.AddView(lbl, row.Width*3/100, 0, row.Width*49/100, rowH)
+		row.AddView(lbl, row.Width*3/100, 0, row.Width*47/100, rowH)
 		lblResults(i).Initialize("")
 		lblResults(i).Text = "---"
 		lblResults(i).TextColor = ColorAccentCyan
@@ -1967,15 +1967,15 @@ Private Sub BuildPageRes
 		lblResults(i).TextSize = 15.5 * sc
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 		lblResults(i).SingleLine = True
-		row.AddView(lblResults(i), row.Width*54/100, 0, row.Width*25/100, rowH)
+		row.AddView(lblResults(i), row.Width*52/100, 0, row.Width*24/100, rowH)
 		lblResultUnits(i).Initialize("")
 		lblResultUnits(i).Text = ResultDefaultUnit(i)
 		lblResultUnits(i).TextColor = ColorButText2
 		lblResultUnits(i).Typeface = Typeface.DEFAULT_BOLD
-		lblResultUnits(i).TextSize = 14.5 * sc
+		If root.Width <= 360dip Then lblResultUnits(i).TextSize = 14 Else lblResultUnits(i).TextSize = 14.5 * sc
 		lblResultUnits(i).Gravity = Gravity.CENTER
 		lblResultUnits(i).SingleLine = True
-		row.AddView(lblResultUnits(i), row.Width*81/100, 0, row.Width*16/100, rowH)
+		row.AddView(lblResultUnits(i), row.Width*77/100, 0, row.Width*20/100, rowH)
 		y = y + rowH
 	Next
 	scvRes.Panel.Height = y + 24dip
