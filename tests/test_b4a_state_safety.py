@@ -561,6 +561,20 @@ def test_premium_visual_contract_is_enforced_in_source():
     assert "**QA-15**" in req and "**QA-19**" in req
 
 
+def test_active_ui_avoids_caption_sized_engineering_controls():
+    main = text("RotorCalculator.b4a")
+    assert "lblResultStatus.TextSize = 13.5 * sc" in main
+    assert "lblTrimSummary.TextSize = 13.5 * sc" in main
+    assert "spnSweepParam.TextSize = 14 * sc" in main
+    assert "btnSweepMultiModel.TextSize = 13.5 * sc" in main
+    assert "btnSweepXAxis.TextSize = 13.5 * sc" in main
+    assert "btnSweepMaxMu.TextSize = 13.5 * sc" in main
+    assert "btnSweepValues.TextSize = 13.5 * sc" in main
+    assert "btnSweepTrimHover.TextSize = 13 * sc" in main
+    assert "btnTable.TextSize = 14 * sc" in main
+    assert "48dip * sc" in main
+
+
 def test_flow_equivalents_get_dedicated_mobile_second_line():
     main = text("RotorCalculator.b4a")
     assert "Dim flowRowH As Int = 78dip" in main
