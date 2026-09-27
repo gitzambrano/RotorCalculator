@@ -277,6 +277,20 @@ def test_results_include_operating_solution_and_atmosphere():
     assert "res.TrimmedCollectiveDeg = c.CollectiveDeg" in engine
 
 
+def test_sweep_uses_canonical_single_source_nomenclature_and_readable_plot_text():
+    popups = text("RotorPopups.bas")
+    assert "Private Sub SweepParamDisplayName" in popups
+    assert "Return SweepParamDisplayName(paramKey)" in popups
+    assert 'AddSweepParam("RPM", SweepParamDisplayName("RPM"))' in popups
+    assert 'Case "RPM": Return "RPM — Solved Speed"' in popups
+    assert 'Case "L_D_eff": Return "L/D eff — Effective L/D"' in popups
+    assert 'Case "PowerKW": Return "Pshaft — Shaft Power [kW]"' in popups
+    assert '"CQ / CPshaft — Shaft Power"' not in popups
+    assert '"L/D eff — Rotor Efficiency"' not in popups
+    assert "Typeface.MONOSPACE, 11, colText" in popups
+    assert "legendSize As Float = 9.5" in popups
+
+
 def test_results_precision_is_variable_specific_plus_one():
     main = text("RotorCalculator.b4a")
     assert "Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String" in main
