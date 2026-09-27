@@ -690,14 +690,14 @@ Private Sub AddSettingsRow(card As Panel, y As Int, title As String, subtitle As
 	lbl.Initialize("")
 	lbl.Text = title & CRLF & subtitle
 	lbl.TextColor = ColorButText1
-	lbl.TextSize = 11.5
+	lbl.TextSize = 13.5
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	card.AddView(lbl, 16dip, y, card.Width * 0.50, 64dip)
 	Dim b As Button
 	b.Initialize(eventName)
 	b.TextColor = ColorAccentCyan
 	b.Typeface = Typeface.DEFAULT_BOLD
-	b.TextSize = 11.5
+	b.TextSize = 14
 	b.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	card.AddView(b, card.Width * 0.54, y + 8dip, card.Width * 0.41, 48dip)
 	If eventName = "btnSettingTheme" Then btnSettingTheme = b
@@ -939,7 +939,7 @@ Private Sub OpenUnitConverter
 	lblTitle.Text = "QUICK UNIT CONVERTER"
 	lblTitle.TextColor = ColorAccentCyan
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
-	lblTitle.TextSize = 13
+	lblTitle.TextSize = 15
 	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	titleBar.AddView(lblTitle, 16dip, 0, cardW - 72dip, 52dip)
 	
@@ -955,7 +955,7 @@ Private Sub OpenUnitConverter
 	spnUnitMode.DropdownBackgroundColor = ColorPnlTitle
 	spnUnitMode.DropdownTextColor = ColorTitleText
 	spnUnitMode.TextColor = ColorTitleText
-	spnUnitMode.TextSize = 12
+	spnUnitMode.TextSize = 14
 	Dim modes() As String = Array As String("kW → hp", "hp → kW", "N → kgf", "kgf → N", "N → lbf", "lbf → N", "km/h → kt", "kt → km/h", "km/h → m/s", "m/s → km/h", "m → ft", "ft → m", "mm → in", "in → mm")
 	For Each mode As String In modes
 		spnUnitMode.Add(mode)
@@ -1756,7 +1756,7 @@ Private Sub BuildPageCond
 	pnl.AddView(lblHorizontalUnit, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	lblHorizontalDerived.Initialize("")
 	lblHorizontalDerived.TextColor = ColorButText2
-	lblHorizontalDerived.TextSize = 12.5 * sc
+	lblHorizontalDerived.TextSize = 14 * sc
 	lblHorizontalDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblHorizontalDerived.SingleLine = True
 	pnl.AddView(lblHorizontalDerived, pnl.Width*36/100, 54dip, pnl.Width*61/100, 20dip)
@@ -1782,7 +1782,7 @@ Private Sub BuildPageCond
 	pnl.AddView(lblAxialUnit, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	lblAxialDerived.Initialize("")
 	lblAxialDerived.TextColor = ColorButText2
-	lblAxialDerived.TextSize = 12.5 * sc
+	lblAxialDerived.TextSize = 14 * sc
 	lblAxialDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblAxialDerived.SingleLine = True
 	pnl.AddView(lblAxialDerived, pnl.Width*36/100, 54dip, pnl.Width*61/100, 20dip)
@@ -3236,7 +3236,7 @@ Sub btnViewPolarPlot_Click
 	lblTitle.Text = "PARAMETER SWEEP"
 	lblTitle.TextColor = ColorAccentCyan
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
-	lblTitle.TextSize = 13 * sc
+	lblTitle.TextSize = 15 * sc
 	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 64dip, topBarH)
 	Dim btnClose As Button
@@ -3256,28 +3256,28 @@ Sub btnViewPolarPlot_Click
 	spnSweepParam.DropdownBackgroundColor = ColorPnlTitle
 	spnSweepParam.DropdownTextColor = ColorTitleText
 	spnSweepParam.TextColor = ColorTitleText
-	spnSweepParam.TextSize = 11 * sc
+	spnSweepParam.TextSize = 14 * sc
 	
 	btnSweepMultiModel.Initialize("btnSweepMultiModel")
 	btnSweepMultiModel.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepMultiModel.TextSize = 10.5 * sc
+	btnSweepMultiModel.TextSize = 13.5 * sc
 	btnSweepXAxis.Initialize("btnSweepXAxis")
 	btnSweepXAxis.TextColor = ColorAccentGreen
 	btnSweepXAxis.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepXAxis.TextSize = 10.5 * sc
+	btnSweepXAxis.TextSize = 13.5 * sc
 	btnSweepMaxMu.Initialize("btnSweepMaxMu")
 	btnSweepMaxMu.TextColor = ColorAccentAmber
 	btnSweepMaxMu.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepMaxMu.TextSize = 10.5 * sc
+	btnSweepMaxMu.TextSize = 13.5 * sc
 	btnSweepValues.Initialize("btnSweepValues")
 	btnSweepValues.Text = "VALUES"
 	btnSweepValues.TextColor = ColorAccentCyan
 	btnSweepValues.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepValues.TextSize = 10.5 * sc
+	btnSweepValues.TextSize = 13.5 * sc
 	btnSweepTrimHover.Initialize("btnSweepTrimHover")
 	btnSweepTrimHover.TextColor = ColorAccentGreen
 	btnSweepTrimHover.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnSweepTrimHover.TextSize = 9.5 * sc
+	btnSweepTrimHover.TextSize = 13 * sc
 	
 	spnSweepParam.Clear
 	For paramIndex = 0 To RotorPopups.SweepParamLabels.Size - 1
@@ -3314,21 +3314,21 @@ Sub btnViewPolarPlot_Click
 		lblY.Text = "Y-AXIS RESULT"
 		lblY.TextColor = ColorButText2
 		lblY.Typeface = Typeface.DEFAULT_BOLD
-		lblY.TextSize = 9.5 * sc
+		lblY.TextSize = 12.5 * sc
 		pnlControls.AddView(lblY, 12dip, 4dip, root.Width - 24dip, 16dip)
 		pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 46dip * sc)
 		Dim rowWidth As Int = root.Width - 30dip
 		Dim familyW As Int = rowWidth * 0.68
 		Dim valuesW As Int = rowWidth - familyW - 6dip
-		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, familyW, 44dip * sc)
-		pnlControls.AddView(btnSweepValues, 18dip + familyW, 72dip * sc, valuesW, 44dip * sc)
+		pnlControls.AddView(btnSweepMultiModel, 12dip, 72dip * sc, familyW, 48dip * sc)
+		pnlControls.AddView(btnSweepValues, 18dip + familyW, 72dip * sc, valuesW, 48dip * sc)
 		Dim thirdGap As Int = 6dip
 		Dim axisW2 As Int = rowWidth * 0.22
 		Dim rangeW2 As Int = rowWidth * 0.27
 		Dim trimW2 As Int = rowWidth - axisW2 - rangeW2 - 2 * thirdGap
-		pnlControls.AddView(btnSweepXAxis, 12dip, 120dip * sc, axisW2, 44dip * sc)
-		pnlControls.AddView(btnSweepMaxMu, 12dip + axisW2 + thirdGap, 120dip * sc, rangeW2, 44dip * sc)
-		pnlControls.AddView(btnSweepTrimHover, 12dip + axisW2 + rangeW2 + 2 * thirdGap, 120dip * sc, trimW2, 44dip * sc)
+		pnlControls.AddView(btnSweepXAxis, 12dip, 120dip * sc, axisW2, 48dip * sc)
+		pnlControls.AddView(btnSweepMaxMu, 12dip + axisW2 + thirdGap, 120dip * sc, rangeW2, 48dip * sc)
+		pnlControls.AddView(btnSweepTrimHover, 12dip + axisW2 + rangeW2 + 2 * thirdGap, 120dip * sc, trimW2, 48dip * sc)
 	End If
 	
 	UpdateSweepMultiButtonText
@@ -3349,7 +3349,7 @@ Sub btnViewPolarPlot_Click
 	pnlSweepPopup.AddView(pnlFooter, 0, root.Height - footerH, root.Width, footerH)
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
-	lblSweepCurrentVal.TextSize = 9.5 * sc
+	lblSweepCurrentVal.TextSize = 13 * sc
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblSweepCurrentVal.SingleLine = True
@@ -3369,7 +3369,7 @@ Sub btnViewPolarPlot_Click
 	btnPng.TextColor = ColorAccentGreen
 	btnPng.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
 	btnTable.Typeface = Typeface.DEFAULT_BOLD: btnCsv.Typeface = Typeface.DEFAULT_BOLD: btnPng.Typeface = Typeface.DEFAULT_BOLD
-	btnTable.TextSize = 10 * sc: btnCsv.TextSize = 10 * sc: btnPng.TextSize = 10 * sc
+	btnTable.TextSize = 14 * sc: btnCsv.TextSize = 14 * sc: btnPng.TextSize = 14 * sc
 	
 	If ld = 1 Then
 		Dim infoWidth As Int = root.Width * 0.38
@@ -3522,20 +3522,20 @@ Sub btnSweepValues_Click
 	title.Text = "FAMILY VALUES"
 	title.TextColor = ColorAccentCyan
 	title.Typeface = Typeface.DEFAULT_BOLD
-	title.TextSize = 13
+	title.TextSize = 15
 	card.AddView(title, 16dip, 12dip, cardW-32dip, 28dip)
 	Dim hint As Label
 	hint.Initialize("")
 	hint.Text = "Enter 1–9 values separated by commas. Example: -10, -5, 0, 5, 10"
 	hint.TextColor = ColorButText2
-	hint.TextSize = 10.5
+	hint.TextSize = 12.5
 	hint.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	card.AddView(hint, 16dip, 44dip, cardW-32dip, 40dip)
 	edtSweepValues.Initialize("")
 	edtSweepValues.Text = CurrentSweepFamilyText
 	edtSweepValues.TextColor = ColorEdtText
 	edtSweepValues.Color = ColorEdt
-	edtSweepValues.TextSize = 13
+	edtSweepValues.TextSize = 15
 	edtSweepValues.SingleLine = True
 	card.AddView(edtSweepValues, 16dip, 90dip, cardW-32dip, 48dip)
 	Dim btnCancel As Button = CreateRowButton("CANCEL", "btnCancelSweepValues")
@@ -3695,7 +3695,7 @@ Private Sub OpenSweepTablePopup
 	title.Text = "SWEEP DATA · " & SweepParamSelectedKey
 	title.TextColor = ColorAccentCyan
 	title.Typeface = Typeface.DEFAULT_BOLD
-	title.TextSize = 13
+	title.TextSize = 15
 	title.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	header.AddView(title, 16dip, 0, root.Width-72dip, headerH)
 	Dim close As Button
