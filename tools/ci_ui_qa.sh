@@ -300,12 +300,14 @@ capture_screen() {
   local W="${SIZE%x*}"
   local H="${SIZE#*x}"
   local ROTOR_LABEL="Sikorsky UH-60 Black Hawk"
-  local SOLVED_RPM_LABEL="Solved RPM"
-  local SOUND_SPEED_LABEL="Speed of Sound"
+  local SOLVED_RPM_LABEL="RPM — Solved Speed"
+  local SOUND_SPEED_LABEL="a — Speed of Sound"
   if [ "$W" -le 430 ]; then ROTOR_LABEL="UH-60"; fi
-  if [ "$W" -le 380 ]; then
+  if [ "$W" -le 360 ]; then
     SOLVED_RPM_LABEL="RPM"
-    SOUND_SPEED_LABEL="Sound Speed"
+    SOUND_SPEED_LABEL="a"
+  elif [ "$W" -le 430 ]; then
+    SOLVED_RPM_LABEL="RPM — Solved"
   fi
 
   adb shell wm size "$SIZE"
@@ -602,10 +604,10 @@ functional_smoke() {
   python3 /tmp/tap_text.py RESULTS
   sleep 0.8
   assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" 393 873 "09-coefficients"
-  assert_text_scrolling_down "$OUT" "Solved RPM" 393 873 "10-solved-rpm"
-  assert_text_scrolling_down "$OUT" "Collective Increment (Δθ)" 393 873 "11-solved-collective"
-  assert_text_scrolling_down "$OUT" "Solved CT" 393 873 "12-solved-ct"
-  assert_text_scrolling_down "$OUT" "Solved Thrust" 393 873 "13-solved-thrust"
+  assert_text_scrolling_down "$OUT" "RPM — Solved" 393 873 "10-solved-rpm"
+  assert_text_scrolling_down "$OUT" "Δθ — Collective" 393 873 "11-solved-collective"
+  assert_text_scrolling_down "$OUT" "CT — Solved" 393 873 "12-solved-ct"
+  assert_text_scrolling_down "$OUT" "T — Solved" 393 873 "13-solved-thrust"
 
   # Settings: exercise all persistent presentation options.
   adb shell input tap 369 28
@@ -858,7 +860,7 @@ functional_smoke() {
     "In-Plane Force H (N)"
     "B — Tip-Loss Factor"
     "Tip Speed ΩR (m/s)"
-    "Solved RPM"
+    "RPM — Solved Speed"
     "Solved Collective Δθ (deg)"
     "μ — Advance Ratio"
     "Vx — Forward Speed (m/s)"
