@@ -5,6 +5,19 @@
 > **Numerical reference:** `tools/zBET.py`  
 > **UI reference:** AeroCalculator interaction principles, adapted for RotorCalculator.
 
+### Visual system convergence with AeroCalculator
+
+- [x] Treat AeroCalculator as the interaction grammar: stable engineering columns, direct selectors and predictable unit controls.
+- [ ] Replace painted clickable Labels with native Buttons for every Geometry/Conditions label and unit.
+- [ ] Keep every normal selector row on the same label/value/unit grid; preserve the unit-column footprint even when there is no convertible unit.
+- [ ] Make Derived Geometry visually read-only while preserving the exact column grid.
+- [ ] Redesign Results as quantity/value/unit columns and remove units from numerical strings.
+- [ ] Remove legacy UI naming indirection; use canonical zBET/zBEMT symbol-first names at source.
+- [ ] Add three-level responsive nomenclature: symbol, compact, full.
+- [ ] Raise section/status typography and preserve 48 dp targets rather than shrinking the interface.
+- [ ] Extend static QA for native controls/canonical names and runtime QA for alignment, result units, responsive labels and 130% font scale.
+- [ ] Final gate: compile exact main, install, operate every screen and inspect real screenshots across the target matrix.
+
 ## 1. Final architecture
 
 RotorCalculator has three primary tabs:
