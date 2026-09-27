@@ -2148,7 +2148,7 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "CMx — Roll Moment": Return "Rotor rolling-moment coefficient about the x axis."
 		Case "CMy — Pitch Moment": Return "Rotor pitching-moment coefficient about the y axis."
 		Case "CPair — Air Power": Return "Air-power coefficient from induced, axial-flow, profile and translational energy terms."
-		Case "FoM — Figure of Merit": Return "Hover efficiency metric using ideal induced power divided by Kind·ideal induced power plus profile power."
+		Case "FoM — Figure of Merit": Return "Hover efficiency metric using ideal induced power divided by K_ind·ideal induced power plus profile power."
 		Case "L/D eff — Effective L/D": Return "(L/D)eff = μ CT / CPair = T Vx / Pair when the forward-power interpretation is applicable."
 		Case "λ — Total Inflow": Return "λ = μz + λi."
 		Case "λi — Induced Inflow": Return "Positive induced downwash inflow ratio."
@@ -2354,19 +2354,35 @@ End Sub
 ' AERODYNAMIC CALCULATION & TELEMETRY MAPPING
 ' ====================================================================
 Private Sub ResultDefaultUnit(Index As Int) As String
-	Select Index
-		Case 0, 3, 4, 29: Return IIf(UnitSystem = 0, "N", "lbf")
-		Case 1: Return IIf(UnitSystem = 0, "kW", "hp")
-		Case 2, 5, 6: Return IIf(UnitSystem = 0, "N·m", "lb·ft")
-		Case 24, 27, 34: Return "deg"
-		Case 26: Return "rpm"
-		Case 31, 33, 35, 42: Return IIf(UnitSystem = 0, "m/s", "ft/s")
-		Case 38: Return IIf(UnitSystem = 0, "m", "ft")
-		Case 39: Return IIf(UnitSystem = 0, "°C", "°F")
-		Case 40: Return IIf(UnitSystem = 0, "kg/m³", "slug/ft³")
-		Case 41: Return IIf(UnitSystem = 0, "hPa", "inHg")
-		Case Else: Return "[-]"
-	End Select
+	If UnitSystem = 0 Then
+		Select Index
+			Case 0, 3, 4, 29: Return "N"
+			Case 1: Return "kW"
+			Case 2, 5, 6: Return "N·m"
+			Case 24, 27, 34: Return "deg"
+			Case 26: Return "rpm"
+			Case 31, 33, 35, 42: Return "m/s"
+			Case 38: Return "m"
+			Case 39: Return "°C"
+			Case 40: Return "kg/m³"
+			Case 41: Return "hPa"
+			Case Else: Return "[-]"
+		End Select
+	Else
+		Select Index
+			Case 0, 3, 4, 29: Return "lbf"
+			Case 1: Return "hp"
+			Case 2, 5, 6: Return "lb·ft"
+			Case 24, 27, 34: Return "deg"
+			Case 26: Return "rpm"
+			Case 31, 33, 35, 42: Return "ft/s"
+			Case 38: Return "ft"
+			Case 39: Return "°F"
+			Case 40: Return "slug/ft³"
+			Case 41: Return "inHg"
+			Case Else: Return "[-]"
+		End Select
+	End If
 End Sub
 
 Private Sub SetResultCell(Index As Int, ValueText As String, UnitText As String)
@@ -2977,7 +2993,7 @@ Sub lblRowTip_Click
 		Case "Target Thrust"
 			tipMsg = "Prescribed dimensional rotor thrust for the selected operating pair."
 		Case "K_ind"
-			tipMsg = "Induced-power factor Kind used in induced power and air-power calculations. Typical ideal value is 1; practical values are greater than 1."
+			tipMsg = "Induced-power factor K_ind used in induced power and air-power calculations. Typical ideal value is 1; practical values are greater than 1."
 		Case "Airfoil"
 			tipMsg = "Section preset. Selecting it populates a0 and Cd0; the numerical values remain visible."
 		Case "Tip Loss"
