@@ -150,18 +150,21 @@ def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
 
 def test_geometry_and_conditions_use_aerocalculator_row_contract():
     main = text("RotorCalculator.b4a")
-    assert 'lblUnit.Initialize("unitRow")' in main
-    assert 'u.Initialize("unitRow")' in main
+    assert "Sub CreateRowLabel(txt As String, evt As String) As Button" in main
+    assert "Sub CreateUnitButton(field As String, unitText As String) As Button" in main
     assert "Sub unitRow_Click" in main
+    assert "Dim u As Button = Sender" in main
+    assert "Dim b As Button = Sender" in main
     assert "Private Sub UnitChoices" in main
     assert "pnl.Width * 31 / 100" in main
     assert "pnl.Width * 39 / 100" in main
     assert "pnl.Width * 20 / 100" in main
     assert 'btnHorizontalInput.Initialize("btnHorizontalInput")' in main
     assert 'btnAxialInput.Initialize("btnAxialInput")' in main
-    assert 'Dim lblHorizontal As Label = CreateRowLabel("Horizontal Flow"' not in main
-    assert 'Dim lblAxial As Label = CreateRowLabel("Axial Flow"' not in main
-    assert 'Return "CT — Thrust"' in main
+    assert 'CreateUnitButton("Airfoil", "—")' in main
+    assert 'CreateUnitButton("Operating Inputs", "—")' in main
+    assert "Dim lblUnit As Label" not in main
+    assert "Dim lbl As Label = CreateRowLabel" not in main
 
 def test_axial_sign_convention_matches_requirements():
     main = text("RotorCalculator.b4a")
@@ -230,7 +233,8 @@ def test_numerical_vectorial_profile_drag_is_authoritative():
 def test_kind_is_condition_input():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
-    assert '"Induced Factor Kind"' in main
+    assert '"K_ind"' in main
+    assert '"Induced Factor Kind"' not in main
     assert "Sub edtKInd_TextChanged" in main
     assert "ActiveCond.KInd = ClampD" in main
     assert "c.KInd = Max(1.0, Min(3.0, c.KInd))" in engine
@@ -253,7 +257,7 @@ def test_results_group_all_coefficients_together():
         17: "ActiveRes.CPair",
     }
     for index, source in expected.items():
-        assert f"lblResults({index}).Text = FormatOutputValue({source}" in main
+        assert f"SetResultCell({index}, FormatOutputValue({source}" in main
 
 
 def test_results_include_operating_solution_and_atmosphere():
@@ -442,14 +446,16 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
   local TEXT="$1"
   local W="$2"
   local H="$3"''' in qa
-    assert 'local SOLVED_RPM_LABEL="Solved RPM"' in qa
-    assert 'local SOUND_SPEED_LABEL="Speed of Sound"' in qa
-    assert 'if [ "$W" -le 380 ]; then' in qa
+    assert 'local SOLVED_RPM_LABEL="RPM — Solved Speed"' in qa
+    assert 'local SOUND_SPEED_LABEL="a — Speed of Sound"' in qa
+    assert 'if [ "$W" -le 360 ]; then' in qa
     assert 'SOLVED_RPM_LABEL="RPM"' in qa
-    assert 'SOUND_SPEED_LABEL="Sound Speed"' in qa
+    assert 'SOUND_SPEED_LABEL="a"' in qa
+    assert 'elif [ "$W" -le 430 ]; then' in qa
+    assert 'SOLVED_RPM_LABEL="RPM — Solved"' in qa
     assert 'assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"' in qa
     assert 'assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"' in qa
-    assert 'assert_text_scrolling_down "$OUT" "Collective Increment (Δθ)" 393 873 "11-solved-collective"' in qa
+    assert 'assert_text_scrolling_down "$OUT" "Δθ — Collective" 393 873 "11-solved-collective"' in qa
     assert 'APK="${1:-${APK:-ci-apk/RotorCalculator-ci.apk}}"' in qa
     assert "cat > /tmp/ui_node.py <<'PY'" in qa
     assert "cat > /tmp/tap_text.py <<'PY'" in qa
@@ -527,13 +533,32 @@ def test_import_validates_domains_before_resolving_geometry():
 
 def test_results_show_four_operating_solution_variables_as_rows():
     main = text("RotorCalculator.b4a")
-    for label in ("Solved RPM", "Collective Increment (Δθ)", "Solved CT", "Solved Thrust"):
+    for label in ("RPM — Solved Speed", "Δθ — Collective Increment", "CT — Solved", "T — Solved Thrust"):
         assert f'"{label}"' in main
     assert "Private lblResults(43) As Label" in main
-    assert "lblResults(26).Text = FormatOutputValue(ActiveRes.TrimmedRPM" in main
-    assert "lblResults(27).Text = FormatOutputValue(ActiveRes.TrimmedCollectiveDeg" in main
-    assert "lblResults(28).Text = FormatOutputValue(ActiveRes.CT" in main
-    assert "lblResults(29).Text = FormatOutputValue(ActiveRes.ThrustN" in main
+    assert "Private lblResultUnits(43) As Label" in main
+    assert "SetResultCell(26, FormatOutputValue(ActiveRes.TrimmedRPM" in main
+    assert "SetResultCell(27, FormatOutputValue(ActiveRes.TrimmedCollectiveDeg" in main
+    assert "SetResultCell(28, FormatOutputValue(ActiveRes.CT" in main
+    assert "SetResultCell(29, FormatOutputValue(ActiveRes.ThrustN" in main
+
+
+def test_premium_visual_contract_is_enforced_in_source():
+    main = text("RotorCalculator.b4a")
+    req = text("docs/software_requirements.md")
+    assert "Private lblResultUnits(43) As Label" in main
+    assert "row.Width*49/100" in main
+    assert "row.Width*25/100" in main
+    assert "row.Width*16/100" in main
+    assert 'SetResultCell(0, FormatOutputValue(ActiveRes.ThrustN, 0), "N")' in main
+    assert 'SetResultCell(42, FormatOutputValue(ActiveRes.SpeedOfSound, 1), "m/s")' in main
+    assert '"Thrust Coef (CT)"' not in main
+    assert '"Torque Coef (CQ)"' not in main
+    assert '"Induced Factor Kind"' not in main
+    assert "If root.Width <= 360dip Then" in main
+    assert "If root.Width <= 430dip Then" in main
+    assert "**UX-21**" in req and "**UX-28**" in req
+    assert "**QA-15**" in req and "**QA-19**" in req
 
 
 def test_flow_equivalents_get_dedicated_mobile_second_line():
