@@ -215,6 +215,9 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **PLOT-20** — PNG shall export the displayed graph with theme, axes, title, legend, and active marker.
 - **PLOT-21** — CSV/PNG shall use Android Storage Access Framework.
 - **PLOT-22** — Plot selections and family values shall survive Activity recreation during the app session.
+- **PLOT-23** — Sweep/plot variable names shall derive from one canonical symbol-first catalog shared with Results. Unit-specific variants may append the unit in brackets, but shall not introduce an alternate physical name for the same quantity.
+- **PLOT-24** — Plot title, tick labels, axis title, current-value footer, legend, selector controls, TABLE/CSV/PNG controls, and family-value dialogs shall remain readable on phones. The plot shall reserve enough margin/legend band for larger text rather than shrinking engineering text into caption-sized labels.
+- **PLOT-25** — The responsive legend shall remain outside the data rectangle and shall increase its row spacing as needed to avoid overlap when text size increases.
 
 ## 6. Geometry backup and sharing
 
@@ -291,3 +294,5 @@ The following requirements are mandatory and take precedence over older Geometry
 - **QA-17** — Runtime QA shall verify that Results render quantity, value and unit as three separate aligned cells, including SI/Imperial switching and invalid operating points.
 - **QA-18** — Static QA shall reject deprecated UI source names when a canonical symbol-first name is defined. Runtime QA shall verify responsive naming at compact, standard-phone and tablet widths.
 - **QA-19** — Visual review shall explicitly inspect information hierarchy, whitespace rhythm, press feedback, text clipping, font scale 130%, and portrait/landscape consistency rather than only checking that controls exist.
+- **QA-20** — Static QA shall verify that Sweep labels and plot titles come from one canonical naming function and shall reject duplicated legacy label maps.
+- **QA-21** — Runtime visual QA shall inspect the Parameter Sweep at compact phone, standard phone and landscape widths, including tick labels, axis/title text, legend spacing, footer values and export buttons.
