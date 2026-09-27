@@ -92,60 +92,55 @@ Public Sub Initialize
 		SweepParamKeys.Initialize
 		SweepParamLabels.Initialize
 		
-		AddSweepParam("CT", "CT — Thrust")
-		AddSweepParam("CP", "CQ / CPshaft — Shaft Power")
-		AddSweepParam("CQi", "CQi — Induced Torque")
-		AddSweepParam("CQ0", "CQ0 — Profile Torque")
-		AddSweepParam("CH", "CH — In-Plane Force")
-		AddSweepParam("CHi", "CHi — Induced In-Plane")
-		AddSweepParam("CH0", "CH0 — Profile In-Plane")
-		AddSweepParam("CY", "CY — Side Force")
-		AddSweepParam("CMx", "CMx — Roll Moment")
-		AddSweepParam("CMy", "CMy — Pitch Moment")
-		AddSweepParam("CPair", "CPair — Air Power")
-		AddSweepParam("lambda", "λ — Total Inflow")
-		AddSweepParam("lambda_i", "λi — Induced Inflow")
-		AddSweepParam("L_D_eff", "L/D eff — Rotor Efficiency")
-		AddSweepParam("FoM", "FoM — Figure of Merit")
-		AddSweepParam("Kx", "Kx — Longitudinal Inflow")
-		AddSweepParam("Ky", "Ky — Lateral Inflow")
-		AddSweepParam("chi", "χ — Wake Skew (°)")
-		AddSweepParam("Mat", "Mat — Advancing Tip Mach")
-		AddSweepParam("PowerKW", "Shaft Power (kW)")
-		AddSweepParam("PowerHP", "Shaft Power (HP)")
-		AddSweepParam("ThrustN", "Thrust (N)")
-		AddSweepParam("ThrustKgf", "Thrust (kgf)")
-		AddSweepParam("TorqueNm", "Torque (N·m)")
-		AddSweepParam("DragHN", "In-Plane Force H (N)")
-		AddSweepParam("B", "B — Tip-Loss Factor")
-		AddSweepParam("TipSpeed", "Tip Speed ΩR (m/s)")
-		AddSweepParam("RPM", "Solved RPM")
-		AddSweepParam("Collective", "Solved Collective Δθ (deg)")
-		AddSweepParam("Mu", "μ — Advance Ratio")
-		AddSweepParam("Vx", "Vx — Forward Speed (m/s)")
-		AddSweepParam("MuZ", "μz — Axial Ratio")
-		AddSweepParam("Vz", "Vz — Axial Speed (m/s)")
-		AddSweepParam("Alpha", "α — Rotor AoA (deg)")
-		AddSweepParam("Altitude", "Altitude (m)")
-		AddSweepParam("Temperature", "Temperature (°C)")
-		AddSweepParam("Density", "Air Density ρ (kg/m³)")
-		AddSweepParam("Pressure", "Ambient Pressure (Pa)")
-		AddSweepParam("SoundSpeed", "Speed of Sound (m/s)")
+		AddSweepParam("CT", SweepParamDisplayName("CT"))
+		AddSweepParam("CP", SweepParamDisplayName("CP"))
+		AddSweepParam("CQi", SweepParamDisplayName("CQi"))
+		AddSweepParam("CQ0", SweepParamDisplayName("CQ0"))
+		AddSweepParam("CH", SweepParamDisplayName("CH"))
+		AddSweepParam("CHi", SweepParamDisplayName("CHi"))
+		AddSweepParam("CH0", SweepParamDisplayName("CH0"))
+		AddSweepParam("CY", SweepParamDisplayName("CY"))
+		AddSweepParam("CMx", SweepParamDisplayName("CMx"))
+		AddSweepParam("CMy", SweepParamDisplayName("CMy"))
+		AddSweepParam("CPair", SweepParamDisplayName("CPair"))
+		AddSweepParam("lambda", SweepParamDisplayName("lambda"))
+		AddSweepParam("lambda_i", SweepParamDisplayName("lambda_i"))
+		AddSweepParam("L_D_eff", SweepParamDisplayName("L_D_eff"))
+		AddSweepParam("FoM", SweepParamDisplayName("FoM"))
+		AddSweepParam("Kx", SweepParamDisplayName("Kx"))
+		AddSweepParam("Ky", SweepParamDisplayName("Ky"))
+		AddSweepParam("chi", SweepParamDisplayName("chi"))
+		AddSweepParam("Mat", SweepParamDisplayName("Mat"))
+		AddSweepParam("PowerKW", SweepParamDisplayName("PowerKW"))
+		AddSweepParam("PowerHP", SweepParamDisplayName("PowerHP"))
+		AddSweepParam("ThrustN", SweepParamDisplayName("ThrustN"))
+		AddSweepParam("ThrustKgf", SweepParamDisplayName("ThrustKgf"))
+		AddSweepParam("TorqueNm", SweepParamDisplayName("TorqueNm"))
+		AddSweepParam("DragHN", SweepParamDisplayName("DragHN"))
+		AddSweepParam("B", SweepParamDisplayName("B"))
+		AddSweepParam("TipSpeed", SweepParamDisplayName("TipSpeed"))
+		AddSweepParam("RPM", SweepParamDisplayName("RPM"))
+		AddSweepParam("Collective", SweepParamDisplayName("Collective"))
+		AddSweepParam("Mu", SweepParamDisplayName("Mu"))
+		AddSweepParam("Vx", SweepParamDisplayName("Vx"))
+		AddSweepParam("MuZ", SweepParamDisplayName("MuZ"))
+		AddSweepParam("Vz", SweepParamDisplayName("Vz"))
+		AddSweepParam("Alpha", SweepParamDisplayName("Alpha"))
+		AddSweepParam("Altitude", SweepParamDisplayName("Altitude"))
+		AddSweepParam("Temperature", SweepParamDisplayName("Temperature"))
+		AddSweepParam("Density", SweepParamDisplayName("Density"))
+		AddSweepParam("Pressure", SweepParamDisplayName("Pressure"))
+		AddSweepParam("SoundSpeed", SweepParamDisplayName("SoundSpeed"))
 	End If
 End Sub
 
-Private Sub AddSweepParam(key As String, label As String)
-	SweepParamKeys.Add(key)
-	SweepParamLabels.Add(label)
-End Sub
-
-Private Sub SweepPlotTitle(paramKey As String) As String
+Private Sub SweepParamDisplayName(paramKey As String) As String
 	Select paramKey
 		Case "CT": Return "CT — Thrust"
-		Case "CP", "CQ": Return "CQ / CPshaft — Shaft Power"
+		Case "CP", "CQ": Return "CQ — Torque"
 		Case "CQi": Return "CQi — Induced Torque"
 		Case "CQ0": Return "CQ0 — Profile Torque"
-		Case "CH": Return "CH — In-Plane Force"
+		Case "CH": Return "CH — In-Plane"
 		Case "CHi": Return "CHi — Induced In-Plane"
 		Case "CH0": Return "CH0 — Profile In-Plane"
 		Case "CY": Return "CY — Side Force"
@@ -154,34 +149,43 @@ Private Sub SweepPlotTitle(paramKey As String) As String
 		Case "CPair": Return "CPair — Air Power"
 		Case "lambda": Return "λ — Total Inflow"
 		Case "lambda_i": Return "λi — Induced Inflow"
-		Case "L_D_eff": Return "Effective L/D"
-		Case "FoM": Return "Figure of Merit"
+		Case "L_D_eff": Return "L/D eff — Effective L/D"
+		Case "FoM": Return "FoM — Figure of Merit"
 		Case "Kx": Return "Kx — Longitudinal Inflow"
 		Case "Ky": Return "Ky — Lateral Inflow"
-		Case "chi": Return "χ — Wake Skew (°)"
+		Case "chi": Return "χ — Wake Skew Angle [deg]"
 		Case "Mat": Return "Mat — Advancing Tip Mach"
-		Case "PowerKW": Return "Shaft Power (kW)"
-		Case "PowerHP": Return "Shaft Power (HP)"
-		Case "ThrustN": Return "Thrust (N)"
-		Case "ThrustKgf": Return "Thrust (kgf)"
-		Case "TorqueNm": Return "Torque (N·m)"
-		Case "DragHN": Return "In-Plane Force H (N)"
+		Case "PowerKW": Return "Pshaft — Shaft Power [kW]"
+		Case "PowerHP": Return "Pshaft — Shaft Power [hp]"
+		Case "ThrustN": Return "T — Thrust [N]"
+		Case "ThrustKgf": Return "T — Thrust [kgf]"
+		Case "TorqueNm": Return "Q — Shaft Torque [N·m]"
+		Case "DragHN": Return "H — In-Plane Force [N]"
 		Case "B": Return "B — Tip-Loss Factor"
-		Case "TipSpeed": Return "Tip Speed ΩR (m/s)"
-		Case "RPM": Return "Solved RPM"
-		Case "Collective": Return "Solved Collective Δθ (deg)"
+		Case "TipSpeed": Return "ΩR — Tip Speed [m/s]"
+		Case "RPM": Return "RPM — Solved Speed"
+		Case "Collective": Return "Δθ — Collective Increment [deg]"
 		Case "Mu": Return "μ — Advance Ratio"
-		Case "Vx": Return "Vx — Forward Speed (m/s)"
+		Case "Vx": Return "Vx — Forward Speed [m/s]"
 		Case "MuZ": Return "μz — Axial Ratio"
-		Case "Vz": Return "Vz — Axial Speed (m/s)"
-		Case "Alpha": Return "α — Rotor AoA (deg)"
-		Case "Altitude": Return "Altitude (m)"
-		Case "Temperature": Return "Temperature (°C)"
-		Case "Density": Return "Air Density ρ (kg/m³)"
-		Case "Pressure": Return "Ambient Pressure (Pa)"
-		Case "SoundSpeed": Return "Speed of Sound (m/s)"
+		Case "Vz": Return "Vz — Axial Speed [m/s]"
+		Case "Alpha": Return "α — Rotor AoA [deg]"
+		Case "Altitude": Return "h — Altitude [m]"
+		Case "Temperature": Return "Tair — Temperature [°C]"
+		Case "Density": Return "ρ — Air Density [kg/m³]"
+		Case "Pressure": Return "p — Ambient Pressure [Pa]"
+		Case "SoundSpeed": Return "a — Speed of Sound [m/s]"
 		Case Else: Return paramKey
 	End Select
+End Sub
+
+Private Sub AddSweepParam(key As String, label As String)
+	SweepParamKeys.Add(key)
+	SweepParamLabels.Add(label)
+End Sub
+
+Private Sub SweepPlotTitle(paramKey As String) As String
+	Return SweepParamDisplayName(paramKey)
 End Sub
 
 Public Sub SweepParamDigits(paramKey As String) As Int
@@ -465,7 +469,7 @@ Public Sub DrawSweepPlot( _
 	Dim legendRows As Int = Ceil(nCurves / legendCols)
 	Dim mLeft As Float = 64dip
 	Dim mRight As Float = 22dip
-	Dim mTop As Float = 34dip + legendRows * 15dip
+	Dim mTop As Float = 38dip + legendRows * 18dip
 	Dim mBottom As Float = 44dip
 	Dim plotW As Float = widthPx - mLeft - mRight
 	Dim plotH As Float = heightPx - mTop - mBottom
@@ -525,7 +529,7 @@ Public Sub DrawSweepPlot( _
 		Dim yGridValue As Double = yMin + gridY / 5.0 * (yMax - yMin)
 		Dim yDigits As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
 		Dim yText As String = NumberFormat2(yGridValue, 1, yDigits, yDigits, False)
-		cvs.DrawText(yText, mLeft - 6dip, gy + 4dip, Typeface.MONOSPACE, 9, colText, "RIGHT")
+		cvs.DrawText(yText, mLeft - 6dip, gy + 4dip, Typeface.MONOSPACE, 11, colText, "RIGHT")
 	Next
 	For gridX = 0 To 5
 		Dim gx As Float = mLeft + gridX / 5.0 * plotW
@@ -533,13 +537,13 @@ Public Sub DrawSweepPlot( _
 		Dim xGridValue As Double = gridX / 5.0 * xMax
 		Dim xDigits As Int = 2
 		If xAxisMode = 1 Then xDigits = 1
-		cvs.DrawText(NumberFormat2(xGridValue, 1, xDigits, xDigits, False), gx, mTop + plotH + 18dip, Typeface.MONOSPACE, 9, colText, "CENTER")
+		cvs.DrawText(NumberFormat2(xGridValue, 1, xDigits, xDigits, False), gx, mTop + plotH + 18dip, Typeface.MONOSPACE, 11, colText, "CENTER")
 	Next
 	
-	cvs.DrawText(SweepPlotTitle(paramKey), mLeft, 16dip, Typeface.DEFAULT_BOLD, 11, colAccent, "LEFT")
+	cvs.DrawText(SweepPlotTitle(paramKey), mLeft, 16dip, Typeface.DEFAULT_BOLD, 13, colAccent, "LEFT")
 	Dim xTitle As String = "Advance Ratio μ"
 	If xAxisMode = 1 Then xTitle = "Forward Speed Vx (m/s)"
-	cvs.DrawText(xTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 10, colText, "CENTER")
+	cvs.DrawText(xTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
 	
 	' Curves are stored curve-major, 25 samples per curve.
 	For curveIndex = 0 To nCurves - 1
@@ -571,12 +575,12 @@ Public Sub DrawSweepPlot( _
 		Dim legendRow As Int = Floor(legendIndex / legendCols)
 		Dim legendCol As Int = legendIndex Mod legendCols
 		Dim legendX As Float = mLeft + legendCol * legendCellW
-		Dim legendY As Float = 31dip + legendRow * 15dip
+		Dim legendY As Float = 33dip + legendRow * 18dip
 		Dim legendPoint As SweepPoint = samples.Get(legendIndex * nPoints)
 		Dim legendColor As Int = SweepCurveColor(legendIndex, multiCurveMode, lightTheme)
 		cvs.DrawLine(legendX, legendY, legendX + 9dip, legendY, legendColor, 2.5dip)
-		Dim legendSize As Float = 7.5
-		If legendCols <= 2 Then legendSize = 7
+		Dim legendSize As Float = 9.5
+		If legendCols <= 2 Then legendSize = 10.5
 		cvs.DrawText(legendPoint.CurveLabel, legendX + 12dip, legendY + 4dip, Typeface.DEFAULT_BOLD, legendSize, legendColor, "LEFT")
 	Next
 	
