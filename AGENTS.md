@@ -102,6 +102,21 @@ Antes de concluir qualquer entrega de desenvolvimento:
 - Horizontal Flow usa um único botão de variável para alternar **μ / Vx**. Axial Flow usa um único botão de variável para alternar **α / Vz / μz**.
 - A seleção do rotor ativo deve persistir entre cold restarts, e edições não salvas devem sobreviver à recriação normal da Activity.
 
+## 8. Binding visual design system
+
+- **AeroCalculator is the interaction reference, not a pixel-for-pixel skin.** RotorCalculator shall inherit its disciplined engineering grammar and may modernize color, spacing, hierarchy, and responsive behavior.
+- Geometry and Conditions use one canonical row geometry: **label button | value | unit button**. The three column edges, control heights, and vertical centers are shared across all normal rows.
+- A clickable row label is a real B4A `Button`, not a `Label` painted to resemble one. A clickable unit is also a real `Button`. This guarantees consistent pressed-state feedback, focus behavior, accessibility semantics, and touch behavior.
+- Selector rows use the same three-column geometry. When a selector has no physical unit, the unit column remains present with a neutral non-converting unit control so the page grid never shifts.
+- Derived/read-only quantities preserve the same columns but the center value is visually read-only and must not resemble an editable `EditText`.
+- Results use their own strict three-column presentation: **symbol-first quantity | value | unit**. Units are never concatenated into the numerical value string. Result rows are read-only and visually distinct from input rows.
+- One canonical engineering name is stored for every quantity. Legacy strings such as `Thrust Coef (CT)` or `Induced Factor Kind` shall not be used as hidden UI source names and translated later. Geometry, Conditions, Results, plots, help, tests and exports shall use the same canonical symbols.
+- Responsive naming has three levels: **symbol/very compact** on narrow phones, **compact engineering name** on ordinary phones, and **full engineering name** where width permits. The physical symbol must not change between levels.
+- Visual hierarchy is deliberate: active rotor / primary action > section heading > editable/selectable row > derived/read-only row > secondary status. Small caption typography is not allowed for information that affects engineering interpretation.
+- Normal engineering text shall target approximately 15–16 sp on phones. Section headings and status text shall remain clearly readable and shall not be reduced to 10–11 sp simply to fit more content.
+- The UI may scroll vertically rather than shrinking text or compressing touch targets. Minimum interactive height remains approximately 48 dp.
+- Visual release review shall inspect at least 320, 360, 393, 412, 600 and 768 dp portrait widths plus representative phone/tablet landscape, including 130% font scale. Source inspection alone is not a visual pass.
+
 ## Release artifact hygiene
 
 - The source target is currently RotorCalculator 1.20 (versionCode 3).
