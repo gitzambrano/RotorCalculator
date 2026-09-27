@@ -547,9 +547,9 @@ def test_premium_visual_contract_is_enforced_in_source():
     main = text("RotorCalculator.b4a")
     req = text("docs/software_requirements.md")
     assert "Private lblResultUnits(43) As Label" in main
-    assert "row.Width*49/100" in main
-    assert "row.Width*25/100" in main
-    assert "row.Width*16/100" in main
+    assert "row.Width*47/100" in main
+    assert "row.Width*24/100" in main
+    assert "row.Width*20/100" in main
     assert 'SetResultCell(0, FormatOutputValue(ActiveRes.ThrustN, 0), "N")' in main
     assert 'SetResultCell(42, FormatOutputValue(ActiveRes.SpeedOfSound, 1), "m/s")' in main
     assert '"Thrust Coef (CT)"' not in main
