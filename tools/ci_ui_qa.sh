@@ -330,10 +330,7 @@ capture_screen() {
   grep -qi "COPY" "$OUT/01-geometry-editor-top.json"
   grep -qi "DELETE" "$OUT/01-geometry-editor-top.json"
 
-  for _ in 1 2 3 4 5 6; do
-    adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
-    sleep 0.15
-  done
+  assert_text_scrolling_down "$OUT" "ROTOR AERODYNAMICS" "$W" "$H" "02-geometry-aero"
   safe_screencap "$OUT/03-geometry-editor-bottom.png"
   python3 /tmp/ui_node.py "$OUT/03-geometry-editor-bottom.xml" > "$OUT/03-geometry-editor-bottom.json"
   grep -qi "ROTOR AERODYNAMICS" "$OUT/03-geometry-editor-bottom.json"
