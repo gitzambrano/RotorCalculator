@@ -16,6 +16,11 @@
 - [x] Add three-level responsive nomenclature: symbol, compact, full.
 - [x] Raise section/status typography and preserve 48 dp targets rather than shrinking the interface.
 - [x] Extend static QA for native controls/canonical names and runtime QA for alignment, result units, responsive labels and 130% font scale.
+- [x] Keep Geometry on the same centered tablet content width as Active Rotor, Conditions and Results.
+- [x] Compact Geometry chrome in landscape by sharing one Active Rotor/action band.
+- [x] Add compact 320 dp / 130% wording for Result status and Sweep controls/footer without shrinking touch targets.
+- [x] Reduce normal label/unit visual weight and make Derived Geometry visibly read-only.
+- [x] Remove stale direct-Geometry contradictions from the offline verifier and make the Geometry runtime scroll assertion viewport-aware.
 - [ ] Final gate: compile exact main, install, operate every screen and inspect real screenshots across the target matrix.
 
 ## 1. Final architecture
