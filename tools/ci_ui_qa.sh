@@ -290,16 +290,18 @@ assert_text_scrolling_down() {
   local H="$4"
   local STEM="$5"
   local attempt
-  for attempt in 0 1 2 3 4 5 6; do
+  # Use small deterministic scroll increments. Large half-screen jumps can skip
+  # short section headers entirely on compact displays.
+  for attempt in $(seq 0 20); do
     python3 /tmp/ui_node.py "$OUTDIR/$STEM-$attempt.xml" > "$OUTDIR/$STEM-$attempt.json"
     if grep -Fqi "$TEXT" "$OUTDIR/$STEM-$attempt.json"; then
-      echo "Verified after live resize: $TEXT"
+      echo "Verified after scrolling: $TEXT"
       return 0
     fi
-    adb shell input swipe $((W/2)) $((H*2/3)) $((W/2)) $((H/3)) 180 || true
-    sleep 0.3
+    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*9/20)) 140 || true
+    sleep 0.15
   done
-  echo "Could not verify persisted text after scrolling: $TEXT" >&2
+  echo "Could not verify text after incremental scrolling: $TEXT" >&2
   return 1
 }
 
