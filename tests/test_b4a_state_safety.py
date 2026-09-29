@@ -166,6 +166,22 @@ def test_geometry_and_conditions_use_aerocalculator_row_contract():
     assert "Dim lblUnit As Label" not in main
     assert "Dim lbl As Label = CreateRowLabel" not in main
 
+def test_visual_audit_fixes_tablet_landscape_and_scaled_text():
+    main = text("RotorCalculator.b4a")
+    assert "UiContentW = scvGeom.Width" not in main
+    assert "rotor identity and actions share one 50dip band" in main
+    assert "Dim activeW As Int = UiContentW * 42 / 100" in main
+    assert "lblResultStatus.SingleLine = True" in main
+    assert '"STATUS · PG CAUTION · Mat≥0.80"' in main
+    assert '"SOLUTION · " & OperatingPairDisplayName' in main
+    assert 'btnSweepTrimHover.Text = "HOVER ONLY"' in main
+    assert 'btnSweepTrimHover.Text = "HOVER ONLY ✓"' in main
+    assert 'btnSweepMaxMu.Text = "μ " &' in main
+    assert 'If root.Width <= 360dip Then' in main
+    assert 'value.TextColor = ColorButText2' in main
+    assert 'Public SweepParamSelectedLabel As String = "CQ — Torque"' in main
+
+
 def test_axial_sign_convention_matches_requirements():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
@@ -194,8 +210,8 @@ def test_conditions_expose_all_six_operating_pairs():
 
 def test_only_two_operating_inputs_are_presented_for_selected_pair():
     main = text("RotorCalculator.b4a")
-    assert "Private lblOperatingInput1 As Label" in main
-    assert "Private lblOperatingInput2 As Label" in main
+    assert "Private lblOperatingInput1 As Button" in main
+    assert "Private lblOperatingInput2 As Button" in main
     assert "Private edtOperatingInput1 As EditText" in main
     assert "Private edtOperatingInput2 As EditText" in main
     assert "Private Sub PairInputName" in main
