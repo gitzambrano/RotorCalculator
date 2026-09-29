@@ -272,6 +272,11 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-26** — Canonical UI names shall be authored once. The implementation shall not create rows with deprecated names and translate them later solely for display. The canonical symbol/name shall be shared by Results, tooltips, plots, tables, CSV and QA.
 - **UX-27** — Visual hierarchy shall distinguish editable, selectable, derived/read-only and status information. Derived/read-only values shall be visually quieter than editable values, while primary actions and current-rotor identity shall remain immediately discoverable.
 - **UX-28** — The UI shall prefer scrolling over shrinking text or touch targets. Normal engineering labels, values, units and Results shall remain approximately 15–16 sp on phone layouts; critical status/section text shall remain comfortably readable and shall not use 10–11 sp caption sizing.
+- **UX-29** — Geometry shall use the same centered maximum content width as Active Rotor, Conditions and Results on screens wider than the phone layout. The form grid shall not expand to full tablet width beneath a narrower Active Rotor/action block.
+- **UX-30** — In landscape, Geometry shall reduce non-engineering chrome before reducing text or touch targets. Active Rotor and SAVE/COPY/DELETE shall share one compact horizontal band when sufficient width exists, preserving approximately 48 dp action targets.
+- **UX-31** — At 320 dp width with Android font scale 130%, status and Sweep controls shall use responsive compact wording/reflow rather than clipped text or smaller fonts. Result status shall remain single-line and Sweep range, hover-trim and active-state text shall fit their assigned controls.
+- **UX-32** — Normal label and unit controls shall remain visibly actionable but shall be visually subordinate to editable values and model/action selectors. Derived Geometry shall use a quieter read-only treatment while retaining aligned actionable help/unit controls.
+- **UX-33** — Rotor Name is textual metadata rather than a physical scalar. On the narrowest phone layouts its editable text may use a slightly more compact responsive text size while retaining the same row grid and touch geometry.
 
 ## 9. Verification/release
 
@@ -296,3 +301,7 @@ The following requirements are mandatory and take precedence over older Geometry
 - **QA-19** — Visual review shall explicitly inspect information hierarchy, whitespace rhythm, press feedback, text clipping, font scale 130%, and portrait/landscape consistency rather than only checking that controls exist.
 - **QA-20** — Static QA shall verify that Sweep labels and plot titles come from one canonical naming function and shall reject duplicated legacy label maps.
 - **QA-21** — Runtime visual QA shall inspect the Parameter Sweep at compact phone, standard phone and landscape widths, including tick labels, axis/title text, legend spacing, footer values and export buttons.
+- **QA-22** — Runtime visual QA shall compare Geometry content edges with the Active Rotor/action block at 600–768 dp portrait widths and fail visible full-width expansion of the form.
+- **QA-23** — Runtime visual QA shall inspect Geometry at representative phone landscape sizes and verify that Active Rotor plus SAVE/COPY/DELETE do not consume a second full vertical band.
+- **QA-24** — Runtime visual QA shall inspect 320×568 at 130% font scale and fail clipping/wrapping of Result status, Sweep range/hover controls, or the active Sweep footer.
+- **QA-25** — Static/source QA shall reject reintroduction of the removed Geometry popup/library architecture and stale canonical sweep labels.
