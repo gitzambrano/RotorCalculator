@@ -348,7 +348,7 @@ capture_screen() {
   done
   safe_screencap "$OUT/04-conditions-bottom.png"
   python3 /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
-  grep -qi "Operating" "$OUT/04-conditions-bottom.json"
+  grep -Fqi "RPM + CT" "$OUT/04-conditions-bottom.json"
   grep -qi "Numerical Vectorial" "$OUT/04-conditions-bottom.json"
 
   python3 /tmp/tap_text.py RESULTS
@@ -378,7 +378,7 @@ capture_screen() {
   assert_app_alive
 
   python3 /tmp/check_bounds.py "$OUT/01-geometry-editor-top.png" "$OUT"
-  python3 /tmp/check_bounds.py "$OUT/02-geometry-editor-top.png" "$OUT"
+  python3 /tmp/check_bounds.py "$OUT/03-geometry-editor-bottom.png" "$OUT"
   adb shell am force-stop flightdyn.rotorcalculator
 }
 
