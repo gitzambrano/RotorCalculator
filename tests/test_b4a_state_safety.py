@@ -481,6 +481,11 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
   local TEXT="$1"
   local W="$2"
   local H="$3"''' in qa
+    assert '''scroll_to_top() {
+  local W="$1"
+  local H="$2"''' in qa
+    assert 'scroll_to_top "$W" "$H"' in qa
+    assert 'scroll_to_top 393 873' in qa
     assert 'local SOLVED_RPM_LABEL="RPM — Solved Speed"' in qa
     assert 'local SOUND_SPEED_LABEL="a — Speed of Sound"' in qa
     assert 'if [ "$W" -le 360 ]; then' in qa
