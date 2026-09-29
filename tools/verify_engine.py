@@ -140,15 +140,15 @@ def verify_ui_source_contract() -> None:
     if missing:
         raise AssertionError("Rotor storage contract missing: " + " | ".join(missing))
 
-    for token in ("rotor library", "geometry popup", "six operating pairs", "universal plots"):
+    for token in ("direct in-page rotor editor", "active rotor", "six operating pairs", "universal plots"):
         if token not in plan:
             raise AssertionError(f"plan contract missing: {token}")
-    for token in ("rotor library", "geometry popup", "**geo-6**", "**ux-7**", "**qa-9**"):
+    for token in ("active rotor", "**geo-6**", "**ux-9**", "**ux-29**", "**qa-9**"):
         if token not in requirements:
             raise AssertionError(f"requirements contract missing: {token}")
 
-    # Every Results row must receive a value somewhere in the valid-results path.
-    assigned = {int(x) for x in re.findall(r"lblResults\((\d+)\)\.Text\s*=", main)}
+    # Every Results row must receive a value through the authoritative value/unit cell helper.
+    assigned = {int(x) for x in re.findall(r"SetResultCell\((\d+),", main)}
     expected = set(range(43))
     if assigned != expected:
         missing_indices = sorted(expected - assigned)
