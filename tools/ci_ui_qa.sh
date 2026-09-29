@@ -354,13 +354,12 @@ capture_screen() {
   grep -Eq '"text": "(μ|Vx)"' "$OUT/03-conditions-top.json"
   grep -Eq '"text": "(α|Vz|μz)"' "$OUT/03-conditions-top.json"
 
-  for _ in 1 2 3 4; do
-    adb shell input swipe $((W/2)) $((H*4/5)) $((W/2)) $((H/4)) 260 || true
-    sleep 0.15
-  done
+  # Verify both lower Conditions sections independently. On short landscape
+  # viewports the operating pair and Profile Drag cannot remain visible together.
+  assert_text_scrolling_down "$OUT" "RPM + CT" "$W" "$H" "04-operating-pair"
+  assert_text_scrolling_down "$OUT" "Numerical Vectorial" "$W" "$H" "04-profile-drag"
   safe_screencap "$OUT/04-conditions-bottom.png"
   python3 /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
-  grep -Fqi "RPM + CT" "$OUT/04-conditions-bottom.json"
   grep -qi "Numerical Vectorial" "$OUT/04-conditions-bottom.json"
 
   python3 /tmp/tap_text.py RESULTS
