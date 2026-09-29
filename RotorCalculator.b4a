@@ -135,7 +135,7 @@ Sub Process_Globals
 	Public SweepVzValues As String = "-10,-5,0,5,10"
 	Public SweepMuZValues As String = "-0.05,-0.025,0,0.025,0.05"
 	Public SweepParamSelectedKey As String = "CP"
-	Public SweepParamSelectedLabel As String = "CQ / CPshaft — Shaft Power"
+	Public SweepParamSelectedLabel As String = "CQ — Torque"
 	Private ion As Object ' Storage Access Framework activity-result callback
 
 End Sub
@@ -1268,14 +1268,11 @@ Private Sub BuildPageGeom
 	btnActiveRotor.Gravity = Gravity.CENTER
 	btnActiveRotor.SingleLine = True
 	btnActiveRotor.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	pnlBack0.AddView(btnActiveRotor, UiContentLeft + 10dip, topY, UiContentW - 20dip, topH)
 	
 	Dim actionBar As Panel
 	actionBar.Initialize("")
 	actionBar.Color = ColorPnlInput5
-	pnlBack0.AddView(actionBar, UiContentLeft, topY + topH + 4dip, UiContentW, actionsH)
 	Dim gap As Int = 8dip
-	Dim bw As Int = (UiContentW - gap * 4) / 3
 	Dim bSave As Button = CreateRowButton("SAVE", "btnGeometrySave")
 	Dim bCopy As Button = CreateRowButton("COPY", "btnGeometryCopy")
 	Dim bDelete As Button = CreateRowButton("DELETE", "btnGeometryDelete")
@@ -1286,11 +1283,31 @@ Private Sub BuildPageGeom
 		bDelete.Enabled = False
 		bDelete.TextColor = ColorButText2
 	End If
-	actionBar.AddView(bSave, gap, 3dip, bw, 48dip)
-	actionBar.AddView(bCopy, gap * 2 + bw, 3dip, bw, 48dip)
-	actionBar.AddView(bDelete, gap * 3 + bw * 2, 3dip, bw, 48dip)
 	
-	Dim editorTop As Int = topY + topH + actionsH + 8dip
+	Dim editorTop As Int
+	If ld = 1 Then
+		' Landscape has little vertical room: rotor identity and actions share one 50dip band.
+		Dim activeW As Int = UiContentW * 42 / 100
+		Dim actionLeft As Int = UiContentLeft + activeW + 6dip
+		Dim actionW As Int = UiContentW - activeW - 6dip
+		pnlBack0.AddView(btnActiveRotor, UiContentLeft, topY, activeW, topH)
+		pnlBack0.AddView(actionBar, actionLeft, topY, actionW, topH)
+		Dim gapL As Int = 5dip
+		Dim bwL As Int = (actionW - gapL * 2) / 3
+		actionBar.AddView(bSave, 0, 1dip, bwL, 48dip)
+		actionBar.AddView(bCopy, bwL + gapL, 1dip, bwL, 48dip)
+		actionBar.AddView(bDelete, 2 * (bwL + gapL), 1dip, actionW - 2 * (bwL + gapL), 48dip)
+		editorTop = topY + topH + 6dip
+	Else
+		pnlBack0.AddView(btnActiveRotor, UiContentLeft + 10dip, topY, UiContentW - 20dip, topH)
+		pnlBack0.AddView(actionBar, UiContentLeft, topY + topH + 4dip, UiContentW, actionsH)
+		Dim bw As Int = (UiContentW - gap * 4) / 3
+		actionBar.AddView(bSave, gap, 3dip, bw, 48dip)
+		actionBar.AddView(bCopy, gap * 2 + bw, 3dip, bw, 48dip)
+		actionBar.AddView(bDelete, gap * 3 + bw * 2, 3dip, bw, 48dip)
+		editorTop = topY + topH + actionsH + 8dip
+	End If
+	
 	scvGeom.Initialize(3000dip)
 	pnlBack0.AddView(scvGeom, 0, editorTop, root.Width, Max(120dip, root.Height - HeaderHeight - editorTop))
 	BuildGeometryEditorContent
@@ -1315,10 +1332,6 @@ End Sub
 
 
 Private Sub BuildGeometryEditorContent
-	Dim oldLeft As Int = UiContentLeft
-	Dim oldWidth As Int = UiContentW
-	UiContentLeft = 0
-	UiContentW = scvGeom.Width
 	Dim y As Int = 8dip
 	Dim rowIndex As Int = 0
 	Dim rowH As Int = 57dip
@@ -1375,8 +1388,6 @@ Private Sub BuildGeometryEditorContent
 	y=y+rowH
 	
 	scvGeom.Panel.Height = y + 18dip
-	UiContentLeft = oldLeft
-	UiContentW = oldWidth
 End Sub
 
 Private Sub AddGeometrySectionHeader(y As Int, title As String) As Int
@@ -1417,11 +1428,13 @@ End Sub
 
 Sub AddDerivedRow(pnl As Panel, title As String, unit As String) As Label
 	Dim lbl As Button = CreateRowLabel(title, "lblRowTip")
+	lbl.TextColor = ColorButText2
+	lbl.Background = ButtonGradient(Array As Int(ColorPnlInput1, ColorPnlInput2), Array As Int(ColorPnlInput2, ColorBut1))
 	pnl.AddView(lbl, pnl.Width*3/100, 4dip, pnl.Width*31/100, 48dip)
 	Dim value As Label
 	value.Initialize("")
 	value.Text = "---"
-	value.TextColor = ColorAccentCyan
+	value.TextColor = ColorButText2
 	value.Typeface = Typeface.DEFAULT_BOLD
 	value.TextSize = 16 * sc
 	value.Gravity = Gravity.CENTER
@@ -1429,6 +1442,8 @@ Sub AddDerivedRow(pnl As Panel, title As String, unit As String) As Label
 	value.Color = Colors.Transparent
 	pnl.AddView(value, pnl.Width*36/100, 4dip, pnl.Width*39/100, 48dip)
 	Dim u As Button = CreateUnitButton(title, unit)
+	u.TextColor = ColorButText2
+	u.Background = ButtonGradient(Array As Int(ColorPnlInput1, ColorPnlInput2), Array As Int(ColorPnlInput2, ColorBut1))
 	pnl.AddView(u, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	Return value
 End Sub
@@ -1682,6 +1697,7 @@ Private Sub BuildPageRes
 	lblResultStatus.Typeface = Typeface.DEFAULT_BOLD
 	lblResultStatus.TextSize = 13.5 * sc
 	lblResultStatus.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	lblResultStatus.SingleLine = True
 	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + UiContentW*4/100, 60dip, UiContentW*92/100, 30dip)
 	
 	lblTrimSummary.Initialize("lblTrimSummary")
@@ -1978,7 +1994,11 @@ Sub AddTextInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVa
 	UpdatingUI = True
 	edt.Text = defVal
 	UpdatingUI = wasUpdating
-	edt.TextSize = 16 * sc
+	If root.Width <= 360dip And lblText = "Rotor Name" Then
+		edt.TextSize = 14.5
+	Else
+		edt.TextSize = 16 * sc
+	End If
 	edt.TextColor = ColorEdtText
 	edt.Color = ColorEdt
 	edt.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
@@ -2021,8 +2041,8 @@ Sub CreateRowLabel(txt As String, evt As String) As Button
 	btn.Text = InputDisplayLabel(txt)
 	If root.Width <= 360dip Then btn.TextSize = 14.5 Else btn.TextSize = 15 * sc
 	btn.Typeface = Typeface.DEFAULT_BOLD
-	btn.TextColor = ColorButText1
-	btn.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	btn.TextColor = ColorTitleText
+	btn.Background = ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle))
 	btn.Gravity = Gravity.CENTER
 	btn.SingleLine = True
 	btn.Tag = txt
@@ -2037,8 +2057,8 @@ Sub CreateUnitButton(field As String, unitText As String) As Button
 	If unitText = "—" Then btn.Text = "—"
 	If root.Width <= 360dip Then btn.TextSize = 14.5 Else btn.TextSize = 15 * sc
 	btn.Typeface = Typeface.DEFAULT_BOLD
-	btn.TextColor = ColorButText1
-	btn.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	btn.TextColor = ColorButText2
+	btn.Background = ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle))
 	btn.Gravity = Gravity.CENTER
 	btn.SingleLine = True
 	Return btn
@@ -2189,7 +2209,7 @@ Public Sub RecalculateRotor
 	
 	If lblResultStatus.IsInitialized Then
 		If ActiveRes.SolutionValid = False Then
-			lblResultStatus.Text = "MODEL STATUS · INVALID OPERATING POINT"
+			If root.Width <= 360dip Then lblResultStatus.Text = "STATUS · INVALID" Else lblResultStatus.Text = "MODEL STATUS · INVALID OPERATING POINT"
 			lblResultStatus.TextColor = ColorAccentRed
 			For i = 0 To 42
 				If lblResults(i).IsInitialized Then lblResults(i).Text = "---"
@@ -2203,10 +2223,10 @@ Public Sub RecalculateRotor
 			If lblHorizontalDerived.IsInitialized Then RefreshFlowDerivedLabels
 			Return
 		Else If ActiveRes.CompressibilityWarning Then
-			lblResultStatus.Text = "MODEL STATUS · PG CAUTION (Mat ≥ 0.80)"
+			If root.Width <= 360dip Then lblResultStatus.Text = "STATUS · PG CAUTION · Mat≥0.80" Else lblResultStatus.Text = "MODEL STATUS · PG CAUTION (Mat ≥ 0.80)"
 			lblResultStatus.TextColor = ColorAccentAmber
 		Else
-			lblResultStatus.Text = "MODEL STATUS · VALID"
+			If root.Width <= 360dip Then lblResultStatus.Text = "STATUS · VALID" Else lblResultStatus.Text = "MODEL STATUS · VALID"
 			lblResultStatus.TextColor = ColorAccentGreen
 		End If
 	End If
@@ -2305,11 +2325,19 @@ End Sub
 Private Sub UpdateTrimSummary
 	If lblTrimSummary.IsInitialized = False Then Return
 	If ActiveRes.SolutionValid = False Then
-		lblTrimSummary.Text = OperatingPairDisplayName(ActiveCond.OperatingPair) & " · NO SOLUTION"
+		If root.Width <= 360dip Then
+			lblTrimSummary.Text = OperatingPairDisplayName(ActiveCond.OperatingPair) & " · NO SOLUTION"
+		Else
+			lblTrimSummary.Text = OperatingPairDisplayName(ActiveCond.OperatingPair) & " · NO SOLUTION"
+		End If
 		lblTrimSummary.TextColor = ColorAccentRed
 		Return
 	End If
-	lblTrimSummary.Text = "OPERATING SOLUTION · " & OperatingPairDisplayName(ActiveCond.OperatingPair)
+	If root.Width <= 360dip Then
+		lblTrimSummary.Text = "SOLUTION · " & OperatingPairDisplayName(ActiveCond.OperatingPair)
+	Else
+		lblTrimSummary.Text = "OPERATING SOLUTION · " & OperatingPairDisplayName(ActiveCond.OperatingPair)
+	End If
 	lblTrimSummary.TextColor = ColorAccentCyan
 End Sub
 
@@ -3012,7 +3040,13 @@ Sub btnViewPolarPlot_Click
 	Dim footerH As Int
 	If ld = 1 Then footerH = 50dip Else footerH = 94dip * sc
 	Dim controlsH As Int
-	If ld = 1 Then controlsH = 58dip Else controlsH = 172dip * sc
+	If ld = 1 Then
+		controlsH = 58dip
+	Else If root.Width <= 360dip Then
+		controlsH = 178dip * sc
+	Else
+		controlsH = 172dip * sc
+	End If
 	
 	Dim pnlHeader As Panel
 	pnlHeader.Initialize("")
@@ -3102,8 +3136,8 @@ Sub btnViewPolarPlot_Click
 		lblY.TextColor = ColorButText2
 		lblY.Typeface = Typeface.DEFAULT_BOLD
 		lblY.TextSize = 12.5 * sc
-		pnlControls.AddView(lblY, 12dip, 4dip, root.Width - 24dip, 16dip)
-		pnlControls.AddView(spnSweepParam, 12dip, 22dip * sc, root.Width - 24dip, 46dip * sc)
+		pnlControls.AddView(lblY, 12dip, 3dip, root.Width - 24dip, 22dip)
+		pnlControls.AddView(spnSweepParam, 12dip, 26dip * sc, root.Width - 24dip, 42dip * sc)
 		Dim rowWidth As Int = root.Width - 30dip
 		Dim familyW As Int = rowWidth * 0.68
 		Dim valuesW As Int = rowWidth - familyW - 6dip
@@ -3279,12 +3313,12 @@ Private Sub UpdateSweepAuxControls
 	If btnSweepValues.IsInitialized Then btnSweepValues.Visible = (SweepMultiMode >= 1 And SweepMultiMode <= 3)
 	If btnSweepTrimHover.IsInitialized Then
 		btnSweepTrimHover.Visible = (ActiveCond.OperatingPair <> "rpm_collective")
-		Dim compactLandscape As Boolean = (ld = 1 And root.Width <= 700dip)
+		Dim compactControls As Boolean = ((ld = 1 And root.Width <= 700dip) Or root.Width <= 360dip)
 		If SweepTrimOnlyHover Then
-			If compactLandscape Then btnSweepTrimHover.Text = "HOVER ✓" Else btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
+			If compactControls Then btnSweepTrimHover.Text = "HOVER ONLY ✓" Else btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorAccentGreen
 		Else
-			If compactLandscape Then btnSweepTrimHover.Text = "HOVER" Else btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
+			If compactControls Then btnSweepTrimHover.Text = "HOVER ONLY" Else btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorButText2
 		End If
 	End If
@@ -3418,7 +3452,7 @@ End Sub
 
 Private Sub UpdateSweepMaxButtonText
 	If btnSweepMaxMu.IsInitialized = False Then Return
-	If ld = 1 And root.Width <= 700dip Then
+	If (ld = 1 And root.Width <= 700dip) Or root.Width <= 360dip Then
 		btnSweepMaxMu.Text = "μ " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
 	Else
 		btnSweepMaxMu.Text = "μ MAX " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False)
@@ -3451,8 +3485,13 @@ Sub UpdateSweepPlotView
 		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, ThemeMode = 1, ExtraPrecision, SweepSamplesCache)
 	ivSweepPlot.Bitmap = bmp
 	If ActiveRes.SolutionValid Then
-		lblSweepCurrentVal.Text = "ACTIVE · μ=" & NumberFormat2(ActiveRes.OperatingMu, 1, 2, 2, False) & _
-			" · Vx=" & NumberFormat2(ActiveRes.OperatingVx, 1, 1, 1, False) & " m/s · μz=" & NumberFormat2(ActiveRes.OperatingMuZ, 1, 3, 3, False)
+		If root.Width <= 360dip Then
+			lblSweepCurrentVal.Text = "μ " & NumberFormat2(ActiveRes.OperatingMu, 1, 2, 2, False) & _
+				" · Vx " & NumberFormat2(ActiveRes.OperatingVx, 1, 1, 1, False) & " · μz " & NumberFormat2(ActiveRes.OperatingMuZ, 1, 3, 3, False)
+		Else
+			lblSweepCurrentVal.Text = "ACTIVE · μ=" & NumberFormat2(ActiveRes.OperatingMu, 1, 2, 2, False) & _
+				" · Vx=" & NumberFormat2(ActiveRes.OperatingVx, 1, 1, 1, False) & " m/s · μz=" & NumberFormat2(ActiveRes.OperatingMuZ, 1, 3, 3, False)
+		End If
 	Else
 		lblSweepCurrentVal.Text = "ACTIVE · INVALID"
 	End If
