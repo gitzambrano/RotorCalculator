@@ -63,7 +63,7 @@ def test_radius_change_preserves_reference_planform_shape_and_solidity():
     assert "Dim scale As Double = newRadius / oldRadius" in engine
     assert "g.ChordRoot = g.ChordRoot * scale" in engine
     assert "g.ChordTip = g.ChordTip * scale" in engine
-    assert "zBETEngine.ScaleRadiusPreserveReference(ActiveGeom, newR)" in main
+    assert "ActiveGeom = zBETEngine.ScaleRadiusPreserveReference(ActiveGeom, ClampD(raw, 0.02, 50.0))" in main
 
 
 def test_sigma_and_aspect_ratio_edits_scale_both_chords():
@@ -110,7 +110,7 @@ def test_geometry_edits_are_explicitly_saved_and_contextual_actions_are_local():
     main = text("RotorCalculator.b4a")
     storage = text("RotorStorage.bas")
     assert "GeometryDirty = True" in main
-    assert "Private Sub SaveCurrentRotor" in main
+    assert "Sub SaveCurrentRotor" in main
     assert "RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)" in main
     assert "Sub btnGeometrySave_Click" in main
     assert "Sub btnGeometryCopy_Click" in main
@@ -135,8 +135,8 @@ def test_geometry_storage_is_versioned_and_migrates_legacy_chord_definition():
 def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     main = text("RotorCalculator.b4a")
     assert '"ATMOSPHERE & FLOW"' in main
-    assert '"Altitude"' in main
-    assert '"Temperature"' in main
+    assert '"h — Altitude"' in main
+    assert '"Tair — Temperature"' in main
     assert '"Horizontal Flow"' in main
     assert '"Axial Flow"' in main
     assert 'btnHorizontalInput.Text = "μ"' in main
@@ -460,11 +460,16 @@ def test_release_source_version_and_binary_hygiene():
     assert "Objects/*.dex" in ignore
 
 
-def test_github_qa_is_manual_only_and_release_signing_is_externalized():
+def test_github_qa_is_manual_by_default_and_release_signing_is_externalized():
     wf = text(".github/workflows/frontend-source-qa.yml")
     build = text("tools/b4a_build.ps1")
     assert "workflow_dispatch:" in wf
-    assert "\n  push:" not in wf
+    # Temporary qa/* validation branches may add a push trigger to execute the
+    # exact candidate source. Production branches must never be auto-triggered here.
+    if "\n  push:" in wf:
+        assert "qa/" in wf
+        assert "- main" not in wf
+        assert "- master" not in wf
     assert "promote-release:" not in wf
     assert "$env:B4A_KEY_FILE" in build
     assert "$env:B4A_KEY_PASSWORD" in build
@@ -508,10 +513,15 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert "rotorcalculator_out_of_domain.txt" in qa
     assert 'grep -Fqi "No valid RotorCalculator geometries"' in qa
     popup = text("RotorPopups.bas")
-    sweep_labels = re.findall(r'AddSweepParam\("[^"]+", "([^"]+)"\)', popup)
+    sweep_keys = re.findall(r'AddSweepParam\("([^"]+)", SweepParamDisplayName\("([^"]+)"\)\)', popup)
+    assert len(sweep_keys) == 39
+    assert all(key == display_key for key, display_key in sweep_keys)
+    qa_catalog = re.search(r'local sweep_y_labels=\(\n(.*?)\n  \)', qa, re.S)
+    assert qa_catalog is not None
+    sweep_labels = re.findall(r'^\s*"([^"]+)"', qa_catalog.group(1), re.M)
     assert len(sweep_labels) == 39
     for label in sweep_labels:
-        assert f'    "{label}"' in qa
+        assert f'Return "{label}"' in popup
     assert 'for target_y in "${sweep_y_labels[@]}"; do' in qa
     assert 'echo "Verified sweep Y: $target_y"' in qa
 
