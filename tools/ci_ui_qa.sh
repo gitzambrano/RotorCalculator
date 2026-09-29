@@ -273,6 +273,16 @@ tap_text_scrolling() {
   return 1
 }
 
+scroll_to_top() {
+  local W="$1"
+  local H="$2"
+  local attempt
+  for attempt in 1 2 3 4 5 6 7 8; do
+    adb shell input swipe $((W/2)) $((H/3)) $((W/2)) $((H*4/5)) 180 || true
+    sleep 0.12
+  done
+}
+
 assert_text_scrolling_down() {
   local OUTDIR="$1"
   local TEXT="$2"
@@ -365,6 +375,7 @@ capture_screen() {
   # Reopen Results from the top and inspect the universal sweep.
   python3 /tmp/tap_text.py RESULTS || true
   sleep 0.3
+  scroll_to_top "$W" "$H"
   tap_text_scrolling "OPEN PARAMETER SWEEP" "$W" "$H"
   sleep 1
   safe_screencap "$OUT/10-sweep.png"
@@ -759,6 +770,7 @@ functional_smoke() {
   # Universal sweep: explicit Y, family, VALUES, X axis/range, hover-only trim and exports.
   python3 /tmp/tap_text.py RESULTS
   sleep 0.3
+  scroll_to_top 393 873
   tap_text_scrolling "OPEN PARAMETER SWEEP" 393 873
   sleep 1
   python3 /tmp/ui_node.py "$OUT/15-sweep.xml" > "$OUT/15-sweep.json"
