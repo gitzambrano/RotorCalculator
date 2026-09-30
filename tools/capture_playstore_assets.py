@@ -34,7 +34,6 @@ def capture(folder):
     for index, name in enumerate(('GEOMETRY', 'CONDITIONS', 'RESULTS'), 1):
         tap(name)
         (folder / f'{index:02d}-{name.lower()}.png').write_bytes(adb('exec-out', 'screencap', '-p', binary=True))
-    tap('CONDITIONS')
     tap('OPEN PARAMETER SWEEP')
     (folder / '04-sweep.png').write_bytes(adb('exec-out', 'screencap', '-p', binary=True))
     adb('shell', 'input', 'keyevent', '4')

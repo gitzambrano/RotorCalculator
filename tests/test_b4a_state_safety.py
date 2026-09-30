@@ -135,19 +135,19 @@ def test_geometry_storage_is_versioned_and_migrates_legacy_chord_definition():
 def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     main = text("RotorCalculator.b4a")
     assert '"ATMOSPHERE & FLOW"' in main
-    assert '"h — Altitude"' in main
-    assert '"Tair — Temperature"' in main
+    assert '"Altitude"' in main
+    assert '"Temperature"' in main
     assert '"Horizontal Flow"' in main
     assert '"Axial Flow"' in main
-    assert 'btnHorizontalInput.Text = "μ"' in main
+    assert 'btnHorizontalInput.Text = "μₓ"' in main
     assert 'btnHorizontalInput.Text = "Vx"' in main
     assert 'btnAxialInput.Text = "α"' in main
     assert 'btnAxialInput.Text = "Vz"' in main
     assert 'btnAxialInput.Text = "μz"' in main
     assert "lblHorizontalDerived" not in main
     assert "lblAxialDerived" not in main
-    assert '"Vx — Forward Speed"' in main
-    assert '"Vz — Axial Speed"' in main
+    assert '"Vx — Airspeed"' in main
+    assert '"Vz — Climb Speed"' in main
     assert '"μz — Axial Ratio"' in main
 
 
@@ -165,7 +165,7 @@ def test_geometry_and_conditions_use_aerocalculator_row_contract():
     assert 'btnHorizontalInput.Initialize("btnHorizontalInput")' in main
     assert 'btnAxialInput.Initialize("btnAxialInput")' in main
     assert 'CreateUnitButton("Airfoil", "—")' in main
-    assert 'CreateUnitButton("Operating Inputs", "—")' in main
+    assert 'CreateUnitButton("Trim Condition", "—")' in main
     assert "Dim lblUnit As Label" not in main
     assert "Dim lbl As Label = CreateRowLabel" not in main
 
@@ -179,7 +179,7 @@ def test_visual_audit_fixes_tablet_landscape_and_scaled_text():
     assert '"SOLUTION · " & OperatingPairDisplayName' in main
     assert 'btnSweepTrimHover.Text = "HOVER TRIM"' in main
     assert 'btnSweepTrimHover.Text = "HOVER TRIM ✓"' in main
-    assert 'btnSweepMaxMu.Text = "μ " &' in main
+    assert 'btnSweepMaxMu.Text = "μₓ " &' in main
     assert 'If root.Width <= 360dip Then' in main
     assert 'value.TextColor = ColorButText2' in main
     assert 'Public SweepParamSelectedLabel As String = "CQ — Torque"' in main
@@ -190,9 +190,9 @@ def test_axial_sign_convention_matches_requirements():
     engine = text("zBETEngine.bas")
     assert "Return -mu * Tan(axialValue * cPI / 180.0)" in engine
     assert "Return axialValue / vtip" in engine
-    assert '"Vz — climb rate; positive means wind from above"' in main
+    assert '"Vz — climb speed; positive means wind from above"' in main
     assert '"α — wind from below when positive"' in main
-    assert '"Vz > 0: positive climb rate, relative wind from above."' in main
+    assert '"Vz > 0: positive climb speed, relative wind from above."' in main
 
 
 def test_conditions_expose_all_six_operating_pairs():
@@ -639,14 +639,14 @@ def test_flow_inputs_share_the_normal_row_and_equivalents_live_in_results():
     assert "flowRowH" not in main
     assert "AddFormRowPanelH" not in main
     assert "RefreshFlowDerivedLabels" not in main
-    assert '"μ — Advance Ratio"' in main
-    assert '"α — Rotor AoA"' in main
+    assert '"μₓ — Advance Ratio"' in main
+    assert '"α — AoA"' in main
 
 def test_sweep_axis_and_range_are_explicit_selectors():
     main = text("RotorCalculator.b4a")
     assert 'InputList(options, "Sweep X Axis", SweepXAxisMode)' in main
     assert 'InputList(options, "Sweep Range", selected)' in main
-    assert 'btnSweepMaxMu.Text = "μ MAX "' in main
+    assert 'btnSweepMaxMu.Text = "μₓ MAX "' in main
 
 
 def test_help_matches_six_pair_final_architecture():

@@ -287,6 +287,9 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-38** — Engineering indices shall use clear mathematical typography when the platform can render them legibly (for example x₀, c₀, c₁, a₀ and inverse units such as rad⁻¹). Mathematical meaning and font legibility take precedence over decorating every symbol. Results shall reserve enough width for long numerical values and units such as slug/ft³ at 320 dp with 130% font scale.
 - **UX-39** — Android system-bar and display-cutout insets define the usable viewport, including Android 16 edge-to-edge enforcement. Headers, controls, plots and footers must remain outside system bars after rotation or Activity recreation; no IME library or runtime permission is used for layout.
 - **UX-40** — Privacy Policy is available from the global menu in both themes, offline. The public store policy and in-app policy describe the same local storage and user-controlled Android file-provider behavior.
+- **UX-41** — Atmosphere fields use the names Altitude and Temperature. The operating-pair selector is named Trim Condition. Horizontal advance ratio uses μₓ consistently in inputs, results, plots, contextual help and visible exports; internal SI state and engine conventions remain unchanged. Use full engineering names wherever they fit and reflow these labels before reducing type size.
+- **UX-42** — Flow quantities use the canonical names μₓ — Advance Ratio, α — AoA, Vx — Airspeed and Vz — Climb Speed. Selector buttons show the name alongside the symbol where width permits; compact symbols retain directly accessible, named selector options. The existing positive axial-flow convention remains explicit in contextual help.
+- **UX-43** — Reference may be abbreviated as Ref. in visible area and solidity labels. Contextual help retains the complete physical definition.
 
 ## 9. Verification/release
 

@@ -307,7 +307,7 @@ import re,subprocess,sys,xml.etree.ElementTree as ET
 w,h=map(int,sys.argv[1:3]); direction=sys.argv[3]
 views=[]
 for n in ET.parse('/tmp/rotor-last-ui.xml').iter('node'):
-    if n.get('class')=='android.widget.ScrollView':
+    if n.get('class') in ('android.widget.ScrollView','android.widget.ListView'):
         b=list(map(int,re.findall(r'\d+',n.get('bounds',''))))
         if len(b)==4 and b[3]>b[1]+50: views.append(b)
 x1,y1,x2,y2=max(views,key=lambda b:(b[2]-b[0])*(b[3]-b[1])) if views else (0,int(h*.3),w,int(h*.9))
@@ -322,13 +322,14 @@ tap_text_scrolling() {
   local TEXT="$1"
   local W="$2"
   local H="$3"
+  local DIRECTION="${4:-down}"
   local attempt
   # Inspect each viewport before moving. A short, slow swipe avoids jumping
   # over a one-line target such as the Rotor Aerodynamics heading.
   for attempt in $(seq 0 80); do
     if python3 /tmp/tap_text.py "$TEXT"; then return 0; fi
     if (( attempt == 80 )); then break; fi
-    python3 /tmp/scroll_step.py "$W" "$H" down
+    python3 /tmp/scroll_step.py "$W" "$H" "$DIRECTION"
     sleep 0.12
   done
   echo "Could not find text after scrolling: $TEXT" >&2
@@ -378,7 +379,7 @@ assert_text_scrolling_down() {
 
 capture_screen() {
   local NAME="$1" SIZE="$2" ROT="$3" FONT="$4"
-  local OUT="qa-results/$NAME"
+  local OUT="qa-results/${QA_THEME:-dark}/$NAME"
   mkdir -p "$OUT"
   local W="${SIZE%x*}"
   local H="${SIZE#*x}"
@@ -403,6 +404,15 @@ capture_screen() {
   sleep 2
   assert_app_alive
   wait_geometry_ready "$OUT" "$W" "$H"
+
+  if [[ "${QA_THEME:-dark}" == light && "${QA_LIGHT_INITIALIZED:-0}" == 0 ]]; then
+    adb shell input tap $((W-24)) 52
+    python3 /tmp/tap_text.py "Settings"
+    python3 /tmp/tap_text.py "DARK"
+    sleep 0.8
+    QA_LIGHT_INITIALIZED=1
+    wait_geometry_ready "$OUT" "$W" "$H"
+  fi
 
   # Geometry opens directly in the editor; the active rotor is selected from the fixed top bar.
   safe_screencap "$OUT/01-geometry-editor-top.png"
@@ -430,8 +440,8 @@ capture_screen() {
   sleep 0.8
   safe_screencap "$OUT/03-conditions-top.png"
   python3 /tmp/ui_node.py "$OUT/03-conditions-top.xml" > "$OUT/03-conditions-top.json"
-  grep -Eq '"text": "(μ|Vx)"' "$OUT/03-conditions-top.json"
-  grep -Eq '"text": "(α|Vz|μz)"' "$OUT/03-conditions-top.json"
+  grep -Eq '"text": "(μₓ|Vx)' "$OUT/03-conditions-top.json"
+  grep -Eq '"text": "(α|Vz|μz)' "$OUT/03-conditions-top.json"
 
   # Verify both lower Conditions sections independently. On short landscape
   # viewports the operating pair and Profile Drag cannot remain visible together.
@@ -517,12 +527,12 @@ functional_smoke() {
 
   python3 /tmp/tap_text.py "ACTIVE ROTOR"
   sleep 0.3
-  python3 /tmp/tap_text.py "UH-60"
+  tap_text_scrolling "UH-60" 393 873 up
   sleep 0.6
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
-  tap_text_scrolling "Sissingh" 393 873
+  tap_text_scrolling "Tip Loss" 393 873
   sleep 0.4
-  python3 /tmp/tap_text.py "Fixed B"
+  python3 /tmp/tap_text.py "Fixed B — prescribed effective tip radius"
   sleep 0.6
   python3 /tmp/ui_node.py "$OUT/02-fixed-b.xml" > "$OUT/02-fixed-b.json"
   grep -qi "Fixed B" "$OUT/02-fixed-b.json"
@@ -569,14 +579,15 @@ functional_smoke() {
 
   # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
-  tap_text_scrolling "Fixed B" 393 873
+  tap_text_scrolling "Tip Loss" 393 873
   sleep 0.3
-  python3 /tmp/tap_text.py "Sissingh"
+  python3 /tmp/tap_text.py "Sissingh — thrust-dependent tip factor"
   sleep 0.5
   adb shell settings put system user_rotation 1
   adb shell wm size 873x393
   sleep 2
   assert_app_alive
+  wait_geometry_ready "$OUT" 873 393
   tap_text_scrolling "ROTOR AERODYNAMICS" 873 393
   tap_text_scrolling "Sissingh" 873 393
   adb shell input keyevent 4
@@ -647,25 +658,25 @@ functional_smoke() {
   sleep 0.8
 
   # Explicit equivalent-flow selectors.
-  python3 /tmp/tap_text.py "μ"
+  python3 /tmp/tap_text.py "μₓ"
   sleep 0.3
-  python3 /tmp/tap_text.py "Vx — forward speed"
+  python3 /tmp/tap_text.py "Vx — airspeed"
   sleep 0.5
   python3 /tmp/ui_node.py "$OUT/05-horizontal-vx.xml" > "$OUT/05-horizontal-vx.json"
-  grep -Eq '"text": "Vx"' "$OUT/05-horizontal-vx.json"
+  grep -Eq '"text": "Vx' "$OUT/05-horizontal-vx.json"
 
   python3 /tmp/tap_text.py "α"
   sleep 0.3
-  python3 /tmp/tap_text.py "Vz — climb rate"
+  python3 /tmp/tap_text.py "Vz — climb speed"
   sleep 0.5
   python3 /tmp/ui_node.py "$OUT/06-axial-vz.xml" > "$OUT/06-axial-vz.json"
-  grep -Eq '"text": "Vz"' "$OUT/06-axial-vz.json"
+  grep -Eq '"text": "Vz' "$OUT/06-axial-vz.json"
   python3 /tmp/tap_text.py "Vz"
   sleep 0.3
   python3 /tmp/tap_text.py "μz — axial ratio"
   sleep 0.5
   python3 /tmp/ui_node.py "$OUT/07-axial-muz.xml" > "$OUT/07-axial-muz.json"
-  grep -Eq '"text": "μz"' "$OUT/07-axial-muz.json"
+  grep -Eq '"text": "μz' "$OUT/07-axial-muz.json"
 
   # All six operating pairs are reachable from one explicit selector.
   tap_text_scrolling "RPM + CT" 393 873
@@ -868,8 +879,8 @@ functional_smoke() {
   sleep 1
   python3 /tmp/ui_node.py "$OUT/15-sweep.xml" > "$OUT/15-sweep.json"
   grep -qi "VALUES" "$OUT/15-sweep.json"
-  grep -qi "X · μ" "$OUT/15-sweep.json"
-  grep -qi "μ MAX" "$OUT/15-sweep.json"
+  grep -qi "X · μₓ" "$OUT/15-sweep.json"
+  grep -qi "μₓ MAX" "$OUT/15-sweep.json"
   grep -qi "TRIM ONLY HOVER" "$OUT/15-sweep.json"
   grep -qi "TABLE" "$OUT/15-sweep.json"
   grep -qi "CSV" "$OUT/15-sweep.json"
@@ -964,13 +975,13 @@ functional_smoke() {
     "ΩR — Tip Speed [m/s]"
     "RPM — Solved Speed"
     "Δθ — Collective Increment [deg]"
-    "μ — Advance Ratio"
-    "Vx — Forward Speed [m/s]"
+    "μₓ — Advance Ratio"
+    "Vx — Airspeed [m/s]"
     "μz — Axial Ratio"
-    "Vz — Axial Speed [m/s]"
-    "α — Rotor AoA [deg]"
-    "h — Altitude [m]"
-    "Tair — Temperature [°C]"
+    "Vz — Climb Speed [m/s]"
+    "α — AoA [deg]"
+    "Altitude [m]"
+    "Temperature [°C]"
     "ρ — Air Density [kg/m³]"
     "p — Ambient Pressure [Pa]"
     "a — Speed of Sound [m/s]"
@@ -988,13 +999,13 @@ functional_smoke() {
     current_y="$target_y"
   done
 
-  python3 /tmp/tap_text.py "X · μ"
+  python3 /tmp/tap_text.py "X · μₓ"
   sleep 0.3
-  python3 /tmp/tap_text.py "Vx — forward speed"
+  python3 /tmp/tap_text.py "Vx — airspeed"
   sleep 0.5
-  python3 /tmp/tap_text.py "μ MAX"
+  python3 /tmp/tap_text.py "μₓ MAX"
   sleep 0.3
-  python3 /tmp/tap_text.py "μ max = 0.60"
+  python3 /tmp/tap_text.py "μₓ max = 0.60"
   sleep 0.5
   python3 /tmp/tap_text.py "TABLE"
   sleep 0.7
@@ -1054,7 +1065,7 @@ if [[ "${QA_SKIP_LANDSCAPE:-0}" != 1 ]]; then
   capture_screen landscape-phone-915x412 915x412 1 1.0
   capture_screen landscape-tablet-1024x600 1024x600 1 1.0
 fi
-functional_smoke
+if [[ "${QA_SKIP_FUNCTIONAL:-0}" != 1 ]]; then functional_smoke; fi
 adb shell settings put system font_scale 1.0
 adb shell wm size reset
 adb shell wm density reset

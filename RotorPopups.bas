@@ -4,8 +4,8 @@ ModulesStructureVersion=1
 Type=StaticCode
 Version=13
 @EndOfDesignText@
-' RotorPopups.bas — Technical Dialogs, Airfoil Database, and Universal μ-Sweep Canvas Plotting
-' Supports full multi-curve sweeps across ALL aerodynamic and performance parameters vs advance ratio (μ).
+' RotorPopups.bas — Technical Dialogs, Airfoil Database, and Universal μₓ-Sweep Canvas Plotting
+' Supports full multi-curve sweeps across ALL aerodynamic and performance parameters vs advance ratio (μₓ).
 
 Sub Process_Globals
 	
@@ -19,7 +19,7 @@ Sub Process_Globals
 	
 	Public Airfoils As List
 	
-	' Complete catalog of ALL selectable parameters for μ-sweeps
+	' Complete catalog of ALL selectable parameters for μₓ-sweeps
 	Public SweepParamKeys As List
 	Public SweepParamLabels As List
 	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
@@ -87,7 +87,7 @@ Public Sub Initialize
 		Airfoils.Add(af6)
 	End If
 	
-	' Initializes ALL selectable output parameters for μ-sweeps
+	' Initializes ALL selectable output parameters for μₓ-sweeps
 	If SweepParamKeys.IsInitialized = False Then
 		SweepParamKeys.Initialize
 		SweepParamLabels.Initialize
@@ -165,13 +165,13 @@ Private Sub SweepParamDisplayName(paramKey As String) As String
 		Case "TipSpeed": Return "ΩR — Tip Speed [m/s]"
 		Case "RPM": Return "RPM — Solved Speed"
 		Case "Collective": Return "Δθ — Collective Increment [deg]"
-		Case "Mu": Return "μ — Advance Ratio"
-		Case "Vx": Return "Vx — Forward Speed [m/s]"
+		Case "Mu": Return "μₓ — Advance Ratio"
+		Case "Vx": Return "Vx — Airspeed [m/s]"
 		Case "MuZ": Return "μz — Axial Ratio"
-		Case "Vz": Return "Vz — Axial Speed [m/s]"
-		Case "Alpha": Return "α — Rotor AoA [deg]"
-		Case "Altitude": Return "h — Altitude [m]"
-		Case "Temperature": Return "Tair — Temperature [°C]"
+		Case "Vz": Return "Vz — Climb Speed [m/s]"
+		Case "Alpha": Return "α — AoA [deg]"
+		Case "Altitude": Return "Altitude [m]"
+		Case "Temperature": Return "Temperature [°C]"
 		Case "Density": Return "ρ — Air Density [kg/m³]"
 		Case "Pressure": Return "p — Ambient Pressure [Pa]"
 		Case "SoundSpeed": Return "a — Speed of Sound [m/s]"
@@ -553,8 +553,8 @@ Public Sub DrawSweepPlot( _
 	Next
 	
 	cvs.DrawText(SweepPlotTitle(paramKey), widthPx * 0.5, 16dip, Typeface.DEFAULT_BOLD, 13, colAccent, "CENTER")
-	Dim xTitle As String = "Advance Ratio μ"
-	If xAxisMode = 1 Then xTitle = "Forward Speed Vx (m/s)"
+	Dim xTitle As String = "Advance Ratio μₓ"
+	If xAxisMode = 1 Then xTitle = "Airspeed Vx (m/s)"
 	cvs.DrawText(xTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
 	
 	' Curves are stored curve-major, 25 samples per curve.
