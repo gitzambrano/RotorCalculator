@@ -99,6 +99,7 @@ Definitions:
 - **GEO-26** — A legacy chord defined at x0 shall map to reference-axis c0 by:
   `c0 = c_root@x0 - (c1 - c_root@x0) x0 / (1 - x0)`.
 - **GEO-27** — Migration tests shall verify the migrated law reproduces the legacy chord at x0.
+- **GEO-28** — Geometry input display precision shall reflect the physical scale: ordinarily two decimals for rotor radius and aspect ratio, one for incidence, three for ordinary chords and root cutout, with additional places for small radii/chords and small dimensionless coefficients where rounding would hide useful variation. Formatting shall never round the stored SI geometry.
 
 ## 3. Conditions
 
@@ -110,13 +111,13 @@ Definitions:
 ### 3.2 Horizontal flow
 
 - **COND-3** — Horizontal Flow shall provide an explicit **μ / Vx** representation selector.
-- **COND-4** — The selected representation shall be editable and the equivalent representation shall remain visible as a derived value.
+- **COND-4** — The selected representation shall be editable. Equivalent μ/Vx values shall be consolidated in Results, without a small secondary line under the input.
 - **COND-5** — `μ = Vx / (ΩR)`.
 
 ### 3.3 Axial flow
 
 - **COND-6** — Axial Flow shall provide an explicit **α / Vz / μz** representation selector.
-- **COND-7** — The selected representation shall be editable and equivalent representations shall remain visible when mathematically defined.
+- **COND-7** — The selected representation shall be editable. Equivalent α/Vz/μz values shall be consolidated in Results when mathematically defined, without a small secondary line under the input.
 - **COND-8** — **+Vz** means positive climb rate; the relative wind arrives from above and flows downward through the disk.
 - **COND-9** — **+μz** is the corresponding positive downward relative-flow ratio.
 - **COND-10** — **+α** means relative wind arriving from below the rotor disk.
@@ -242,7 +243,7 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **UX-1** — Geometry and Conditions shall share one AeroCalculator-inspired three-column row system: **label / value / unit**. Column edges and row baselines shall align throughout each page.
 - **UX-2** — Primary touch targets shall be approximately 48 dp high or larger. Input labels, editable values, units, and Results shall use legible mobile typography rather than compressed caption-sized text.
 - **UX-3** — Mobile discovery shall be tap-first; no essential explanation shall require mouse hover.
-- **UX-4** — Equivalent flow values shall remain readable on narrow phones without competing with the editable value.
+- **UX-4** — Conditions shall show only the selected flow input in each form row; Results shall show the complete equivalent flow state with readable quantity/value/unit columns.
 - **UX-5** — Dark and Light themes shall provide equivalent hierarchy and contrast.
 - **UX-6** — No value, unit, legend, label, or action shall clip at supported portrait widths.
 - **UX-7** — Rotor identity shall appear in the Geometry Active Rotor bar; the global header shall show only the application identity and navigation.
@@ -276,7 +277,12 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-30** — In landscape, Geometry shall reduce non-engineering chrome before reducing text or touch targets. Active Rotor and SAVE/COPY/DELETE shall share one compact horizontal band when sufficient width exists, preserving approximately 48 dp action targets.
 - **UX-31** — At 320 dp width with Android font scale 130%, status and Sweep controls shall use responsive compact wording/reflow rather than clipped text or smaller fonts. Result status shall remain single-line and Sweep range, hover-trim and active-state text shall fit their assigned controls.
 - **UX-32** — Normal label and unit controls shall remain visibly actionable but shall be visually subordinate to editable values and model/action selectors. Derived Geometry shall use a quieter read-only treatment while retaining aligned actionable help/unit controls.
-- **UX-33** — Rotor Name is textual metadata rather than a physical scalar. On the narrowest phone layouts its editable text may use a slightly more compact responsive text size while retaining the same row grid and touch geometry.
+- **UX-33** — Rotor Name is textual metadata rather than a physical scalar. On the narrowest phone layouts its editable row shall grow vertically and wrap the full name at a legible size while retaining the same column grid and touch geometry.
+- **UX-34** — Every input, result and action shall be understandable to an engineer opening the app for the first time. Compact on-screen wording may use established symbols, but shall not make a quantity or action ambiguous. Symbols including σref, K_ind, μz, CPair and χ shall have short, accessible contextual explanations stating the physical meaning and the convention used here.
+- **UX-35** — Tapping a non-selector label shall open concise contextual help. Tapping a label that denotes a selectable variable, operating pair or model shall open that selector directly. Tapping a unit with alternatives shall open its unit selector. A single-unit or dimensionless unit button may retain the grid footprint, but its behavior shall clearly explain why no conversion is offered.
+- **UX-36** — Main screens shall favor short rows and contextual help over permanent descriptive paragraphs. Important actions shall be visible in the app, without requiring external documentation or trial and error to discover them.
+- **UX-37** — Every popup/dialog shall have a contextual title, self-explanatory options, a clear indication of the current selection where applicable, and a working Cancel path. A popup shall exist only when it serves a current user action; obsolete popup flows shall be removed.
+- **UX-38** — Engineering indices shall use clear mathematical typography when the platform can render them legibly (for example x₀, c₀, c₁, a₀ and inverse units such as rad⁻¹). Mathematical meaning and font legibility take precedence over decorating every symbol. Results shall reserve enough width for long numerical values and units such as slug/ft³ at 320 dp with 130% font scale.
 
 ## 9. Verification/release
 
@@ -305,3 +311,15 @@ The following requirements are mandatory and take precedence over older Geometry
 - **QA-23** — Runtime visual QA shall inspect Geometry at representative phone landscape sizes and verify that Active Rotor plus SAVE/COPY/DELETE do not consume a second full vertical band.
 - **QA-24** — Runtime visual QA shall inspect 320×568 at 130% font scale and fail clipping/wrapping of Result status, Sweep range/hover controls, or the active Sweep footer.
 - **QA-25** — Static/source QA shall reject reintroduction of the removed Geometry popup/library architecture and stale canonical sweep labels.
+- **QA-26** — Audit every Geometry and Conditions input, variable/model selector, unit control, derived value and action, plus every Results coefficient and Sweep control, as a first-time engineer would. Verify that the visible wording or tap-accessible help explains its meaning and that tapping it produces the expected action without prior code knowledge.
+- **QA-27** — For every reachable popup/dialog, record the opening action and verify its title, option wording, selected state, Cancel behavior, unit/model terminology and continuing purpose. Also identify non-selector labels that still lack contextual help.
+- **QA-28** — Inspect the flow input rows for redundant small equivalent-value text, inspect Geometry displayed precision and legible indices, and verify long Results values/units and Sweep titles/tick labels at 320 dp with 130% font scale.
+
+- **UX-39** — Android system-bar and display-cutout insets define the usable viewport, including Android 16 edge-to-edge enforcement. Headers, controls, plots and footers must remain outside system bars after rotation or Activity recreation; no IME library or runtime permission is used for layout.
+- **UX-40** — Privacy Policy is available from the global menu in both themes, offline. The public store policy and in-app policy describe the same local storage and user-controlled Android file-provider behavior.
+- **QA-29** — Inspect status/navigation-bar separation in portrait and landscape and verify the Privacy Policy menu action in both themes.
+
+- **GEO-29** — Chord inputs retain millimeter-scale display detail where needed without forcing trailing third/fourth decimal zeros; display formatting never rounds or changes the canonical geometry.
+
+- **COND-28** — Collective trim must bracket the target using the residuals of the actual valid candidate states. An invalid-to-valid transition may not create a false sign change or a valid solution that misses its prescribed CT/thrust.
+- **QA-30** — Run the locally compiled B4A engine against the Python reference, including all six operating pairs in hover, forward flight and nonzero axial flow, plus default RPM + CT target closure. Tolerances and the invalid-to-valid collective-bracket regression are documented in `docs/trim-regression-2026-09-30.md`.

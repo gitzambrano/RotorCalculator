@@ -685,6 +685,9 @@ Private Sub SolveCollective(baseGeom As RotorGeometry, sourceCond As FlightCondi
 		Dim x As Double = lo + i * (hi - lo) / 48.0
 		Dim obj() As Object = CandidateResidual(baseGeom, sourceCond, rpm, x, targetKind, targetValue)
 		If prevObj(1) And obj(1) Then
+			' Rebind the residual to the actual previous valid sample. Invalid
+			' candidates can precede the first valid pair in the scan.
+			fLo = prevObj(0)
 			Dim f As Double = obj(0)
 			If Abs(f) < 1.0e-10 Then Return Array(x, True)
 			If (fLo <= 0 And f >= 0) Or (fLo >= 0 And f <= 0) Then
