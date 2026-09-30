@@ -456,7 +456,7 @@ Public Sub DrawSweepPlot( _
 	Dim nPoints As Int = 25
 	Dim nCurves As Int = Max(1, samples.Size / nPoints)
 	Dim legendCols As Int = nCurves
-	If widthPx < 390dip Then
+	If widthPx < 540dip Then
 		If multiCurveMode = 0 Then
 			legendCols = Min(2, nCurves)
 		Else
@@ -468,6 +468,7 @@ Public Sub DrawSweepPlot( _
 	If legendCols < 1 Then legendCols = 1
 	Dim legendRows As Int = Ceil(nCurves / legendCols)
 	Dim mLeft As Float = 64dip
+	If widthPx < 390dip Then mLeft = 82dip
 	Dim mRight As Float = 22dip
 	Dim mTop As Float = 38dip + legendRows * 18dip
 	Dim mBottom As Float = 44dip
@@ -519,6 +520,15 @@ Public Sub DrawSweepPlot( _
 	End If
 	If xAxisMode = 0 Then xMax = maxMu
 	If xMax <= 1.0e-12 Then xMax = 1.0
+	' Reserve actual rendered tick width, including Android font scaling.
+	For tickIndex = 0 To 5
+		Dim tickValue As Double = yMin + tickIndex / 5.0 * (yMax - yMin)
+		Dim tickDigits As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
+		Dim tickText As String = NumberFormat2(tickValue, 1, tickDigits, tickDigits, False)
+		mLeft = Max(mLeft, cvs.MeasureStringWidth(tickText, Typeface.MONOSPACE, 12.5) + 12dip)
+	Next
+	plotW = widthPx - mLeft - mRight
+	If plotW <= 10 Then Return bmp
 	
 	Dim plotRect As Rect
 	plotRect.Initialize(mLeft, mTop, mLeft + plotW, mTop + plotH)
@@ -529,18 +539,20 @@ Public Sub DrawSweepPlot( _
 		Dim yGridValue As Double = yMin + gridY / 5.0 * (yMax - yMin)
 		Dim yDigits As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
 		Dim yText As String = NumberFormat2(yGridValue, 1, yDigits, yDigits, False)
-		cvs.DrawText(yText, mLeft - 6dip, gy + 4dip, Typeface.MONOSPACE, 11, colText, "RIGHT")
+		cvs.DrawText(yText, mLeft - 6dip, gy + 4dip, Typeface.MONOSPACE, 12.5, colText, "RIGHT")
 	Next
-	For gridX = 0 To 5
-		Dim gx As Float = mLeft + gridX / 5.0 * plotW
+	Dim xTickCount As Int = 5
+	If widthPx < 390dip Then xTickCount = 4
+	For gridX = 0 To xTickCount
+		Dim gx As Float = mLeft + gridX / xTickCount * plotW
 		cvs.DrawLine(gx, mTop, gx, mTop + plotH, colGrid, 1dip)
-		Dim xGridValue As Double = gridX / 5.0 * xMax
+		Dim xGridValue As Double = gridX / xTickCount * xMax
 		Dim xDigits As Int = 2
 		If xAxisMode = 1 Then xDigits = 1
-		cvs.DrawText(NumberFormat2(xGridValue, 1, xDigits, xDigits, False), gx, mTop + plotH + 18dip, Typeface.MONOSPACE, 11, colText, "CENTER")
+		cvs.DrawText(NumberFormat2(xGridValue, 1, xDigits, xDigits, False), gx, mTop + plotH + 18dip, Typeface.MONOSPACE, 12, colText, "CENTER")
 	Next
 	
-	cvs.DrawText(SweepPlotTitle(paramKey), mLeft, 16dip, Typeface.DEFAULT_BOLD, 13, colAccent, "LEFT")
+	cvs.DrawText(SweepPlotTitle(paramKey), widthPx * 0.5, 16dip, Typeface.DEFAULT_BOLD, 13, colAccent, "CENTER")
 	Dim xTitle As String = "Advance Ratio μ"
 	If xAxisMode = 1 Then xTitle = "Forward Speed Vx (m/s)"
 	cvs.DrawText(xTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
@@ -570,17 +582,17 @@ Public Sub DrawSweepPlot( _
 	Next
 	
 	' Responsive legend occupies its own band, never the data rectangle.
-	Dim legendCellW As Float = plotW / legendCols
+	Dim legendCellW As Float = (widthPx - 24dip) / legendCols
 	For legendIndex = 0 To nCurves - 1
 		Dim legendRow As Int = Floor(legendIndex / legendCols)
 		Dim legendCol As Int = legendIndex Mod legendCols
-		Dim legendX As Float = mLeft + legendCol * legendCellW
+		Dim legendX As Float = 12dip + legendCol * legendCellW
 		Dim legendY As Float = 33dip + legendRow * 18dip
 		Dim legendPoint As SweepPoint = samples.Get(legendIndex * nPoints)
 		Dim legendColor As Int = SweepCurveColor(legendIndex, multiCurveMode, lightTheme)
 		cvs.DrawLine(legendX, legendY, legendX + 9dip, legendY, legendColor, 2.5dip)
-		Dim legendSize As Float = 9.5
-		If legendCols <= 2 Then legendSize = 10.5
+		Dim legendSize As Float = 10.5
+		If legendCols <= 2 Then legendSize = 11.5
 		cvs.DrawText(legendPoint.CurveLabel, legendX + 12dip, legendY + 4dip, Typeface.DEFAULT_BOLD, legendSize, legendColor, "LEFT")
 	Next
 	

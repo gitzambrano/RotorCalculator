@@ -99,7 +99,8 @@ Definitions:
 - **GEO-26** — A legacy chord defined at x0 shall map to reference-axis c0 by:
   `c0 = c_root@x0 - (c1 - c_root@x0) x0 / (1 - x0)`.
 - **GEO-27** — Migration tests shall verify the migrated law reproduces the legacy chord at x0.
-- **GEO-28** — Geometry input display precision shall reflect the physical scale: ordinarily two decimals for rotor radius and aspect ratio, one for incidence, three for ordinary chords and root cutout, with additional places for small radii/chords and small dimensionless coefficients where rounding would hide useful variation. Formatting shall never round the stored SI geometry.
+- **GEO-28** — Geometry input display precision shall reflect the physical scale: ordinarily two decimals for rotor radius and aspect ratio, one for incidence, up to three for ordinary chords and three for root cutout, with additional places for small radii/chords and small dimensionless coefficients where rounding would hide useful variation. Formatting shall never round the stored SI geometry.
+- **GEO-29** — Chord inputs retain millimeter-scale display detail where needed without forcing trailing third/fourth decimal zeros; display formatting never rounds or changes the canonical geometry.
 
 ## 3. Conditions
 
@@ -155,6 +156,7 @@ The user prescribes any two; RotorCalculator solves the remaining two at the cur
 - **COND-25** — Conditions shall include induced-power factor **K_ind**. The same symbol/name shall be used consistently in Conditions, Results/help, plots, and documentation.
 - **COND-26** — Profile drag shall always use **Numerical Vectorial** radial/azimuthal integration.
 - **COND-27** — Every Conditions label shall be rendered as an AeroCalculator-style button/control, not passive text. Every displayed Conditions unit shall also be rendered as a button/control; when alternate units exist it shall open the unit selector, and otherwise it shall retain the same aligned button style. Horizontal and axial representation selection shall each use exactly one variable-selector button in the label column.
+- **COND-28** — Collective trim must bracket the target using the residuals of the actual valid candidate states. An invalid-to-valid transition may not create a false sign change or a valid solution that misses its prescribed CT/thrust.
 
 ## 4. Results
 
@@ -283,6 +285,8 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-36** — Main screens shall favor short rows and contextual help over permanent descriptive paragraphs. Important actions shall be visible in the app, without requiring external documentation or trial and error to discover them.
 - **UX-37** — Every popup/dialog shall have a contextual title, self-explanatory options, a clear indication of the current selection where applicable, and a working Cancel path. A popup shall exist only when it serves a current user action; obsolete popup flows shall be removed.
 - **UX-38** — Engineering indices shall use clear mathematical typography when the platform can render them legibly (for example x₀, c₀, c₁, a₀ and inverse units such as rad⁻¹). Mathematical meaning and font legibility take precedence over decorating every symbol. Results shall reserve enough width for long numerical values and units such as slug/ft³ at 320 dp with 130% font scale.
+- **UX-39** — Android system-bar and display-cutout insets define the usable viewport, including Android 16 edge-to-edge enforcement. Headers, controls, plots and footers must remain outside system bars after rotation or Activity recreation; no IME library or runtime permission is used for layout.
+- **UX-40** — Privacy Policy is available from the global menu in both themes, offline. The public store policy and in-app policy describe the same local storage and user-controlled Android file-provider behavior.
 
 ## 9. Verification/release
 
@@ -315,11 +319,6 @@ The following requirements are mandatory and take precedence over older Geometry
 - **QA-27** — For every reachable popup/dialog, record the opening action and verify its title, option wording, selected state, Cancel behavior, unit/model terminology and continuing purpose. Also identify non-selector labels that still lack contextual help.
 - **QA-28** — Inspect the flow input rows for redundant small equivalent-value text, inspect Geometry displayed precision and legible indices, and verify long Results values/units and Sweep titles/tick labels at 320 dp with 130% font scale.
 
-- **UX-39** — Android system-bar and display-cutout insets define the usable viewport, including Android 16 edge-to-edge enforcement. Headers, controls, plots and footers must remain outside system bars after rotation or Activity recreation; no IME library or runtime permission is used for layout.
-- **UX-40** — Privacy Policy is available from the global menu in both themes, offline. The public store policy and in-app policy describe the same local storage and user-controlled Android file-provider behavior.
 - **QA-29** — Inspect status/navigation-bar separation in portrait and landscape and verify the Privacy Policy menu action in both themes.
 
-- **GEO-29** — Chord inputs retain millimeter-scale display detail where needed without forcing trailing third/fourth decimal zeros; display formatting never rounds or changes the canonical geometry.
-
-- **COND-28** — Collective trim must bracket the target using the residuals of the actual valid candidate states. An invalid-to-valid transition may not create a false sign change or a valid solution that misses its prescribed CT/thrust.
 - **QA-30** — Run the locally compiled B4A engine against the Python reference, including all six operating pairs in hover, forward flight and nonzero axial flow, plus default RPM + CT target closure. Tolerances and the invalid-to-valid collective-bracket regression are documented in `docs/trim-regression-2026-09-30.md`.

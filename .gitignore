@@ -18,6 +18,7 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+qa-results/
 
 # OS and Editor files
 Thumbs.db

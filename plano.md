@@ -256,3 +256,29 @@ Remaining work before calling the frontend 5/5:
 3. review fresh screenshots at 320×568, 320×568 @130%, 360×780, 393×873, 412×915, 600×960, 768×1024, 915×412 and 1024×600;
 4. specifically confirm tablet Geometry width, landscape Geometry chrome, 130% Result status, Sweep range/hover/footer, and Derived Geometry hierarchy;
 5. only then apply any further visual changes found by the screenshots.
+
+## 11. 2026-09-30 release completion work (local evidence)
+
+Starting checkout: `c3d491b250f4c4b0ceae7acf1501868727ba7e7a`, on `main`, clean after remote fast-forward check.
+
+Implemented during this audit:
+- Context dialogs for Geometry/Conditions labels and Results; selectors open directly with context, selected choices and Cancel preserving state.
+- Flow equivalents appear in Results, without redundant small captions in Conditions.
+- Mathematical indices and inverse-angle units are rendered legibly; geometry precision follows physical scale and avoids gratuitous chord trailing zeros.
+- Long rotor names wrap, SAVE has primary emphasis, tablet widths stay centered, landscape actions share a band, and Results retain separate value/unit columns.
+- Android 16 system-bar/display-cutout insets are applied once to the usable root rectangle without IME; rebuilding preserves dirty state.
+- Sweep control wording, legend columns and tick margins respond to available space and font scaling.
+- Offline privacy policy and real Android store-capture automation replace reliance on web mockup screenshots.
+- Publication tooling is adapted from AeroCalculator; upload key and API credentials are outside Git.
+
+A compiled-engine regression was discovered and fixed independently of UI work: invalid collective candidates could leave a zero residual that created a false bracket. See `docs/trim-regression-2026-09-30.md` and commit `310cd64`. No aerodynamic formula changed.
+
+Evidence obtained locally so far:
+- `python tools/verify_engine.py`: PASS, 100/100 numerical reference cases; maximum momentum closure residual 9.698e-14.
+- `python -m pytest -q`: 62 passed.
+- `python tools/verify_compiled_engine.py`: actual compiled B4A engine PASS, 100 cases × 14 outputs (maximum absolute difference 8.942e-09), all six operating pairs × three flow states, and default CT target closure.
+- B4ABuilder 13.70 compiled the current source successfully against Android SDK 36.
+- Real APK installs and interactions executed locally. Screenshots have revealed and driven fixes for name truncation, header overlap, narrow sweep wording, legend overlap and tick clipping.
+- Full nine-profile harness remains in progress. Landscape inspection exposed a stale hierarchy used to calculate swipe bounds; the dump helper now updates the scroll geometry after every fresh dump. The ROTOR AERODYNAMICS assertion remains intact.
+
+Play Console: RotorCalculator created as a free app in Flight Dyn. Privacy URL, sign-in access, ads, government/health/financial declarations, adult target audience and absence of Advertising ID are saved. Data safety is drafted. Content rating, listing, signed bundle, final local validation and review submission remain outstanding. No release has been published and no 5/5 score is claimed at this checkpoint.

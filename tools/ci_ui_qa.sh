@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTHONIOENCODING=utf-8
 
 APK="${1:-${APK:-ci-apk/RotorCalculator-ci.apk}}"
 command -v adb >/dev/null
@@ -8,11 +9,20 @@ test -f "$APK"
 mkdir -p qa-results
 
 cat > /tmp/ui_node.py <<'PY'
-import subprocess, sys, xml.etree.ElementTree as ET, re, json
+import subprocess, sys, xml.etree.ElementTree as ET, re, json, os, time
 out = sys.argv[1]
-subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
-subprocess.run(["adb","pull","/sdcard/window.xml",out], check=True, stdout=subprocess.DEVNULL)
+remote=f"/sdcard/rotor-ui-{os.getpid()}.xml"
+for attempt in range(4):
+    subprocess.run(["adb","shell","rm","-f",remote],stdout=subprocess.DEVNULL)
+    dump=subprocess.run(["adb","shell","uiautomator","dump",remote],capture_output=True,text=True)
+    pull=subprocess.run(["adb","pull",remote,out],capture_output=True,text=True)
+    if pull.returncode == 0: break
+    time.sleep(0.4)
+else:
+    raise SystemExit("Unable to obtain a fresh Android UI hierarchy: "+dump.stderr.strip())
+subprocess.run(["adb","shell","rm","-f",remote],stdout=subprocess.DEVNULL)
 root = ET.parse(out).getroot()
+ET.ElementTree(root).write("/tmp/rotor-last-ui.xml",encoding="utf-8")
 def bounds(s):
     m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",s or "")
     return tuple(map(int,m.groups())) if m else None
@@ -29,12 +39,21 @@ print(json.dumps(nodes,ensure_ascii=False,indent=2))
 PY
 
 cat > /tmp/tap_text.py <<'PY'
-import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile
+import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile, os, time
 needle=sys.argv[1].strip().lower()
 xml=tempfile.NamedTemporaryFile(delete=False,suffix=".xml").name
-subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
-subprocess.run(["adb","pull","/sdcard/window.xml",xml], check=True, stdout=subprocess.DEVNULL)
+remote=f"/sdcard/rotor-ui-{os.getpid()}.xml"
+for attempt in range(4):
+    subprocess.run(["adb","shell","rm","-f",remote],stdout=subprocess.DEVNULL)
+    dump=subprocess.run(["adb","shell","uiautomator","dump",remote],capture_output=True,text=True)
+    pull=subprocess.run(["adb","pull",remote,xml],capture_output=True,text=True)
+    if pull.returncode == 0: break
+    time.sleep(0.4)
+else:
+    raise SystemExit("Unable to obtain a fresh Android UI hierarchy: "+dump.stderr.strip())
+subprocess.run(["adb","shell","rm","-f",remote],stdout=subprocess.DEVNULL)
 root=ET.parse(xml).getroot()
+ET.ElementTree(root).write("/tmp/rotor-last-ui.xml",encoding="utf-8")
 candidates=[]
 for order,n in enumerate(root.iter("node")):
     text=(n.attrib.get("text") or "").strip()
@@ -67,12 +86,13 @@ print("NOT_FOUND",sys.argv[1]); sys.exit(2)
 PY
 
 cat > /tmp/set_first_edit_text.py <<'PY'
-import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile, time
+import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile, os, time, time
 value=sys.argv[1]
 xml=tempfile.NamedTemporaryFile(delete=False,suffix='.xml').name
 subprocess.run(['adb','shell','uiautomator','dump','/sdcard/window.xml'],check=False,stdout=subprocess.DEVNULL)
 subprocess.run(['adb','pull','/sdcard/window.xml',xml],check=True,stdout=subprocess.DEVNULL)
 root=ET.parse(xml).getroot()
+ET.ElementTree(root).write("/tmp/rotor-last-ui.xml",encoding="utf-8")
 target=None
 for n in root.iter('node'):
     if n.attrib.get('class')!='android.widget.EditText' or n.attrib.get('enabled','true')=='false':
@@ -97,6 +117,7 @@ xml=tempfile.NamedTemporaryFile(delete=False,suffix='.xml').name
 subprocess.run(['adb','shell','uiautomator','dump','/sdcard/window.xml'],check=False,stdout=subprocess.DEVNULL)
 subprocess.run(['adb','pull','/sdcard/window.xml',xml],check=True,stdout=subprocess.DEVNULL)
 root=ET.parse(xml).getroot()
+ET.ElementTree(root).write("/tmp/rotor-last-ui.xml",encoding="utf-8")
 vals=[]
 for n in root.iter('node'):
     if n.attrib.get('class')=='android.widget.EditText' and n.attrib.get('enabled','true')!='false':
@@ -113,7 +134,13 @@ if header[:8] != b"\x89PNG\r\n\x1a\n":
     raise SystemExit("Invalid PNG: "+png)
 w,h=struct.unpack(">II",header[16:24])
 issues=[]
-for jf in glob.glob(os.path.join(sys.argv[2],"*.json")):
+snapshot_names=("01-geometry-editor-top.json","02-geometry-derived.json",
+                "03-geometry-editor-bottom.json","03b-geometry-aero-fields.json",
+                "03-conditions-top.json","04-conditions-bottom.json",
+                "05-results-top.json","10-sweep.json")
+for name in snapshot_names:
+    jf=os.path.join(sys.argv[2],name)
+    if not os.path.exists(jf): continue
     for n in json.load(open(jf,encoding="utf-8")):
         b=n.get("bounds")
         if not b: continue
@@ -194,6 +221,22 @@ assert_app_alive() {
   fi
 }
 
+wait_geometry_ready() {
+  local OUTDIR="$1" W="$2" H="$3" attempt
+  for attempt in $(seq 1 20); do
+    python3 /tmp/ui_node.py "$OUTDIR/ready-$attempt.xml" > "$OUTDIR/ready-$attempt.json"
+    if grep -Fqi '"text": "BLADE GEOMETRY"' "$OUTDIR/ready-$attempt.json"; then return 0; fi
+    # A prior Activity can restore Geometry's scroll offset after relaunch.
+    # Return toward the start of the form, checking the heading each step.
+    if grep -Fqi '"text": "ACTIVE ROTOR' "$OUTDIR/ready-$attempt.json"; then
+    python3 /tmp/scroll_step.py "$W" "$H" up
+    fi
+    sleep 0.3
+  done
+  echo "Geometry editor did not become ready" >&2
+  return 1
+}
+
 assert_document_picker() {
   local OUTDIR="$1"
   local STEM="$2"
@@ -259,15 +302,34 @@ open_document_picker_file() {
   assert_app_alive
 }
 
+cat > /tmp/scroll_step.py <<'PY'
+import re,subprocess,sys,xml.etree.ElementTree as ET
+w,h=map(int,sys.argv[1:3]); direction=sys.argv[3]
+views=[]
+for n in ET.parse('/tmp/rotor-last-ui.xml').iter('node'):
+    if n.get('class')=='android.widget.ScrollView':
+        b=list(map(int,re.findall(r'\d+',n.get('bounds',''))))
+        if len(b)==4 and b[3]>b[1]+50: views.append(b)
+x1,y1,x2,y2=max(views,key=lambda b:(b[2]-b[0])*(b[3]-b[1])) if views else (0,int(h*.3),w,int(h*.9))
+x=x1+max(0,(x2-x1-620)//2)+5
+step=max(48,(y2-y1)//3)
+start=y2-20; end=max(y1+20,start-step)
+if direction=='up': start,end=end,start
+subprocess.run(['adb','shell','input','swipe',str(x),str(start),str(x),str(end),'450'],check=True)
+PY
+
 tap_text_scrolling() {
   local TEXT="$1"
   local W="$2"
   local H="$3"
   local attempt
-  for attempt in 1 2 3 4; do
+  # Inspect each viewport before moving. A short, slow swipe avoids jumping
+  # over a one-line target such as the Rotor Aerodynamics heading.
+  for attempt in $(seq 0 80); do
     if python3 /tmp/tap_text.py "$TEXT"; then return 0; fi
-    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H/4)) 250 || true
-    sleep 1
+    if (( attempt == 80 )); then break; fi
+    python3 /tmp/scroll_step.py "$W" "$H" down
+    sleep 0.12
   done
   echo "Could not find text after scrolling: $TEXT" >&2
   return 1
@@ -277,10 +339,17 @@ scroll_to_top() {
   local W="$1"
   local H="$2"
   local attempt
-  for attempt in 1 2 3 4 5 6 7 8; do
-    adb shell input swipe $((W/2)) $((H/3)) $((W/2)) $((H*4/5)) 180 || true
+  # Results is several viewports tall in landscape. Verify its top action
+  # instead of assuming a fixed swipe count is sufficient.
+  for attempt in $(seq 0 32); do
+    python3 /tmp/ui_node.py /tmp/results-top-check.xml > /tmp/results-top-check.json
+    if grep -Fqi 'OPEN PARAMETER SWEEP' /tmp/results-top-check.json; then return 0; fi
+    if (( attempt == 32 )); then break; fi
+    python3 /tmp/scroll_step.py "$W" "$H" up
     sleep 0.12
   done
+  echo "Could not return to Results top" >&2
+  return 1
 }
 
 assert_text_scrolling_down() {
@@ -290,16 +359,18 @@ assert_text_scrolling_down() {
   local H="$4"
   local STEM="$5"
   local attempt
-  # Use small deterministic scroll increments. Large half-screen jumps can skip
-  # short section headers entirely on compact displays.
-  for attempt in $(seq 0 20); do
+  # Each iteration dumps before moving. The 10%-viewport drag and long gesture
+  # duration avoid fling, so even a short heading cannot be passed between dumps.
+  # 80 steps cover at least eight full viewports on the smallest profile.
+  for attempt in $(seq 0 80); do
     python3 /tmp/ui_node.py "$OUTDIR/$STEM-$attempt.xml" > "$OUTDIR/$STEM-$attempt.json"
     if grep -Fqi "$TEXT" "$OUTDIR/$STEM-$attempt.json"; then
       echo "Verified after scrolling: $TEXT"
       return 0
     fi
-    adb shell input swipe $((W/2)) $((H*3/5)) $((W/2)) $((H*9/20)) 140 || true
-    sleep 0.15
+    if (( attempt == 80 )); then break; fi
+    python3 /tmp/scroll_step.py "$W" "$H" down
+    sleep 0.12
   done
   echo "Could not verify text after incremental scrolling: $TEXT" >&2
   return 1
@@ -314,13 +385,13 @@ capture_screen() {
   local ROTOR_LABEL="Sikorsky UH-60 Black Hawk"
   local SOLVED_RPM_LABEL="RPM — Solved Speed"
   local SOUND_SPEED_LABEL="a — Speed of Sound"
-  if [ "$W" -le 430 ]; then ROTOR_LABEL="UH-60"; fi
-  if [ "$W" -le 360 ]; then
-    SOLVED_RPM_LABEL="RPM"
-    SOUND_SPEED_LABEL="a"
-  elif [ "$W" -le 430 ]; then
+  if (( W <= 360 )); then
+    SOLVED_RPM_LABEL='"text": "RPM"'
+    SOUND_SPEED_LABEL='"text": "a"'
+  elif (( W <= 430 )); then
     SOLVED_RPM_LABEL="RPM — Solved"
   fi
+  if [ "$W" -le 430 ]; then ROTOR_LABEL="UH-60"; fi
 
   adb shell wm size "$SIZE"
   adb shell wm density 160
@@ -331,6 +402,7 @@ capture_screen() {
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 2
   assert_app_alive
+  wait_geometry_ready "$OUT" "$W" "$H"
 
   # Geometry opens directly in the editor; the active rotor is selected from the fixed top bar.
   safe_screencap "$OUT/01-geometry-editor-top.png"
@@ -342,10 +414,17 @@ capture_screen() {
   grep -qi "COPY" "$OUT/01-geometry-editor-top.json"
   grep -qi "DELETE" "$OUT/01-geometry-editor-top.json"
 
+  assert_text_scrolling_down "$OUT" "DERIVED GEOMETRY" "$W" "$H" "02-geometry-derived"
+  adb shell input swipe $(((W>620?(W-620)/2:0)+5)) $((H*3/4)) $(((W>620?(W-620)/2:0)+5)) $((H/2)) 450
+  sleep 0.2
+  safe_screencap "$OUT/02-geometry-derived.png"
   assert_text_scrolling_down "$OUT" "ROTOR AERODYNAMICS" "$W" "$H" "02-geometry-aero"
   safe_screencap "$OUT/03-geometry-editor-bottom.png"
   python3 /tmp/ui_node.py "$OUT/03-geometry-editor-bottom.xml" > "$OUT/03-geometry-editor-bottom.json"
   grep -qi "ROTOR AERODYNAMICS" "$OUT/03-geometry-editor-bottom.json"
+  adb shell input swipe $(((W>620?(W-620)/2:0)+5)) $((H*3/4)) $(((W>620?(W-620)/2:0)+5)) $((H/2)) 450
+  sleep 0.2
+  safe_screencap "$OUT/03b-geometry-aero-fields.png"
 
   python3 /tmp/tap_text.py CONDITIONS
   sleep 0.8
@@ -358,6 +437,8 @@ capture_screen() {
   # viewports the operating pair and Profile Drag cannot remain visible together.
   assert_text_scrolling_down "$OUT" "RPM + CT" "$W" "$H" "04-operating-pair"
   assert_text_scrolling_down "$OUT" "Numerical Vectorial" "$W" "$H" "04-profile-drag"
+  adb shell input swipe $(((W>620?(W-620)/2:0)+5)) $((H*3/4)) $(((W>620?(W-620)/2:0)+5)) $((H/2)) 450
+  sleep 0.2
   safe_screencap "$OUT/04-conditions-bottom.png"
   python3 /tmp/ui_node.py "$OUT/04-conditions-bottom.xml" > "$OUT/04-conditions-bottom.json"
   grep -qi "Numerical Vectorial" "$OUT/04-conditions-bottom.json"
@@ -369,9 +450,17 @@ capture_screen() {
   grep -qi "DIMENSIONAL PERFORMANCE" "$OUT/05-results-top.json"
 
   assert_text_scrolling_down "$OUT" "AERODYNAMIC COEFFICIENTS" "$W" "$H" "06-coefficients"
+  adb shell input swipe $(((W>620?(W-620)/2:0)+5)) $((H*3/4)) $(((W>620?(W-620)/2:0)+5)) $((H/2)) 450
+  sleep 0.2
+  safe_screencap "$OUT/06-results-middle.png"
   assert_text_scrolling_down "$OUT" "OPERATING STATE & ATMOSPHERE" "$W" "$H" "07-operating-state"
   assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"
   assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"
+  for _ in 1 2; do
+    adb shell input swipe $(((W>620?(W-620)/2:0)+5)) $((H*3/4)) $(((W>620?(W-620)/2:0)+5)) $((H/2)) 450
+    sleep 0.12
+  done
+  safe_screencap "$OUT/09-results-bottom.png"
 
   # Reopen Results from the top and inspect the universal sweep.
   python3 /tmp/tap_text.py RESULTS || true
@@ -406,6 +495,7 @@ functional_smoke() {
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 2
   assert_app_alive
+  wait_geometry_ready "$OUT" 393 873
 
   # Direct Geometry editor + Active Rotor selector + NEW/DELETE semantics.
   python3 /tmp/ui_node.py "$OUT/01-geometry-editor-top.xml" > "$OUT/01-geometry-editor-top.json"
@@ -437,7 +527,7 @@ functional_smoke() {
   python3 /tmp/ui_node.py "$OUT/02-fixed-b.xml" > "$OUT/02-fixed-b.json"
   grep -qi "Fixed B" "$OUT/02-fixed-b.json"
 
-  tap_text_scrolling "Sikorsky SC1095" 393 873
+  tap_text_scrolling "Airfoil" 393 873
   sleep 0.4
   python3 /tmp/tap_text.py "NACA 0012"
   sleep 0.6
@@ -479,7 +569,7 @@ functional_smoke() {
 
   # Unsaved Geometry survives Activity recreation/orientation and Discard restores persisted data.
   tap_text_scrolling "ROTOR AERODYNAMICS" 393 873
-  python3 /tmp/tap_text.py "Fixed B"
+  tap_text_scrolling "Fixed B" 393 873
   sleep 0.3
   python3 /tmp/tap_text.py "Sissingh"
   sleep 0.5
@@ -488,6 +578,8 @@ functional_smoke() {
   sleep 2
   assert_app_alive
   tap_text_scrolling "ROTOR AERODYNAMICS" 873 393
+  tap_text_scrolling "Sissingh" 873 393
+  adb shell input keyevent 4
   safe_screencap "$OUT/04b-geometry-unsaved-landscape.png"
   python3 /tmp/ui_node.py "$OUT/04b-geometry-unsaved-landscape.xml" > "$OUT/04b-geometry-unsaved-landscape.json"
   grep -qi "Sissingh" "$OUT/04b-geometry-unsaved-landscape.json"
@@ -504,7 +596,7 @@ functional_smoke() {
   grep -qi "ACTIVE ROTOR" "$OUT/04c-after-discard.json"
 
   # Global menu: converter, help, conventions, about and factory restore.
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Quick Unit Converter"
   sleep 0.5
@@ -514,7 +606,7 @@ functional_smoke() {
   adb shell input keyevent 4
   sleep 0.3
 
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Physics & Equations"
   sleep 0.8
@@ -523,7 +615,7 @@ functional_smoke() {
   adb shell input keyevent 4
   sleep 0.3
 
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "zBET Conventions & Physical Axes"
   sleep 0.5
@@ -532,7 +624,7 @@ functional_smoke() {
   adb shell input keyevent 4
   sleep 0.3
 
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "About RotorCalculator"
   sleep 0.5
@@ -541,7 +633,7 @@ functional_smoke() {
   adb shell input keyevent 4
   sleep 0.3
 
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Restore Factory Rotor Presets"
   sleep 0.5
@@ -619,7 +711,7 @@ functional_smoke() {
   assert_text_scrolling_down "$OUT" "T — Solved" 393 873 "13-solved-thrust"
 
   # Settings: exercise all persistent presentation options.
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.4
   python3 /tmp/tap_text.py "Settings"
   sleep 0.5
@@ -654,7 +746,7 @@ functional_smoke() {
   python3 /tmp/tap_text.py "SAVE"
   sleep 0.7
   adb shell rm -f /sdcard/Download/rotorcalculator_geometries.txt || true
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Settings"
   sleep 0.4
@@ -670,7 +762,7 @@ functional_smoke() {
   sleep 0.6
   python3 /tmp/ui_node.py "$OUT/14j-after-roundtrip-delete.xml" > "$OUT/14j-after-roundtrip-delete.json"
   ! grep -Fqi "Custom Rotor" "$OUT/14j-after-roundtrip-delete.json"
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Settings"
   sleep 0.4
@@ -707,7 +799,7 @@ functional_smoke() {
   printf '%s\n' 'ROTORCALCULATOR_GEOMETRIES|2' 'R|Out Of Domain|75|4|0.10|0.50|0.40|0.20|0.10|6.0|0.01|fixed|0.97|1' | adb shell 'cat > /sdcard/Download/rotorcalculator_out_of_domain.txt'
   adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Download/rotorcalculator_malformed.txt >/dev/null || true
   adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/Download/rotorcalculator_out_of_domain.txt >/dev/null || true
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Settings"
   sleep 0.4
@@ -741,7 +833,7 @@ functional_smoke() {
   safe_screencap "$OUT/14b-portrait-light.png"
 
   # Reopen Settings and verify the live state.
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Settings"
   sleep 0.5
@@ -757,7 +849,7 @@ functional_smoke() {
   adb shell monkey -p flightdyn.rotorcalculator -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 1.5
   assert_app_alive
-  adb shell input tap 369 28
+  adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Settings"
   sleep 0.5
@@ -932,7 +1024,7 @@ PY
   assert_text_scrolling_down "$OUT" "Drees" 873 393 "18c-inflow"
 
   # Switch back to DARK while still landscape and capture the same orientation.
-  adb shell input tap 849 24
+  adb shell input tap 849 52
   sleep 0.3
   python3 /tmp/tap_text.py "Settings"
   sleep 0.4
@@ -947,15 +1039,21 @@ PY
   assert_app_alive
 }
 
-capture_screen compact-320x568 320x568 0 1.0
-capture_screen compact-font130-320x568 320x568 0 1.3
-capture_screen standard-360x780 360x780 0 1.0
-capture_screen modern-393x873 393x873 0 1.0
-capture_screen large-412x915 412x915 0 1.0
-capture_screen tablet-small-600x960 600x960 0 1.0
-capture_screen tablet-768x1024 768x1024 0 1.0
-capture_screen landscape-phone-915x412 915x412 1 1.0
-capture_screen landscape-tablet-1024x600 1024x600 1 1.0
+if [[ "${QA_SKIP_COMPACT:-0}" != 1 ]]; then
+  capture_screen compact-320x568 320x568 0 1.0
+  capture_screen compact-font130-320x568 320x568 0 1.3
+  capture_screen standard-360x780 360x780 0 1.0
+fi
+if [[ "${QA_SKIP_PORTRAIT:-0}" != 1 ]]; then
+  capture_screen modern-393x873 393x873 0 1.0
+  capture_screen large-412x915 412x915 0 1.0
+  capture_screen tablet-small-600x960 600x960 0 1.0
+  capture_screen tablet-768x1024 768x1024 0 1.0
+fi
+if [[ "${QA_SKIP_LANDSCAPE:-0}" != 1 ]]; then
+  capture_screen landscape-phone-915x412 915x412 1 1.0
+  capture_screen landscape-tablet-1024x600 1024x600 1 1.0
+fi
 functional_smoke
 adb shell settings put system font_scale 1.0
 adb shell wm size reset

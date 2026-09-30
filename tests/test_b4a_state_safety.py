@@ -103,7 +103,7 @@ def test_rotor_aerodynamics_share_geometry_panel_language():
     assert '"Tip Loss"' in main
     assert '"Fixed Tip Factor B"' in main
     assert '"Compressibility"' in main
-    assert 'options.Add("Sissingh")' in main
+    assert 'options.Add("Sissingh — thrust-dependent tip factor")' in main
 
 
 def test_geometry_edits_are_explicitly_saved_and_contextual_actions_are_local():
@@ -144,8 +144,11 @@ def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     assert 'btnAxialInput.Text = "α"' in main
     assert 'btnAxialInput.Text = "Vz"' in main
     assert 'btnAxialInput.Text = "μz"' in main
-    assert "lblHorizontalDerived" in main
-    assert "lblAxialDerived" in main
+    assert "lblHorizontalDerived" not in main
+    assert "lblAxialDerived" not in main
+    assert '"Vx — Forward Speed"' in main
+    assert '"Vz — Axial Speed"' in main
+    assert '"μz — Axial Ratio"' in main
 
 
 def test_geometry_and_conditions_use_aerocalculator_row_contract():
@@ -172,10 +175,10 @@ def test_visual_audit_fixes_tablet_landscape_and_scaled_text():
     assert "rotor identity and actions share one 50dip band" in main
     assert "Dim activeW As Int = UiContentW * 42 / 100" in main
     assert "lblResultStatus.SingleLine = True" in main
-    assert '"STATUS · PG CAUTION · Mat≥0.80"' in main
+    assert '"CAUTION · TIP MACH ≥ 0.80"' in main
     assert '"SOLUTION · " & OperatingPairDisplayName' in main
-    assert 'btnSweepTrimHover.Text = "HOVER ONLY"' in main
-    assert 'btnSweepTrimHover.Text = "HOVER ONLY ✓"' in main
+    assert 'btnSweepTrimHover.Text = "HOVER TRIM"' in main
+    assert 'btnSweepTrimHover.Text = "HOVER TRIM ✓"' in main
     assert 'btnSweepMaxMu.Text = "μ " &' in main
     assert 'If root.Width <= 360dip Then' in main
     assert 'value.TextColor = ColorButText2' in main
@@ -187,8 +190,8 @@ def test_axial_sign_convention_matches_requirements():
     engine = text("zBETEngine.bas")
     assert "Return -mu * Tan(axialValue * cPI / 180.0)" in engine
     assert "Return axialValue / vtip" in engine
-    assert '"+Vz means positive climb rate' in main
-    assert '"+α means relative wind arriving from below' in main
+    assert '"Vz — climb rate; positive means wind from above"' in main
+    assert '"α — wind from below when positive"' in main
     assert '"Vz > 0: positive climb rate, relative wind from above."' in main
 
 
@@ -303,8 +306,9 @@ def test_sweep_uses_canonical_single_source_nomenclature_and_readable_plot_text(
     assert 'Case "PowerKW": Return "Pshaft — Shaft Power [kW]"' in popups
     assert '"CQ / CPshaft — Shaft Power"' not in popups
     assert '"L/D eff — Rotor Efficiency"' not in popups
-    assert "Typeface.MONOSPACE, 11, colText" in popups
-    assert "legendSize As Float = 9.5" in popups
+    assert "Typeface.MONOSPACE, 12, colText" in popups
+    assert "legendSize As Float = 10.5" in popups
+    assert "If widthPx < 540dip Then" in popups
 
 
 def test_results_precision_is_variable_specific_plus_one():
@@ -354,7 +358,7 @@ def test_plot_supports_custom_family_values():
     popup = text("RotorPopups.bas")
     assert 'btnSweepValues.Text = "VALUES"' in main
     assert "Private Sub ParseSweepFamilyValues" in main
-    assert "Enter 1–9 values separated by commas" in main
+    assert "Enter 1–9 comma-separated values" in main
     assert "SweepAlphaValues" in main
     assert "SweepVzValues" in main
     assert "SweepMuZValues" in main
@@ -450,12 +454,22 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 3" in main
-    assert "#VersionName: 1.20" in main
-    assert not (ROOT / "Objects" / "RotorCalculator.apk").exists()
+    assert "#VersionCode: 4" in main
+    assert "#VersionName: 1.21" in main
+    # A local QA build must be allowed; release hygiene concerns tracked binaries.
+    import subprocess
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "Objects/RotorCalculator.apk"],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    assert tracked.returncode != 0
     assert not (ROOT / "RotorCalculator_Signed.apk").exists()
     assert not (ROOT / "RotorCalculator_Signed.aab").exists()
-    assert not (ROOT / "Objects" / "classes.dex").exists()
+    tracked_dex = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "Objects/classes.dex"],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    assert tracked_dex.returncode != 0
     assert "Objects/*.apk" in ignore
     assert "Objects/*.dex" in ignore
 
@@ -488,10 +502,10 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert 'scroll_to_top 393 873' in qa
     assert 'local SOLVED_RPM_LABEL="RPM — Solved Speed"' in qa
     assert 'local SOUND_SPEED_LABEL="a — Speed of Sound"' in qa
-    assert 'if [ "$W" -le 360 ]; then' in qa
-    assert 'SOLVED_RPM_LABEL="RPM"' in qa
-    assert 'SOUND_SPEED_LABEL="a"' in qa
-    assert 'elif [ "$W" -le 430 ]; then' in qa
+    assert 'if (( W <= 360 )); then' in qa
+    assert 'SOLVED_RPM_LABEL=\'"text": "RPM"\'' in qa
+    assert 'SOUND_SPEED_LABEL=\'"text": "a"\'' in qa
+    assert 'elif (( W <= 430 )); then' in qa
     assert 'SOLVED_RPM_LABEL="RPM — Solved"' in qa
     assert 'assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"' in qa
     assert 'assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"' in qa
@@ -620,12 +634,13 @@ def test_active_ui_avoids_caption_sized_engineering_controls():
     assert "48dip * sc" in main
 
 
-def test_flow_equivalents_get_dedicated_mobile_second_line():
+def test_flow_inputs_share_the_normal_row_and_equivalents_live_in_results():
     main = text("RotorCalculator.b4a")
-    assert "Dim flowRowH As Int = 78dip" in main
-    assert "Private Sub AddFormRowPanelH" in main
-    assert "pnl.AddView(lblHorizontalDerived, pnl.Width*36/100, 54dip" in main
-    assert "pnl.AddView(lblAxialDerived, pnl.Width*36/100, 54dip" in main
+    assert "flowRowH" not in main
+    assert "AddFormRowPanelH" not in main
+    assert "RefreshFlowDerivedLabels" not in main
+    assert '"μ — Advance Ratio"' in main
+    assert '"α — Rotor AoA"' in main
 
 def test_sweep_axis_and_range_are_explicit_selectors():
     main = text("RotorCalculator.b4a")

@@ -16,6 +16,8 @@ File21=icon.png
 File22=icon_bezel_green_white.png
 File23=physics_help.html
 File24=physics_help_light.html
+File25=privacy_policy.html
+File26=privacy_policy_light.html
 File3=ic_action_cancel.png
 File4=icon_bezel_transp_green.png
 File5=icon_bezel_transp_white.png
@@ -64,8 +66,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: RotorCalculator
 	#MultiDex: False
-	#VersionCode: 3
-	#VersionName: 1.20
+	#VersionCode: 4
+	#VersionName: 1.21
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -204,11 +206,9 @@ Sub Globals
 	Private btnHorizontalInput As Button
 	Private edtHorizontalValue As EditText
 	Private lblHorizontalUnit As Button
-	Private lblHorizontalDerived As Label
 	Private btnAxialInput As Button
 	Private edtAxialValue As EditText
 	Private lblAxialUnit As Button
-	Private lblAxialDerived As Label
 	Private btnInflowModel As Button
 	Private btnOperatingPair As Button
 	Private lblOperatingInput1 As Button
@@ -250,6 +250,7 @@ Sub Globals
 	Private InputUnits As Map
 	
 	' Responsive layout metrics
+	Private SafeContentLeft, SafeContentTop, SafeContentWidth, SafeContentHeight As Int
 	Private HeaderHeight As Int
 	Private HeaderTopH As Int
 	Private HeaderTabsY As Int
@@ -273,11 +274,21 @@ Sub Activity_Create(FirstTime As Boolean)
 	ApplyThemePalette
 	InitializeInputUnitMaps
 	
+	BuildMainUi
+End Sub
+
+Private Sub BuildMainUi
+	Dim retainedGeometryDirty As Boolean = GeometryDirty
+	UpdatingUI = True
 	' B4A's Activity content area is the layout viewport. Keep all UI inside it.
 	root.Initialize("")
 	Activity.Color = ColorPnlInput5
 	root.Color = ColorPnlInput5
-	Activity.AddView(root, 0, 0, 100%x, 100%y)
+	If SafeContentWidth <= 0 Or SafeContentHeight <= 0 Then
+		SafeContentWidth = 100%x
+		SafeContentHeight = 100%y
+	End If
+	Activity.AddView(root, SafeContentLeft, SafeContentTop, SafeContentWidth, SafeContentHeight)
 	
 	' Responsive scaling: both width and height constrain growth.
 	' This prevents tall/narrow phones from enlarging the header until it clips.
@@ -327,7 +338,9 @@ Sub Activity_Create(FirstTime As Boolean)
 	LoadConditionDataToFields
 	RecalculateRotor
 	ShowPage(CurrentPage, False)
-	
+	UpdatingUI = False
+	GeometryDirty = retainedGeometryDirty
+	RefreshActiveRotorBar
 End Sub
 
 Sub Activity_Resume
@@ -430,6 +443,7 @@ Private Sub BuildUnifiedHeader
 	PopupMenu.AddMenuItem(3, 3, "zBET Conventions & Physical Axes")
 	PopupMenu.AddMenuItem(4, 4, "Restore Factory Rotor Presets")
 	PopupMenu.AddMenuItem(5, 5, "About RotorCalculator")
+	PopupMenu.AddMenuItem(6, 6, "Privacy Policy")
 	
 	' 3. App title uses the whole header between app icon and menu.
 	Dim titleLeft As Int = edge + iconSize + 8dip
@@ -441,7 +455,7 @@ Private Sub BuildUnifiedHeader
 	If titleW < 170dip Then titleSize = 18
 	If titleW < 145dip Then titleSize = 17
 	If titleW < 125dip Then titleSize = 15.5
-	If root.Width <= 340dip Then titleSize = 14
+	If root.Width <= 340dip Then titleSize = 18
 	lblAppTitle.TextSize = titleSize
 	lblAppTitle.Gravity = Gravity.CENTER_VERTICAL
 	lblAppTitle.SingleLine = True
@@ -529,6 +543,10 @@ Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
 				RecalculateRotor
 				ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
 			End If
+		Case 6
+			Dim privacyAsset As String = "privacy_policy.html"
+			If ThemeMode = 1 Then privacyAsset = "privacy_policy_light.html"
+			OpenHelpAsset(privacyAsset, "PRIVACY POLICY")
 		Case 5
 			Dim pm As PackageManager
 			Dim ver As String = "1.0.0"
@@ -852,6 +870,12 @@ Private Sub ShowConventionDialog
 End Sub
 
 Private Sub OpenPhysicsHelp
+	Dim helpAsset As String = "physics_help.html"
+	If ThemeMode = 1 Then helpAsset = "physics_help_light.html"
+	OpenHelpAsset(helpAsset, "PHYSICS & EQUATIONS")
+End Sub
+
+Private Sub OpenHelpAsset(helpAsset As String, titleText As String)
 	If HelpPopupOpen Then ClosePhysicsHelp
 	pnlHelpPopup.Initialize("pnlHelpPopup")
 	pnlHelpPopup.Color = ColorPnlInput5
@@ -866,7 +890,7 @@ Private Sub OpenPhysicsHelp
 	pnlHelpPopup.AddView(titleBar, 0, 0, root.Width, titleH)
 	Dim lblTitle As Label
 	lblTitle.Initialize("")
-	lblTitle.Text = "PHYSICS & EQUATIONS"
+	lblTitle.Text = titleText
 	lblTitle.TextColor = ColorAccentCyan
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
 	lblTitle.TextSize = 14
@@ -882,8 +906,6 @@ Private Sub OpenPhysicsHelp
 	
 	wvHelp.Initialize("")
 	pnlHelpPopup.AddView(wvHelp, 0, titleH, root.Width, root.Height - titleH)
-	Dim helpAsset As String = "physics_help.html"
-	If ThemeMode = 1 Then helpAsset = "physics_help_light.html"
 	wvHelp.LoadUrl("file:///android_asset/" & helpAsset)
 End Sub
 
@@ -1057,7 +1079,7 @@ Private Sub InitializeInputUnitMaps
 	InputUnits.Put("Tip Chord c1", lenUnit)
 	InputUnits.Put("Root Incidence", "deg")
 	InputUnits.Put("Tip Incidence", "deg")
-	InputUnits.Put("Lift Slope a0", "1/rad")
+	InputUnits.Put("Lift Slope a0", "rad⁻¹")
 	InputUnits.Put("Disk Area", areaUnit)
 	InputUnits.Put("Reference Blade Area", areaUnit)
 	InputUnits.Put("Active Blade Area", areaUnit)
@@ -1108,7 +1130,7 @@ Private Sub UnitChoices(field As String) As List
 		Case "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
 			out.AddAll(Array As String("deg", "rad"))
 		Case "Lift Slope a0"
-			out.AddAll(Array As String("1/rad", "1/deg"))
+			out.AddAll(Array As String("rad⁻¹", "deg⁻¹"))
 		Case "Tair — Temperature"
 			out.AddAll(Array As String("°C", "°F", "K"))
 		Case "Horizontal Vx", "Axial Vz"
@@ -1144,7 +1166,7 @@ Private Sub CanonicalToDisplay(field As String, value As Double) As Double
 		Case "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
 			If u = "rad" Then Return value * cPI / 180.0
 		Case "Lift Slope a0"
-			If u = "1/deg" Then Return value * cPI / 180.0
+			If u = "deg⁻¹" Then Return value * cPI / 180.0
 		Case "Tair — Temperature"
 			If u = "°F" Then Return value * 9.0 / 5.0 + 32.0
 			If u = "K" Then Return value + 273.15
@@ -1182,7 +1204,7 @@ Private Sub InputToCanonical(field As String, value As Double) As Double
 		Case "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
 			If u = "rad" Then Return value * 180.0 / cPI
 		Case "Lift Slope a0"
-			If u = "1/deg" Then Return value * 180.0 / cPI
+			If u = "deg⁻¹" Then Return value * 180.0 / cPI
 		Case "Tair — Temperature"
 			If u = "°F" Then Return (value - 32.0) * 5.0 / 9.0
 			If u = "K" Then Return value - 273.15
@@ -1200,7 +1222,9 @@ Private Sub InputToCanonical(field As String, value As Double) As Double
 End Sub
 
 Private Sub FormatInputValue(field As String, canonical As Double, decimals As Int) As String
-	Return NumberFormat2(CanonicalToDisplay(field, canonical), 1, decimals, decimals, False)
+	Dim minimumDigits As Int = decimals
+	If field = "Root Chord c0" Or field = "Tip Chord c1" Then minimumDigits = Min(2, decimals)
+	Return NumberFormat2(CanonicalToDisplay(field, canonical), 1, decimals, minimumDigits, False)
 End Sub
 
 Sub unitRow_Click
@@ -1208,7 +1232,15 @@ Sub unitRow_Click
 	Dim field As String = "" & u.Tag
 	Dim options As List = UnitChoices(field)
 	If options.Size <= 1 Then
-		ToastMessageShow("No alternate unit for this quantity.", False)
+		If field = "Rotor Name" Then
+			ToastMessageShow("Rotor name is text. Edit the value to rename this rotor.", False)
+		Else If field = "Profile Drag" Then
+			ToastMessageShow("Profile drag uses Numerical Vectorial integration. Tap Drag for details.", False)
+		Else If u.Text = "—" Then
+			ToastMessageShow("This selection has no physical unit; tap its label or value to choose.", False)
+		Else
+			ToastMessageShow("This quantity has no alternate display unit.", False)
+		End If
 		Return
 	End If
 	Dim current As String = UnitForField(field, "" & u.Text)
@@ -1216,7 +1248,7 @@ Sub unitRow_Click
 	For i = 0 To options.Size - 1
 		If ("" & options.Get(i)) = current Then selected = i
 	Next
-	Dim idx As Int = InputList(options, "Choose Unit · " & InputDisplayLabel(field), selected)
+	Dim idx As Int = InputList(options, "Unit · " & field, selected)
 	If idx < 0 Then Return
 	InputUnits.Put(UnitKeyForField(field), "" & options.Get(idx))
 	u.Text = UnitForField(field, "" & options.Get(idx))
@@ -1226,9 +1258,6 @@ Sub unitRow_Click
 End Sub
 
 Sub btnActiveRotor_Click
-	If GeometryDirty Then
-		If ResolveUnsavedGeometry("changing the active rotor") = False Then Return
-	End If
 	Dim options As List
 	options.Initialize
 	For i = 0 To RotorStorage.Rotors.Size - 1
@@ -1241,6 +1270,10 @@ Sub btnActiveRotor_Click
 	If idx = RotorStorage.Rotors.Size Then
 		btnNewRotor_Click
 		Return
+	End If
+	If idx = RotorStorage.ActiveIndex Then Return
+	If GeometryDirty Then
+		If ResolveUnsavedGeometry("changing the active rotor") = False Then Return
 	End If
 	RotorStorage.SetActiveRotor(idx)
 	ActiveGeom = RotorStorage.GetActiveRotor
@@ -1277,8 +1310,8 @@ Private Sub BuildPageGeom
 	Dim bCopy As Button = CreateRowButton("COPY", "btnGeometryCopy")
 	Dim bDelete As Button = CreateRowButton("DELETE", "btnGeometryDelete")
 	bSave.TextColor = ColorAccentGreen
-	bCopy.TextColor = ColorAccentCyan
-	bDelete.TextColor = ColorAccentRed
+	bCopy.TextColor = ColorButText2
+	bDelete.TextColor = ColorButText2
 	If RotorStorage.Rotors.Size <= 1 Then
 		bDelete.Enabled = False
 		bDelete.TextColor = ColorButText2
@@ -1338,7 +1371,11 @@ Private Sub BuildGeometryEditorContent
 	Dim pnl As Panel
 	
 	y = AddGeometrySectionHeader(y, "BLADE GEOMETRY")
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRotorName = AddTextInputRow(pnl, 4dip, 48dip, "Rotor Name", ActiveGeom.Name, "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	Dim nameRowH As Int = 82dip
+	If root.Width <= 340dip Then nameRowH = 112dip
+	pnl = AddFormRowPanelSized(scvGeom, y, rowIndex, nameRowH - 1dip)
+	edtRotorName = AddTextInputRow(pnl, 4dip, nameRowH - 10dip, "Rotor Name", ActiveGeom.Name, "edtGeom")
+	y = y + nameRowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRadius = AddFullInputRow(pnl, 4dip, 48dip, "Radius R", "", "m", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtNBlades = AddFullInputRow(pnl, 4dip, 48dip, "Blade Count", "", "[-]", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtRootCutout = AddFullInputRow(pnl, 4dip, 48dip, "Root Cutout", "", "r/R", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
@@ -1367,7 +1404,7 @@ Private Sub BuildGeometryEditorContent
 	Dim unitAirfoil As Button = CreateUnitButton("Airfoil", "—")
 	pnl.AddView(unitAirfoil, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtLiftSlope = AddFullInputRow(pnl, 4dip, 48dip, "Lift Slope a0", "", "1/rad", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtLiftSlope = AddFullInputRow(pnl, 4dip, 48dip, "Lift Slope a0", "", "rad⁻¹", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtCd0 = AddFullInputRow(pnl, 4dip, 48dip, "Profile Cd0", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
 	Dim lblTip As Button = CreateRowLabel("Tip Loss", "lblRowTip")
@@ -1403,26 +1440,18 @@ Private Sub AddGeometrySectionHeader(y As Int, title As String) As Int
 End Sub
 
 Private Sub AddFormRowPanel(scv As ScrollView, y As Int, rowIndex As Int) As Panel
-	Dim pnl As Panel
-	pnl.Initialize("")
-	If rowIndex Mod 2 = 0 Then pnl.Color = ColorPnlInput2 Else pnl.Color = ColorPnlInput1
-	scv.Panel.AddView(pnl, UiContentLeft, y, UiContentW, 56dip)
-	Dim lineRow As Panel
-	lineRow.Initialize("")
-	lineRow.Color = ColorPnlLine3
-	scv.Panel.AddView(lineRow, UiContentLeft, y + 55dip, UiContentW, 1dip)
-	Return pnl
+	Return AddFormRowPanelSized(scv, y, rowIndex, 56dip)
 End Sub
 
-Private Sub AddFormRowPanelH(scv As ScrollView, y As Int, rowIndex As Int, h As Int) As Panel
+Private Sub AddFormRowPanelSized(scv As ScrollView, y As Int, rowIndex As Int, rowHeight As Int) As Panel
 	Dim pnl As Panel
 	pnl.Initialize("")
 	If rowIndex Mod 2 = 0 Then pnl.Color = ColorPnlInput2 Else pnl.Color = ColorPnlInput1
-	scv.Panel.AddView(pnl, UiContentLeft, y, UiContentW, h)
+	scv.Panel.AddView(pnl, UiContentLeft, y, UiContentW, rowHeight)
 	Dim lineRow As Panel
 	lineRow.Initialize("")
 	lineRow.Color = ColorPnlLine3
-	scv.Panel.AddView(lineRow, UiContentLeft, y + h - 1dip, UiContentW, 1dip)
+	scv.Panel.AddView(lineRow, UiContentLeft, y + rowHeight - 1dip, UiContentW, 1dip)
 	Return pnl
 End Sub
 
@@ -1534,14 +1563,13 @@ Private Sub BuildPageCond
 	Dim y As Int = 8dip
 	Dim rowIndex As Int = 0
 	Dim rowH As Int = 57dip
-	Dim flowRowH As Int = 78dip
 	Dim pnl As Panel
 	
 	y = AddConditionSectionHeader(y, "ATMOSPHERE & FLOW")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtAltitude = AddFullInputRow(pnl, 4dip, 48dip, "h — Altitude", "0", "m", "edtCond"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtTemperature = AddFullInputRow(pnl, 4dip, 48dip, "Tair — Temperature", "15", "°C", "edtCond"): y=y+rowH: rowIndex=rowIndex+1
 	
-	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
+	pnl = AddFormRowPanel(scvCond, y, rowIndex)
 	btnHorizontalInput.Initialize("btnHorizontalInput")
 	btnHorizontalInput.Typeface = Typeface.DEFAULT_BOLD
 	btnHorizontalInput.TextColor = ColorButText1
@@ -1559,15 +1587,9 @@ Private Sub BuildPageCond
 	pnl.AddView(edtHorizontalValue, pnl.Width*36/100, 4dip, pnl.Width*39/100, 48dip)
 	lblHorizontalUnit = CreateUnitButton("Horizontal Flow", "[-]")
 	pnl.AddView(lblHorizontalUnit, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
-	lblHorizontalDerived.Initialize("")
-	lblHorizontalDerived.TextColor = ColorButText2
-	lblHorizontalDerived.TextSize = 14 * sc
-	lblHorizontalDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	lblHorizontalDerived.SingleLine = True
-	pnl.AddView(lblHorizontalDerived, pnl.Width*36/100, 54dip, pnl.Width*61/100, 20dip)
-	y=y+flowRowH: rowIndex=rowIndex+1
-	
-	pnl = AddFormRowPanelH(scvCond, y, rowIndex, flowRowH - 1dip)
+	y=y+rowH: rowIndex=rowIndex+1
+
+	pnl = AddFormRowPanel(scvCond, y, rowIndex)
 	btnAxialInput.Initialize("btnAxialInput")
 	btnAxialInput.Typeface = Typeface.DEFAULT_BOLD
 	btnAxialInput.TextColor = ColorButText1
@@ -1585,13 +1607,7 @@ Private Sub BuildPageCond
 	pnl.AddView(edtAxialValue, pnl.Width*36/100, 4dip, pnl.Width*39/100, 48dip)
 	lblAxialUnit = CreateUnitButton("Axial Flow", "deg")
 	pnl.AddView(lblAxialUnit, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
-	lblAxialDerived.Initialize("")
-	lblAxialDerived.TextColor = ColorButText2
-	lblAxialDerived.TextSize = 14 * sc
-	lblAxialDerived.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	lblAxialDerived.SingleLine = True
-	pnl.AddView(lblAxialDerived, pnl.Width*36/100, 54dip, pnl.Width*61/100, 20dip)
-	y=y+flowRowH: rowIndex=rowIndex+1
+	y=y+rowH: rowIndex=rowIndex+1
 	
 	y = AddConditionSectionHeader(y + 4dip, "OPERATING CONSTRAINTS")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
@@ -1654,7 +1670,7 @@ Private Sub BuildPageCond
 	lblDragFixed.TextColor = ColorAccentCyan
 	lblDragFixed.Typeface = Typeface.DEFAULT_BOLD
 	lblDragFixed.Gravity = Gravity.CENTER
-	lblDragFixed.TextSize = 15 * sc
+	If root.Width <= 360dip Then lblDragFixed.TextSize = 14 Else lblDragFixed.TextSize = 15 * sc
 	pnl.AddView(lblDragFixed, pnl.Width*36/100, 4dip, pnl.Width*39/100, 48dip)
 	Dim unitDrag As Button = CreateUnitButton("Profile Drag", "—")
 	pnl.AddView(unitDrag, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
@@ -1765,7 +1781,11 @@ Private Sub BuildPageRes
 		lbl.TextSize = 15 * sc
 		lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 		lbl.SingleLine = True
-		row.AddView(lbl, row.Width*3/100, 0, row.Width*47/100, rowH)
+		If root.Width <= 360dip Then
+			row.AddView(lbl, row.Width*3/100, 0, row.Width*36/100, rowH)
+		Else
+			row.AddView(lbl, row.Width*3/100, 0, row.Width*47/100, rowH)
+		End If
 		lblResults(i).Initialize("")
 		lblResults(i).Text = "---"
 		lblResults(i).TextColor = ColorAccentCyan
@@ -1773,7 +1793,11 @@ Private Sub BuildPageRes
 		lblResults(i).TextSize = 15.5 * sc
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 		lblResults(i).SingleLine = True
-		row.AddView(lblResults(i), row.Width*52/100, 0, row.Width*24/100, rowH)
+		If root.Width <= 360dip Then
+			row.AddView(lblResults(i), row.Width*40/100, 0, row.Width*32/100, rowH)
+		Else
+			row.AddView(lblResults(i), row.Width*52/100, 0, row.Width*24/100, rowH)
+		End If
 		lblResultUnits(i).Initialize("")
 		lblResultUnits(i).Text = ResultDefaultUnit(i)
 		lblResultUnits(i).TextColor = ColorButText2
@@ -1781,7 +1805,11 @@ Private Sub BuildPageRes
 		If root.Width <= 360dip Then lblResultUnits(i).TextSize = 14 Else lblResultUnits(i).TextSize = 14.5 * sc
 		lblResultUnits(i).Gravity = Gravity.CENTER
 		lblResultUnits(i).SingleLine = True
-		row.AddView(lblResultUnits(i), row.Width*77/100, 0, row.Width*20/100, rowH)
+		If root.Width <= 360dip Then
+			row.AddView(lblResultUnits(i), row.Width*73/100, 0, row.Width*25/100, rowH)
+		Else
+			row.AddView(lblResultUnits(i), row.Width*77/100, 0, row.Width*20/100, rowH)
+		End If
 		y = y + rowH
 	Next
 	scvRes.Panel.Height = y + 24dip
@@ -1795,9 +1823,9 @@ Private Sub InputDisplayLabel(fullText As String) As String
 			Case "Rotor Name": Return "Name"
 			Case "Radius R": Return "R"
 			Case "Blade Count": Return "Nb"
-			Case "Root Cutout": Return "x0"
-			Case "Root Chord c0": Return "c0"
-			Case "Tip Chord c1": Return "c1"
+			Case "Root Cutout": Return "x₀"
+			Case "Root Chord c0": Return "c₀"
+			Case "Tip Chord c1": Return "c₁"
 			Case "Reference Solidity": Return "σref"
 			Case "Aspect Ratio": Return "AR"
 			Case "Root Incidence": Return "θroot"
@@ -1808,9 +1836,10 @@ Private Sub InputDisplayLabel(fullText As String) As String
 			Case "Reference Blade Area": Return "Sref,b"
 			Case "Active Blade Area": Return "Sactive,b"
 			Case "Total Twist": Return "Δθtwist"
-			Case "Lift Slope a0": Return "a0"
-			Case "Profile Cd0": Return "Cd0"
-			Case "Fixed Tip Factor B": Return "B"
+			Case "Taper Ratio": Return "Taper"
+			Case "Lift Slope a0": Return "a₀"
+			Case "Profile Cd0": Return "Cd₀"
+			Case "Fixed Tip Factor B": Return "Fixed B"
 			Case "h — Altitude": Return "h"
 			Case "Tair — Temperature": Return "Tair"
 			Case "Operating Inputs": Return "Inputs"
@@ -1820,6 +1849,7 @@ Private Sub InputDisplayLabel(fullText As String) As String
 			Case "K_ind": Return "K_ind"
 			Case "Inflow Model": Return "Inflow"
 			Case "Compressibility": Return "Comp."
+			Case "Profile Drag": Return "Drag"
 			Case Else: Return fullText
 		End Select
 	End If
@@ -1827,9 +1857,9 @@ Private Sub InputDisplayLabel(fullText As String) As String
 		Select fullText
 			Case "Rotor Name": Return "Name"
 			Case "Blade Count": Return "Blades"
-			Case "Root Cutout": Return "Root x0"
-			Case "Root Chord c0": Return "Root c0"
-			Case "Tip Chord c1": Return "Tip c1"
+			Case "Root Cutout": Return "Root x₀"
+			Case "Root Chord c0": Return "Root c₀"
+			Case "Tip Chord c1": Return "Tip c₁"
 			Case "Reference Solidity": Return "σref"
 			Case "Aspect Ratio": Return "AR"
 			Case "Root Incidence": Return "θroot"
@@ -1839,9 +1869,9 @@ Private Sub InputDisplayLabel(fullText As String) As String
 			Case "Reference Blade Area": Return "Ref. area"
 			Case "Active Blade Area": Return "Active area"
 			Case "Total Twist": Return "Twist"
-			Case "Lift Slope a0": Return "a0"
-			Case "Profile Cd0": Return "Cd0"
-			Case "Fixed Tip Factor B": Return "Tip B"
+			Case "Lift Slope a0": Return "a₀"
+			Case "Profile Cd0": Return "Cd₀"
+			Case "Fixed Tip Factor B": Return "Fixed B"
 			Case "Tair — Temperature": Return "Temperature"
 			Case "Operating Inputs": Return "Operating pair"
 			Case "Collective Δθ": Return "Collective"
@@ -1851,6 +1881,12 @@ Private Sub InputDisplayLabel(fullText As String) As String
 			Case Else: Return fullText
 		End Select
 	End If
+	Select fullText
+		Case "Root Chord c0": Return "Root Chord c₀"
+		Case "Tip Chord c1": Return "Tip Chord c₁"
+		Case "Lift Slope a0": Return "Lift Slope a₀"
+		Case "Profile Cd0": Return "Profile Cd₀"
+	End Select
 	Return fullText
 End Sub
 
@@ -1931,7 +1967,7 @@ End Sub
 
 Sub lblResultTip_Click
 	Dim l As Label = Sender
-	ToastMessageShow(ResultTooltip("" & l.Tag), True)
+	Msgbox(ResultTooltip("" & l.Tag), "About · " & l.Tag)
 End Sub
 
 Private Sub ResultTooltip(labelText As String) As String
@@ -2002,7 +2038,11 @@ Sub AddTextInputRow(pnl As Panel, ib As Int, tb As Int, lblText As String, defVa
 	edt.TextColor = ColorEdtText
 	edt.Color = ColorEdt
 	edt.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	edt.SingleLine = True
+	If lblText = "Rotor Name" Then
+		edt.SingleLine = False
+	Else
+		edt.SingleLine = True
+	End If
 	edt.ForceDoneButton = True
 	pnl.AddView(edt, pnl.Width * 36 / 100, ib * sc, pnl.Width * 39 / 100, tb * sc)
 	Dim u As Button = CreateUnitButton(lblText, "—")
@@ -2220,10 +2260,9 @@ Public Sub RecalculateRotor
 			Dim fallbackCond As FlightCondition = zBETEngine.ResolveConditionAtRPM(ActiveCond, fallbackGeom)
 			ActiveCond.Mu = fallbackCond.Mu
 			ActiveCond.MuZ = fallbackCond.MuZ
-			If lblHorizontalDerived.IsInitialized Then RefreshFlowDerivedLabels
 			Return
 		Else If ActiveRes.CompressibilityWarning Then
-			If root.Width <= 360dip Then lblResultStatus.Text = "STATUS · PG CAUTION · Mat≥0.80" Else lblResultStatus.Text = "MODEL STATUS · PG CAUTION (Mat ≥ 0.80)"
+			If root.Width <= 360dip Then lblResultStatus.Text = "CAUTION · TIP MACH ≥ 0.80" Else lblResultStatus.Text = "MODEL CAUTION · TIP MACH ≥ 0.80"
 			lblResultStatus.TextColor = ColorAccentAmber
 		Else
 			If root.Width <= 360dip Then lblResultStatus.Text = "STATUS · VALID" Else lblResultStatus.Text = "MODEL STATUS · VALID"
@@ -2234,7 +2273,6 @@ Public Sub RecalculateRotor
 	' Keep derived nondimensional state synchronized with the solved operating RPM.
 	ActiveCond.Mu = ActiveRes.OperatingMu
 	ActiveCond.MuZ = ActiveRes.OperatingMuZ
-	If lblHorizontalDerived.IsInitialized Then RefreshFlowDerivedLabels
 	
 	Dim tipMach As Double = 0.0
 	If ActiveRes.SpeedOfSound > 0 Then tipMach = ActiveRes.TipSpeed / ActiveRes.SpeedOfSound
@@ -2364,25 +2402,25 @@ Sub LoadRotorDataToFields(geom As RotorGeometry)
 	Dim g As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(geom))
 	UpdatingUI = True
 	edtRotorName.Text = g.Name
-	edtRadius.Text = FormatInputValue("Radius R", g.Radius, 3)
+	edtRadius.Text = FormatInputValue("Radius R", g.Radius, RadiusDisplayDigits(g.Radius))
 	edtNBlades.Text = g.NBlades
 	edtRootCutout.Text = NumberFormat2(g.RootCutout, 1, 3, 3, False)
-	edtChordRoot.Text = FormatInputValue("Root Chord c0", g.ChordRoot, 4)
-	edtChordTip.Text = FormatInputValue("Tip Chord c1", g.ChordTip, 4)
-	edtSigmaRef.Text = NumberFormat2(g.SigmaRef, 1, 5, 5, False)
-	edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(g), 1, 3, 3, False)
-	edtThetaRoot.Text = FormatInputValue("Root Incidence", g.ThetaRoot * 180.0 / cPI, 3)
-	edtThetaTip.Text = FormatInputValue("Tip Incidence", g.ThetaTip * 180.0 / cPI, 3)
-	edtLiftSlope.Text = FormatInputValue("Lift Slope a0", g.LiftSlope0, 4)
-	edtCd0.Text = NumberFormat2(g.Cd0, 1, 5, 5, False)
-	edtTipLossB.Text = NumberFormat2(g.TipLossB, 1, 4, 4, False)
+	edtChordRoot.Text = FormatInputValue("Root Chord c0", g.ChordRoot, ChordDisplayDigits(g.ChordRoot))
+	edtChordTip.Text = FormatInputValue("Tip Chord c1", g.ChordTip, ChordDisplayDigits(g.ChordTip))
+	edtSigmaRef.Text = NumberFormat2(g.SigmaRef, 1, 4, 4, False)
+	edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(g), 1, 2, 2, False)
+	edtThetaRoot.Text = FormatInputValue("Root Incidence", g.ThetaRoot * 180.0 / cPI, 1)
+	edtThetaTip.Text = FormatInputValue("Tip Incidence", g.ThetaTip * 180.0 / cPI, 1)
+	edtLiftSlope.Text = FormatInputValue("Lift Slope a0", g.LiftSlope0, 2)
+	edtCd0.Text = NumberFormat2(g.Cd0, 1, 4, 4, False)
+	edtTipLossB.Text = NumberFormat2(g.TipLossB, 1, 3, 3, False)
 	btnSelectAirfoil.Text = AirfoilDisplayName(g)
 	RefreshTipLossButton(g)
 	If g.UsePrandtlGlauert Then
-		btnCompressibility.Text = "Prandtl-Glauert: ON"
+		If root.Width <= 430dip Then btnCompressibility.Text = "PG · ON" Else btnCompressibility.Text = "Prandtl-Glauert: ON"
 		btnCompressibility.TextColor = ColorAccentGreen
 	Else
-		btnCompressibility.Text = "Prandtl-Glauert: OFF"
+		If root.Width <= 430dip Then btnCompressibility.Text = "PG · OFF" Else btnCompressibility.Text = "Prandtl-Glauert: OFF"
 		btnCompressibility.TextColor = ColorButText2
 	End If
 	UpdatingUI = False
@@ -2421,8 +2459,12 @@ End Sub
 Private Sub AirfoilDisplayName(geom As RotorGeometry) As String
 	For i = 0 To RotorPopups.Airfoils.Size - 1
 		Dim af As AirfoilData = RotorPopups.Airfoils.Get(i)
-		If Abs(geom.LiftSlope0 - af.A0) < 0.001 And Abs(geom.Cd0 - af.Cd0) < 0.00001 Then Return af.Name
+		If Abs(geom.LiftSlope0 - af.A0) < 0.001 And Abs(geom.Cd0 - af.Cd0) < 0.00001 Then
+			If root.Width <= 360dip And af.Name.StartsWith("Sikorsky ") Then Return af.Name.SubString(9)
+			Return af.Name
+		End If
 	Next
+	If root.Width <= 360dip Then Return "Custom"
 	Return "Custom Section"
 End Sub
 
@@ -2465,13 +2507,19 @@ Sub LoadConditionDataToFields
 		Case "uniform": btnInflowModel.Text = "Uniform"
 		Case "coleman_simple": btnInflowModel.Text = "Coleman Simple"
 		Case "drees": btnInflowModel.Text = "Drees"
-		Case Else: btnInflowModel.Text = "Coleman-Feingold"
+		Case Else
+			If root.Width <= 360dip Then
+				btnInflowModel.Text = "Coleman-F."
+			Else If root.Width <= 430dip Then
+				btnInflowModel.Text = "Coleman-Feing."
+			Else
+				btnInflowModel.Text = "Coleman-Feingold"
+			End If
 	End Select
 	If edtKInd.IsInitialized Then edtKInd.Text = NumberFormat2(ActiveCond.KInd, 1, 3, 3, False)
 	RefreshOperatingControls
 	UpdatingUI = False
 	SyncConditionRepresentations
-	RefreshFlowDerivedLabels
 End Sub
 
 Sub RefreshHorizontalInputDisplay
@@ -2512,29 +2560,6 @@ Private Sub RotorTipSpeed As Double
 	Dim rpm As Double = Max(1.0, Min(30000.0, ActiveCond.RPM))
 	Dim radius As Double = Max(0.02, ActiveGeom.Radius)
 	Return rpm * cPI / 30.0 * radius
-End Sub
-
-Private Sub RefreshFlowDerivedLabels
-	If lblHorizontalDerived.IsInitialized = False Then Return
-	Dim mu As Double = ActiveCond.Mu
-	Dim muz As Double = ActiveCond.MuZ
-	Dim vtip As Double = RotorTipSpeed
-	Dim vx As Double = mu * vtip
-	Dim vz As Double = muz * vtip
-	Dim alpha As Double = zBETEngine.AlphaFromMuZ(mu, muz)
-	If HorizontalInputMode = "vx" Then
-		lblHorizontalDerived.Text = "μ " & FormatResultValue(mu, 4)
-	Else
-		lblHorizontalDerived.Text = "Vx " & FormatResultValue(vx, 1)
-	End If
-	Select AxialInputMode
-		Case "alpha"
-			lblAxialDerived.Text = "Vz " & FormatResultValue(vz, 1) & " · μz " & FormatResultValue(muz, 3)
-		Case "vz"
-			lblAxialDerived.Text = "α " & FormatResultValue(alpha, 1) & "° · μz " & FormatResultValue(muz, 3)
-		Case Else
-			lblAxialDerived.Text = "Vz " & FormatResultValue(vz, 1) & " · α " & FormatResultValue(alpha, 1) & "°"
-	End Select
 End Sub
 
 Private Sub PairInputName(pair As String, position As Int) As String
@@ -2599,7 +2624,6 @@ Private Sub RefreshDerivedCondition(updateDisplayedValues As Boolean)
 		RefreshOperatingControls
 		UpdatingUI = wasUpdating
 	End If
-	If ActiveRes.SolutionValid Then RefreshFlowDerivedLabels
 End Sub
 
 
@@ -2610,7 +2634,12 @@ Sub btnSelectAirfoil_Click
 		Dim af As AirfoilData = RotorPopups.Airfoils.Get(i)
 		options.Add(af.Name & "  ·  a0=" & af.A0 & "  Cd0=" & af.Cd0)
 	Next
-	Dim resIndex As Int = InputList(options, "Airfoil Section", -1)
+	Dim selected As Int = -1
+	For i = 0 To RotorPopups.Airfoils.Size - 1
+		Dim currentAf As AirfoilData = RotorPopups.Airfoils.Get(i)
+		If Abs(currentAf.A0 - ActiveGeom.LiftSlope0) < 0.000001 And Abs(currentAf.Cd0 - ActiveGeom.Cd0) < 0.000001 Then selected = i
+	Next
+	Dim resIndex As Int = InputList(options, "Airfoil Section · sets a0 and Cd0", selected)
 	If resIndex < 0 Then Return
 	Dim selAf As AirfoilData = RotorPopups.Airfoils.Get(resIndex)
 	ActiveGeom.LiftSlope0 = selAf.A0
@@ -2623,9 +2652,9 @@ End Sub
 Sub btnTipLoss_Click
 	Dim options As List
 	options.Initialize
-	options.Add("None")
-	options.Add("Fixed B")
-	options.Add("Sissingh")
+	options.Add("None — full aerodynamic span")
+	options.Add("Fixed B — prescribed effective tip radius")
+	options.Add("Sissingh — thrust-dependent tip factor")
 	Dim selected As Int = 0
 	If ActiveGeom.TipLossMode = "fixed" Then selected = 1
 	If ActiveGeom.TipLossMode = "sissingh" Then selected = 2
@@ -2644,7 +2673,13 @@ Sub btnTipLoss_Click
 End Sub
 
 Sub btnCompressibility_Click
-	ActiveGeom.UsePrandtlGlauert = Not(ActiveGeom.UsePrandtlGlauert)
+	Dim options As List
+	options.Initialize2(Array As String("Off — no compressibility correction", "On — Prandtl-Glauert correction"))
+	Dim selected As Int = 0
+	If ActiveGeom.UsePrandtlGlauert Then selected = 1
+	Dim idx As Int = InputList(options, "Compressibility Model", selected)
+	If idx < 0 Then Return
+	ActiveGeom.UsePrandtlGlauert = (idx = 1)
 	GeometryDirty = True
 	LoadRotorDataToFields(ActiveGeom)
 	RecalculateRotor
@@ -2676,13 +2711,6 @@ Sub btnInflowModel_Click
 End Sub
 
 Sub btnOperatingPair_Click
-	' Seed every possible new pair with the current solved state so mode changes are continuous.
-	If ActiveRes.SolutionValid Then
-		ActiveCond.RPM = ActiveRes.TrimmedRPM
-		ActiveCond.CollectiveDeg = ActiveRes.TrimmedCollectiveDeg
-		ActiveCond.TargetCT = Max(1.0e-8, ActiveRes.CT)
-		ActiveCond.TargetThrustN = Max(1.0e-6, ActiveRes.ThrustN)
-	End If
 	Dim options As List
 	options.Initialize
 	options.Add("RPM + Collective")
@@ -2702,6 +2730,13 @@ Sub btnOperatingPair_Click
 	End Select
 	Dim idx As Int = InputList(options, "Operating Inputs · prescribe any two", selected)
 	If idx < 0 Then Return
+	' Only seed after a committed choice: Cancel must leave the physical state intact.
+	If ActiveRes.SolutionValid Then
+		ActiveCond.RPM = ActiveRes.TrimmedRPM
+		ActiveCond.CollectiveDeg = ActiveRes.TrimmedCollectiveDeg
+		ActiveCond.TargetCT = Max(1.0e-8, ActiveRes.CT)
+		ActiveCond.TargetThrustN = Max(1.0e-6, ActiveRes.ThrustN)
+	End If
 	Select idx
 		Case 0: ActiveCond.OperatingPair = "rpm_collective"
 		Case 1: ActiveCond.OperatingPair = "rpm_ct"
@@ -2738,10 +2773,17 @@ End Sub
 
 Sub lblRowTip_Click
 	Dim b As Button = Sender
+	Select b.Tag
+		Case "Airfoil": btnSelectAirfoil_Click: Return
+		Case "Tip Loss": btnTipLoss_Click: Return
+		Case "Compressibility": btnCompressibility_Click: Return
+		Case "Inflow Model": btnInflowModel_Click: Return
+		Case "Operating Inputs": btnOperatingPair_Click: Return
+	End Select
 	Dim tipMsg As String = ""
 	Select b.Tag
 		Case "Rotor Name"
-			tipMsg = "Name stored with this rotor geometry."
+			tipMsg = "Current name: " & ActiveGeom.Name & CRLF & CRLF & "Edit the value to rename this rotor; SAVE stores the change."
 		Case "Radius R"
 			tipMsg = "Rotor radius R. Editing R scales c0 and c1 proportionally, preserving reference solidity, aspect ratio and taper."
 		Case "Blade Count"
@@ -2777,28 +2819,11 @@ Sub lblRowTip_Click
 		Case "Profile Cd0"
 			tipMsg = "Baseline section profile-drag coefficient used by the Numerical Vectorial integration."
 		Case "Fixed Tip Factor B"
-			tipMsg = "Fixed effective tip radius factor B. Editable only when Fixed B tip loss is selected."
+			tipMsg = "Prescribed effective tip radius factor B. Used and editable only with Fixed B tip loss; None and Sissingh ignore this stored setting. The effective operating B is shown in Results."
 		Case "h — Altitude"
 			tipMsg = "Pressure altitude used by the atmosphere model."
 		Case "Tair — Temperature"
 			tipMsg = "Ambient temperature used for density and speed of sound."
-		Case "Horizontal Flow"
-			Msgbox("Choose μ or Vx as equivalent horizontal inputs." & CRLF & CRLF & _
-				"μ = Vx/(ΩR)." & CRLF & _
-				"+Vx is forward in-plane flow." & CRLF & _
-				"The non-selected representation is shown as a derived value.", "Horizontal Flow")
-			Return
-		Case "Axial Flow"
-			Msgbox("Choose α, Vz or μz as one equivalent axial input." & CRLF & CRLF & _
-				"+Vz means positive climb rate: the relative wind comes from above and passes downward through the disk." & CRLF & _
-				"+μz is the corresponding positive downward relative flow." & CRLF & _
-				"+α means relative wind arriving from below." & CRLF & _
-				"μz = Vz/(ΩR) = -μ tan(α).", "Axial Flow")
-			Return
-		Case "Operating Inputs"
-			Msgbox("RPM, collective Δθ, CT and thrust form one operating solution." & CRLF & CRLF & _
-				"Choose any two as prescribed inputs. RotorCalculator solves the other two at the current forward/axial flight condition.", "Operating Constraints")
-			Return
 		Case "RPM"
 			tipMsg = "Prescribed rotational speed for the selected operating pair."
 		Case "Collective Δθ"
@@ -2809,33 +2834,26 @@ Sub lblRowTip_Click
 			tipMsg = "Prescribed dimensional rotor thrust for the selected operating pair."
 		Case "K_ind"
 			tipMsg = "Induced-power factor K_ind used in induced power and air-power calculations. Typical ideal value is 1; practical values are greater than 1."
-		Case "Airfoil"
-			tipMsg = "Section preset. Selecting it populates a0 and Cd0; the numerical values remain visible."
-		Case "Tip Loss"
-			tipMsg = "Finite-blade tip-loss model: None, Fixed B, or Sissingh."
-		Case "Compressibility"
-			tipMsg = "Optional Prandtl-Glauert correction using the zBET representative subsonic Mach definition."
-		Case "Inflow Model"
-			Msgbox("Uniform: no harmonic gradient." & CRLF & CRLF & _
-				"Coleman Simple: longitudinal first harmonic." & CRLF & CRLF & _
-				"Coleman-Feingold: longitudinal and lateral harmonics." & CRLF & CRLF & _
-				"Drees: classical longitudinal and lateral gradients.", "Inflow Models")
-			Return
 		Case "Profile Drag"
 			tipMsg = "Profile drag is always evaluated with Numerical Vectorial radial/azimuthal quadrature."
 		Case Else
 			tipMsg = "" & b.Tag
 	End Select
-	ToastMessageShow(tipMsg, True)
+	Msgbox(tipMsg, "About · " & b.Tag)
 End Sub
 
-Sub btnUnit_Click
-	Dim b As Button = Sender
-	ToastMessageShow("Input unit: " & b.Tag & " (inputs use SI)", False)
+Private Sub RadiusDisplayDigits(value As Double) As Int
+	If Abs(value) < 1 Then Return 3
+	Return 2
+End Sub
+
+Private Sub ChordDisplayDigits(value As Double) As Int
+	If Abs(value) < 0.1 Then Return 4
+	Return 3
 End Sub
 
 Sub edtGeom_TextChanged (Old As String, New As String)
-	If UpdatingUI Or edtRadius.IsInitialized = False Or edtAspectRatio.IsInitialized = False Then Return
+	If UpdatingUI Or Old = New Or edtRadius.IsInitialized = False Or edtAspectRatio.IsInitialized = False Then Return
 	Dim edt As EditText = Sender
 	Dim field As String = "" & edt.Tag
 	Dim raw As Double
@@ -2894,13 +2912,13 @@ Sub RefreshGeometryDependentInputs(sourceField As String)
 	If edtRadius.IsInitialized = False Or edtAspectRatio.IsInitialized = False Then Return
 	Dim wasUpdating As Boolean = UpdatingUI
 	UpdatingUI = True
-	If sourceField <> "Radius R" Then edtRadius.Text = FormatInputValue("Radius R", ActiveGeom.Radius, 3)
+	If sourceField <> "Radius R" Then edtRadius.Text = FormatInputValue("Radius R", ActiveGeom.Radius, RadiusDisplayDigits(ActiveGeom.Radius))
 	If sourceField <> "Blade Count" Then edtNBlades.Text = ActiveGeom.NBlades
 	If sourceField <> "Root Cutout" Then edtRootCutout.Text = NumberFormat2(ActiveGeom.RootCutout, 1, 3, 3, False)
-	If sourceField <> "Root Chord c0" Then edtChordRoot.Text = FormatInputValue("Root Chord c0", ActiveGeom.ChordRoot, 4)
-	If sourceField <> "Tip Chord c1" Then edtChordTip.Text = FormatInputValue("Tip Chord c1", ActiveGeom.ChordTip, 4)
-	If sourceField <> "Reference Solidity" Then edtSigmaRef.Text = NumberFormat2(ActiveGeom.SigmaRef, 1, 5, 5, False)
-	If sourceField <> "Aspect Ratio" Then edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(ActiveGeom), 1, 3, 3, False)
+	If sourceField <> "Root Chord c0" Then edtChordRoot.Text = FormatInputValue("Root Chord c0", ActiveGeom.ChordRoot, ChordDisplayDigits(ActiveGeom.ChordRoot))
+	If sourceField <> "Tip Chord c1" Then edtChordTip.Text = FormatInputValue("Tip Chord c1", ActiveGeom.ChordTip, ChordDisplayDigits(ActiveGeom.ChordTip))
+	If sourceField <> "Reference Solidity" Then edtSigmaRef.Text = NumberFormat2(ActiveGeom.SigmaRef, 1, 4, 4, False)
+	If sourceField <> "Aspect Ratio" Then edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(ActiveGeom), 1, 2, 2, False)
 	UpdatingUI = wasUpdating
 End Sub
 
@@ -3036,7 +3054,7 @@ Sub btnViewPolarPlot_Click
 	SweepPopupOpen = True
 	pnlSweepPopup.BringToFront
 	
-	Dim topBarH As Int = 48dip
+	Dim topBarH As Int = 52dip
 	Dim footerH As Int
 	If ld = 1 Then footerH = 50dip Else footerH = 94dip * sc
 	Dim controlsH As Int
@@ -3059,14 +3077,14 @@ Sub btnViewPolarPlot_Click
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
 	lblTitle.TextSize = 15 * sc
 	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	pnlHeader.AddView(lblTitle, 12dip, 0, root.Width - 64dip, topBarH)
+	pnlHeader.AddView(lblTitle, 12dip, 2dip, root.Width - 64dip, 48dip)
 	Dim btnClose As Button
 	btnClose.Initialize("btnCloseSweepPlot")
 	btnClose.Text = "×"
 	btnClose.TextColor = ColorAccentRed
 	btnClose.TextSize = 20
 	btnClose.Color = Colors.Transparent
-	pnlHeader.AddView(btnClose, root.Width - 52dip, 0, 48dip, topBarH)
+	pnlHeader.AddView(btnClose, root.Width - 52dip, 2dip, 48dip, 48dip)
 	
 	Dim pnlControls As Panel
 	pnlControls.Initialize("")
@@ -3315,10 +3333,10 @@ Private Sub UpdateSweepAuxControls
 		btnSweepTrimHover.Visible = (ActiveCond.OperatingPair <> "rpm_collective")
 		Dim compactControls As Boolean = ((ld = 1 And root.Width <= 700dip) Or root.Width <= 360dip)
 		If SweepTrimOnlyHover Then
-			If compactControls Then btnSweepTrimHover.Text = "HOVER ONLY ✓" Else btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
+			If compactControls Then btnSweepTrimHover.Text = "HOVER TRIM ✓" Else btnSweepTrimHover.Text = "☑ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorAccentGreen
 		Else
-			If compactControls Then btnSweepTrimHover.Text = "HOVER ONLY" Else btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
+			If compactControls Then btnSweepTrimHover.Text = "HOVER TRIM" Else btnSweepTrimHover.Text = "☐ TRIM ONLY HOVER"
 			btnSweepTrimHover.TextColor = ColorButText2
 		End If
 	End If
@@ -3340,14 +3358,22 @@ Sub btnSweepValues_Click
 	pnlSweepValuesPopup.AddView(card, (root.Width-cardW)/2, (root.Height-cardH)/2, cardW, cardH)
 	Dim title As Label
 	title.Initialize("")
-	title.Text = "FAMILY VALUES"
+	Select SweepMultiMode
+		Case 1: title.Text = "α FAMILY VALUES [deg]"
+		Case 2: title.Text = "Vz FAMILY VALUES [m/s]"
+		Case Else: title.Text = "μz FAMILY VALUES [-]"
+	End Select
 	title.TextColor = ColorAccentCyan
 	title.Typeface = Typeface.DEFAULT_BOLD
 	title.TextSize = 15
 	card.AddView(title, 16dip, 12dip, cardW-32dip, 28dip)
 	Dim hint As Label
 	hint.Initialize("")
-	hint.Text = "Enter 1–9 values separated by commas. Example: -10, -5, 0, 5, 10"
+	If SweepMultiMode = 3 Then
+		hint.Text = "Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05"
+	Else
+		hint.Text = "Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10"
+	End If
 	hint.TextColor = ColorButText2
 	hint.TextSize = 12.5
 	hint.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
@@ -3748,3 +3774,52 @@ Private Sub ParseIntDef(txt As String, defVal As Int) As Int
 		Return defVal
 	End Try
 End Sub
+
+' Android 16 enforces edge-to-edge. Insets are read natively without IME,
+' runtime permissions, or JavaObject layout calls. They only define the viewport.
+Sub SafeContent_Changed(left As Int, top As Int, width As Int, height As Int)
+    If width <= 0 Or height <= 0 Then Return
+    If left = SafeContentLeft And top = SafeContentTop And width = SafeContentWidth And height = SafeContentHeight Then Return
+    SafeContentLeft = left
+    SafeContentTop = top
+    SafeContentWidth = width
+    SafeContentHeight = height
+    Activity.RemoveAllViews
+    BuildMainUi
+End Sub
+
+#If JAVA
+@Override
+public void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    final android.view.View decor = getWindow().getDecorView();
+    decor.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+        @Override public void onGlobalLayout() {
+            if (android.os.Build.VERSION.SDK_INT < 23 || isFinishing() || _root == null || !_root.IsInitialized() || _activity == null) return;
+            final android.view.View content = _activity.getObject();
+            final android.view.WindowInsets insets = decor.getRootWindowInsets();
+            if (insets == null) return;
+            int il, it, ir, ib;
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets bars = insets.getInsets(android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.displayCutout());
+                il = bars.left; it = bars.top; ir = bars.right; ib = bars.bottom;
+            } else {
+                il = insets.getStableInsetLeft(); it = insets.getStableInsetTop();
+                ir = insets.getStableInsetRight(); ib = insets.getStableInsetBottom();
+            }
+            int[] origin = new int[2];
+            content.getLocationOnScreen(origin);
+            android.graphics.Point real = new android.graphics.Point();
+            getWindowManager().getDefaultDisplay().getRealSize(real);
+            int left = Math.max(0, il - origin[0]);
+            int top = Math.max(0, it - origin[1]);
+            int width = Math.min(content.getWidth(), real.x - ir - origin[0]) - left;
+            int height = Math.min(content.getHeight(), real.y - ib - origin[1]) - top;
+            if (width > 0 && height > 0) decor.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            if (width > 0 && height > 0 && (left != _safecontentleft || top != _safecontenttop || width != _safecontentwidth || height != _safecontentheight)) {
+                activityBA.raiseEventFromUI(this, "safecontent_changed", left, top, width, height);
+            }
+        }
+    });
+}
+#End If
