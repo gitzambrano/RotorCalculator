@@ -229,3 +229,30 @@ Remaining release / evidence gate:
 4. execute the full `tools/ci_ui_qa.sh` interaction matrix locally (without GitHub Actions), including the direct Geometry editor, Active Rotor selector, selectable units, flow-variable selectors, the 39 Y variables, applied VALUES, SAF round-trip, invalid-import rejection and export flows;
 5. review the real portrait/landscape and Light/Dark screenshots produced by that exact APK;
 6. correct any runtime or visual issue found before calling the app 5/5 or publishing an APK/AAB.
+
+
+## 10. 2026-09-30 responsive-UI checkpoint
+
+Implemented and committed in `main`:
+- Geometry uses the same centered maximum content width as Active Rotor, Conditions and Results on wide screens;
+- landscape Geometry puts Active Rotor and SAVE/COPY/DELETE in one compact horizontal band;
+- 320 dp / 130% font-scale uses compact Result status and Sweep control/footer wording without shrinking touch targets;
+- normal label/unit controls have lower visual weight and Derived Geometry is visibly read-only;
+- the initial Sweep label is canonical (`CQ — Torque`);
+- the offline verifier reflects the direct in-page Geometry architecture and rejects the removed popup/library architecture;
+- source tests cover the screenshot-driven responsive fixes.
+
+Validation already completed:
+- numerical/reference regression passed;
+- current B4A source compiled successfully and produced the APK;
+- the APK installed and launched in the Android emulator.
+
+Current blocker:
+- the full Android UI matrix still stops in `tools/ci_ui_qa.sh` at the Geometry section check because the scroll helper can jump past the visible `ROTOR AERODYNAMICS` heading. This is a QA-harness failure, not an observed crash or numerical failure.
+
+Remaining work before calling the frontend 5/5:
+1. make the Geometry scroll assertion deterministic (small-step scroll / locate-before-tap) without weakening the check;
+2. rerun the full APK interaction matrix from the exact current `main`;
+3. review fresh screenshots at 320×568, 320×568 @130%, 360×780, 393×873, 412×915, 600×960, 768×1024, 915×412 and 1024×600;
+4. specifically confirm tablet Geometry width, landscape Geometry chrome, 130% Result status, Sweep range/hover/footer, and Derived Geometry hierarchy;
+5. only then apply any further visual changes found by the screenshots.
