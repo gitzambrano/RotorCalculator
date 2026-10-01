@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 OUT_DIR = Path("qa-results/full-audit")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-TARGET_URL = "http://localhost:8080/"
+TARGET_URL = "https://gitzambrano.github.io/RotorCalculator/"
 
 async def run_audit():
     async with async_playwright() as p:
