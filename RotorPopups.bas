@@ -30,7 +30,7 @@ Sub Process_Globals
 	Private dpRem As Float
 	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
 		MuZ As Double, InflowModel As String, Value As Double, Valid As Boolean, RPM As Double, _
-		CollectiveDeg As Double, CT As Double, ThrustN As Double)
+		CollectiveDeg As Double, CT As Double, ThrustN As Double, MuLam As Double)
 End Sub
 
 ' Initializes the rotorcraft airfoil library and the complete parameter catalog
@@ -112,6 +112,11 @@ Public Sub Initialize
 		AddSweepParam("CPair", SweepParamDisplayName("CPair"))
 		AddSweepParam("lambda", SweepParamDisplayName("lambda"))
 		AddSweepParam("lambda_i", SweepParamDisplayName("lambda_i"))
+		AddSweepParam("muLam", SweepParamDisplayName("muLam"))
+		AddSweepParam("lamh", SweepParamDisplayName("lamh"))
+		AddSweepParam("CLbar", SweepParamDisplayName("CLbar"))
+		AddSweepParam("Tc", SweepParamDisplayName("Tc"))
+		AddSweepParam("Pc", SweepParamDisplayName("Pc"))
 		AddSweepParam("L_D_eff", SweepParamDisplayName("L_D_eff"))
 		AddSweepParam("FoM", SweepParamDisplayName("FoM"))
 		AddSweepParam("Kx", SweepParamDisplayName("Kx"))
@@ -145,51 +150,59 @@ End Sub
 ' Parameter metadata (canonical names per docs/nomenclature.md)
 ' Returns Array(Full, Short, Symbol(plain, "_" subscripts), Unit)
 ' ---------------------------------------------------------------------------
-Private Sub SweepInfo(k As String) As String()
-	Dim d As String = Chr(8211)
+Private Sub SweepNameKey(k As String) As String
 	Select k
-		Case "CT": Return Array As String("Thrust Coefficient", "Thrust Coeff", "C_T", d)
-		Case "CTs": Return Array As String("Blade Loading", "Blade Loading", "C_T/σ", d)
-		Case "CP", "CQ": Return Array As String("Torque Coefficient", "Torque Coeff", "C_Q", d)
-		Case "CQi": Return Array As String("Induced Torque Coefficient", "Induced Torque", "C_Qi", d)
-		Case "CQ0": Return Array As String("Profile Torque Coefficient", "Profile Torque", "C_Q0", d)
-		Case "CH": Return Array As String("In-Plane Force Coefficient", "In-Plane Coeff", "C_H", d)
-		Case "CHi": Return Array As String("Induced In-Plane Coefficient", "Induced In-Plane", "C_Hi", d)
-		Case "CH0": Return Array As String("Profile In-Plane Coefficient", "Profile In-Plane", "C_H0", d)
-		Case "CY": Return Array As String("Side Force Coefficient", "Side Force Coeff", "C_Y", d)
-		Case "CMx": Return Array As String("Roll Moment Coefficient", "Roll Coeff", "C_Mx", d)
-		Case "CMy": Return Array As String("Pitch Moment Coefficient", "Pitch Coeff", "C_My", d)
-		Case "CPair": Return Array As String("Air Power Coefficient", "Air Power Coeff", "C_Pair", d)
-		Case "lambda": Return Array As String("Total Inflow Ratio", "Inflow Ratio", "λ", d)
-		Case "lambda_i": Return Array As String("Induced Inflow Ratio", "Induced Inflow", "λ_i", d)
-		Case "L_D_eff": Return Array As String("Effective Lift-to-Drag Ratio", "Effective L/D", "(L/D)_e", d)
-		Case "FoM": Return Array As String("Figure of Merit", "Figure of Merit", "FM", d)
-		Case "Kx": Return Array As String("Longitudinal Inflow Gradient", "Long Gradient", "K_x", d)
-		Case "Ky": Return Array As String("Lateral Inflow Gradient", "Lat Gradient", "K_y", d)
-		Case "chi": Return Array As String("Wake Skew Angle", "Wake Skew", "χ", "deg")
-		Case "Mat": Return Array As String("Advancing Tip Mach Number", "Advancing Mach", "M_adv", d)
-		Case "PowerKW": Return Array As String("Shaft Power", "Power", "P", "kW")
-		Case "PowerHP": Return Array As String("Shaft Power", "Power", "P", "hp")
-		Case "ThrustN": Return Array As String("Thrust", "Thrust", "T", "N")
-		Case "ThrustKgf": Return Array As String("Thrust", "Thrust", "T", "kgf")
-		Case "TorqueNm": Return Array As String("Shaft Torque", "Torque", "Q", "N·m")
-		Case "DragHN": Return Array As String("In-Plane Force", "In-Plane Force", "H", "N")
-		Case "B": Return Array As String("Tip-Loss Factor", "Tip Factor", "B", d)
-		Case "TipSpeed": Return Array As String("Tip Speed", "Tip Speed", "ΩR", "m/s")
-		Case "RPM": Return Array As String("Rotor Speed", "Rotor Speed", "Ω", "rpm")
-		Case "Collective": Return Array As String("Collective Pitch", "Collective", "Δθ", "deg")
-		Case "Mu": Return Array As String("Advance Ratio", "Advance Ratio", "μ_x", d)
-		Case "Vx": Return Array As String("Forward Airspeed", "Airspeed", "V_x", "m/s")
-		Case "MuZ": Return Array As String("Axial Flow Ratio", "Axial Ratio", "μ_z", d)
-		Case "Vz": Return Array As String("Climb Speed", "Climb Speed", "V_z", "m/s")
-		Case "Alpha": Return Array As String("Disk Angle of Attack", "Disk AoA", "α", "deg")
-		Case "Altitude": Return Array As String("Pressure Altitude", "Altitude", "h", "m")
-		Case "Temperature": Return Array As String("Ambient Temperature", "Temperature", "T_amb", "°C")
-		Case "Density": Return Array As String("Air Density", "Density", "ρ", "kg/m³")
-		Case "Pressure": Return Array As String("Ambient Pressure", "Pressure", "p", "Pa")
-		Case "SoundSpeed": Return Array As String("Speed of Sound", "Sound Speed", "a", "m/s")
-		Case Else: Return Array As String(k, k, k, Chr(8211))
+		Case "CP": Return "CQ"
+		Case "lambda": Return "lam"
+		Case "lambda_i": Return "lami"
+		Case "L_D_eff": Return "LDe"
+		Case "FoM": Return "FM"
+		Case "Mat": Return "Madv"
+		Case "PowerKW", "PowerHP": Return "P"
+		Case "ThrustN", "ThrustKgf": Return "T"
+		Case "TorqueNm": Return "Q"
+		Case "DragHN": Return "H"
+		Case "B": Return "Bres"
+		Case "TipSpeed": Return "OmR"
+		Case "RPM": Return "rpm"
+		Case "Collective": Return "coll"
+		Case "Mu": Return "mu"
+		Case "MuZ": Return "muz"
+		Case "Alpha": Return "alpha"
+		Case "Altitude": Return "h"
+		Case "Temperature": Return "T0"
+		Case "Density": Return "rho"
+		Case "Pressure": Return "p"
+		Case "SoundSpeed": Return "a"
+		Case Else: Return k
 	End Select
+End Sub
+
+Private Sub SweepUnit(k As String) As String
+	Select k
+		Case "chi", "Collective", "Alpha": Return "deg"
+		Case "PowerKW": Return "kW"
+		Case "PowerHP": Return "hp"
+		Case "ThrustN", "DragHN": Return "N"
+		Case "ThrustKgf": Return "kgf"
+		Case "TorqueNm": Return Chr(183) & "N"
+		Case "TipSpeed", "Vx", "Vz", "SoundSpeed": Return "m/s"
+		Case "RPM": Return "rpm"
+		Case "Altitude": Return "m"
+		Case "Temperature": Return Chr(176) & "C"
+		Case "Density": Return "kg/m" & Chr(179)
+		Case "Pressure": Return "Pa"
+		Case Else: Return Chr(8211)
+	End Select
+End Sub
+
+' Returns Array(Full, Short, Symbol(plain, "_" subscripts), Unit). All names come from RotorNames (single source).
+Private Sub SweepInfo(k As String) As String()
+	Dim nk As String = SweepNameKey(k)
+	Dim u As String = SweepUnit(k)
+	If k = "TorqueNm" Then u = "N" & Chr(183) & "m"
+	If RotorNames.HasKey(nk) Then Return Array As String(RotorNames.FullName(nk), RotorNames.ShortName(nk), RotorNames.Symbol(nk), u)
+	Return Array As String(k, k, k, u)
 End Sub
 
 Public Sub SweepParamFullName(key As String) As String
@@ -284,7 +297,9 @@ Public Sub SweepParamDigits(paramKey As String) As Int
 		Case "CT": Return 5
 		Case "CTs": Return 4
 		Case "CP", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair": Return 6
-		Case "lambda", "lambda_i": Return 5
+		Case "lambda", "lambda_i", "lamh": Return 5
+		Case "muLam", "CLbar": Return 3
+		Case "Tc", "Pc": Return 4
 		Case "L_D_eff": Return 2
 		Case "FoM": Return 4
 		Case "Kx", "Ky": Return 3
@@ -302,7 +317,7 @@ End Sub
 
 ' Legacy extractor (no blade-loading support: needs sigma).
 ' sigma = thrust-weighted solidity, used only by "CTs" (CT/sigma).
-Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As Double) As Double
+Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As Double, area As Double) As Double
 	Select Case paramKey
 		Case "CT": Return res.CT
 		Case "CTs"
@@ -320,6 +335,11 @@ Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As 
 		Case "CPair": Return res.CPair
 		Case "lambda": Return res.InflowLambda
 		Case "lambda_i": Return res.InflowLambdaI
+		Case "muLam": Return zBETEngine.DerivedMuOverLambda(res)
+		Case "lamh": Return zBETEngine.DerivedLambdaH(res)
+		Case "CLbar": Return zBETEngine.DerivedClBar(res, sigma)
+		Case "Tc": Return zBETEngine.DerivedTc(res, area)
+		Case "Pc": Return zBETEngine.DerivedPc(res, area)
 		Case "L_D_eff": Return res.L_D_eff
 		Case "FoM": Return res.FoM
 		Case "Kx": Return res.InflowKx
@@ -348,6 +368,10 @@ Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As 
 		Case "SoundSpeed": Return res.SpeedOfSound
 		Case Else: Return res.CT
 	End Select
+End Sub
+
+Private Sub GeomArea(geom As RotorGeometry) As Double
+	Return zBETEngine.RotorArea(geom)
 End Sub
 
 Private Sub GeomSigma(geom As RotorGeometry) As Double
@@ -601,6 +625,7 @@ Public Sub BuildSweepSamples( _
 	Dim nPoints As Int = SweepPointsPerCurve
 	Dim nCurves As Int = SweepCurveCount(multiCurveMode, familyValues)
 	Dim sigma As Double = GeomSigma(geom)
+	Dim area As Double = GeomArea(geom)
 
 	' Baseline operating point of the active condition.
 	Dim live As RotorResults = zBETEngine.Calculate(geom, cond)
@@ -733,7 +758,8 @@ Public Sub BuildSweepSamples( _
 			If result.SolutionValid Then
 				point.Vx = result.OperatingVx
 				point.MuZ = result.OperatingMuZ
-				point.Value = ExtractParamValueS(result, paramKey, sigma)
+				point.Value = ExtractParamValueS(result, paramKey, sigma, area)
+				point.MuLam = zBETEngine.DerivedMuOverLambda(result)
 				point.RPM = result.TrimmedRPM
 				point.CollectiveDeg = result.TrimmedCollectiveDeg
 				point.CT = result.CT
@@ -750,7 +776,41 @@ End Sub
 ' ---------------------------------------------------------------------------
 Private Sub PointX(p As SweepPoint, xAxisMode As Int) As Double
 	If xAxisMode = 1 Then Return p.Vx
+	If xAxisMode = 2 Then Return p.MuLam
 	Return p.Mu
+End Sub
+
+' Point usable on the current X axis: valid solution, finite value, finite (and for mu/lambda, non-negative) x.
+Private Sub XOk(p As SweepPoint, xAxisMode As Int) As Boolean
+	If p.Valid = False Then Return False
+	If p.Mu > 0.6001 Then Return False ' engine clamps mu to +-0.60 (zBET.py); points beyond are not a solution
+	If IsNum(p.Value) = False Then Return False
+	Dim x As Double = PointX(p, xAxisMode)
+	If IsNum(x) = False Then Return False
+	If xAxisMode = 2 And x < 0 Then Return False
+	Return True
+End Sub
+
+' Sample indices of one curve that are usable on the X axis, sorted by ascending x.
+Private Sub CurveOrder(samples As List, curveIndex As Int, xAxisMode As Int) As List
+	Dim n As Int = SweepPointsPerCurve
+	Dim ord As List
+	ord.Initialize
+	For i = 0 To n - 1
+		Dim idx As Int = curveIndex * n + i
+		If idx >= samples.Size Then Exit
+		Dim p As SweepPoint = samples.Get(idx)
+		If XOk(p, xAxisMode) = False Then Continue
+		Dim x As Double = PointX(p, xAxisMode)
+		Dim pos As Int = ord.Size
+		Do While pos > 0
+			Dim q As SweepPoint = samples.Get(ord.Get(pos - 1))
+			If PointX(q, xAxisMode) <= x Then Exit
+			pos = pos - 1
+		Loop
+		ord.InsertAt(pos, idx)
+	Next
+	Return ord
 End Sub
 
 ' Index (into samples) of the valid point of the given curve closest to xValue; -1 if none.
@@ -762,7 +822,7 @@ Public Sub SweepNearestIndex(samples As List, curveIndex As Int, xAxisMode As In
 		Dim idx As Int = curveIndex * n + i
 		If idx >= samples.Size Then Exit
 		Dim p As SweepPoint = samples.Get(idx)
-		If p.Valid Then
+		If XOk(p, xAxisMode) Then
 			Dim dd As Double = Abs(PointX(p, xAxisMode) - xValue)
 			If dd < bestD Then
 				bestD = dd
@@ -783,6 +843,9 @@ Public Sub SweepReadout(samples As List, paramKey As String, xAxisMode As Int, x
 	If xAxisMode = 1 Then
 		xKey = "Vx"
 		xDig = 1
+	Else If xAxisMode = 2 Then
+		xKey = "muLam"
+		xDig = 2
 	End If
 	Dim unit As String = SweepParamUnit(paramKey)
 	If unit = Chr(8211) Then unit = "" Else unit = " " & unit
@@ -811,7 +874,7 @@ End Sub
 
 ' Number of leading x columns in BuildSweepTableRows: 1 (mu) or 2 (mu, Vx of curve 0).
 Public Sub SweepTableXCols(xAxisMode As Int) As Int
-	If xAxisMode = 1 Then Return 2
+	If xAxisMode >= 1 Then Return 2
 	Return 1
 End Sub
 
@@ -829,7 +892,11 @@ Public Sub BuildSweepTableRows(samples As List, paramKey As String, xAxisMode As
 	If forCsv Then na = "-"
 	Dim hdr(xc + nCurves) As String
 	hdr(0) = SymText("Mu", forCsv) & HdrUnit("Mu", na, forCsv)
-	If xc = 2 Then hdr(1) = SymText("Vx", forCsv) & HdrUnit("Vx", na, forCsv)
+	If xc = 2 Then
+		Dim x2Key As String = "Vx"
+		If xAxisMode = 2 Then x2Key = "muLam"
+		hdr(1) = SymText(x2Key, forCsv) & HdrUnit(x2Key, na, forCsv)
+	End If
 	For c = 0 To nCurves - 1
 		Dim lbl As String = ""
 		If c * n < samples.Size Then
@@ -844,14 +911,20 @@ Public Sub BuildSweepTableRows(samples As List, paramKey As String, xAxisMode As
 		Dim pf As SweepPoint = samples.Get(i)
 		row(0) = TblNum(pf.Mu, 3, forCsv)
 		If xc = 2 Then
-			If pf.Valid Then row(1) = TblNum(pf.Vx, 1, forCsv) Else row(1) = na
+			If xAxisMode = 2 Then
+				If XOk(pf, 2) Then row(1) = TblNum(pf.MuLam, 3, forCsv) Else row(1) = na
+			Else If pf.Valid Then
+				row(1) = TblNum(pf.Vx, 1, forCsv)
+			Else
+				row(1) = na
+			End If
 		End If
 		For c = 0 To nCurves - 1
 			Dim idx As Int = c * n + i
 			row(xc + c) = na
 			If idx < samples.Size Then
 				Dim p As SweepPoint = samples.Get(idx)
-				If p.Valid Then row(xc + c) = TblNum(p.Value, dig, forCsv)
+				If p.Valid And IsNum(p.Value) Then row(xc + c) = TblNum(p.Value, dig, forCsv)
 			End If
 		Next
 		rows.Add(row)
@@ -868,7 +941,7 @@ Private Sub LiveOnCurve(samples As List, nPoints As Int, nCurves As Int, xAxisMo
 		For i = 0 To nPoints - 2
 			Dim p1 As SweepPoint = samples.Get(c * nPoints + i)
 			Dim p2 As SweepPoint = samples.Get(c * nPoints + i + 1)
-			If p1.Valid And p2.Valid Then
+			If XOk(p1, xAxisMode) And XOk(p2, xAxisMode) Then
 				Dim x1 As Double = PointX(p1, xAxisMode)
 				Dim x2 As Double = PointX(p2, xAxisMode)
 				If x >= Min(x1, x2) - 1.0e-9 And x <= Max(x1, x2) + 1.0e-9 Then
@@ -987,7 +1060,7 @@ Public Sub DrawSweepPlot( _
 	Dim validCount As Int = 0
 	For sampleIndex = 0 To samples.Size - 1
 		Dim sample As SweepPoint = samples.Get(sampleIndex)
-		If sample.Valid Then
+		If XOk(sample, xAxisMode) Then
 			validCount = validCount + 1
 			If sample.Value < yMin Then yMin = sample.Value
 			If sample.Value > yMax Then yMax = sample.Value
@@ -1000,12 +1073,14 @@ Public Sub DrawSweepPlot( _
 	Dim liveValue As Double = 0.0
 	Dim liveX As Double = 0.0
 	If liveValid Then
-		liveValue = ExtractParamValueS(liveRes, paramKey, sigma)
+		liveValue = ExtractParamValueS(liveRes, paramKey, sigma, GeomArea(geom))
 		liveX = liveRes.OperatingMu
 		If xAxisMode = 1 Then liveX = liveRes.OperatingVx
+		If xAxisMode = 2 Then liveX = zBETEngine.DerivedMuOverLambda(liveRes)
+		If IsNum(liveX) = False Or IsNum(liveValue) = False Or liveX < 0 Then liveValid = False
 		' The marker uses the live (conditions) trim; the curves use the sweep trim mode. Show the marker
 		' only when it lies on a curve, so it never floats off the data it is compared with.
-		liveValid = LiveOnCurve(samples, nPoints, nCurves, xAxisMode, liveX, liveValue, yMin, yMax)
+		If liveValid Then liveValid = LiveOnCurve(samples, nPoints, nCurves, xAxisMode, liveX, liveValue, yMin, yMax)
 	End If
 	If liveValid Then
 		If liveValue < yMin Then yMin = liveValue
@@ -1060,6 +1135,7 @@ Public Sub DrawSweepPlot( _
 	If cvs.MeasureStringWidth(yTitle, Typeface.DEFAULT_BOLD, fs) > widthPx - 2 * padX Then yTitle = sy & tail
 	Dim xKey As String = "Mu"
 	If xAxisMode = 1 Then xKey = "Vx"
+	If xAxisMode = 2 Then xKey = "muLam"
 	Dim xu As String = SweepParamUnit(xKey)
 	Dim xTail As String = ""
 	If xu <> Chr(8211) Then xTail = " [" & xu & "]"
@@ -1073,16 +1149,16 @@ Public Sub DrawSweepPlot( _
 	Next
 	Dim mRight As Float = 14dip
 	If wDip < 400 Then mRight = 10dip
-	Dim mTop As Float = lineH + 4dip + legendRows * lineH + 4dip + lineH * 0.9
-	Dim mBottom As Float = lineH * 2 + 4dip
+	Dim mTop As Float = lineH * 1.7 + 4dip
+	Dim mBottom As Float = lineH * 2 + 6dip + legendRows * lineH + 4dip
 	Dim plotW As Float = widthPx - mLeft - mRight
 	Dim plotH As Float = heightPx - mTop - mBottom
 	If plotW <= 10 Or plotH <= 10 Then Return bmp
 
-	' --- Titles and legend ---
-	DrawRichText(cvs, yTitle, padX, lineH * 0.8, Typeface.DEFAULT_BOLD, fs, colAccent, "LEFT")
+	' --- Title (top) and legend (below the X-axis title) ---
+	DrawRichText(cvs, yTitle, padX, lineH * 0.8, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
 	For i = 0 To nCurves - 1
-		Dim ly As Float = lineH + 4dip + legRow(i) * lineH + lineH * 0.55
+		Dim ly As Float = mTop + plotH + lineH * 2 + 6dip + legRow(i) * lineH + lineH * 0.5
 		Dim lc As Int = PlotColor(paletteIndex, i, lightTheme)
 		Dim lpt As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
 		If i Mod 4 = 0 Then
@@ -1139,10 +1215,13 @@ Public Sub DrawSweepPlot( _
 		Dim pat() As Float = DashPattern(curveIndex)
 		dpIdx = 0
 		dpRem = pat(0)
-		For pointIndex = 0 To nPoints - 2
-			Dim p1 As SweepPoint = samples.Get(curveIndex * nPoints + pointIndex)
-			Dim p2 As SweepPoint = samples.Get(curveIndex * nPoints + pointIndex + 1)
-			If p1.Valid And p2.Valid Then
+		Dim ord As List = CurveOrder(samples, curveIndex, xAxisMode)
+		For oi = 0 To ord.Size - 2
+			Dim i1 As Int = ord.Get(oi)
+			Dim i2 As Int = ord.Get(oi + 1)
+			Dim p1 As SweepPoint = samples.Get(i1)
+			Dim p2 As SweepPoint = samples.Get(i2)
+			If xAxisMode = 2 Or i2 - i1 = 1 Then
 				Dim x1 As Float = mLeft + PointX(p1, xAxisMode) / xMax * plotW
 				Dim x2 As Float = mLeft + PointX(p2, xAxisMode) / xMax * plotW
 				Dim y1 As Float = mTop + plotH - (p1.Value / yScale - yLo) / (yHi - yLo) * plotH
@@ -1157,14 +1236,12 @@ Public Sub DrawSweepPlot( _
 				dpRem = pat(0)
 			End If
 		Next
-		For pointIndex = 0 To nPoints - 1
-			If (pointIndex + curveIndex) Mod 4 = 0 Then
-				Dim pm As SweepPoint = samples.Get(curveIndex * nPoints + pointIndex)
-				If pm.Valid Then
-					Dim mx As Float = mLeft + PointX(pm, xAxisMode) / xMax * plotW
-					Dim my As Float = mTop + plotH - (pm.Value / yScale - yLo) / (yHi - yLo) * plotH
-					DrawMarker(cvs, curveIndex, mx, my, 3.5dip, curveColor)
-				End If
+		For oi = 0 To ord.Size - 1
+			If (ord.Get(oi) - curveIndex * nPoints + curveIndex) Mod 4 = 0 Then
+				Dim pm As SweepPoint = samples.Get(ord.Get(oi))
+				Dim mx As Float = mLeft + PointX(pm, xAxisMode) / xMax * plotW
+				Dim my As Float = mTop + plotH - (pm.Value / yScale - yLo) / (yHi - yLo) * plotH
+				DrawMarker(cvs, curveIndex, mx, my, 3.5dip, curveColor)
 			End If
 		Next
 	Next

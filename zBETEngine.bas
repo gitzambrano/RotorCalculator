@@ -1219,3 +1219,53 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	
 	Return res
 End Sub
+
+' ---------------------------------------------------------------------------
+' Derived output helpers (pure post-processing of RotorResults; no physics change).
+' Undefined values are returned as NaN; callers test with a finite check and show an en dash.
+' ---------------------------------------------------------------------------
+Public Sub NaNValue As Double
+	Dim z As Double = 0
+	Return z / z
+End Sub
+
+Public Sub RotorArea(geom As RotorGeometry) As Double
+	Return cPI * geom.Radius * geom.Radius
+End Sub
+
+' Free-stream speed V_inf = sqrt(Vx^2 + Vz^2) [m/s].
+Public Sub FreestreamSpeed(res As RotorResults) As Double
+	Return Sqrt(res.OperatingVx * res.OperatingVx + res.OperatingVz * res.OperatingVz)
+End Sub
+
+' mu_x / lambda; undefined when |lambda| is tiny.
+Public Sub DerivedMuOverLambda(res As RotorResults) As Double
+	If Abs(res.InflowLambda) < 0.0001 Then Return NaNValue
+	Return res.OperatingMu / res.InflowLambda
+End Sub
+
+' Propulsive-style thrust coefficient T / (0.5 rho Vinf^2 A); undefined near hover.
+Public Sub DerivedTc(res As RotorResults, area As Double) As Double
+	Dim v As Double = FreestreamSpeed(res)
+	If v < 0.01 Or area <= 0 Or res.DensityRho <= 0 Then Return NaNValue
+	Return res.ThrustN / (0.5 * res.DensityRho * v * v * area)
+End Sub
+
+' Power coefficient P / (0.5 rho Vinf^3 A); undefined near hover.
+Public Sub DerivedPc(res As RotorResults, area As Double) As Double
+	Dim v As Double = FreestreamSpeed(res)
+	If v < 0.01 Or area <= 0 Or res.DensityRho <= 0 Then Return NaNValue
+	Return res.PowerShaftW / (0.5 * res.DensityRho * v * v * v * area)
+End Sub
+
+' Hover-equivalent induced inflow ratio sqrt(CT/2); undefined for CT < 0.
+Public Sub DerivedLambdaH(res As RotorResults) As Double
+	If res.CT < 0 Then Return NaNValue
+	Return Sqrt(res.CT / 2)
+End Sub
+
+' Mean lift coefficient 6 CT / sigma (sigma = thrust-weighted solidity, same as CT/sigma).
+Public Sub DerivedClBar(res As RotorResults, sigma As Double) As Double
+	If sigma <= 0 Then Return NaNValue
+	Return 6 * res.CT / sigma
+End Sub

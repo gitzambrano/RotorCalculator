@@ -46,26 +46,14 @@ def main() -> None:
     muted = (151, 188, 202)
     green = (88, 229, 173)
 
-    # Restrained rotor construction lines echo the app icon without repeating it.
-    cx, cy, radius = 746, 250, 182
-    for r, color, width in ((218, navy, 2), (radius, cyan_soft, 3), (130, navy, 2), (41, cyan, 3)):
-        d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=color, width=width)
-    for angle in (18, 108, 198, 288):
-        a = math.radians(angle)
-        inner, outer = 49, 174
-        x1, y1 = cx + inner * math.cos(a), cy + inner * math.sin(a)
-        x2, y2 = cx + outer * math.cos(a), cy + outer * math.sin(a)
-        d.line((x1, y1, x2, y2), fill=(54, 131, 161), width=17)
-        d.line((x1, y1, x2, y2), fill=(21, 75, 102), width=11)
-    d.ellipse((cx - 15, cy - 15, cx + 15, cy + 15), fill=(18, 53, 78), outline=cyan, width=3)
-    d.ellipse((cx - 5, cy - 5, cx + 5, cy + 5), fill=white)
-
-    # Small sweep trace gives the graphic an engineering rather than lifestyle cue.
-    trace = [(600, 395), (630, 382), (665, 365), (700, 356), (735, 348),
-             (770, 335), (805, 313), (840, 276), (876, 220), (910, 144)]
-    d.line(trace, fill=green, width=4, joint="curve")
-    d.ellipse((594, 389, 606, 401), fill=green)
-    d.ellipse((904, 138, 916, 150), fill=green)
+    # Brand mark from tools/generate_icon.py (rotor with highlighted BET strip).
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import generate_icon as gi
+    n = 460
+    mark = gi.rotor_layer(n * gi.SS, 0.40).resize((n, n), Image.LANCZOS)
+    im.paste(mark, (746 - n // 2, 250 - n // 2), mark)
+    d = ImageDraw.Draw(im)
 
     d.rounded_rectangle((86, 88, 422, 97), radius=4, fill=cyan)
     d.text((85, 126), "RotorCalculator", font=font(52, True), fill=white)

@@ -29,8 +29,17 @@ Developed by Gustavo José Zambrano.
   - Axial: Disk angle of attack $\alpha$ ($\alpha > 0$ denotes wind arriving from below), vertical climb rate $V_z$, and vertical advance ratio $\mu_z$.
 - **Parameter Sweeps**: Full multi-curve parametric sweeps vs advance ratio ($\mu_x$) over dimensional and coefficient outputs. Plots are static with a tap readout, three selectable palettes, and CSV/PNG export.
 - **Rotor Management**: Built-in factory presets (UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, eVTOL) with local persistence, custom create/duplicate/delete, and import/export of the versioned text geometry database (Settings).
-- **Coupled Geometry Editing**: Every geometry quantity is editable; radius and solidity scale chords preserving $\sigma_{ref}$, taper keeps $\sigma_{ref}$, and $	heta_{twist}$ keeps mean pitch.
+- **Coupled Geometry Editing**: Every geometry quantity is editable; radius and solidity scale chords preserving $\sigma_{ref}$, taper keeps $\sigma_{ref}$, and $\theta_{twist}$ keeps mean pitch.
 - **Help**: Long-press any label for contextual help; an offline physics manual (MathML) is bundled. Labels follow `docs/nomenclature.md`.
+
+---
+
+## Documentation
+
+- **In-app help.** Open the Physics Manual from the help entry in the app for the offline Physics Manual (`Files/physics_help.html`, light and dark variants). It is self-contained: conventions and sign rules, every geometric parameter with its coupling rule, flight condition and ISA atmosphere, inflow models and tip loss, the analytical coefficient equations with a where-list for every symbol, derived outputs, trim modes, model limits and references.
+- **Context help.** Long-press any label or unit in Geometry, Conditions, Results or the sweep panel for the definition, equation, typical range and how the value is obtained.
+- **Nomenclature.** Every label, symbol and help text lives in `RotorNames.bas`; `docs/nomenclature.md` mirrors it. Coefficients follow one pattern: `Thrust Coefficient C_T` at the full level, `Thrust C_T` at the short level.
+- **Engineering notes.** `docs/zBET-documentation.md` (numerical reference), `docs/software_requirements.md` and `AGENTS.md` (governance).
 
 ---
 

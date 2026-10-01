@@ -159,7 +159,8 @@ def test_geometry_and_conditions_use_aerocalculator_row_contract():
     assert "Private Sub UnitChoices" in main
     # label button | value | unit button on one shared three-column geometry
     assert "Private Sub ComputeColumns" in main
-    assert "ColLblW = inner * 42 / 100" in main
+    assert "ColUnitW = Max(56dip, inner * 19 / 100)" in main
+    assert "ColLblW = inner - ColValW - ColUnitW" in main
     assert "ColValW = inner * 32 / 100" in main
     assert "pnl.AddView(lbl, ColLblX, cy, ColLblW, ch)" in main
     assert "pnl.AddView(v, ColValX, cy, ColValW, ch)" in main
@@ -270,8 +271,8 @@ def test_kind_is_condition_input():
 RESULT_KEYS = (
     "T", "P", "Pi", "P0", "Q", "H", "Y", "Mx", "My",
     "DL", "PL", "vi", "CTs", "FM", "LDe",
-    "CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair",
-    "lam", "lami", "Kx", "Ky", "chi", "Bres",
+    "CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", "CLbar", "Tc", "Pc",
+    "lam", "lami", "lamh", "muLam", "Kx", "Ky", "chi", "Bres",
     "rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv",
     "h", "T0", "rho", "p", "a",
 )
@@ -315,7 +316,8 @@ def test_sweep_uses_canonical_single_source_nomenclature_and_readable_plot_text(
     assert "Private Sub SweepParamDisplayName" in popups
     assert "Return SweepParamFullName(paramKey) & " in popups
     assert 'AddSweepParam("RPM", SweepParamDisplayName("RPM"))' in popups
-    assert 'Case "CP", "CQ": Return Array As String("Torque Coefficient"' in popups
+    assert 'Case "CP": Return "CQ"' in popups
+    assert "RotorNames.FullName(nk)" in popups and "Coeff" not in popups
     assert '"CQ / CPshaft — Shaft Power"' not in popups
     assert "Typeface.MONOSPACE" in popups
     assert "Public Sub SweepReadout" in popups
@@ -413,7 +415,8 @@ def test_plot_table_csv_and_canvas_share_one_cached_dataset():
 def test_plot_invalid_samples_are_not_drawn_as_zero():
     popup = text("RotorPopups.bas")
     assert "point.Valid = result.SolutionValid" in popup
-    assert "If p1.Valid And p2.Valid Then" in popup
+    assert "XOk(p1, xAxisMode) And XOk(p2, xAxisMode)" in popup
+    assert "CurveOrder(samples, curveIndex, xAxisMode)" in popup
     assert "No valid operating points in this sweep." in popup
 
 
@@ -522,9 +525,9 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert qa.count('assert_document_picker "$OUT"') >= 4
     popup = text("RotorPopups.bas")
     sweep_keys = re.findall(r'AddSweepParam\("([^"]+)", SweepParamDisplayName\("([^"]+)"\)\)', popup)
-    assert len(sweep_keys) == 40
+    assert len(sweep_keys) == 45
     assert all(key == display_key for key, display_key in sweep_keys)
-    assert len({key for key, _ in sweep_keys}) == 40
+    assert len({key for key, _ in sweep_keys}) == 45
 
 
 def test_requirements_and_plan_are_authoritative_for_new_architecture():
@@ -650,11 +653,10 @@ def test_sweep_axis_and_range_are_explicit_selectors():
 def test_help_matches_six_pair_final_architecture():
     for path in ("Files/physics_help.html", "Files/physics_help_light.html"):
         help_text = text(path)
-        assert "Ω + Δθ" in help_text
-        assert "Δθ + C<sub>T</sub>" in help_text
-        assert "C<sub>T</sub> + T" in help_text
+        assert "Ω, Δθ" in help_text
+        assert "prescribed" in help_text
         assert "Hover Only" in help_text
-        assert "Vz &gt; 0" in help_text
+        assert "T<sub>c</sub>" in help_text or "T_c" in help_text or "T<sub>c" in help_text
 
 
 def test_themed_sheets_replace_every_system_dialog():

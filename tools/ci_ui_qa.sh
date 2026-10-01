@@ -606,7 +606,7 @@ functional_smoke() {
   python3 /tmp/ui_node.py "$OUT/04c-after-discard.xml" > "$OUT/04c-after-discard.json"
   grep -qi "ACTIVE ROTOR" "$OUT/04c-after-discard.json"
 
-  # Global menu: converter, help, conventions, about and factory restore.
+  # Global menu: converter, help, about and factory restore.
   adb shell input tap 369 52
   sleep 0.3
   python3 /tmp/tap_text.py "Quick Unit Converter"
@@ -626,14 +626,6 @@ functional_smoke() {
   adb shell input keyevent 4
   sleep 0.3
 
-  adb shell input tap 369 52
-  sleep 0.3
-  python3 /tmp/tap_text.py "zBET Conventions & Physical Axes"
-  sleep 0.5
-  python3 /tmp/ui_node.py "$OUT/04f-conventions.xml" > "$OUT/04f-conventions.json"
-  grep -qi "zBET / zBEMT Conventions" "$OUT/04f-conventions.json"
-  adb shell input keyevent 4
-  sleep 0.3
 
   adb shell input tap 369 52
   sleep 0.3

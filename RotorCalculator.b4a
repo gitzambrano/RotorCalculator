@@ -569,10 +569,9 @@ Private Sub BuildUnifiedHeader
 	PopupMenu.AddMenuItem(0, 0, "Settings")
 	PopupMenu.AddMenuItem(1, 1, "Quick Unit Converter")
 	PopupMenu.AddMenuItem(2, 2, "Physics & Equations")
-	PopupMenu.AddMenuItem(3, 3, "zBET Conventions & Physical Axes")
-	PopupMenu.AddMenuItem(4, 4, "Restore Factory Rotor Presets")
-	PopupMenu.AddMenuItem(5, 5, "About RotorCalculator")
-	PopupMenu.AddMenuItem(6, 6, "Privacy Policy")
+	PopupMenu.AddMenuItem(3, 3, "Restore Factory Rotor Presets")
+	PopupMenu.AddMenuItem(4, 4, "About RotorCalculator")
+	PopupMenu.AddMenuItem(5, 5, "Privacy Policy")
 	
 	' 3. App title uses the whole header between app icon and menu.
 	Dim titleLeft As Int = edge + iconSize + 8dip
@@ -671,8 +670,6 @@ Sub HandleMenuItem(ItemId As Int)
 		Case 2
 			OpenPhysicsHelp
 		Case 3
-			ShowConventionDialog
-		Case 4
 			Wait For (ResolveUnsavedGeometry("restoring factory presets")) Complete (ok As Boolean)
 			If ok = False Then Return
 			Wait For (sheet.ShowConfirm("Restore Factory Presets", "Restore the shipped factory rotor definitions?" & CRLF & CRLF & "Custom user rotors are preserved. Same-name factory presets are replaced by their original values.", "Restore", "Cancel", "", False)) Complete (r As Int)
@@ -681,7 +678,7 @@ Sub HandleMenuItem(ItemId As Int)
 				AfterRotorChange
 				ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
 			End If
-		Case 5
+		Case 4
 			Dim pm As PackageManager
 			Dim ver As String = "1.0.0"
 			Try
@@ -690,9 +687,9 @@ Sub HandleMenuItem(ItemId As Int)
 			End Try
 			sheet.ShowMessage("About RotorCalculator", "RotorCalculator v" & ver & CRLF & CRLF & _
 				"Rotor performance calculator using the zBET analytical model." & CRLF & _
-				"Conventions aligned with zBET and zBEMT." & CRLF & CRLF & _
+				"Notation follows Johnson and Leishman." & CRLF & CRLF & _
 				"Developed by Gustavo Zambrano")
-		Case 6
+		Case 5
 			Dim privacyAsset As String = "privacy_policy.html"
 			If ThemeMode = 1 Then privacyAsset = "privacy_policy_light.html"
 			OpenHelpAsset(privacyAsset, "PRIVACY POLICY")
@@ -1056,19 +1053,6 @@ Private Sub RebuildApplicationUI
 	LoadConditionDataToFields
 	RecalculateRotor
 	ShowPage(CurrentPage, False)
-End Sub
-
-Private Sub ShowConventionDialog
-	sheet.ShowMessage("zBET / zBEMT Conventions", "zBET / zBEMT rotor convention:" & CRLF & CRLF & _
-		"+x / +V_x: forward in the rotor plane." & CRLF & _
-		"+y: starboard." & CRLF & _
-		"+V_z: positive downward through the disk; the relative wind arrives from above." & CRLF & _
-		"Thrust T > 0 acts upward (-z)." & CRLF & CRLF & _
-		"μ_x = V_x/(ΩR)." & CRLF & _
-		"μ_z = V_z/(ΩR), positive for that downward relative flow." & CRLF & _
-		"α > 0 means the stream arrives from below, so μ_z = -μ_x tan α." & CRLF & _
-		"λ = μ_z + λ_i, with λ_i ≥ 0 induced downward." & CRLF & CRLF & _
-		"CCW rotation viewed from above; advancing side is the right side.")
 End Sub
 
 Private Sub OpenPhysicsHelp
@@ -1513,9 +1497,10 @@ End Sub
 ' ====================================================================
 Private Sub ComputeColumns
 	Dim inner As Int = UiContentW - 16dip - 8dip
-	ColLblW = inner * 42 / 100
+	' Unit column is narrow (about 19%, min 56 dip); the freed width goes to the label column.
 	ColValW = inner * 32 / 100
-	ColUnitW = inner - ColLblW - ColValW
+	ColUnitW = Max(56dip, inner * 19 / 100)
+	ColLblW = inner - ColValW - ColUnitW
 	ColLblX = 8dip
 	ColValX = ColLblX + ColLblW + 4dip
 	ColUnitX = ColValX + ColValW + 4dip
@@ -2434,22 +2419,15 @@ Private Sub BuildPageRes
 	btnViewPolarPlot.TextSize = 15 * sc
 	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW*3/100, 8dip, UiContentW*94/100, 48dip)
 
-	' Status cards: model validity / Mach caution, and the active operating solution.
 	Dim y As Int = 64dip
-	lblResultStatus = NewChip("lblResultStatus", "status")
-	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + 8dip, y, UiContentW - 16dip, 60dip)
-	y = y + 66dip
-	lblTrimSummary = NewChip("lblTrimSummary", "trim")
-	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + 8dip, y, UiContentW - 16dip, 48dip)
-	y = y + 56dip
 
 	' One canonical key per row (docs/nomenclature.md). Operating state shows rotor speed and collective pitch.
 	ResKeys.Initialize
 	ResKeys.AddAll(Array As String( _
 		"T", "P", "Pi", "P0", "Q", "H", "Y", "Mx", "My", _
 		"DL", "PL", "vi", "CTs", "FM", "LDe", _
-		"CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", _
-		"lam", "lami", "Kx", "Ky", "chi", "Bres", _
+		"CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", "CLbar", "Tc", "Pc", _
+		"lam", "lami", "lamh", "muLam", "Kx", "Ky", "chi", "Bres", _
 		"rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv", "h", "T0", "rho", "p", "a"))
 	Dim rowW As Int = UiContentW
 	Dim nameW As Int = rowW * 42 / 100
@@ -2458,16 +2436,16 @@ Private Sub BuildPageRes
 	ResLevel = RotorNames.ChooseLevel(ResKeys, nameW - 10dip, TextSp, MinNameLevel)
 	Dim resLblSp As Float = RotorNames.FitLabelSize(ResKeys, ResLevel, nameW - 10dip, TextSp, 14)
 	For i = 0 To ResKeys.Size - 1
+		Dim k As String = ResKeys.Get(i)
 		Dim sectionTitle As String = ""
-		Select i
-			Case 0: sectionTitle = "DIMENSIONAL PERFORMANCE"
-			Case 9: sectionTitle = "LOADING & EFFICIENCY"
-			Case 15: sectionTitle = "AERODYNAMIC COEFFICIENTS"
-			Case 26: sectionTitle = "INFLOW & WAKE"
-			Case 32: sectionTitle = "STATE & ATMOSPHERE"
+		Select k
+			Case "T": sectionTitle = "DIMENSIONAL PERFORMANCE"
+			Case "DL": sectionTitle = "LOADING & EFFICIENCY"
+			Case "CT": sectionTitle = "AERODYNAMIC COEFFICIENTS"
+			Case "lam": sectionTitle = "INFLOW & WAKE"
+			Case "rpm": sectionTitle = "STATE & ATMOSPHERE"
 		End Select
 		If sectionTitle <> "" Then y = AddSectionHeader(scvRes, y, sectionTitle)
-		Dim k As String = ResKeys.Get(i)
 		Dim row As Panel
 		row.Initialize("resRow")
 		row.Tag = "res:" & k
@@ -2506,6 +2484,14 @@ Private Sub BuildPageRes
 		row.AddView(sep, 0, rowH - 1dip, rowW, 1dip)
 		y = y + rowH
 	Next
+	' Status block at the very end: operating solution (trim) then model validity.
+	y = AddSectionHeader(scvRes, y, "MODEL STATUS")
+	lblTrimSummary = NewChip("lblTrimSummary", "trim")
+	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + 8dip, y + 4dip, UiContentW - 16dip, 48dip)
+	y = y + 60dip
+	lblResultStatus = NewChip("lblResultStatus", "status")
+	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + 8dip, y, UiContentW - 16dip, 60dip)
+	y = y + 66dip
 	scvRes.Panel.Height = y + 24dip
 End Sub
 
@@ -2797,6 +2783,15 @@ Private Sub ResTextFor(key As String) As String
 		Case "CMx": v = r.CMx
 		Case "CMy": v = r.CMy
 		Case "CPair": v = r.CPair
+		Case "CLbar"
+			Dim sg3 As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(ActiveGeom))
+			Dim sigma3 As Double = sg3.SigmaThrust
+			If sigma3 <= 0 Then sigma3 = sg3.SigmaRef
+			v = zBETEngine.DerivedClBar(r, sigma3)
+		Case "Tc": v = zBETEngine.DerivedTc(r, area)
+		Case "Pc": v = zBETEngine.DerivedPc(r, area)
+		Case "lamh": v = zBETEngine.DerivedLambdaH(r)
+		Case "muLam": v = zBETEngine.DerivedMuOverLambda(r)
 		Case "lam": v = r.InflowLambda
 		Case "lami": v = r.InflowLambdaI
 		Case "Kx": v = r.InflowKx
@@ -3454,7 +3449,11 @@ Private Sub RefreshSweepControls
 		Case Else: cv = "Active"
 	End Select
 	btnSweepMultiModel.Text = SweepBtnText("Curves", cv)
-	If SweepXAxisMode = 1 Then btnSweepXAxis.Text = SweepBtnText("X axis", "V_x") Else btnSweepXAxis.Text = SweepBtnText("X axis", "μ_x")
+	Select SweepXAxisMode
+		Case 1: btnSweepXAxis.Text = SweepBtnText("X axis", "V_x")
+		Case 2: btnSweepXAxis.Text = SweepBtnText("X axis", "μ/λ")
+		Case Else: btnSweepXAxis.Text = SweepBtnText("X axis", "μ_x")
+	End Select
 	btnSweepMaxMu.Text = SweepBtnText("Range", "≤ " & NumberFormat2(SweepMaxMuVal, 1, 2, 2, False))
 	If ActiveCond.OperatingPair = "rpm_collective" Then
 		btnSweepTrim.Text = SweepBtnText("Trim", "Fixed")
@@ -3648,6 +3647,7 @@ Sub btnSweepXAxis_Click
 	options.Initialize
 	options.Add(RotorNames.PlainLabel("mu", 0))
 	options.Add(RotorNames.PlainLabel("Vx", 0))
+	options.Add(RotorNames.PlainLabel("muLam", 0))
 	Wait For (sheet.ShowChoice(RotorNames.PlainLabel("xAxis", 0), options, SweepXAxisMode)) Complete (idx As Int)
 	If idx < 0 Then Return
 	SweepXAxisMode = idx
@@ -3656,24 +3656,17 @@ Sub btnSweepXAxis_Click
 End Sub
 
 Sub btnSweepMaxMu_Click
+	Dim vals() As Double = Array As Double(0.3, 0.4, 0.5, 0.6, 0.8, 1.0)
 	Dim options As List
 	options.Initialize
-	options.Add("μ_x max = 0.30")
-	options.Add("μ_x max = 0.40")
-	options.Add("μ_x max = 0.50")
-	options.Add("μ_x max = 0.60")
 	Dim selected As Int = 1
-	If Abs(SweepMaxMuVal - 0.30) < 0.001 Then selected = 0
-	If Abs(SweepMaxMuVal - 0.50) < 0.001 Then selected = 2
-	If Abs(SweepMaxMuVal - 0.60) < 0.001 Then selected = 3
+	For i = 0 To vals.Length - 1
+		options.Add("μ_x max = " & NumberFormat2(vals(i), 1, 2, 2, False))
+		If Abs(SweepMaxMuVal - vals(i)) < 0.001 Then selected = i
+	Next
 	Wait For (sheet.ShowChoice("Sweep Range", options, selected)) Complete (idx As Int)
-	If idx < 0 Then Return
-	Select idx
-		Case 0: SweepMaxMuVal = 0.30
-		Case 1: SweepMaxMuVal = 0.40
-		Case 2: SweepMaxMuVal = 0.50
-		Case 3: SweepMaxMuVal = 0.60
-	End Select
+	If idx < 0 Or idx >= vals.Length Then Return
+	SweepMaxMuVal = vals(idx)
 	SweepCrossX = -1
 	UpdateSweepPlotView
 End Sub
