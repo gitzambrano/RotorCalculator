@@ -687,16 +687,32 @@ function loadRotorToUI(rotor: StoredRotor): void {
   activeGeom = cloneGeometry(rotor.geom);
   byId("display-active-rotor-name").textContent = rotor.name;
   byId<HTMLInputElement>("inp-rotor-name").value = rotor.name;
-  byId<HTMLInputElement>("inp-radius").value = activeGeom.radius.toString();
+
+  const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
+  byId<HTMLInputElement>("inp-radius").value = convertValue(activeGeom.radius, "m", rUnit).toFixed(2);
   byId<HTMLInputElement>("inp-nblades").value = activeGeom.nBlades.toString();
   byId<HTMLInputElement>("inp-cutout").value = activeGeom.rootCutout.toString();
-  byId<HTMLInputElement>("inp-chord-root").value = activeGeom.chordRoot.toString();
-  byId<HTMLInputElement>("inp-chord-tip").value = activeGeom.chordTip.toString();
+
+  const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+  byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
+
+  const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+  byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
+
   byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
   byId<HTMLInputElement>("inp-aspect-ratio").value = (activeGeom.radius / activeGeom.chordRoot).toFixed(1);
-  byId<HTMLInputElement>("inp-theta-root").value = ((activeGeom.thetaRoot * 180) / Math.PI).toFixed(1);
-  byId<HTMLInputElement>("inp-theta-tip").value = ((activeGeom.thetaTip * 180) / Math.PI).toFixed(1);
-  byId<HTMLInputElement>("inp-lift-slope").value = activeGeom.liftSlope0.toString();
+
+  const thRootUnit = byId("unit-theta-root")?.textContent?.trim() || "deg";
+  const degRoot = (activeGeom.thetaRoot * 180) / Math.PI;
+  byId<HTMLInputElement>("inp-theta-root").value = convertValue(degRoot, "deg", thRootUnit).toFixed(1);
+
+  const thTipUnit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
+  const degTip = (activeGeom.thetaTip * 180) / Math.PI;
+  byId<HTMLInputElement>("inp-theta-tip").value = convertValue(degTip, "deg", thTipUnit).toFixed(1);
+
+  const a0Unit = byId("unit-lift-slope")?.textContent?.trim() || "rad⁻¹";
+  byId<HTMLInputElement>("inp-lift-slope").value = convertValue(activeGeom.liftSlope0, "rad⁻¹", a0Unit).toFixed(2);
+
   byId<HTMLInputElement>("inp-cd0").value = activeGeom.cd0.toString();
   byId<HTMLButtonElement>("btn-tiploss-mode").textContent = activeGeom.tipLossMode.toUpperCase();
   byId<HTMLInputElement>("inp-tiploss-b").value = activeGeom.tipLossB.toString();
@@ -709,16 +725,35 @@ function bindInputListeners(): void {
   // Geometry Inputs
   const onGeomChange = () => {
     activeGeom.name = byId<HTMLInputElement>("inp-rotor-name").value.trim() || "Custom Rotor";
-    activeGeom.radius = parseFloat(byId<HTMLInputElement>("inp-radius").value) || 5.0;
+    const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
+    const rVal = parseFloat(byId<HTMLInputElement>("inp-radius").value) || 5.0;
+    activeGeom.radius = convertValue(rVal, rUnit, "m");
+
     activeGeom.nBlades = parseInt(byId<HTMLInputElement>("inp-nblades").value, 10) || 4;
     activeGeom.rootCutout = parseFloat(byId<HTMLInputElement>("inp-cutout").value) || 0.15;
-    activeGeom.chordRoot = parseFloat(byId<HTMLInputElement>("inp-chord-root").value) || 0.3;
-    activeGeom.chordTip = parseFloat(byId<HTMLInputElement>("inp-chord-tip").value) || 0.3;
+
+    const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+    const cRootVal = parseFloat(byId<HTMLInputElement>("inp-chord-root").value) || 0.3;
+    activeGeom.chordRoot = convertValue(cRootVal, cRootUnit, "m");
+
+    const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+    const cTipVal = parseFloat(byId<HTMLInputElement>("inp-chord-tip").value) || 0.3;
+    activeGeom.chordTip = convertValue(cTipVal, cTipUnit, "m");
+
+    const thRootUnit = byId("unit-theta-root")?.textContent?.trim() || "deg";
     const tRoot = parseFloat(byId<HTMLInputElement>("inp-theta-root").value) || 0;
+    const tRootDeg = convertValue(tRoot, thRootUnit, "deg");
+    activeGeom.thetaRoot = (tRootDeg * Math.PI) / 180;
+
+    const thTipUnit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
     const tTip = parseFloat(byId<HTMLInputElement>("inp-theta-tip").value) || 0;
-    activeGeom.thetaRoot = (tRoot * Math.PI) / 180;
-    activeGeom.thetaTip = (tTip * Math.PI) / 180;
-    activeGeom.liftSlope0 = parseFloat(byId<HTMLInputElement>("inp-lift-slope").value) || 5.73;
+    const tTipDeg = convertValue(tTip, thTipUnit, "deg");
+    activeGeom.thetaTip = (tTipDeg * Math.PI) / 180;
+
+    const a0Unit = byId("unit-lift-slope")?.textContent?.trim() || "rad⁻¹";
+    const a0Val = parseFloat(byId<HTMLInputElement>("inp-lift-slope").value) || 5.73;
+    activeGeom.liftSlope0 = convertValue(a0Val, a0Unit, "rad⁻¹");
+
     activeGeom.cd0 = parseFloat(byId<HTMLInputElement>("inp-cd0").value) || 0.009;
     activeGeom.tipLossB = parseFloat(byId<HTMLInputElement>("inp-tiploss-b").value) || 0.97;
     byId("display-active-rotor-name").textContent = activeGeom.name;
@@ -741,16 +776,37 @@ function bindInputListeners(): void {
 
   // Condition Inputs
   const onCondChange = () => {
-    activeCond.altitudeM = parseFloat(byId<HTMLInputElement>("inp-altitude").value) || 0;
-    activeCond.temperatureC = parseFloat(byId<HTMLInputElement>("inp-temperature").value) || 15;
-    activeCond.horizontalValue = parseFloat(byId<HTMLInputElement>("inp-horiz-val").value) || 0;
-    activeCond.axialValue = parseFloat(byId<HTMLInputElement>("inp-axial-val").value) || 0;
+    const altUnit = byId("unit-altitude")?.textContent?.trim() || "m";
+    const altVal = parseFloat(byId<HTMLInputElement>("inp-altitude").value) || 0;
+    activeCond.altitudeM = convertValue(altVal, altUnit, "m");
+
+    const tempUnit = byId("unit-temperature")?.textContent?.trim() || "°C";
+    const tempVal = parseFloat(byId<HTMLInputElement>("inp-temperature").value) || 15;
+    activeCond.temperatureC = convertValue(tempVal, tempUnit, "°C");
+
+    const horizVal = parseFloat(byId<HTMLInputElement>("inp-horiz-val").value) || 0;
+    if (activeCond.horizontalMode === "vx") {
+      const vxUnit = byId("unit-horiz-val")?.textContent?.trim() || "m/s";
+      activeCond.horizontalValue = convertValue(horizVal, vxUnit, "m/s");
+    } else {
+      activeCond.horizontalValue = horizVal;
+    }
+
+    const axialVal = parseFloat(byId<HTMLInputElement>("inp-axial-val").value) || 0;
+    if (activeCond.axialMode === "vz") {
+      const vzUnit = byId("unit-axial-val")?.textContent?.trim() || "m/s";
+      activeCond.axialValue = convertValue(axialVal, vzUnit, "m/s");
+    } else {
+      activeCond.axialValue = axialVal;
+    }
+
     activeCond.rpm = parseFloat(byId<HTMLInputElement>("inp-operating-1").value) || 258;
     const op2Val = parseFloat(byId<HTMLInputElement>("inp-operating-2").value) || 0;
     if (activeCond.operatingPair === "rpm_ct") {
       activeCond.targetCT = op2Val;
     } else if (activeCond.operatingPair === "rpm_thrust") {
-      activeCond.targetThrustN = op2Val;
+      const tUnit = byId("unit-operating-2")?.textContent?.trim() || "N";
+      activeCond.targetThrustN = convertValue(op2Val, tUnit, "N");
     } else {
       activeCond.collectiveDeg = op2Val;
     }
@@ -1139,6 +1195,131 @@ function bindSelectorButtons(): void {
   });
 }
 
+function bindUnitButtons(): void {
+  const configs = [
+    {
+      btnId: "unit-radius",
+      inpId: "inp-radius",
+      units: ["m", "ft", "in"],
+      getSI: () => activeGeom.radius,
+      setSI: (v: number) => { activeGeom.radius = v; },
+      decimals: 2,
+    },
+    {
+      btnId: "unit-chord-root",
+      inpId: "inp-chord-root",
+      units: ["m", "ft", "in", "mm"],
+      getSI: () => activeGeom.chordRoot,
+      setSI: (v: number) => { activeGeom.chordRoot = v; },
+      decimals: 3,
+    },
+    {
+      btnId: "unit-chord-tip",
+      inpId: "inp-chord-tip",
+      units: ["m", "ft", "in", "mm"],
+      getSI: () => activeGeom.chordTip,
+      setSI: (v: number) => { activeGeom.chordTip = v; },
+      decimals: 3,
+    },
+    {
+      btnId: "unit-theta-root",
+      inpId: "inp-theta-root",
+      units: ["deg", "rad"],
+      getSI: () => (activeGeom.thetaRoot * 180) / Math.PI,
+      setSI: (v: number) => { activeGeom.thetaRoot = (v * Math.PI) / 180; },
+      decimals: 1,
+    },
+    {
+      btnId: "unit-theta-tip",
+      inpId: "inp-theta-tip",
+      units: ["deg", "rad"],
+      getSI: () => (activeGeom.thetaTip * 180) / Math.PI,
+      setSI: (v: number) => { activeGeom.thetaTip = (v * Math.PI) / 180; },
+      decimals: 1,
+    },
+    {
+      btnId: "unit-lift-slope",
+      inpId: "inp-lift-slope",
+      units: ["rad⁻¹", "deg⁻¹"],
+      getSI: () => activeGeom.liftSlope0,
+      setSI: (v: number) => { activeGeom.liftSlope0 = v; },
+      decimals: 2,
+    },
+    {
+      btnId: "unit-altitude",
+      inpId: "inp-altitude",
+      units: ["m", "ft", "km"],
+      getSI: () => activeCond.altitudeM,
+      setSI: (v: number) => { activeCond.altitudeM = v; },
+      decimals: 0,
+    },
+    {
+      btnId: "unit-temperature",
+      inpId: "inp-temperature",
+      units: ["°C", "°F", "K"],
+      getSI: () => activeCond.temperatureC,
+      setSI: (v: number) => { activeCond.temperatureC = v; },
+      decimals: 1,
+    },
+    {
+      btnId: "unit-horiz-val",
+      inpId: "inp-horiz-val",
+      units: ["m/s", "kt", "km/h", "mph"],
+      getSI: () => activeCond.horizontalValue,
+      setSI: (v: number) => { activeCond.horizontalValue = v; },
+      decimals: 1,
+      onlyWhen: () => activeCond.horizontalMode === "vx",
+    },
+    {
+      btnId: "unit-axial-val",
+      inpId: "inp-axial-val",
+      units: ["m/s", "ft/min", "km/h"],
+      getSI: () => activeCond.axialValue,
+      setSI: (v: number) => { activeCond.axialValue = v; },
+      decimals: 2,
+      onlyWhen: () => activeCond.axialMode === "vz",
+    },
+    {
+      btnId: "unit-operating-1",
+      inpId: "inp-operating-1",
+      units: ["rpm", "rad/s"],
+      getSI: () => activeCond.rpm,
+      setSI: (v: number) => { activeCond.rpm = v; },
+      decimals: 0,
+    },
+    {
+      btnId: "unit-operating-2",
+      inpId: "inp-operating-2",
+      units: ["N", "lbf", "kN", "kgf"],
+      getSI: () => activeCond.targetThrustN || 45000,
+      setSI: (v: number) => { activeCond.targetThrustN = v; },
+      decimals: 0,
+      onlyWhen: () => activeCond.operatingPair === "rpm_thrust",
+    },
+  ];
+
+  configs.forEach((cfg) => {
+    const btn = document.getElementById(cfg.btnId) as HTMLButtonElement | null;
+    const inp = document.getElementById(cfg.inpId) as HTMLInputElement | null;
+    if (!btn || !inp) return;
+
+    btn.addEventListener("click", () => {
+      if (cfg.onlyWhen && !cfg.onlyWhen()) return;
+      const curUnit = btn.textContent?.trim() || cfg.units[0];
+      const curIdx = cfg.units.indexOf(curUnit);
+      const nextIdx = (curIdx + 1) % cfg.units.length;
+      const nextUnit = cfg.units[nextIdx];
+      const curVal = parseFloat(inp.value) || 0;
+      const convertedVal = convertValue(curVal, curUnit, nextUnit);
+      inp.value = convertedVal.toFixed(cfg.decimals);
+      btn.textContent = nextUnit;
+      const siVal = convertValue(convertedVal, nextUnit, cfg.units[0]);
+      cfg.setSI(siVal);
+      recalculate();
+    });
+  });
+}
+
 // Parameter Sweep Modal Setup
 function initSweepModal(): void {
   const selectParam = byId<HTMLSelectElement>("sweep-select-param");
@@ -1337,22 +1518,36 @@ function bindSettingsListeners(): void {
   });
 }
 
-// Tooltip Popover on Result Rows
+// Tooltip Popover on Engineering & Result Rows
 function initTooltips(): void {
   const popover = byId("tooltip-popover");
+  let hideTimer: number | null = null;
   document.querySelectorAll<HTMLElement>("[data-tip]").forEach((el) => {
-    el.addEventListener("mouseenter", (e) => {
+    const show = () => {
+      if (hideTimer) clearTimeout(hideTimer);
       const tip = el.dataset.tip;
       if (!tip) return;
       popover.textContent = tip;
       popover.classList.add("visible");
       const rect = el.getBoundingClientRect();
-      popover.style.left = `${Math.min(window.innerWidth - 250, rect.left)}px`;
+      popover.style.left = `${Math.max(12, Math.min(window.innerWidth - 260, rect.left))}px`;
       popover.style.top = `${rect.bottom + 6}px`;
-    });
-    el.addEventListener("mouseleave", () => {
+    };
+    const hide = () => {
       popover.classList.remove("visible");
+    };
+    el.addEventListener("mouseenter", show);
+    el.addEventListener("mouseleave", hide);
+    el.addEventListener("click", () => {
+      show();
+      hideTimer = window.setTimeout(hide, 3500);
     });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!(e.target as HTMLElement)?.closest("[data-tip]") && e.target !== popover) {
+      popover.classList.remove("visible");
+    }
   });
 }
 
@@ -1364,6 +1559,7 @@ function initApp(): void {
   bindModalListeners();
   bindRotorActionButtons();
   bindSelectorButtons();
+  bindUnitButtons();
   bindSettingsListeners();
   initSwipeNavigation();
   initTooltips();

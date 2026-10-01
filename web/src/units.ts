@@ -112,6 +112,7 @@ export function convertValue(val: number, fromUnit: string, toUnit: string): num
 
 export function formatResultValue(val: number, decimals: number, extraPrecision = 0): string {
   if (!Number.isFinite(val)) return "---";
+  if (Math.abs(val) < 1e-9 || Object.is(val, -0)) val = 0;
   const effectiveDecimals = decimals + extraPrecision;
   return val.toLocaleString("en-US", {
     minimumFractionDigits: effectiveDecimals,
