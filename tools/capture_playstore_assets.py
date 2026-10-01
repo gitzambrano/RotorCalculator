@@ -11,32 +11,49 @@ from pathlib import Path
 PACKAGE = 'flightdyn.rotorcalculator'
 
 
+import shutil
+
+ADB_BIN = shutil.which('adb') or r'C:\Android\platform-tools\adb.exe'
+
 def adb(*args, binary=False):
-    return subprocess.check_output(['adb', *args], text=not binary)
+    return subprocess.check_output([ADB_BIN, *args], text=not binary)
 
 
 def tap(text):
     remote = '/sdcard/rotor-store-ui.xml'
-    adb('shell', 'rm', '-f', remote)
-    adb('shell', 'uiautomator', 'dump', remote)
-    root = ET.fromstring(adb('shell', 'cat', remote))
-    for node in root.iter('node'):
-        if node.get('text', '').strip() == text:
-            x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds')))
-            adb('shell', 'input', 'tap', str((x1+x2)//2), str((y1+y2)//2))
-            time.sleep(.7)
-            return
+    for attempt in range(6):
+        try:
+            adb('shell', 'cmd', 'statusbar', 'collapse')
+            adb('shell', 'rm', '-f', remote)
+            res = adb('shell', 'uiautomator', 'dump', remote)
+            if 'dumped to' in res or attempt > 1:
+                content = adb('shell', 'cat', remote)
+                if content.strip().startswith('<?xml') or '<hierarchy' in content:
+                    root = ET.fromstring(content)
+                    for node in root.iter('node'):
+                        if node.get('text', '').strip() == text:
+                            x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds')))
+                            adb('shell', 'input', 'tap', str((x1+x2)//2), str((y1+y2)//2))
+                            time.sleep(0.8)
+                            return
+        except Exception:
+            pass
+        time.sleep(1.0)
     raise RuntimeError(f'Visible control not found: {text}')
 
 
 def capture(folder):
     folder.mkdir(parents=True, exist_ok=True)
+    adb('shell', 'cmd', 'statusbar', 'collapse')
     for index, name in enumerate(('GEOMETRY', 'CONDITIONS', 'RESULTS'), 1):
         tap(name)
+        adb('shell', 'cmd', 'statusbar', 'collapse')
         (folder / f'{index:02d}-{name.lower()}.png').write_bytes(adb('exec-out', 'screencap', '-p', binary=True))
     tap('OPEN PARAMETER SWEEP')
+    adb('shell', 'cmd', 'statusbar', 'collapse')
     (folder / '04-sweep.png').write_bytes(adb('exec-out', 'screencap', '-p', binary=True))
     adb('shell', 'input', 'keyevent', '4')
+    time.sleep(0.6)
 
 
 def main():
@@ -58,7 +75,7 @@ def main():
             adb('shell', 'wm', 'density', density)
             adb('shell', 'settings', 'put', 'system', 'user_rotation', rotation)
             adb('shell', 'monkey', '-p', PACKAGE, '-c', 'android.intent.category.LAUNCHER', '1')
-            time.sleep(2)
+            time.sleep(3.5)
             capture(Path(__file__).resolve().parents[1] / 'store' / folder)
     finally:
         adb('shell', 'wm', 'size', 'reset')

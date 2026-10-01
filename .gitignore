@@ -1,18 +1,5 @@
 # B4A Build intermediates
-Objects/bin/
-Objects/gen/
-Objects/res/
-Objects/src/
-Objects/temp/
-Objects/extra/
-Objects/dexed/
-Objects/AndroidManifest.xml
-Objects/*.zip
-Objects/*.apk
-Objects/*.aab
-Objects/*.dex
-Objects/b4xlibs/
-Objects/d8_arguments.txt
+Objects/
 eval-screenshots/
 AutoBackups/
 
@@ -33,14 +20,11 @@ Desktop.ini
 *.tmp
 
 # Signing / publishing secrets (never version)
-Key/*.keystore
-Key/pepk.jar
-Key/encryption_public_key.pem
-Key/*.jks
-Key/*.pepk
-Key/*.b64.txt
-Key/*service_account*.json
-Key/*PassKey*
-Key/*commandline*
+Key/
+*.keystore
+*.jks
+*.pepk*
+*.pem
+*service_account*.json
 .env
 .env.*
