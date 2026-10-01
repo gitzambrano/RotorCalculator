@@ -10,6 +10,11 @@ __pycache__/
 .pytest_cache/
 qa-results/
 
+# Web dependencies and build
+node_modules/
+web/dist/
+web/.vite/
+
 # OS and Editor files
 Thumbs.db
 Desktop.ini
