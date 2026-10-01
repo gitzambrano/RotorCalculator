@@ -119,7 +119,7 @@ Antes de concluir qualquer entrega de desenvolvimento:
 
 ## Release artifact hygiene
 
-- The source target is currently RotorCalculator 1.21 (versionCode 4).
+- The source target is currently RotorCalculator 1.22 (versionCode 5).
 - Do not keep an APK or AAB in the repository if it was built from an older source revision.
 - A release APK/AAB may be committed only after the exact source commit is compiled locally, installed, operated, and visually reviewed.
 - GitHub Actions is not the release authority and must not auto-promote binaries.

@@ -66,8 +66,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: RotorCalculator
 	#MultiDex: False
-	#VersionCode: 4
-	#VersionName: 1.21
+	#VersionCode: 5
+	#VersionName: 1.22
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -1077,6 +1077,8 @@ Private Sub InitializeInputUnitMaps
 	InputUnits.Put("Radius R", lenUnit)
 	InputUnits.Put("Root Chord c0", lenUnit)
 	InputUnits.Put("Tip Chord c1", lenUnit)
+	InputUnits.Put("Root Pitch", "deg")
+	InputUnits.Put("Tip Pitch", "deg")
 	InputUnits.Put("Root Incidence", "deg")
 	InputUnits.Put("Tip Incidence", "deg")
 	InputUnits.Put("Lift Slope a0", "rad⁻¹")
@@ -1127,7 +1129,7 @@ Private Sub UnitChoices(field As String) As List
 			out.AddAll(Array As String("m", "ft", "km"))
 		Case "Disk Area", "Reference Blade Area", "Active Blade Area"
 			out.AddAll(Array As String("m²", "ft²", "in²", "cm²"))
-		Case "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
+		Case "Root Pitch", "Tip Pitch", "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
 			out.AddAll(Array As String("deg", "rad"))
 		Case "Lift Slope a0"
 			out.AddAll(Array As String("rad⁻¹", "deg⁻¹"))
@@ -1163,7 +1165,7 @@ Private Sub CanonicalToDisplay(field As String, value As Double) As Double
 				Case "in²": Return value / 0.00064516
 				Case "cm²": Return value * 10000.0
 			End Select
-		Case "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
+		Case "Root Pitch", "Tip Pitch", "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
 			If u = "rad" Then Return value * cPI / 180.0
 		Case "Lift Slope a0"
 			If u = "deg⁻¹" Then Return value * cPI / 180.0
@@ -1201,7 +1203,7 @@ Private Sub InputToCanonical(field As String, value As Double) As Double
 				Case "in²": Return value * 0.00064516
 				Case "cm²": Return value / 10000.0
 			End Select
-		Case "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
+		Case "Root Pitch", "Tip Pitch", "Root Incidence", "Tip Incidence", "Total Twist", "Axial Alpha", "Collective Δθ"
 			If u = "rad" Then Return value * 180.0 / cPI
 		Case "Lift Slope a0"
 			If u = "deg⁻¹" Then Return value * 180.0 / cPI
@@ -1383,8 +1385,8 @@ Private Sub BuildGeometryEditorContent
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtChordTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Chord c1", "", "m", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtSigmaRef = AddFullInputRow(pnl, 4dip, 48dip, "Reference Solidity", "", "[-]", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtAspectRatio = AddFullInputRow(pnl, 4dip, 48dip, "Aspect Ratio", "", "[-]", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Incidence", "", "deg", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Incidence", "", "deg", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaRoot = AddFullInputRow(pnl, 4dip, 48dip, "Root Pitch", "", "deg", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtThetaTip = AddFullInputRow(pnl, 4dip, 48dip, "Tip Pitch", "", "deg", "edtGeom"): y = y + rowH: rowIndex=rowIndex+1
 	
 	y = AddGeometrySectionHeader(y + 4dip, "DERIVED GEOMETRY")
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): lblSigmaGeomDerived = AddDerivedRow(pnl, "Geometric Solidity", "[-]"): y=y+rowH: rowIndex=rowIndex+1
@@ -1405,7 +1407,7 @@ Private Sub BuildGeometryEditorContent
 	pnl.AddView(unitAirfoil, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtLiftSlope = AddFullInputRow(pnl, 4dip, 48dip, "Lift Slope a0", "", "rad⁻¹", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtCd0 = AddFullInputRow(pnl, 4dip, 48dip, "Profile Cd0", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtCd0 = AddFullInputRow(pnl, 4dip, 48dip, "Profile cd0", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
 	Dim lblTip As Button = CreateRowLabel("Tip Loss", "lblRowTip")
 	pnl.AddView(lblTip, pnl.Width*3/100, 4dip, pnl.Width*31/100, 48dip)
@@ -1414,7 +1416,7 @@ Private Sub BuildGeometryEditorContent
 	Dim unitTip As Button = CreateUnitButton("Tip Loss", "—")
 	pnl.AddView(unitTip, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtTipLossB = AddFullInputRow(pnl, 4dip, 48dip, "Fixed Tip Factor B", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvGeom, y, rowIndex): edtTipLossB = AddFullInputRow(pnl, 4dip, 48dip, "Tip Factor B", "", "[-]", "edtGeom"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvGeom, y, rowIndex)
 	Dim lblComp As Button = CreateRowLabel("Compressibility", "lblRowTip")
 	pnl.AddView(lblComp, pnl.Width*3/100, 4dip, pnl.Width*31/100, 48dip)
@@ -1611,11 +1613,11 @@ Private Sub BuildPageCond
 	
 	y = AddConditionSectionHeader(y + 4dip, "OPERATING CONSTRAINTS")
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
-	Dim lblPair As Button = CreateRowLabel("Trim Condition", "lblRowTip")
+	Dim lblPair As Button = CreateRowLabel("Trim Mode", "lblRowTip")
 	pnl.AddView(lblPair, pnl.Width*3/100, 4dip, pnl.Width*31/100, 48dip)
-	btnOperatingPair = CreateRowButton("Trim Condition", "btnOperatingPair")
+	btnOperatingPair = CreateRowButton("Trim Mode", "btnOperatingPair")
 	pnl.AddView(btnOperatingPair, pnl.Width*36/100, 4dip, pnl.Width*39/100, 48dip)
-	Dim unitPair As Button = CreateUnitButton("Trim Condition", "—")
+	Dim unitPair As Button = CreateUnitButton("Trim Mode", "—")
 	pnl.AddView(unitPair, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
 	
@@ -1660,7 +1662,7 @@ Private Sub BuildPageCond
 	Dim unitInflow As Button = CreateUnitButton("Inflow Model", "—")
 	pnl.AddView(unitInflow, pnl.Width*77/100, 4dip, pnl.Width*20/100, 48dip)
 	y=y+rowH: rowIndex=rowIndex+1
-	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtKInd = AddFullInputRow(pnl, 4dip, 48dip, "K_ind", "1.15", "[-]", "edtKInd"): y=y+rowH: rowIndex=rowIndex+1
+	pnl = AddFormRowPanel(scvCond, y, rowIndex): edtKInd = AddFullInputRow(pnl, 4dip, 48dip, "Induced Factor kind", "1.15", "[-]", "edtKInd"): y=y+rowH: rowIndex=rowIndex+1
 	pnl = AddFormRowPanel(scvCond, y, rowIndex)
 	Dim lblDrag As Button = CreateRowLabel("Profile Drag", "lblRowTip")
 	pnl.AddView(lblDrag, pnl.Width*3/100, 4dip, pnl.Width*31/100, 48dip)
@@ -1729,16 +1731,16 @@ Private Sub BuildPageRes
 	labels.Initialize2(Array As String( _
 		"T — Thrust", "Pshaft — Shaft Power", "Q — Shaft Torque", "H — In-Plane Force", _
 		"Y — Side Force", "Mx — Roll Moment", "My — Pitch Moment", _
-		"CT — Thrust", "CQ — Torque", "CQi — Induced Torque", "CQ0 — Profile Torque", _
-		"CH — In-Plane", "CHi — Induced In-Plane", "CH0 — Profile In-Plane", "CY — Side Force", _
-		"CMx — Roll Moment", "CMy — Pitch Moment", "CPair — Air Power", _
-		"FoM — Figure of Merit", "L/D eff — Effective L/D", _
+		"CT — Thrust Coeff", "CQ — Torque Coeff", "CQ,i — Induced Coeff", "CQ,0 — Profile Coeff", _
+		"CH — In-Plane", "CH,i — Induced H", "CH,0 — Profile H", "CY — Side Force", _
+		"CMx — Roll Moment", "CMy — Pitch Moment", "CP,air — Air Power", _
+		"FM — Figure of Merit", "(L/D)eff — Effective L/D", _
 		"λ — Total Inflow", "λi — Induced Inflow", "Kx — Longitudinal Inflow", _
 		"Ky — Lateral Inflow", "χ — Wake Skew Angle", "B — Tip-Loss Factor", _
-		"RPM — Solved Speed", "Δθ — Collective Increment", "CT — Solved", "T — Solved Thrust", _
-		"μₓ — Advance Ratio", "Vx — Airspeed", "μz — Axial Ratio", "Vz — Climb Speed", "α — AoA", _
-		"ΩR — Tip Speed", "Mtip — Tip Mach", "Mat — Advancing Tip Mach", _
-		"Altitude", "Temperature", "ρ — Air Density", "p — Ambient Pressure", "a — Speed of Sound" _
+		"RPM — Solved Speed", "Δθ — Collective Increment", "CT — Trimmed", "T — Trimmed Thrust", _
+		"μₓ — Advance Ratio", "Vx — Airspeed", "μz — Axial Ratio", "Vz — Climb Speed", "α — Angle of Attack", _
+		"ΩR — Tip Speed", "Mtip — Tip Mach", "Madv — Advancing Mach", _
+		"h — Altitude", "Tamb — Temperature", "ρ — Air Density", "p — Ambient Pressure", "a — Speed of Sound" _
 	))
 	Dim y As Int = 126dip
 	Dim rowH As Int = 50dip
@@ -1823,30 +1825,30 @@ Private Sub InputDisplayLabel(fullText As String) As String
 			Case "Rotor Name": Return "Name"
 			Case "Radius R": Return "R"
 			Case "Blade Count": Return "Nb"
-			Case "Root Cutout": Return "Root Cutout"
-			Case "Root Chord c0": Return "Root Chord"
-			Case "Tip Chord c1": Return "Tip Chord"
+			Case "Root Cutout": Return "r₀/R"
+			Case "Root Chord c0": Return "Chord c₀"
+			Case "Tip Chord c1": Return "Chord c₁"
 			Case "Reference Solidity": Return "Ref. Solidity"
 			Case "Aspect Ratio": Return "AR"
-			Case "Root Incidence": Return "Root Theta"
-			Case "Tip Incidence": Return "Tip Theta"
-			Case "Geometric Solidity": Return "σgeom"
-			Case "Thrust Solidity": Return "σthrust"
+			Case "Root Pitch", "Root Incidence": Return "Root Pitch"
+			Case "Tip Pitch", "Tip Incidence": Return "Tip Pitch"
+			Case "Geometric Solidity": Return "Geom. Solidity"
+			Case "Thrust Solidity": Return "Thrust Solidity"
 			Case "Disk Area": Return "A"
-			Case "Reference Blade Area": Return "RefBlade Area"
-			Case "Active Blade Area": Return "Blade Area"
-			Case "Total Twist": Return "Δθtwist"
-			Case "Taper Ratio": Return "Taper"
+			Case "Reference Blade Area": Return "Ab"
+			Case "Active Blade Area": Return "Aact"
+			Case "Total Twist": Return "Δθ"
+			Case "Taper Ratio": Return "c₁/c₀"
 			Case "Lift Slope a0": Return "a₀"
-			Case "Profile Cd0": Return "Cd₀"
-			Case "Fixed Tip Factor B": Return "Fixed B"
+			Case "Profile cd0", "Profile Cd0": Return "cd₀"
+			Case "Tip Factor B", "Fixed Tip Factor B": Return "Factor B"
 			Case "Altitude": Return "Altitude"
-			Case "Temperature": Return "Temperature"
-			Case "Trim Condition": Return "Trim Condition"
+			Case "Temperature": Return "Tamb"
+			Case "Trim Mode", "Trim Condition": Return "Trim Mode"
 			Case "Collective Δθ": Return "Δθ"
-			Case "Target CT": Return "CT"
-			Case "Target Thrust": Return "T"
-			Case "K_ind": Return "K_ind"
+			Case "Target CT": Return "Target CT"
+			Case "Target Thrust": Return "Target T"
+			Case "Induced Factor kind", "K_ind": Return "kind"
 			Case "Inflow Model": Return "Inflow"
 			Case "Compressibility": Return "Comp."
 			Case "Profile Drag": Return "Drag"
@@ -1856,41 +1858,55 @@ Private Sub InputDisplayLabel(fullText As String) As String
 	If root.Width <= 430dip Then
 		Select fullText
 			Case "Rotor Name": Return "Name"
-			Case "Blade Count": Return "Blades"
-			Case "Root Cutout": Return "Root Cutout"
-			Case "Root Chord c0": Return "Root Chord"
-			Case "Tip Chord c1": Return "Tip Chord"
+			Case "Blade Count": Return "Blade Count Nb"
+			Case "Root Cutout": Return "Cutout r₀/R"
+			Case "Root Chord c0": Return "Root Chord c₀"
+			Case "Tip Chord c1": Return "Tip Chord c₁"
 			Case "Reference Solidity": Return "Ref. Solidity"
 			Case "Aspect Ratio": Return "AR"
-			Case "Root Incidence": Return "Root Theta"
-			Case "Tip Incidence": Return "Tip Theta"
-			Case "Geometric Solidity": Return "σgeom"
-			Case "Thrust Solidity": Return "σthrust"
-			Case "Reference Blade Area": Return "RefBlade Area"
-			Case "Active Blade Area": Return "Blade Area"
-			Case "Total Twist": Return "Twist"
-			Case "Lift Slope a0": Return "a₀"
-			Case "Profile Cd0": Return "Cd₀"
-			Case "Fixed Tip Factor B": Return "Fixed B"
+			Case "Root Pitch", "Root Incidence": Return "Root Pitch"
+			Case "Tip Pitch", "Tip Incidence": Return "Tip Pitch"
+			Case "Geometric Solidity": Return "Geom. Solidity"
+			Case "Thrust Solidity": Return "Thrust Solidity"
+			Case "Reference Blade Area": Return "Ref Blade Ab"
+			Case "Active Blade Area": Return "Active Aact"
+			Case "Total Twist": Return "Total Twist Δθ"
+			Case "Taper Ratio": Return "Taper c₁/c₀"
+			Case "Lift Slope a0": Return "Lift Slope a₀"
+			Case "Profile cd0", "Profile Cd0": Return "Profile cd₀"
+			Case "Tip Factor B", "Fixed Tip Factor B": Return "Tip Factor B"
 			Case "Temperature": Return "Temperature"
-			Case "Trim Condition": Return "Trim Condition"
-			Case "Collective Δθ": Return "Collective"
-			Case "Target Thrust": Return "Target T"
+			Case "Trim Mode", "Trim Condition": Return "Trim Mode"
+			Case "Collective Δθ": Return "Collective Δθ"
+			Case "Target CT": Return "Target CT"
+			Case "Target Thrust": Return "Target Thrust T"
+			Case "Induced Factor kind", "K_ind": Return "Induced kind"
 			Case "Inflow Model": Return "Inflow"
 			Case "Compressibility": Return "Compress."
 			Case Else: Return fullText
 		End Select
 	End If
 	Select fullText
-		Case "Reference Solidity": Return "Ref. Solidity"
-		Case "Reference Blade Area": Return "RefBlade Area"
-		Case "Active Blade Area": Return "Blade Area"
-		Case "Root Incidence": Return "Root Theta"
-		Case "Tip Incidence": Return "Tip Theta"
-		Case "Root Chord c0": Return "Root Chord"
-		Case "Tip Chord c1": Return "Tip Chord"
+		Case "Blade Count": Return "Blade Count Nb"
+		Case "Root Cutout": Return "Root Cutout r₀/R"
+		Case "Root Chord c0": Return "Root Chord c₀"
+		Case "Tip Chord c1": Return "Tip Chord c₁"
+		Case "Reference Solidity": Return "Reference Solidity"
+		Case "Reference Blade Area": Return "Ref Blade Area Ab"
+		Case "Active Blade Area": Return "Active Area Aact"
+		Case "Root Pitch", "Root Incidence": Return "Root Pitch"
+		Case "Tip Pitch", "Tip Incidence": Return "Tip Pitch"
+		Case "Geometric Solidity": Return "Geometric Solidity"
+		Case "Thrust Solidity": Return "Thrust Solidity"
+		Case "Total Twist": Return "Total Twist Δθ"
+		Case "Taper Ratio": Return "Taper Ratio c₁/c₀"
 		Case "Lift Slope a0": Return "Lift Slope a₀"
-		Case "Profile Cd0": Return "Profile Cd₀"
+		Case "Profile cd0", "Profile Cd0": Return "Profile cd₀"
+		Case "Tip Factor B", "Fixed Tip Factor B": Return "Tip Factor B"
+		Case "Trim Mode", "Trim Condition": Return "Trim Mode"
+		Case "Target CT": Return "Target CT"
+		Case "Target Thrust": Return "Target Thrust T"
+		Case "Induced Factor kind", "K_ind": Return "Induced Factor kind"
 	End Select
 	Return fullText
 End Sub
@@ -1939,22 +1955,27 @@ Sub ResultDisplayLabel(canonical As String) As String
 		Select canonical
 			Case "μₓ — Advance Ratio": Return "μₓ — Adv. Ratio"
 			Case "Pshaft — Shaft Power": Return "Pshaft — Power"
-			Case "Q — Shaft Torque": Return "Q — Torque"
-			Case "H — In-Plane Force": Return "H — In-Plane"
-			Case "CQi — Induced Torque": Return "CQi — Induced Q"
-			Case "CQ0 — Profile Torque": Return "CQ0 — Profile Q"
-			Case "CHi — Induced In-Plane": Return "CHi — Induced H"
-			Case "CH0 — Profile In-Plane": Return "CH0 — Profile H"
-			Case "FoM — Figure of Merit": Return "FoM — Merit"
-			Case "L/D eff — Effective L/D": Return "L/D eff"
+			Case "CT — Thrust Coeff": Return "CT — Thrust"
+			Case "CQ — Torque Coeff": Return "CQ — Torque"
+			Case "CQ,i — Induced Coeff": Return "CQ,i — Induced"
+			Case "CQ,0 — Profile Coeff": Return "CQ,0 — Profile"
+			Case "CH,i — Induced H": Return "CH,i — Induced"
+			Case "CH,0 — Profile H": Return "CH,0 — Profile"
+			Case "CP,air — Air Power": Return "CP,air — Power"
+			Case "FM — Figure of Merit": Return "FM — Merit"
+			Case "(L/D)eff — Effective L/D": Return "(L/D)eff"
 			Case "Kx — Longitudinal Inflow": Return "Kx — Long. Inflow"
 			Case "Ky — Lateral Inflow": Return "Ky — Lat. Inflow"
 			Case "χ — Wake Skew Angle": Return "χ — Wake Skew"
 			Case "RPM — Solved Speed": Return "RPM — Solved"
 			Case "Δθ — Collective Increment": Return "Δθ — Collective"
-			Case "T — Solved Thrust": Return "T — Solved"
-			Case "Mat — Advancing Tip Mach": Return "Mat — Adv. Mach"
-			Case "Temperature": Return "Temperature"
+			Case "CT — Trimmed": Return "CT — Trimmed"
+			Case "T — Trimmed Thrust": Return "T — Trimmed"
+			Case "α — Angle of Attack": Return "α — AoA"
+			Case "Mtip — Tip Mach": Return "Mtip — Mach"
+			Case "Madv — Advancing Mach": Return "Madv — Adv. Mach"
+			Case "h — Altitude": Return "h — Altitude"
+			Case "Tamb — Temperature": Return "Tamb — Temp."
 		End Select
 	End If
 	Return canonical
@@ -1985,19 +2006,19 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "Y — Side Force": Return "Dimensional lateral rotor side force Y."
 		Case "Mx — Roll Moment": Return "Dimensional rotor rolling moment Mx."
 		Case "My — Pitch Moment": Return "Dimensional rotor pitching moment My."
-		Case "CT — Thrust": Return "CT = T / [ρ A (ΩR)²]."
-		Case "CQ — Torque": Return "CQ = Q / [ρ A (ΩR)² R], equal to shaft-power coefficient CPshaft."
-		Case "CQi — Induced Torque": Return "Induced torque/power contribution from the blade-element torque integral or configured energy balance."
-		Case "CQ0 — Profile Torque": Return "Profile-drag torque from Numerical Vectorial radial/azimuthal integration."
+		Case "CT — Thrust Coeff", "CT — Thrust": Return "CT = T / [ρ A (ΩR)²]."
+		Case "CQ — Torque Coeff", "CQ — Torque": Return "CQ = Q / [ρ A (ΩR)² R], equal to shaft-power coefficient CPshaft."
+		Case "CQ,i — Induced Coeff", "CQi — Induced Torque": Return "Induced torque/power contribution from the blade-element torque integral or configured energy balance."
+		Case "CQ,0 — Profile Coeff", "CQ0 — Profile Torque": Return "Profile-drag torque from Numerical Vectorial radial/azimuthal integration."
 		Case "CH — In-Plane": Return "Total longitudinal in-plane force coefficient CH = CHi + CH0."
-		Case "CHi — Induced In-Plane": Return "Induced contribution to longitudinal in-plane force coefficient."
-		Case "CH0 — Profile In-Plane": Return "Numerical Vectorial profile-drag contribution to CH."
+		Case "CH,i — Induced H", "CHi — Induced In-Plane": Return "Induced contribution to longitudinal in-plane force coefficient."
+		Case "CH,0 — Profile H", "CH0 — Profile In-Plane": Return "Numerical Vectorial profile-drag contribution to CH."
 		Case "CY — Side Force": Return "Rotor lateral side-force coefficient."
 		Case "CMx — Roll Moment": Return "Rotor rolling-moment coefficient about the x axis."
 		Case "CMy — Pitch Moment": Return "Rotor pitching-moment coefficient about the y axis."
-		Case "CPair — Air Power": Return "Air-power coefficient from induced, axial-flow, profile and translational energy terms."
-		Case "FoM — Figure of Merit": Return "Hover efficiency metric using ideal induced power divided by K_ind·ideal induced power plus profile power."
-		Case "L/D eff — Effective L/D": Return "(L/D)eff = μₓ CT / CPair = T Vx / Pair when the forward-power interpretation is applicable."
+		Case "CP,air — Air Power", "CPair — Air Power": Return "Air-power coefficient from induced, axial-flow, profile and translational energy terms."
+		Case "FM — Figure of Merit", "FoM — Figure of Merit": Return "Hover efficiency metric using ideal induced power divided by K_ind·ideal induced power plus profile power."
+		Case "(L/D)eff — Effective L/D", "L/D eff — Effective L/D": Return "(L/D)eff = μₓ CT / CPair = T Vx / Pair when the forward-power interpretation is applicable."
 		Case "λ — Total Inflow": Return "λ = μz + λi."
 		Case "λi — Induced Inflow": Return "Positive induced downwash inflow ratio."
 		Case "Kx — Longitudinal Inflow": Return "Longitudinal first-harmonic inflow-gradient factor."
@@ -2006,18 +2027,18 @@ Private Sub ResultTooltip(labelText As String) As String
 		Case "B — Tip-Loss Factor": Return "Effective tip-radius factor used by the selected tip-loss model."
 		Case "RPM — Solved Speed": Return "Operating RPM after solving the selected pair of RPM, collective, CT and thrust constraints."
 		Case "Δθ — Collective Increment": Return "Solved uniform collective increment added equally to root and tip incidence."
-		Case "CT — Solved": Return "CT from the final trimmed operating state."
-		Case "T — Solved Thrust": Return "Dimensional thrust from the final trimmed operating state."
+		Case "CT — Trimmed", "CT — Solved": Return "CT from the final trimmed operating state."
+		Case "T — Trimmed Thrust", "T — Solved Thrust": Return "Dimensional thrust from the final trimmed operating state."
 		Case "μₓ — Advance Ratio": Return "μₓ = Vx/(ΩR) at the solved operating RPM."
 		Case "Vx — Airspeed": Return "Dimensional forward in-plane relative velocity corresponding to μₓ."
 		Case "μz — Axial Ratio": Return "μz = Vz/(ΩR); positive means downward relative flow through the disk."
 		Case "Vz — Climb Speed": Return "Positive Vz represents positive climb speed: relative wind arrives from above and passes downward through the disk."
-		Case "α — AoA": Return "Rotor angle of attack; positive α means relative wind arrives from below. μz = -μₓ tan α."
+		Case "α — Angle of Attack", "α — AoA": Return "Rotor angle of attack; positive α means relative wind arrives from below. μz = -μₓ tan α."
 		Case "ΩR — Tip Speed": Return "Solved rotational tip speed ΩR."
 		Case "Mtip — Tip Mach": Return "Rotational tip Mach ΩR/a."
-		Case "Mat — Advancing Tip Mach": Return "Approximate advancing-tip Mach using ΩR(1+μₓ)/a."
-		Case "Altitude": Return "Pressure altitude used by the atmosphere model."
-		Case "Temperature": Return "Ambient temperature used by density and speed-of-sound calculations."
+		Case "Madv — Advancing Mach", "Mat — Advancing Tip Mach": Return "Approximate advancing-tip Mach using ΩR(1+μₓ)/a."
+		Case "h — Altitude", "Altitude": Return "Pressure altitude used by the atmosphere model."
+		Case "Tamb — Temperature", "Temperature": Return "Ambient temperature used by density and speed-of-sound calculations."
 		Case "ρ — Air Density": Return "Ambient density ρ used in dimensional aerodynamic scaling."
 		Case "p — Ambient Pressure": Return "Ambient static pressure from the active atmosphere."
 		Case "a — Speed of Sound": Return "Local speed of sound used for Mach and compressibility."
@@ -2087,15 +2108,37 @@ End Sub
 Private Sub EngineeringText(text As String) As CSBuilder
 	Dim rich As CSBuilder
 	rich.Initialize
-	Dim indices As Matcher = Regex.Matcher("(?<![A-Za-z0-9])(K_ind|Pshaft|CPair|σgeom|σthrust|σref|μz|λi|CMx|CMy|CQi|CQ0|CHi|CH0|CT|CP|CQ|CH|CY|Kx|Ky|Vx|Vz|Mat|Mt)(?![A-Za-z0-9])", text)
+	Dim regexPattern As String = "(\(L/D\)eff|CP,air|CQ,i|CQ,0|CH,i|CH,0|Pshaft|CMx|CMy|Mtip|Madv|Tamb|Aact|kind|Nb|Ab|CT|CP|CQ|CH|CY|Kx|Ky|Vx|Vz|μz|λi)"
+	Dim indices As Matcher = Regex.Matcher(regexPattern, text)
 	Dim previous As Int = 0
 	Do While indices.Find
 		rich.Append(text.SubString2(previous, indices.GetStart(0)))
 		Dim token As String = indices.Match
-		rich.Append(token.SubString2(0, 1))
-		Dim suffix As String = token.SubString(1)
-		If token = "K_ind" Then suffix = "ind"
-		rich.VerticalAlign(3dip).RelativeSize(0.9).Append(suffix).Pop.Pop
+		Dim baseStr As String
+		Dim subStr As String
+		If token = "(L/D)eff" Then
+			baseStr = "(L/D)"
+			subStr = "eff"
+		Else If token = "CP,air" Then
+			baseStr = "C"
+			subStr = "P,air"
+		Else If token = "CQ,i" Then
+			baseStr = "C"
+			subStr = "Q,i"
+		Else If token = "CQ,0" Then
+			baseStr = "C"
+			subStr = "Q,0"
+		Else If token = "CH,i" Then
+			baseStr = "C"
+			subStr = "H,i"
+		Else If token = "CH,0" Then
+			baseStr = "C"
+			subStr = "H,0"
+		Else
+			baseStr = token.SubString2(0, 1)
+			subStr = token.SubString(1)
+		End If
+		rich.Append(baseStr).VerticalAlign(3dip).RelativeSize(0.88).Append(subStr).Pop.Pop
 		previous = indices.GetEnd(0)
 	Loop
 	rich.Append(text.SubString(previous))
@@ -2105,15 +2148,22 @@ End Sub
 Sub CreateRowLabel(txt As String, evt As String) As Button
 	Dim btn As Button
 	btn.Initialize(evt)
+	btn.Padding = Array As Int (2dip, 1dip, 2dip, 1dip)
 	btn.Text = EngineeringText(InputDisplayLabel(txt))
-	If root.Width <= 360dip Then btn.TextSize = 14.5 Else btn.TextSize = 15 * sc
+	If root.Width <= 340dip Then
+		btn.TextSize = 13.5
+	Else If root.Width <= 360dip Then
+		btn.TextSize = 14
+	Else
+		btn.TextSize = 15 * sc
+	End If
 	btn.Typeface = Typeface.DEFAULT_BOLD
 	btn.TextColor = ColorTitleText
 	btn.Background = ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle))
 	btn.Gravity = Gravity.CENTER
 	btn.SingleLine = True
-	If txt = "Temperature" Or txt = "Trim Condition" Then btn.SingleLine = False
-	If txt = "Root Cutout" Or txt = "Root Chord c0" Or txt = "Tip Chord c1" Or txt = "Reference Solidity" Or txt = "Reference Blade Area" Or txt = "Active Blade Area" Or txt = "Root Incidence" Or txt = "Tip Incidence" Then btn.SingleLine = False
+	If txt = "Trim Condition" Or txt = "Trim Mode" Then btn.SingleLine = False
+	If txt = "Root Cutout" Or txt = "Root Chord c0" Or txt = "Tip Chord c1" Or txt = "Reference Solidity" Or txt = "Reference Blade Area" Or txt = "Active Blade Area" Or txt = "Root Pitch" Or txt = "Tip Pitch" Or txt = "Root Incidence" Or txt = "Tip Incidence" Then btn.SingleLine = False
 	btn.Tag = txt
 	Return btn
 End Sub
@@ -2122,9 +2172,16 @@ Sub CreateUnitButton(field As String, unitText As String) As Button
 	Dim btn As Button
 	btn.Initialize("unitRow")
 	btn.Tag = field
+	btn.Padding = Array As Int (1dip, 1dip, 1dip, 1dip)
 	btn.Text = UnitForField(field, unitText)
 	If unitText = "—" Then btn.Text = "—"
-	If root.Width <= 360dip Then btn.TextSize = 14.5 Else btn.TextSize = 15 * sc
+	If root.Width <= 340dip Then
+		btn.TextSize = 13.5
+	Else If root.Width <= 360dip Then
+		btn.TextSize = 14
+	Else
+		btn.TextSize = 15 * sc
+	End If
 	btn.Typeface = Typeface.DEFAULT_BOLD
 	btn.TextColor = ColorButText2
 	btn.Background = ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle))
@@ -2136,8 +2193,15 @@ End Sub
 Sub CreateRowButton(txt As String, evt As String) As Button
 	Dim btn As Button
 	btn.Initialize(evt)
-	btn.Text = InputDisplayLabel(txt)
-	If root.Width <= 340dip Then btn.TextSize = 14 Else btn.TextSize = 15 * sc
+	btn.Padding = Array As Int (2dip, 1dip, 2dip, 1dip)
+	btn.Text = EngineeringText(InputDisplayLabel(txt))
+	If root.Width <= 340dip Then
+		btn.TextSize = 13.5
+	Else If root.Width <= 360dip Then
+		btn.TextSize = 14
+	Else
+		btn.TextSize = 15 * sc
+	End If
 	btn.Typeface = Typeface.DEFAULT_BOLD
 	btn.TextColor = ColorButText1
 	btn.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
@@ -2385,7 +2449,7 @@ Private Sub OperatingPairDisplayName(pair As String) As String
 		Case "collective_ct": Return "Collective + CT"
 		Case "collective_thrust": Return "Collective + Thrust"
 		Case "ct_thrust": Return "CT + Thrust"
-		Case Else: Return "Trim Condition"
+		Case Else: Return "Trim Mode"
 	End Select
 End Sub
 
@@ -2438,8 +2502,8 @@ Sub LoadRotorDataToFields(geom As RotorGeometry)
 	edtChordTip.Text = FormatInputValue("Tip Chord c1", g.ChordTip, ChordDisplayDigits(g.ChordTip))
 	edtSigmaRef.Text = NumberFormat2(g.SigmaRef, 1, 4, 4, False)
 	edtAspectRatio.Text = NumberFormat2(zBETEngine.ReferenceAspectRatio(g), 1, 2, 2, False)
-	edtThetaRoot.Text = FormatInputValue("Root Incidence", g.ThetaRoot * 180.0 / cPI, 1)
-	edtThetaTip.Text = FormatInputValue("Tip Incidence", g.ThetaTip * 180.0 / cPI, 1)
+	edtThetaRoot.Text = FormatInputValue("Root Pitch", g.ThetaRoot * 180.0 / cPI, 1)
+	edtThetaTip.Text = FormatInputValue("Tip Pitch", g.ThetaTip * 180.0 / cPI, 1)
 	edtLiftSlope.Text = FormatInputValue("Lift Slope a0", g.LiftSlope0, 2)
 	edtCd0.Text = NumberFormat2(g.Cd0, 1, 4, 4, False)
 	edtTipLossB.Text = NumberFormat2(g.TipLossB, 1, 3, 3, False)
@@ -2553,18 +2617,34 @@ End Sub
 
 Sub RefreshHorizontalInputDisplay
 	If btnHorizontalInput.IsInitialized = False Then Return
+	btnHorizontalInput.Padding = Array As Int (2dip, 1dip, 2dip, 1dip)
+	btnHorizontalInput.SingleLine = True
+	If root.Width <= 340dip Then
+		btnHorizontalInput.TextSize = 13.5
+	Else If root.Width <= 360dip Then
+		btnHorizontalInput.TextSize = 14
+	Else
+		btnHorizontalInput.TextSize = 15 * sc
+	End If
 	If HorizontalInputMode = "vx" Then
-		btnHorizontalInput.Text = "Vx"
-		btnHorizontalInput.SingleLine = False
-		btnHorizontalInput.Text = "Vx" & CRLF & "Airspeed"
+		If root.Width <= 360dip Then
+			btnHorizontalInput.Text = EngineeringText("Vx")
+		Else If root.Width <= 430dip Then
+			btnHorizontalInput.Text = EngineeringText("Vx · Airspeed")
+		Else
+			btnHorizontalInput.Text = EngineeringText("Vx · Airspeed")
+		End If
 		lblHorizontalUnit.Text = UnitForField("Horizontal Flow", "m/s")
 		edtHorizontalValue.Text = FormatInputValue("Horizontal Flow", ConditionHorizontalValue, 3)
 	Else
 		HorizontalInputMode = "mu"
-		btnHorizontalInput.Text = "μₓ"
-		btnHorizontalInput.SingleLine = False
-		If root.Width > 360dip And root.Width <= 430dip Then btnHorizontalInput.Text = "μₓ" & CRLF & "Adv. Ratio"
-		If root.Width > 430dip Then btnHorizontalInput.Text = "μₓ" & CRLF & "Advance Ratio"
+		If root.Width <= 360dip Then
+			btnHorizontalInput.Text = EngineeringText("μₓ")
+		Else If root.Width <= 430dip Then
+			btnHorizontalInput.Text = EngineeringText("μₓ · Adv. Ratio")
+		Else
+			btnHorizontalInput.Text = EngineeringText("μₓ · Advance Ratio")
+		End If
 		lblHorizontalUnit.Text = "[-]"
 		edtHorizontalValue.Text = NumberFormat2(ConditionHorizontalValue, 1, 4, 4, False)
 	End If
@@ -2572,24 +2652,43 @@ End Sub
 
 Sub RefreshAxialInputDisplay
 	If btnAxialInput.IsInitialized = False Then Return
+	btnAxialInput.Padding = Array As Int (2dip, 1dip, 2dip, 1dip)
+	btnAxialInput.SingleLine = True
+	If root.Width <= 340dip Then
+		btnAxialInput.TextSize = 13.5
+	Else If root.Width <= 360dip Then
+		btnAxialInput.TextSize = 14
+	Else
+		btnAxialInput.TextSize = 15 * sc
+	End If
 	Select AxialInputMode
 		Case "vz"
-			btnAxialInput.Text = "Vz"
-			btnAxialInput.SingleLine = False
-			If root.Width > 360dip Then btnAxialInput.Text = "Vz" & CRLF & "Climb Speed" Else btnAxialInput.Text = "Vz" & CRLF & "Climb"
+			If root.Width <= 360dip Then
+				btnAxialInput.Text = EngineeringText("Vz")
+			Else If root.Width <= 430dip Then
+				btnAxialInput.Text = EngineeringText("Vz · Climb")
+			Else
+				btnAxialInput.Text = EngineeringText("Vz · Climb Speed")
+			End If
 			lblAxialUnit.Text = UnitForField("Axial Flow", "m/s")
 			edtAxialValue.Text = FormatInputValue("Axial Flow", ConditionAxialValue, 3)
 		Case "muz"
-			btnAxialInput.Text = "μz"
-			btnAxialInput.SingleLine = False
-			If root.Width > 360dip Then btnAxialInput.Text = "μz" & CRLF & "Axial Ratio"
+			If root.Width <= 360dip Then
+				btnAxialInput.Text = EngineeringText("μz")
+			Else If root.Width <= 430dip Then
+				btnAxialInput.Text = EngineeringText("μz · Axial")
+			Else
+				btnAxialInput.Text = EngineeringText("μz · Axial Ratio")
+			End If
 			lblAxialUnit.Text = "[-]"
 			edtAxialValue.Text = NumberFormat2(ConditionAxialValue, 1, 4, 4, False)
 		Case Else
 			AxialInputMode = "alpha"
-			btnAxialInput.Text = "α"
-			btnAxialInput.SingleLine = False
-			btnAxialInput.Text = "α · AoA"
+			If root.Width <= 430dip Then
+				btnAxialInput.Text = "α · AoA"
+			Else
+				btnAxialInput.Text = "α · Angle of Attack"
+			End If
 			lblAxialUnit.Text = UnitForField("Axial Flow", "deg")
 			edtAxialValue.Text = FormatInputValue("Axial Flow", ConditionAxialValue, 3)
 	End Select
@@ -2635,9 +2734,9 @@ Sub RefreshOperatingControls
 	btnOperatingPair.Text = OperatingPairDisplayName(ActiveCond.OperatingPair)
 	Dim n1 As String = PairInputName(ActiveCond.OperatingPair, 1)
 	Dim n2 As String = PairInputName(ActiveCond.OperatingPair, 2)
-	lblOperatingInput1.Text = InputDisplayLabel(n1)
+	lblOperatingInput1.Text = EngineeringText(InputDisplayLabel(n1))
 	lblOperatingInput1.Tag = n1
-	lblOperatingInput2.Text = InputDisplayLabel(n2)
+	lblOperatingInput2.Text = EngineeringText(InputDisplayLabel(n2))
 	lblOperatingInput2.Tag = n2
 	lblOperatingUnit1.Tag = n1
 	lblOperatingUnit2.Tag = n2
@@ -2768,7 +2867,7 @@ Sub btnOperatingPair_Click
 		Case "collective_thrust": selected = 4
 		Case "ct_thrust": selected = 5
 	End Select
-	Dim idx As Int = InputList(options, "Trim Condition · prescribe any two", selected)
+	Dim idx As Int = InputList(options, "Trim Mode · prescribe any two", selected)
 	If idx < 0 Then Return
 	' Only seed after a committed choice: Cancel must leave the physical state intact.
 	If ActiveRes.SolutionValid Then
@@ -2818,7 +2917,7 @@ Sub lblRowTip_Click
 		Case "Tip Loss": btnTipLoss_Click: Return
 		Case "Compressibility": btnCompressibility_Click: Return
 		Case "Inflow Model": btnInflowModel_Click: Return
-		Case "Trim Condition": btnOperatingPair_Click: Return
+		Case "Trim Mode", "Trim Condition": btnOperatingPair_Click: Return
 	End Select
 	Dim tipMsg As String = ""
 	Select b.Tag
@@ -2838,8 +2937,8 @@ Sub lblRowTip_Click
 			tipMsg = "σref = Nb/(π AR). Editing σref scales both chords by one factor and preserves taper ratio."
 		Case "Aspect Ratio"
 			tipMsg = "Reference blade AR = R²/Sref,b = 2R/(c0+c1). Editing AR scales both chords while preserving taper."
-		Case "Root Incidence", "Tip Incidence"
-			tipMsg = "Baseline blade incidence. Operating collective Δθ is added equally to root and tip, preserving total twist."
+		Case "Root Pitch", "Tip Pitch", "Root Incidence", "Tip Incidence"
+			tipMsg = "Baseline blade pitch. Operating collective Δθ is added equally to root and tip, preserving total twist."
 		Case "Geometric Solidity"
 			tipMsg = "Physical-area solidity over the active blade span x0 ≤ r/R ≤ 1."
 		Case "Thrust Solidity"
@@ -2856,9 +2955,9 @@ Sub lblRowTip_Click
 			tipMsg = "Baseline linear twist θtip − θroot. Collective trim preserves this difference."
 		Case "Lift Slope a0"
 			tipMsg = "Section lift-curve slope dCl/dα before optional compressibility correction."
-		Case "Profile Cd0"
+		Case "Profile cd0", "Profile Cd0"
 			tipMsg = "Baseline section profile-drag coefficient used by the Numerical Vectorial integration."
-		Case "Fixed Tip Factor B"
+		Case "Tip Factor B", "Fixed Tip Factor B"
 			tipMsg = "Prescribed effective tip radius factor B. Used and editable only with Fixed B tip loss; None and Sissingh ignore this stored setting. The effective operating B is shown in Results."
 		Case "Altitude"
 			tipMsg = "Pressure altitude used by the atmosphere model."
@@ -2867,13 +2966,13 @@ Sub lblRowTip_Click
 		Case "RPM"
 			tipMsg = "Prescribed rotational speed for the selected operating pair."
 		Case "Collective Δθ"
-			tipMsg = "Uniform pitch increment added equally to root and tip incidence."
+			tipMsg = "Uniform pitch increment added equally to root and tip pitch."
 		Case "Target CT"
 			tipMsg = "Prescribed CT = T/[ρA(ΩR)²] for the selected operating pair."
 		Case "Target Thrust"
 			tipMsg = "Prescribed dimensional rotor thrust for the selected operating pair."
-		Case "K_ind"
-			tipMsg = "Induced-power factor K_ind used in induced power and air-power calculations. Typical ideal value is 1; practical values are greater than 1."
+		Case "Induced Factor kind", "K_ind"
+			tipMsg = "Induced-power factor kind used in induced power and air-power calculations. Typical ideal value is 1; practical values are greater than 1."
 		Case "Profile Drag"
 			tipMsg = "Profile drag is always evaluated with Numerical Vectorial radial/azimuthal quadrature."
 		Case Else
@@ -2925,18 +3024,18 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 			ActiveGeom = zBETEngine.ScaleChordsToSigmaRef(ActiveGeom, ParseDoubleDef(edt.Text, ActiveGeom.SigmaRef))
 		Case "Aspect Ratio"
 			ActiveGeom = zBETEngine.ScaleChordsToAspectRatio(ActiveGeom, ParseDoubleDef(edt.Text, zBETEngine.ReferenceAspectRatio(ActiveGeom)))
-		Case "Root Incidence"
+		Case "Root Pitch", "Root Incidence"
 			raw = InputToCanonical(field, ParseDoubleDef(edt.Text, CanonicalToDisplay(field, ActiveGeom.ThetaRoot*180/cPI)))
 			ActiveGeom.ThetaRoot = ClampD(raw, -90.0, 90.0) * cPI / 180.0
-		Case "Tip Incidence"
+		Case "Tip Pitch", "Tip Incidence"
 			raw = InputToCanonical(field, ParseDoubleDef(edt.Text, CanonicalToDisplay(field, ActiveGeom.ThetaTip*180/cPI)))
 			ActiveGeom.ThetaTip = ClampD(raw, -90.0, 90.0) * cPI / 180.0
 		Case "Lift Slope a0"
 			raw = InputToCanonical(field, ParseDoubleDef(edt.Text, CanonicalToDisplay(field, ActiveGeom.LiftSlope0)))
 			ActiveGeom.LiftSlope0 = ClampD(raw, 0.1, 10.0)
-		Case "Profile Cd0"
+		Case "Profile cd0", "Profile Cd0"
 			ActiveGeom.Cd0 = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.Cd0), 0.0, 0.5)
-		Case "Fixed Tip Factor B"
+		Case "Tip Factor B", "Fixed Tip Factor B"
 			ActiveGeom.TipLossB = ClampD(ParseDoubleDef(edt.Text, ActiveGeom.TipLossB), ActiveGeom.RootCutout + 0.001, 1.0)
 	End Select
 	ActiveGeom.PitchMode = "linear_twist"
