@@ -12,7 +12,7 @@ if (scriptMatch) {
   try {
     let js = await readFile(scriptPath, "utf8");
     js = js.replace(/<\/script/gi, "<\\/script");
-    html = html.replace(scriptMatch[0], `<script type="module">\n${js}\n</script>`);
+    html = html.replace(scriptMatch[0], () => `<script type="module">\n${js}\n</script>`);
   } catch (err) {
     console.warn("Could not inline script, keeping external reference:", err.message);
   }
@@ -24,7 +24,7 @@ if (styleMatch) {
   try {
     let css = await readFile(stylePath, "utf8");
     css = css.replace(/<\/style/gi, "<\\/style");
-    html = html.replace(styleMatch[0], `<style>\n${css}\n</style>`);
+    html = html.replace(styleMatch[0], () => `<style>\n${css}\n</style>`);
   } catch (err) {
     console.warn("Could not inline stylesheet, keeping external reference:", err.message);
   }

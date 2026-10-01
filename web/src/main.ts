@@ -74,9 +74,18 @@ let sweepMultiMode = 0;
 let sweepXAxisMode: "mu" | "vx" = "mu";
 let sweepMaxMu = 0.4;
 let sweepTableVisible = false;
+let sweepHoverTrim = false;
+const sweepCustomValues: Record<number, number[]> = {
+  1: [-10, -5, 0, 5, 10],
+  2: [-10, -5, 0, 5, 10],
+  3: [-0.05, -0.025, 0, 0.025, 0.05],
+};
 
-// Flags
+// Flags & Dialog State
 let isInternalSync = false;
+let isGeometryDirty = false;
+let pendingUnsavedAction: (() => void) | null = null;
+let pendingImportList: StoredRotor[] = [];
 
 // Initialize Root App DOM
 const app = document.getElementById("app");
@@ -432,13 +441,16 @@ app.innerHTML = `
             </div>
             <div class="sweep-control-group">
               <label>Multi-Curve Family</label>
-              <select class="sweep-select" id="sweep-select-family">
-                <option value="0">Single Curve (Active)</option>
-                <option value="1">α Family (-10° to +10°)</option>
-                <option value="2">Vz Family (-10 to +10 m/s)</option>
-                <option value="3">μz Family (-0.05 to +0.05)</option>
-                <option value="4">Inflow Models Family</option>
-              </select>
+              <div style="display: flex; gap: 6px;">
+                <select class="sweep-select" id="sweep-select-family" style="flex: 1; min-width: 0;">
+                  <option value="0">Single Curve (Active)</option>
+                  <option value="1">α Family (-10° to +10°)</option>
+                  <option value="2">Vz Family (-10 to +10 m/s)</option>
+                  <option value="3">μz Family (-0.05 to +0.05)</option>
+                  <option value="4">Inflow Models Family</option>
+                </select>
+                <button class="action-btn" id="btn-sweep-values" style="display: none; flex-shrink: 0; height: 38px; padding: 0 10px; font-size: 11.5px; font-weight: 700; color: var(--accent);">VALUES</button>
+              </div>
             </div>
             <div class="sweep-control-group">
               <label>X-Axis Scale</label>
@@ -456,6 +468,10 @@ app.innerHTML = `
                 <option value="0.5">0.50 (Extreme)</option>
               </select>
             </div>
+            <div class="sweep-control-group" id="sweep-group-trim-hover" style="display: none;">
+              <label>Hover Trim Strategy</label>
+              <button class="action-btn" id="btn-sweep-trim-hover" style="height: 38px; font-size: 12px; font-weight: 700;">HOVER TRIM: OFF</button>
+            </div>
           </div>
 
           <div class="sweep-canvas-wrapper">
@@ -469,6 +485,75 @@ app.innerHTML = `
             <button class="action-btn" id="btn-sweep-export-csv" style="height: 38px;">EXPORT CSV</button>
             <button class="action-btn" id="btn-sweep-export-png" style="height: 38px;">EXPORT PNG</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: SWEEP CUSTOM VALUES -->
+    <div class="modal-overlay" id="modal-sweep-values">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <div class="modal-title">Edit Curve Family Values</div>
+          <button class="modal-close-btn" data-close="modal-sweep-values">×</button>
+        </div>
+        <div class="modal-body" style="padding: 16px 20px;">
+          <p id="sweep-values-hint" style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 12px;">Enter comma-separated numerical values for the curve family.</p>
+          <input class="row-input" id="inp-sweep-values" type="text" style="width: 100%; height: 42px; margin-bottom: 16px; font-family: monospace; font-size: 14px; text-align: left;" />
+          <div style="display: flex; gap: 8px;">
+            <button class="action-btn" id="btn-sweep-values-save" style="flex: 1; height: 42px; color: var(--accent); font-weight: 700;">APPLY VALUES</button>
+            <button class="action-btn" id="btn-sweep-values-cancel" style="height: 42px;">CANCEL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: UNSAVED CHANGES CONFIRMATION -->
+    <div class="modal-overlay" id="modal-unsaved-confirm">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header">
+          <div class="modal-title" style="color: #FFB300;">Unsaved Geometry Changes</div>
+          <button class="modal-close-btn" data-close="modal-unsaved-confirm">×</button>
+        </div>
+        <div class="modal-body" style="padding: 16px 20px;">
+          <p id="unsaved-confirm-msg" style="margin-bottom: 20px; font-size: 14.5px; line-height: 1.5; color: var(--text-main);">Geometry has unsaved changes. Save them before continuing?</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="action-btn" id="btn-unsaved-save" style="height: 42px; font-weight: 700; color: var(--accent-green);">SAVE CHANGES</button>
+            <button class="action-btn" id="btn-unsaved-discard" style="height: 42px; font-weight: 700; color: var(--accent-red);">DISCARD CHANGES</button>
+            <button class="action-btn" id="btn-unsaved-cancel" style="height: 42px; font-weight: 600;">CANCEL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: IMPORT CONFLICT RESOLUTION -->
+    <div class="modal-overlay" id="modal-import-conflict">
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div class="modal-title">Import Geometries</div>
+          <button class="modal-close-btn" data-close="modal-import-conflict">×</button>
+        </div>
+        <div class="modal-body" style="padding: 16px 20px;">
+          <p id="import-conflict-msg" style="margin-bottom: 16px; font-size: 14px; line-height: 1.5; color: var(--text-main);"></p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="action-btn" id="btn-import-rename" style="height: 42px; font-weight: 700; color: var(--accent);">RENAME (Keep both with unique names)</button>
+            <button class="action-btn" id="btn-import-replace" style="height: 42px; font-weight: 700; color: var(--accent-amber);">REPLACE (Overwrite local rotors)</button>
+            <button class="action-btn" id="btn-import-skip" style="height: 42px; font-weight: 700; color: var(--accent-red);">SKIP (Keep local rotors unchanged)</button>
+            <button class="action-btn" id="btn-import-cancel" style="height: 38px;">CANCEL IMPORT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: RESULT TOOLTIP -->
+    <div class="modal-overlay" id="modal-result-tooltip">
+      <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header">
+          <div class="modal-title" id="result-tooltip-title">About • Result</div>
+          <button class="modal-close-btn" data-close="modal-result-tooltip">×</button>
+        </div>
+        <div class="modal-body" style="padding: 16px 20px;">
+          <div id="result-tooltip-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 20px;"></div>
+          <button class="action-btn" id="btn-result-tooltip-open-help" style="width: 100%; height: 42px; font-weight: 700; color: var(--accent);">OPEN FULL PHYSICS & EQUATIONS GUIDE</button>
         </div>
       </div>
     </div>
@@ -1001,6 +1086,75 @@ function renderResults(): void {
   byId("unit-res-sound").textContent = vtipUnit;
 }
 
+// Result Contextual Physics & Equation Tooltips
+const RESULT_TOOLTIPS: Record<string, string> = {
+  "T — Thrust": "Solved dimensional rotor thrust T = ρ A (ΩR)² CT at the current flight condition.",
+  "Pshaft — Shaft Power": "Mechanical shaft power P = ΩQ = ρ A (ΩR)³ CP, required to rotate the rotor against aerodynamic torque.",
+  "Q — Shaft Torque": "Aerodynamic torque about the rotor shaft: Q = ρ A (ΩR)² R CQ.",
+  "H — In-Plane Force": "Dimensional longitudinal in-plane force H resisting forward motion in forward flight.",
+  "Y — Side Force": "Dimensional lateral rotor side force Y arising from aerodynamic asymmetry.",
+  "Mx — Roll Moment": "Dimensional rotor rolling moment Mx about the longitudinal axis.",
+  "My — Pitch Moment": "Dimensional rotor pitching moment My about the lateral axis.",
+  "CT — Thrust Coeff": "CT = T / [ρ A (ΩR)²]. Non-dimensional rotor thrust coefficient normalized by rotor disk area and tip speed.",
+  "CQ — Torque Coeff": "CQ = Q / [ρ A (ΩR)² R]. Non-dimensional rotor shaft torque coefficient, mathematically equal to shaft-power coefficient CPshaft.",
+  "CQ,i — Induced Coeff": "Induced torque/power contribution CQ,i from induced downwash velocity across the rotor disk.",
+  "CQ,0 — Profile Coeff": "Profile-drag torque contribution CQ,0 integrated using the Numerical Vectorial method over radial and azimuthal elements.",
+  "CH — In-Plane": "Total longitudinal in-plane force coefficient: CH = CH,i + CH,0.",
+  "CH,i — Induced H": "Induced contribution to longitudinal in-plane force coefficient.",
+  "CH,0 — Profile H": "Numerical Vectorial profile-drag contribution to longitudinal in-plane force coefficient.",
+  "CY — Side Force": "Non-dimensional rotor lateral side-force coefficient.",
+  "CMx — Roll Moment": "Non-dimensional rotor rolling-moment coefficient about the x-axis.",
+  "CMy — Pitch Moment": "Non-dimensional rotor pitching-moment coefficient about the y-axis.",
+  "CP,air — Air Power": "Air-power coefficient from induced, axial-flow, profile, and translational aerodynamic energy terms.",
+  "FM — Figure of Merit": "Hover aerodynamic efficiency: FoM = CT^(3/2) / [√2 CPshaft]. Ratio of ideal induced power to actual required shaft power.",
+  "(L/D)eff — Effective L/D": "Effective rotor lift-to-drag ratio in forward flight: (L/D)eff = μx CT / CP,air = T Vx / Pair.",
+  "λ — Total Inflow": "Total inflow ratio normal to the rotor disk: λ = μz + λi.",
+  "λi — Induced Inflow": "Induced downwash inflow ratio through the disk: λi = vi / (ΩR).",
+  "Kx — Longitudinal Inflow": "Longitudinal first-harmonic inflow-gradient coefficient (Drees / Coleman / Pitt-Peters).",
+  "Ky — Lateral Inflow": "Lateral first-harmonic inflow-gradient coefficient.",
+  "χ — Wake Skew Angle": "Wake-skew angle χ = tan⁻¹(μx / λ) measuring the angle between rotor shaft and wake trajectory.",
+  "B — Tip-Loss Factor": "Effective aerodynamic blade tip radius factor B used to account for 3D tip-vortex lift reduction.",
+  "RPM — Solved Speed": "Operating rotational speed in revolutions per minute, solved from the prescribed operating pair.",
+  "Δθ — Solved Collective": "Solved uniform collective pitch increment Δθ added equally to baseline root and tip pitch.",
+  "θ0 — Solved Collective": "Solved uniform collective pitch increment Δθ added equally to baseline root and tip pitch.",
+  "μx — Advance Ratio": "Non-dimensional in-plane advance ratio: μx = Vx / (ΩR).",
+  "Vx — Airspeed": "Dimensional forward in-plane flight speed: Vx = μx (ΩR).",
+  "μz — Axial Ratio": "Non-dimensional axial flow ratio: μz = Vz / (ΩR). Positive indicates downward relative flow.",
+  "Vz — Climb Speed": "Dimensional vertical flight speed: positive Vz indicates climb (relative wind from above).",
+  "α — Angle of Attack": "Rotor disk angle of attack relative to oncoming velocity vector. Positive α indicates wind from below (μz = -μx tan α).",
+  "ΩR — Tip Speed": "Rotational blade tip speed: ΩR = (2π RPM / 60) R.",
+  "Mtip — Tip Mach": "Rotational hover tip Mach number: Mtip = ΩR / a.",
+  "Madv — Advancing Mach": "Advancing blade tip Mach number at 90° azimuth: Madv = ΩR (1 + μx) / a.",
+  "h — Altitude": "Pressure altitude used by the International Standard Atmosphere (ISA) model.",
+  "Tamb — Temperature": "Ambient air temperature used to compute local air density and speed of sound.",
+  "ρ — Air Density": "Ambient atmospheric mass density ρ [kg/m³ or slug/ft³] from the ISA model.",
+  "p — Ambient Pressure": "Ambient static atmospheric pressure p from the ISA barometric formula.",
+  "a — Speed of Sound": "Local speed of sound a = √(γ R_gas T) used for Mach and compressibility corrections.",
+};
+
+function bindResultRowTooltips(): void {
+  document.querySelectorAll<HTMLElement>(".result-row").forEach((row) => {
+    row.addEventListener("click", () => {
+      const labelEl = row.querySelector(".result-label");
+      const labelText = labelEl?.textContent?.trim() || "";
+      const matched = Object.entries(RESULT_TOOLTIPS).find(([key]) => {
+        return labelText.startsWith(key) || key.startsWith(labelText) || labelText.includes(key);
+      });
+      const title = matched ? matched[0] : labelText;
+      const desc = matched ? matched[1] : `Computed aerodynamic or atmospheric metric for ${labelText}.`;
+
+      byId("result-tooltip-title").textContent = `About • ${title}`;
+      byId("result-tooltip-desc").textContent = desc;
+      openModal("modal-result-tooltip");
+    });
+  });
+
+  byId("btn-result-tooltip-open-help")?.addEventListener("click", () => {
+    closeModal("modal-result-tooltip");
+    openModal("modal-physics-help");
+  });
+}
+
 // Operating Controls Setup
 function refreshOperatingControls(): void {
   const pair = activeCond.operatingPair;
@@ -1075,13 +1229,47 @@ function refreshOperatingControls(): void {
   }
 }
 
+function escapeHTML(str: string): string {
+  return str.replace(/[&<>'"]/g, 
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
+function updateActiveRotorBar(): void {
+  const bar = byId("display-active-rotor-name");
+  if (!bar) return;
+  if (isGeometryDirty) {
+    bar.innerHTML = `${escapeHTML(currentRotor.name)} <span style="color: #FFB300; font-weight: bold; margin-left: 6px;">• * UNSAVED</span>`;
+  } else {
+    bar.textContent = currentRotor.name;
+  }
+}
+
+function markGeometryDirty(): void {
+  if (!isGeometryDirty) {
+    isGeometryDirty = true;
+    updateActiveRotorBar();
+  }
+}
+
+function resolveUnsavedGeometry(actionText: string, onProceed: () => void): void {
+  if (!isGeometryDirty) {
+    onProceed();
+    return;
+  }
+  pendingUnsavedAction = onProceed;
+  byId("unsaved-confirm-msg").textContent = `Geometry has unsaved changes. Save them before ${actionText}?`;
+  openModal("modal-unsaved-confirm");
+}
+
 // Load Rotor Data into Inputs
 function loadRotorToUI(rotor: StoredRotor): void {
   currentRotor = rotor;
   activeGeom = cloneGeometry(rotor.geom);
   isInternalSync = true;
+  isGeometryDirty = false;
+  updateActiveRotorBar();
 
-  byId("display-active-rotor-name").textContent = rotor.name;
   byId<HTMLInputElement>("inp-rotor-name").value = rotor.name;
 
   const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
@@ -1142,6 +1330,7 @@ function bindInputListeners(): void {
       byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
       byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
 
+      markGeometryDirty();
       recalculate();
       isInternalSync = false;
     }
@@ -1168,6 +1357,7 @@ function bindInputListeners(): void {
     byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
     byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
 
+    markGeometryDirty();
     recalculate();
     isInternalSync = false;
   };
@@ -1190,6 +1380,7 @@ function bindInputListeners(): void {
       byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
       byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
 
+      markGeometryDirty();
       recalculate();
       isInternalSync = false;
     }
@@ -1209,6 +1400,7 @@ function bindInputListeners(): void {
       byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
       byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
 
+      markGeometryDirty();
       recalculate();
       isInternalSync = false;
     }
@@ -1217,13 +1409,14 @@ function bindInputListeners(): void {
   // Other Geometry inputs
   byId("inp-rotor-name").addEventListener("input", () => {
     activeGeom.name = byId<HTMLInputElement>("inp-rotor-name").value.trim() || "Custom Rotor";
-    byId("display-active-rotor-name").textContent = activeGeom.name;
+    markGeometryDirty();
   });
 
   byId("inp-theta-root").addEventListener("input", () => {
     const unit = byId("unit-theta-root")?.textContent?.trim() || "deg";
     const val = parseFloat(byId<HTMLInputElement>("inp-theta-root").value) || 0;
     activeGeom.thetaRoot = (convertValue(val, unit, "deg") * Math.PI) / 180;
+    markGeometryDirty();
     recalculate();
   });
 
@@ -1231,6 +1424,7 @@ function bindInputListeners(): void {
     const unit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
     const val = parseFloat(byId<HTMLInputElement>("inp-theta-tip").value) || 0;
     activeGeom.thetaTip = (convertValue(val, unit, "deg") * Math.PI) / 180;
+    markGeometryDirty();
     recalculate();
   });
 
@@ -1238,16 +1432,19 @@ function bindInputListeners(): void {
     const unit = byId("unit-lift-slope")?.textContent?.trim() || "rad⁻¹";
     const val = parseFloat(byId<HTMLInputElement>("inp-lift-slope").value) || 5.73;
     activeGeom.liftSlope0 = convertValue(val, unit, "rad⁻¹");
+    markGeometryDirty();
     recalculate();
   });
 
   byId("inp-cd0").addEventListener("input", () => {
     activeGeom.cd0 = parseFloat(byId<HTMLInputElement>("inp-cd0").value) || 0.009;
+    markGeometryDirty();
     recalculate();
   });
 
   byId("inp-tiploss-b").addEventListener("input", () => {
     activeGeom.tipLossB = parseFloat(byId<HTMLInputElement>("inp-tiploss-b").value) || 0.97;
+    markGeometryDirty();
     recalculate();
   });
 
@@ -1438,6 +1635,7 @@ function bindSelectorButtons(): void {
           byId("btn-select-airfoil").textContent = sel.name;
           byId<HTMLInputElement>("inp-lift-slope").value = sel.a0.toString();
           byId<HTMLInputElement>("inp-cd0").value = sel.cd0.toString();
+          markGeometryDirty();
           recalculate();
         }
       }
@@ -1489,6 +1687,7 @@ function bindSelectorButtons(): void {
         activeGeom.tipLossMode = modeId as RotorGeometry["tipLossMode"];
         const labels: Record<string, string> = { none: "NONE", fixed: "FIXED B", sissingh: "SISSINGH" };
         byId("btn-tiploss-mode").textContent = labels[activeGeom.tipLossMode];
+        markGeometryDirty();
         recalculate();
       }
     );
@@ -1509,6 +1708,7 @@ function bindSelectorButtons(): void {
         activeGeom.usePrandtlGlauert = selId === "on";
         byId("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "ON (PG)" : "OFF";
         byId("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent-green)" : "var(--text-muted)";
+        markGeometryDirty();
         recalculate();
       }
     );
@@ -1777,6 +1977,8 @@ function bindRotorActionButtons(): void {
     currentRotor.name = activeGeom.name;
     currentRotor.geom = cloneGeometry(activeGeom);
     saveStoredRotors(storedRotors);
+    isGeometryDirty = false;
+    updateActiveRotorBar();
     const saveBtn = byId("btn-geom-save");
     saveBtn.textContent = "SAVED ✓";
     setTimeout(() => (saveBtn.textContent = "SAVE"), 1500);
@@ -1808,16 +2010,18 @@ function bindRotorActionButtons(): void {
   });
 
   byId("btn-manager-new").addEventListener("click", () => {
-    const newRotor: StoredRotor = {
-      id: `custom-${Date.now()}`,
-      name: `Custom Rotor ${storedRotors.length + 1}`,
-      geom: createDefaultGeometry(),
-    };
-    storedRotors.push(newRotor);
-    saveStoredRotors(storedRotors);
-    loadRotorToUI(newRotor);
-    setActiveRotorId(newRotor.id);
-    closeModal("modal-rotor-manager");
+    resolveUnsavedGeometry("creating a new rotor", () => {
+      const newRotor: StoredRotor = {
+        id: `custom-${Date.now()}`,
+        name: `Custom Rotor ${storedRotors.length + 1}`,
+        geom: createDefaultGeometry(),
+      };
+      storedRotors.push(newRotor);
+      saveStoredRotors(storedRotors);
+      loadRotorToUI(newRotor);
+      setActiveRotorId(newRotor.id);
+      closeModal("modal-rotor-manager");
+    });
   });
 
   byId("btn-manager-export").addEventListener("click", () => {
@@ -1842,18 +2046,141 @@ function bindRotorActionButtons(): void {
     reader.onload = (evt) => {
       const content = evt.target?.result as string;
       const imported = importRotorsJSON(content);
-      if (imported && imported.length > 0) {
-        storedRotors = imported;
+      if (!imported || imported.length === 0) {
+        alert("Failed to parse valid rotor geometries from file.");
+        return;
+      }
+      const conflicting = imported.filter((imp) =>
+        storedRotors.some((loc) => loc.name.toLowerCase() === imp.name.toLowerCase())
+      );
+      if (conflicting.length === 0) {
+        storedRotors.push(...imported);
         saveStoredRotors(storedRotors);
-        loadRotorToUI(storedRotors[0]);
-        setActiveRotorId(storedRotors[0].id);
+        loadRotorToUI(imported[0]);
+        setActiveRotorId(imported[0].id);
         renderRotorManagerList();
         alert(`Successfully imported ${imported.length} rotor geometries.`);
       } else {
-        alert("Failed to parse rotor geometries JSON.");
+        pendingImportList = imported;
+        byId("import-conflict-msg").innerHTML = `Found <strong>${imported.length} valid geometries</strong>.<br><br><strong>${conflicting.length} conflict(s)</strong> detected with existing local rotors:<br><em>${conflicting.map((c) => escapeHTML(c.name)).join(", ")}</em>.<br><br>How would you like to handle conflicting rotors?`;
+        openModal("modal-import-conflict");
       }
     };
     reader.readAsText(file);
+    (e.target as HTMLInputElement).value = "";
+  });
+
+  // Modal: Unsaved Changes Confirm Listeners
+  byId("btn-unsaved-save").addEventListener("click", () => {
+    currentRotor.name = activeGeom.name;
+    currentRotor.geom = cloneGeometry(activeGeom);
+    saveStoredRotors(storedRotors);
+    isGeometryDirty = false;
+    updateActiveRotorBar();
+    closeModal("modal-unsaved-confirm");
+    if (pendingUnsavedAction) {
+      const act = pendingUnsavedAction;
+      pendingUnsavedAction = null;
+      act();
+    }
+  });
+
+  byId("btn-unsaved-discard").addEventListener("click", () => {
+    isGeometryDirty = false;
+    loadRotorToUI(currentRotor);
+    closeModal("modal-unsaved-confirm");
+    if (pendingUnsavedAction) {
+      const act = pendingUnsavedAction;
+      pendingUnsavedAction = null;
+      act();
+    }
+  });
+
+  byId("btn-unsaved-cancel").addEventListener("click", () => {
+    pendingUnsavedAction = null;
+    closeModal("modal-unsaved-confirm");
+  });
+
+  // Modal: Import Conflict Resolution Listeners
+  byId("btn-import-rename").addEventListener("click", () => {
+    if (!pendingImportList.length) return;
+    pendingImportList.forEach((imp) => {
+      let candidateName = imp.name;
+      let counter = 1;
+      while (storedRotors.some((r) => r.name.toLowerCase() === candidateName.toLowerCase())) {
+        candidateName = `${imp.name} (${counter === 1 ? "Imported" : counter})`;
+        counter++;
+      }
+      storedRotors.push({
+        id: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        name: candidateName,
+        geom: cloneGeometry(imp.geom),
+      });
+    });
+    saveStoredRotors(storedRotors);
+    loadRotorToUI(storedRotors[storedRotors.length - 1]);
+    setActiveRotorId(storedRotors[storedRotors.length - 1].id);
+    renderRotorManagerList();
+    closeModal("modal-import-conflict");
+    alert(`Successfully imported ${pendingImportList.length} rotor geometries with unique names.`);
+    pendingImportList = [];
+  });
+
+  byId("btn-import-replace").addEventListener("click", () => {
+    if (!pendingImportList.length) return;
+    pendingImportList.forEach((imp) => {
+      const matchIdx = storedRotors.findIndex((r) => r.name.toLowerCase() === imp.name.toLowerCase());
+      if (matchIdx >= 0) {
+        storedRotors[matchIdx] = {
+          id: storedRotors[matchIdx].id,
+          name: imp.name,
+          geom: cloneGeometry(imp.geom),
+        };
+      } else {
+        storedRotors.push({
+          id: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          name: imp.name,
+          geom: cloneGeometry(imp.geom),
+        });
+      }
+    });
+    saveStoredRotors(storedRotors);
+    loadRotorToUI(storedRotors[0]);
+    setActiveRotorId(storedRotors[0].id);
+    renderRotorManagerList();
+    closeModal("modal-import-conflict");
+    alert(`Successfully imported ${pendingImportList.length} rotor geometries (replaced matching local rotors).`);
+    pendingImportList = [];
+  });
+
+  byId("btn-import-skip").addEventListener("click", () => {
+    if (!pendingImportList.length) return;
+    let addedCount = 0;
+    pendingImportList.forEach((imp) => {
+      const exists = storedRotors.some((r) => r.name.toLowerCase() === imp.name.toLowerCase());
+      if (!exists) {
+        storedRotors.push({
+          id: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          name: imp.name,
+          geom: cloneGeometry(imp.geom),
+        });
+        addedCount++;
+      }
+    });
+    saveStoredRotors(storedRotors);
+    if (addedCount > 0) {
+      loadRotorToUI(storedRotors[storedRotors.length - 1]);
+      setActiveRotorId(storedRotors[storedRotors.length - 1].id);
+    }
+    renderRotorManagerList();
+    closeModal("modal-import-conflict");
+    alert(`Imported ${addedCount} new non-conflicting rotor(s). Conflicting local rotors were preserved.`);
+    pendingImportList = [];
+  });
+
+  byId("btn-import-cancel").addEventListener("click", () => {
+    pendingImportList = [];
+    closeModal("modal-import-conflict");
   });
 }
 
@@ -1883,9 +2210,11 @@ function renderRotorManagerList(): void {
 
     // Click to select
     item.querySelector(".rotor-manager-info")?.addEventListener("click", () => {
-      setActiveRotorId(rotor.id);
-      loadRotorToUI(rotor);
-      closeModal("modal-rotor-manager");
+      resolveUnsavedGeometry("switching the active rotor", () => {
+        setActiveRotorId(rotor.id);
+        loadRotorToUI(rotor);
+        closeModal("modal-rotor-manager");
+      });
     });
 
     // Copy & Delete
@@ -1993,10 +2322,61 @@ function initSweepModal(): void {
   });
 
   const canvas = byId<HTMLCanvasElement>("sweep-canvas");
+  const selectFamily = byId<HTMLSelectElement>("sweep-select-family");
+  const btnValues = byId<HTMLButtonElement>("btn-sweep-values");
+  const groupHover = byId("sweep-group-trim-hover");
+  const btnTrimHover = byId<HTMLButtonElement>("btn-sweep-trim-hover");
+
+  const syncSweepControlVisibilities = () => {
+    const multi = parseInt(selectFamily.value, 10);
+    btnValues.style.display = (multi === 1 || multi === 2 || multi === 3) ? "block" : "none";
+
+    const participatesInTrim = activeCond.operatingPair !== "rpm_collective";
+    groupHover.style.display = participatesInTrim ? "flex" : "none";
+  };
+
+  btnValues.onclick = () => {
+    const multi = parseInt(selectFamily.value, 10);
+    const familyNames: Record<number, string> = {
+      1: "Angle of Attack α [deg]",
+      2: "Climb Speed Vz [m/s]",
+      3: "Axial Flow Ratio μz [-]",
+    };
+    byId("sweep-values-hint").textContent = `Enter comma-separated values for ${familyNames[multi] || "Family"}:`;
+    const cur = sweepCustomValues[multi] || [-10, -5, 0, 5, 10];
+    byId<HTMLInputElement>("inp-sweep-values").value = cur.join(", ");
+    openModal("modal-sweep-values");
+  };
+
+  byId("btn-sweep-values-save").onclick = () => {
+    const multi = parseInt(selectFamily.value, 10);
+    const raw = byId<HTMLInputElement>("inp-sweep-values").value;
+    const parts = raw.split(",").map((s) => parseFloat(s.trim())).filter((n) => !isNaN(n));
+    if (parts.length < 2) {
+      alert("Please enter at least 2 distinct numerical values.");
+      return;
+    }
+    parts.sort((a, b) => a - b);
+    sweepCustomValues[multi] = parts;
+    closeModal("modal-sweep-values");
+    updateSweepPlot();
+  };
+
+  byId("btn-sweep-values-cancel").onclick = () => {
+    closeModal("modal-sweep-values");
+  };
+
+  btnTrimHover.onclick = () => {
+    sweepHoverTrim = !sweepHoverTrim;
+    btnTrimHover.textContent = sweepHoverTrim ? "HOVER TRIM: ON" : "HOVER TRIM: OFF";
+    btnTrimHover.style.color = sweepHoverTrim ? "var(--accent-green)" : "var(--text-main)";
+    updateSweepPlot();
+  };
 
   const updateSweepPlot = () => {
+    syncSweepControlVisibilities();
     sweepSelectedParam = selectParam.value;
-    sweepMultiMode = parseInt(byId<HTMLSelectElement>("sweep-select-family").value, 10);
+    sweepMultiMode = parseInt(selectFamily.value, 10);
     sweepXAxisMode = byId<HTMLSelectElement>("sweep-select-xaxis").value as "mu" | "vx";
     sweepMaxMu = parseFloat(byId<HTMLSelectElement>("sweep-select-maxmu").value) || 0.4;
 
@@ -2006,7 +2386,9 @@ function initSweepModal(): void {
       sweepSelectedParam,
       sweepMultiMode,
       sweepMaxMu,
-      25
+      25,
+      sweepCustomValues[sweepMultiMode],
+      sweepHoverTrim
     );
 
     const meta = SWEEP_PARAMS.find((p) => p.key === sweepSelectedParam) || SWEEP_PARAMS[0];
@@ -2030,9 +2412,19 @@ function initSweepModal(): void {
   };
 
   byId("btn-sweep-export-csv").onclick = () => {
-    const { curves } = runParameterSweep(activeGeom, activeCond, sweepSelectedParam, sweepMultiMode, sweepMaxMu, 25);
+    const { curves } = runParameterSweep(
+      activeGeom,
+      activeCond,
+      sweepSelectedParam,
+      sweepMultiMode,
+      sweepMaxMu,
+      25,
+      sweepCustomValues[sweepMultiMode],
+      sweepHoverTrim
+    );
     const meta = SWEEP_PARAMS.find((p) => p.key === sweepSelectedParam) || SWEEP_PARAMS[0];
-    const csv = generateSweepCSV(curves, sweepXAxisMode, meta);
+    const trimText = sweepHoverTrim ? "Hover Trim (Fixed RPM & Collective)" : "Point-by-Point Trim";
+    const csv = generateSweepCSV(curves, sweepXAxisMode, meta, trimText);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -2056,7 +2448,12 @@ function initSweepModal(): void {
 function renderSweepTable(curves: any[], meta: any): void {
   const container = byId("sweep-table-container");
   const xCol = sweepXAxisMode === "mu" ? "μ [-]" : "Vx [m/s]";
-  let html = `<table style="width: 100%; border-collapse: collapse; text-align: right;"><thead style="position: sticky; top: 0; background: var(--header-bg); border-bottom: 1px solid var(--border);"><tr><th style="padding: 6px 10px; text-align: left;">${xCol}</th>`;
+  const trimText = sweepHoverTrim ? "Hover Trim (Fixed RPM & Collective)" : "Point-by-Point Trim";
+  let html = `
+    <div style="padding: 6px 10px; font-size: 11.5px; color: var(--text-muted); background: var(--header-bg); border-bottom: 1px solid var(--border);">
+      Trim Strategy: <strong style="color: var(--accent);">${trimText}</strong>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; text-align: right;"><thead style="position: sticky; top: 0; background: var(--header-bg); border-bottom: 1px solid var(--border);"><tr><th style="padding: 6px 10px; text-align: left;">${xCol}</th>`;
   curves.forEach((c) => {
     html += `<th style="padding: 6px 10px; color: ${c.color};">${c.label}</th>`;
   });
@@ -2273,9 +2670,17 @@ function initApp(): void {
   bindRotorActionButtons();
   bindSelectorButtons();
   bindUnitButtons();
+  bindResultRowTooltips();
   bindSettingsListeners();
   initSwipeNavigation();
   initTooltips();
+
+  window.addEventListener("beforeunload", (e) => {
+    if (isGeometryDirty) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 
   document.querySelectorAll<HTMLButtonElement>(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {

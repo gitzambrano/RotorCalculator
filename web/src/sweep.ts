@@ -71,7 +71,9 @@ export function runParameterSweep(
   selectedParamKey: string,
   multiMode: number, // 0=Single, 1=Alpha, 2=Vz, 3=MuZ, 4=Inflow
   maxMu = 0.4,
-  numSteps = 21
+  numSteps = 21,
+  customFamilyValues?: number[],
+  hoverTrimOnly = false
 ): { curves: SweepCurve[]; currentOpPoint: { mu: number; vx: number; val: number } | null } {
   const meta = SWEEP_PARAMS.find((p) => p.key === selectedParamKey) || SWEEP_PARAMS[0];
   const curves: SweepCurve[] = [];
@@ -80,21 +82,21 @@ export function runParameterSweep(
 
   if (multiMode === 1) {
     // Alpha Family
-    const alphas = [-10, -5, 0, 5, 10];
+    const alphas = customFamilyValues && customFamilyValues.length >= 2 ? customFamilyValues : [-10, -5, 0, 5, 10];
     familyConfigs = alphas.map((a) => ({
       label: `α = ${a > 0 ? "+" : ""}${a}°`,
       patch: { axialMode: "alpha", axialValue: a },
     }));
   } else if (multiMode === 2) {
     // Vz Family
-    const vzs = [-10, -5, 0, 5, 10];
+    const vzs = customFamilyValues && customFamilyValues.length >= 2 ? customFamilyValues : [-10, -5, 0, 5, 10];
     familyConfigs = vzs.map((v) => ({
       label: `Vz = ${v > 0 ? "+" : ""}${v} m/s`,
       patch: { axialMode: "vz", axialValue: v },
     }));
   } else if (multiMode === 3) {
     // MuZ Family
-    const muzs = [-0.05, -0.025, 0, 0.025, 0.05];
+    const muzs = customFamilyValues && customFamilyValues.length >= 2 ? customFamilyValues : [-0.05, -0.025, 0, 0.025, 0.05];
     familyConfigs = muzs.map((m) => ({
       label: `μz = ${m > 0 ? "+" : ""}${m.toFixed(3)}`,
       patch: { axialMode: "muz", axialValue: m },
@@ -120,6 +122,22 @@ export function runParameterSweep(
     ];
   }
 
+  // Pre-solve hover state if hoverTrimOnly is active
+  let lockedRPM: number | null = null;
+  let lockedCollectiveDeg: number | null = null;
+  if (hoverTrimOnly && baseCond.operatingPair !== "rpm_collective") {
+    const hoverCond = cloneCondition(baseCond);
+    hoverCond.horizontalMode = "mu";
+    hoverCond.horizontalValue = 0;
+    hoverCond.axialMode = "muz";
+    hoverCond.axialValue = 0;
+    const hoverRes = calculate(geom, hoverCond);
+    if (hoverRes.solutionValid) {
+      lockedRPM = hoverRes.trimmedRPM;
+      lockedCollectiveDeg = hoverRes.trimmedCollectiveDeg;
+    }
+  }
+
   const dMu = maxMu / Math.max(1, numSteps - 1);
 
   familyConfigs.forEach((cfg, idx) => {
@@ -130,6 +148,12 @@ export function runParameterSweep(
       Object.assign(c, cfg.patch);
       c.horizontalMode = "mu";
       c.horizontalValue = muTarget;
+
+      if (lockedRPM !== null && lockedCollectiveDeg !== null) {
+        c.operatingPair = "rpm_collective";
+        c.rpm = lockedRPM;
+        c.collectiveDeg = lockedCollectiveDeg;
+      }
 
       const res = calculate(geom, c);
       const val = res.solutionValid ? meta.getValue(res) : 0;
@@ -368,10 +392,19 @@ export function drawSweepCanvas(
   ctx.restore();
 }
 
-export function generateSweepCSV(curves: SweepCurve[], xAxisMode: "mu" | "vx", paramMeta: SweepParamMeta): string {
+export function generateSweepCSV(
+  curves: SweepCurve[],
+  xAxisMode: "mu" | "vx",
+  paramMeta: SweepParamMeta,
+  trimStrategy = "Point-by-Point"
+): string {
   const xHeader = xAxisMode === "mu" ? "mu" : "Vx_mps";
   const headers = [xHeader, ...curves.map((c) => `"${c.label} (${paramMeta.unit})"` )];
-  const rows: string[] = [headers.join(",")];
+  const rows: string[] = [
+    `# RotorCalculator Parameter Sweep`,
+    `# Trim Strategy: ${trimStrategy}`,
+    headers.join(",")
+  ];
 
   const numPts = curves[0]?.points.length || 0;
   for (let i = 0; i < numPts; i++) {
