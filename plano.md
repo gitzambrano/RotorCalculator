@@ -187,6 +187,9 @@ Before release:
 Implemented in main:
 - direct in-page Geometry editor with a persistent Active Rotor selector;
 - SAVE/COPY/DELETE/NEW workflows without a mandatory geometry popup;
+- Geometry action buttons (SAVE/COPY/DELETE) at the end of the Geometry page;
+- canonical nomenclature per `docs/nomenclature.md` (Description Symbol labels; collective symbol Δθ, twist symbol θ_twist; Full/Short/Narrow levels chosen once per page);
+- one sweep trim dropdown (No Trim, Collective/Rotor Speed x Every Point/Hover Only) and three plot palettes;
 - unsaved Geometry state preserved across normal Activity recreation;
 - versioned rotor storage and migration;
 - import/export geometry backup;

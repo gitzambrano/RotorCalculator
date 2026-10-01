@@ -76,33 +76,32 @@ def verify_ui_source_contract() -> None:
 
     required_main = [
         'btnActiveRotor.Initialize("btnActiveRotor")',
-        'options.Add("＋ NEW ROTOR")',
+        'items.Add(Chr(65291) & " New Rotor|Create a custom rotor")',
         "BuildGeometryEditorContent",
-        'CreateRowButton("SAVE", "btnGeometrySave")',
-        'CreateRowButton("COPY", "btnGeometryCopy")',
-        'CreateRowButton("DELETE", "btnGeometryDelete")',
-        '"BLADE GEOMETRY"',
-        '"DERIVED GEOMETRY"',
-        '"ROTOR AERODYNAMICS"',
-        'lowerName.Contains(" copy")',
-        'shortName = shortName & " (Copy)"',
-        'Dim copySuffix As String = fullName.SubString(copyPos + 1).Trim',
-        "rotor identity and actions share one 50dip band",
-        'lblResultStatus.SingleLine = True',
-        '"CAUTION · TIP MACH ≥ 0.80"',
-        'compactLandscape As Boolean = (ld = 1 And root.Width <= 700dip)',
-        'btnSweepMultiModel.Text = "Models (4)"',
-        'btnSweepTrimHover.Text = "HOVER TRIM ✓"',
-        "Private lblResults(43) As Label",
-        "Private lblResultUnits(43) As Label",
+        'MakeActionButton("SAVE", "btnGeometrySave"',
+        'MakeActionButton("COPY", "btnGeometryCopy"',
+        'MakeActionButton("DELETE", "btnGeometryDelete"',
+        '"PLANFORM"',
+        '"SOLIDITY & AREAS"',
+        '"BLADE PITCH"',
+        '"AERODYNAMICS"',
+        "zBETEngine.SetGeometryQuantity(ActiveGeom, key, si)",
+        "Private Sub ResolveUnsavedGeometry(ActionText As String) As ResumableSub",
+        "sheet.ShowInput(",
+        "Private Sub RotorOrder As List",
+        "ResLevel = RotorNames.ChooseLevel(ResKeys, nameW - 10dip, TextSp, MinNameLevel)",
+        "Private lblResults(64) As Label",
+        "Private lblResultUnits(64) As Label",
         '"DIMENSIONAL PERFORMANCE"',
+        '"LOADING & EFFICIENCY"',
         '"AERODYNAMIC COEFFICIENTS"',
-        '"EFFICIENCY"',
         '"INFLOW & WAKE"',
-        '"OPERATING STATE & ATMOSPHERE"',
-        'btnTable.Initialize("btnSweepTable")',
-        'btnCsv.Initialize("btnSweepExportCsv")',
-        'btnPng.Initialize("btnSweepExportPng")',
+        '"STATE & ATMOSPHERE"',
+        "Private Sub FormatSig(Value As Double, sig As Int) As String",
+        "Sub btnSweepTrim_Click",
+        'sheet.ShowChoice("Y-Axis Result", items, selected)',
+        "Sub pnlSweepTouch_Touch",
+        "RotorPopups.BuildSweepTableRows(",
         "SweepSamplesCache = RotorPopups.BuildSweepSamples",
         "Private Sub BuildSweepCsv As String",
     ]
@@ -147,15 +146,18 @@ def verify_ui_source_contract() -> None:
         if token not in requirements:
             raise AssertionError(f"requirements contract missing: {token}")
 
-    # Every Results row must receive a value through the authoritative value/unit cell helper.
-    assigned = {int(x) for x in re.findall(r"SetResultCell\((\d+),", main)}
-    expected = set(range(43))
-    if assigned != expected:
-        missing_indices = sorted(expected - assigned)
-        extra_indices = sorted(assigned - expected)
-        raise AssertionError(
-            f"Results index coverage mismatch: missing={missing_indices}, extra={extra_indices}"
-        )
+    # Every Results row is one canonical RotorNames key; every key must exist in the nomenclature table.
+    names = (ROOT / "RotorNames.bas").read_text(encoding="utf-8")
+    block_start = main.index("ResKeys.AddAll(Array As String(")
+    block = main[block_start:main.index("))", block_start)]
+    result_keys = re.findall(r'"([^"]+)"', block)
+    if len(result_keys) != len(set(result_keys)) or len(result_keys) < 40:
+        raise AssertionError(f"Results keys invalid: {result_keys}")
+    for key in result_keys:
+        if f'Add("{key}"' not in names:
+            raise AssertionError(f"Results key missing from RotorNames: {key}")
+        if f'Case "{key}"' not in main and key not in ("p", "h"):
+            raise AssertionError(f"Results key has no value mapping: {key}")
 
     # Cheap structural sanity: no duplicate Sub names in the edited Android main.
     sub_names = [

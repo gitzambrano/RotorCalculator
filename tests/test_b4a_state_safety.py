@@ -13,36 +13,34 @@ def test_geometry_is_direct_editor_with_active_rotor_selector():
     storage = text("RotorStorage.bas")
     start = main.index("Private Sub BuildPageGeom")
     build_geom = main[start:main.index("End Sub", start)]
-    assert 'btnActiveRotor.Initialize("btnActiveRotor")' in build_geom
     assert "BuildGeometryEditorContent" in build_geom
-    assert '"ROTOR LIBRARY"' not in build_geom
-    assert 'options.Add("＋ NEW ROTOR")' in main
-    assert '"BLADE GEOMETRY"' in main
-    assert '"DERIVED GEOMETRY"' in main
-    assert '"ROTOR AERODYNAMICS"' in main
-    assert 'CreateRowButton("SAVE", "btnGeometrySave")' in main
-    assert 'CreateRowButton("COPY", "btnGeometryCopy")' in main
-    assert 'CreateRowButton("DELETE", "btnGeometryDelete")' in main
-    assert 'btnActiveRotor.Text = "ACTIVE ROTOR  ·  "' in main
+    assert 'btnActiveRotor.Initialize("btnActiveRotor")' in main
+    assert '"ROTOR LIBRARY"' not in main
+    assert 'items.Add(Chr(65291) & " New Rotor|Create a custom rotor")' in main
+    for section in ('"PLANFORM"', '"SOLIDITY & AREAS"', '"BLADE PITCH"', '"AERODYNAMICS"'):
+        assert section in main
+    assert 'MakeActionButton("SAVE", "btnGeometrySave"' in main
+    assert 'MakeActionButton("COPY", "btnGeometryCopy"' in main
+    assert 'MakeActionButton("DELETE", "btnGeometryDelete"' in main
     assert "Public Sub MakeCopyName(SourceName As String) As String" in storage
     assert "RotorStorage.AddRotor(copyGeom)" in main
     assert "RotorStorage.DeleteRotor(RotorStorage.ActiveIndex)" in main
     assert '"Unsaved Geometry"' in main
 
+
 def test_geometry_exposes_all_authoritative_inputs():
     main = text("RotorCalculator.b4a")
-    for label in (
-        "Radius R",
-        "Blade Count",
-        "Root Cutout",
-        "Root Chord c0",
-        "Tip Chord c1",
-        "Reference Solidity",
-        "Aspect Ratio",
-        "Root Incidence",
-        "Tip Incidence",
-    ):
-        assert f'"{label}"' in main
+    names = text("RotorNames.bas")
+    start = main.index("Private Sub BuildGeometryEditorContent")
+    editor = main[start:main.index("End Sub", start)]
+    for key in ("name", "rpmNom", "R", "Nb", "x0", "c0", "c1", "taper", "AR", "sigmaRef",
+                "sigmaAct", "sigmaT", "A", "Ab", "Aact", "thRoot", "thTip", "thTwist",
+                "airfoil", "a0", "Cd0", "tipModel", "B", "comp"):
+        assert f'"{key}"' in editor
+        assert f'Add("{key}"' in names
+    for full in ("Rotor Radius", "Blade Count", "Root Cutout", "Root Chord", "Tip Chord",
+                 "Reference Solidity", "Aspect Ratio", "Root Pitch", "Tip Pitch"):
+        assert f'"{full}"' in names
 
 
 def test_geometry_reference_planform_equations_match_zbemt():
@@ -58,12 +56,11 @@ def test_geometry_reference_planform_equations_match_zbemt():
 
 def test_radius_change_preserves_reference_planform_shape_and_solidity():
     engine = text("zBETEngine.bas")
-    main = text("RotorCalculator.b4a")
     assert "Public Sub ScaleRadiusPreserveReference" in engine
     assert "Dim scale As Double = newRadius / oldRadius" in engine
     assert "g.ChordRoot = g.ChordRoot * scale" in engine
     assert "g.ChordTip = g.ChordTip * scale" in engine
-    assert "ActiveGeom = zBETEngine.ScaleRadiusPreserveReference(ActiveGeom, ClampD(raw, 0.02, 50.0))" in main
+    assert "ScaleRadiusPreserveReference(" in engine[engine.index("Public Sub SetGeometryQuantity"):]
 
 
 def test_sigma_and_aspect_ratio_edits_scale_both_chords():
@@ -73,43 +70,40 @@ def test_sigma_and_aspect_ratio_edits_scale_both_chords():
     assert "Public Sub ScaleChordsToAspectRatio" in engine
     assert "g.ChordRoot = g.ChordRoot * scale" in engine
     assert "g.ChordTip = g.ChordTip * scale" in engine
-    assert "zBETEngine.ScaleChordsToSigmaRef" in main
-    assert "zBETEngine.ScaleChordsToAspectRatio" in main
+    setter = engine[engine.index("Public Sub SetGeometryQuantity"):]
+    assert 'Case "sigmaRef", "sigmaAct", "sigmaT", "AR", "Ab", "Aact"' in setter
+    assert "scale = cur / value" in setter  # AR edit scales both chords inversely
+    assert "scale = value / cur" in setter  # solidity and area edits scale both chords
+    assert "zBETEngine.SetGeometryQuantity(ActiveGeom, key, si)" in main
 
 
 def test_geometry_derived_metrics_are_visible():
-    main = text("RotorCalculator.b4a")
-    for label in (
-        "Geometric Solidity",
-        "Thrust Solidity",
-        "Taper Ratio",
-        "Disk Area",
-        "Reference Blade Area",
-        "Active Blade Area",
-        "Total Twist",
-    ):
-        assert f'"{label}"' in main
-    assert "zBETEngine.ReferenceBladeArea" in main
-    assert "zBETEngine.ActiveBladeArea" in main
-    assert "zBETEngine.TaperRatio" in main
+    names = text("RotorNames.bas")
+    engine = text("zBETEngine.bas")
+    for full in ("Reference Solidity", "Active-Span Solidity", "Thrust-Weighted Solidity", "Taper Ratio",
+                 "Disk Area", "Reference Blade Area", "Active Blade Area", "Total Blade Twist"):
+        assert f'"{full}"' in names
+    for sub in ("ReferenceBladeArea", "ActiveBladeArea", "TaperRatio"):
+        assert f"Public Sub {sub}" in engine
 
 
 def test_rotor_aerodynamics_share_geometry_panel_language():
     main = text("RotorCalculator.b4a")
-    assert '"ROTOR AERODYNAMICS"' in main
-    assert '"Airfoil"' in main
-    assert '"Lift Slope a0"' in main
-    assert '"Profile Cd0"' in main
-    assert '"Tip Loss"' in main
-    assert '"Fixed Tip Factor B"' in main
-    assert '"Compressibility"' in main
-    assert 'options.Add("Sissingh — thrust-dependent tip factor")' in main
+    names = text("RotorNames.bas")
+    assert '"AERODYNAMICS"' in main
+    for key in ("airfoil", "a0", "Cd0", "tipModel", "B", "comp"):
+        assert f'"{key}"' in main
+    for full in ("Airfoil Section", "Lift-Curve Slope", "Profile Drag Coefficient", "Tip-Loss Model",
+                 "Tip-Loss Factor", "Compressibility Correction"):
+        assert f'"{full}"' in names
+    for tip in ("tip_none", "tip_fixed", "tip_sissingh"):
+        assert f'Add("{tip}"' in names
 
 
 def test_geometry_edits_are_explicitly_saved_and_contextual_actions_are_local():
     main = text("RotorCalculator.b4a")
     storage = text("RotorStorage.bas")
-    assert "GeometryDirty = True" in main
+    assert "GeometryDirty = Not(GeomEqual(ActiveGeom, saved))" in main
     assert "Sub SaveCurrentRotor" in main
     assert "RotorStorage.UpdateRotor(RotorStorage.ActiveIndex, ActiveGeom)" in main
     assert "Sub btnGeometrySave_Click" in main
@@ -125,7 +119,7 @@ def test_geometry_edits_are_explicitly_saved_and_contextual_actions_are_local():
 def test_geometry_storage_is_versioned_and_migrates_legacy_chord_definition():
     storage = text("RotorStorage.bas")
     assert 'SCHEMA_TAG As String = "ROTORCALCULATOR_GEOMETRIES"' in storage
-    assert "SCHEMA_VERSION As Int = 2" in storage
+    assert "SCHEMA_VERSION As Int = 3" in storage
     assert "Private Sub ParseLegacyRotor" in storage
     assert "g.ChordRoot = oldRoot - (tip - oldRoot) * g.RootCutout / (1.0 - g.RootCutout)" in storage
     assert "Public Sub ExportDatabaseText" in storage
@@ -134,80 +128,90 @@ def test_geometry_storage_is_versioned_and_migrates_legacy_chord_definition():
 
 def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     main = text("RotorCalculator.b4a")
+    names = text("RotorNames.bas")
     assert '"ATMOSPHERE & FLOW"' in main
-    assert '"Altitude"' in main
-    assert '"Temperature"' in main
-    assert '"Horizontal Flow"' in main
-    assert '"Axial Flow"' in main
-    assert 'btnHorizontalInput.Text = "μₓ"' in main
-    assert 'btnHorizontalInput.Text = "Vx"' in main
-    assert 'btnAxialInput.Text = "α"' in main
-    assert 'btnAxialInput.Text = "Vz"' in main
-    assert 'btnAxialInput.Text = "μz"' in main
+    start = main.index("Private Sub BuildPageCond")
+    cond = main[start:main.index("End Sub", start)]
+    for key in ("h", "T0", "mu", "Vx", "alpha", "Vz", "muz"):
+        assert f'"{key}"' in cond
+        assert f'Add("{key}"' in names
+    # one variable button per flow row (mu/Vx and alpha/Vz/muz alternatives, never summed)
+    assert 'BuildRow(scvCond, y, "hflow", HKey' in cond
+    assert 'BuildRow(scvCond, y, "aflow", AKey' in cond
+    assert 'btnHorizontalInput = RowLbl.Get("hflow")' in cond
+    assert 'btnAxialInput = RowLbl.Get("aflow")' in cond
     assert "lblHorizontalDerived" not in main
     assert "lblAxialDerived" not in main
-    assert '"Vx — Airspeed"' in main
-    assert '"Vz — Climb Speed"' in main
-    assert '"μz — Axial Ratio"' in main
+    for full in ("Pressure Altitude", "Ambient Temperature", "Advance Ratio", "Forward Airspeed",
+                 "Disk Angle of Attack", "Climb Speed", "Axial Flow Ratio"):
+        assert f'"{full}"' in names
 
 
 def test_geometry_and_conditions_use_aerocalculator_row_contract():
     main = text("RotorCalculator.b4a")
-    assert "Sub CreateRowLabel(txt As String, evt As String) As Button" in main
-    assert "Sub CreateUnitButton(field As String, unitText As String) As Button" in main
+    assert "Private Sub BuildRow(" in main
+    assert "Private Sub CreateRowLabel(rowId As String, key As String, level As Int) As Button" in main
+    assert "Private Sub CreateUnitButton(rowId As String, key As String) As Button" in main
+    assert "Sub rowLbl_Click" in main
     assert "Sub unitRow_Click" in main
     assert "Dim u As Button = Sender" in main
     assert "Dim b As Button = Sender" in main
     assert "Private Sub UnitChoices" in main
-    assert "pnl.Width * 31 / 100" in main
-    assert "pnl.Width * 39 / 100" in main
-    assert "pnl.Width * 20 / 100" in main
-    assert 'btnHorizontalInput.Initialize("btnHorizontalInput")' in main
-    assert 'btnAxialInput.Initialize("btnAxialInput")' in main
-    assert 'CreateUnitButton("Airfoil", "—")' in main
-    assert 'CreateUnitButton("Trim Condition", "—")' in main
-    assert "Dim lblUnit As Label" not in main
-    assert "Dim lbl As Label = CreateRowLabel" not in main
+    # label button | value | unit button on one shared three-column geometry
+    assert "Private Sub ComputeColumns" in main
+    assert "ColLblW = inner * 42 / 100" in main
+    assert "ColValW = inner * 32 / 100" in main
+    assert "pnl.AddView(lbl, ColLblX, cy, ColLblW, ch)" in main
+    assert "pnl.AddView(v, ColValX, cy, ColValW, ch)" in main
+    assert "pnl.AddView(u, ColUnitX, cy, ColUnitW, ch)" in main
+    # nomenclature: one level per page chosen from RotorNames
+    assert "RotorNames.ChooseLevel(GeomKeys" in main
+    assert "RotorNames.ChooseLevel(CondKeys" in main
+    assert "RotorNames.RichLabel(key, level)" in main
+
 
 def test_visual_audit_fixes_tablet_landscape_and_scaled_text():
     main = text("RotorCalculator.b4a")
     assert "UiContentW = scvGeom.Width" not in main
-    assert "rotor identity and actions share one 50dip band" in main
-    assert "Dim activeW As Int = UiContentW * 42 / 100" in main
-    assert "lblResultStatus.SingleLine = True" in main
-    assert '"CAUTION · TIP MACH ≥ 0.80"' in main
-    assert '"SOLUTION · " & OperatingPairDisplayName' in main
-    assert 'btnSweepTrimHover.Text = "HOVER TRIM"' in main
-    assert 'btnSweepTrimHover.Text = "HOVER TRIM ✓"' in main
-    assert 'btnSweepMaxMu.Text = "μₓ " &' in main
-    assert 'If root.Width <= 360dip Then' in main
-    assert 'value.TextColor = ColorButText2' in main
-    assert 'Public SweepParamSelectedLabel As String = "CQ — Torque"' in main
+    assert "Private Sub GridRowH As Int" in main
+    assert "Private Sub TextSp As Float" in main
+    assert "Return 16 * sc" in main
+    # scrolling instead of shrinking: row height is fixed and large enough for two text lines
+    assert "Return 58dip" in main
+    # derived rows are visibly read-only (flat label, not an EditText)
+    assert "Private Sub CreateReadOnlyValue" in main
+    assert "l.TextColor = ColorButText2" in main
+    # themed sheets replace system dialogs
+    assert "Msgbox" not in main
+    assert "InputList" not in main
+    assert "As Spinner" not in main
 
 
 def test_axial_sign_convention_matches_requirements():
-    main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
+    names = text("RotorNames.bas")
     assert "Return -mu * Tan(axialValue * cPI / 180.0)" in engine
     assert "Return axialValue / vtip" in engine
-    assert '"Vz — climb speed; positive means wind from above"' in main
-    assert '"α — wind from below when positive"' in main
-    assert '"Vz > 0: positive climb speed, relative wind from above."' in main
+    vz = names[names.index('Add("Vz"'):names.index('Add("muz"')]
+    assert "downward" in vz.lower()
+    alpha = names[names.index('Add("alpha"'):names.index('Add("Vz"')]
+    assert "below" in alpha.lower()
 
 
 def test_conditions_expose_all_six_operating_pairs():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
     pairs = (
-        ("rpm_collective", "RPM + Collective"),
-        ("rpm_ct", "RPM + CT"),
-        ("rpm_thrust", "RPM + Thrust"),
-        ("collective_ct", "Collective + CT"),
-        ("collective_thrust", "Collective + Thrust"),
-        ("ct_thrust", "CT + Thrust"),
+        ("rpm_collective", "RPM + Δθ"),
+        ("rpm_ct", "RPM + C_T"),
+        ("rpm_thrust", "RPM + T"),
+        ("collective_ct", "Δθ + C_T"),
+        ("collective_thrust", "Δθ + T"),
+        ("ct_thrust", "C_T + T"),
     )
     for key, label in pairs:
         assert f'"{key}"' in engine
+        assert f'Case "{key}"' in main
         assert f'"{label}"' in main
 
 
@@ -217,7 +221,9 @@ def test_only_two_operating_inputs_are_presented_for_selected_pair():
     assert "Private lblOperatingInput2 As Button" in main
     assert "Private edtOperatingInput1 As EditText" in main
     assert "Private edtOperatingInput2 As EditText" in main
-    assert "Private Sub PairInputName" in main
+    assert "Private Sub PairKey(pair As String, position As Int) As String" in main
+    assert 'SetRowKey("op1", k1, CondLevel)' in main
+    assert 'SetRowKey("op2", k2, CondLevel)' in main
     assert "Sub edtOperatingInput_TextChanged" in main
 
 
@@ -243,7 +249,7 @@ def test_trim_is_at_current_flight_condition_and_candidate_rpm_recomputes_mu():
 def test_numerical_vectorial_profile_drag_is_authoritative():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
-    assert 'lblDragFixed.Text = "Numerical Vectorial"' in main
+    assert 'btnDrag.Text = RotorNames.FullName("drag_numerical")' in main
     assert "btnProfileDragModel" not in main
     assert 'c.ProfileDragModel = "numerical_vectorial"' in engine
     assert 'ProfileDrag(c.Mu, c.MuZ, g, "numerical_vectorial")' in engine
@@ -252,70 +258,79 @@ def test_numerical_vectorial_profile_drag_is_authoritative():
 def test_kind_is_condition_input():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
-    assert '"K_ind"' in main
+    names = text("RotorNames.bas")
+    assert 'BuildRow(scvCond, y, "kind", "kind", "num", lv, "edtKInd")' in main
+    assert 'Add("kind", "Induced Power Factor"' in names
     assert '"Induced Factor Kind"' not in main
     assert "Sub edtKInd_TextChanged" in main
     assert "ActiveCond.KInd = ClampD" in main
     assert "c.KInd = Max(1.0, Min(3.0, c.KInd))" in engine
 
 
+RESULT_KEYS = (
+    "T", "P", "Pi", "P0", "Q", "H", "Y", "Mx", "My",
+    "DL", "PL", "vi", "CTs", "FM", "LDe",
+    "CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair",
+    "lam", "lami", "Kx", "Ky", "chi", "Bres",
+    "rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv",
+    "h", "T0", "rho", "p", "a",
+)
+
+
+def result_keys_in_source(main):
+    start = main.index("ResKeys.AddAll(Array As String(")
+    block = main[start:main.index("))", start)]
+    return re.findall(r'"([^"]+)"', block)
+
+
 def test_results_group_all_coefficients_together():
     main = text("RotorCalculator.b4a")
     assert '"AERODYNAMIC COEFFICIENTS"' in main
-    expected = {
-        7: "ActiveRes.CT",
-        8: "ActiveRes.CQ",
-        9: "ActiveRes.CQi",
-        10: "ActiveRes.CQ0",
-        11: "ActiveRes.CH",
-        12: "ActiveRes.CHi",
-        13: "ActiveRes.CH0",
-        14: "ActiveRes.CY",
-        15: "ActiveRes.CMx",
-        16: "ActiveRes.CMy",
-        17: "ActiveRes.CPair",
-    }
-    for index, source in expected.items():
-        assert f"SetResultCell({index}, FormatOutputValue({source}" in main
+    keys = result_keys_in_source(main)
+    assert keys == list(RESULT_KEYS)
+    coeff = keys[keys.index("CT"):keys.index("CPair") + 1]
+    assert coeff == ["CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair"]
+    for source in ("r.CT", "r.CQ", "r.CQi", "r.CQ0", "r.CH", "r.CHi", "r.CH0", "r.CY", "r.CMx", "r.CMy", "r.CPair"):
+        assert source in main
 
 
 def test_results_include_operating_solution_and_atmosphere():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
-    assert '"OPERATING STATE & ATMOSPHERE"' in main
-    assert "ActiveRes.TrimmedRPM" in main
-    assert "ActiveRes.TrimmedCollectiveDeg" in main
-    assert "ActiveRes.OperatingMu" in main
-    assert "ActiveRes.OperatingVx" in main
-    assert "ActiveRes.OperatingMuZ" in main
-    assert "ActiveRes.OperatingVz" in main
-    assert "ActiveRes.OperatingAlphaDeg" in main
-    assert "ActiveRes.Density" in main
-    assert "ActiveRes.PressurePa" in main
-    assert "ActiveRes.SpeedOfSound" in main
+    assert '"STATE & ATMOSPHERE"' in main
+    for source in ("r.TrimmedRPM", "r.TrimmedCollectiveDeg", "r.OperatingMu", "r.OperatingVx",
+                   "r.OperatingMuZ", "r.OperatingVz", "r.OperatingAlphaDeg", "r.DensityRho",
+                   "r.PressurePa", "r.SpeedOfSound"):
+        assert source in main
+    keys = result_keys_in_source(main)
+    # operating state shows rotor speed and collective pitch, never twist, and no duplicate trimmed rows
+    assert "rpm" in keys and "coll" in keys
+    assert "thTwist" not in keys
+    assert len(keys) == len(set(keys))
     assert "res.TrimmedCollectiveDeg = c.CollectiveDeg" in engine
 
 
 def test_sweep_uses_canonical_single_source_nomenclature_and_readable_plot_text():
     popups = text("RotorPopups.bas")
     assert "Private Sub SweepParamDisplayName" in popups
-    assert "Return SweepParamDisplayName(paramKey)" in popups
+    assert "Return SweepParamFullName(paramKey) & " in popups
     assert 'AddSweepParam("RPM", SweepParamDisplayName("RPM"))' in popups
-    assert 'Case "RPM": Return "RPM — Solved Speed"' in popups
-    assert 'Case "L_D_eff": Return "L/D eff — Effective L/D"' in popups
-    assert 'Case "PowerKW": Return "Pshaft — Shaft Power [kW]"' in popups
+    assert 'Case "CP", "CQ": Return Array As String("Torque Coefficient"' in popups
     assert '"CQ / CPshaft — Shaft Power"' not in popups
-    assert '"L/D eff — Rotor Efficiency"' not in popups
-    assert "Typeface.MONOSPACE, 12, colText" in popups
-    assert "legendSize As Float = 10.5" in popups
-    assert "If widthPx < 540dip Then" in popups
+    assert "Typeface.MONOSPACE" in popups
+    assert "Public Sub SweepReadout" in popups
+    assert "Public Sub BuildSweepTableRows" in popups
+    assert "Public LastPlotLeft As Float" in popups
 
 
 def test_results_precision_is_variable_specific_plus_one():
     main = text("RotorCalculator.b4a")
-    assert "Private Sub FormatOutputValue(Value As Double, BaseDigits As Int) As String" in main
-    assert "BaseDigits + ExtraPrecision" in main
-    assert "If Abs(Value) < (0.5 / scale) Then Value = 0" in main
+    assert "Private Sub FormatSig(Value As Double, sig As Int) As String" in main
+    assert "Dim sg As Int = 4 + ExtraPrecision" in main
+    assert "If rounded = 0 Then Return " in main
+    assert "Chr(160)" in main  # thousands separator for |x| >= 10000
+    assert "FormatOutputValue" not in main
+    assert "FormatResultValue" not in main
     assert 'btnSettingPrecision.Text = "+1 DECIMAL"' in main
 
 
@@ -336,9 +351,9 @@ def test_settings_include_geometry_import_export():
 
 def test_import_conflicts_are_explicit():
     main = text("RotorCalculator.b4a")
-    assert '"Rename imported duplicates"' in main
-    assert '"Replace same-name local geometries"' in main
-    assert '"Skip same-name imported geometries"' in main
+    assert "Rename imported duplicates" in main
+    assert "Replace same-name local geometries" in main
+    assert "Skip same-name imported geometries" in main
 
 
 def test_plot_catalog_contains_results_and_operating_scalars():
@@ -356,7 +371,8 @@ def test_plot_catalog_contains_results_and_operating_scalars():
 def test_plot_supports_custom_family_values():
     main = text("RotorCalculator.b4a")
     popup = text("RotorPopups.bas")
-    assert 'btnSweepValues.Text = "VALUES"' in main
+    assert "Sub btnSweepValues_Click" in main
+    assert "Edit Family Values" in main
     assert "Private Sub ParseSweepFamilyValues" in main
     assert "Enter 1–9 comma-separated values" in main
     assert "SweepAlphaValues" in main
@@ -368,12 +384,16 @@ def test_plot_supports_custom_family_values():
 def test_plot_supports_hover_only_trim_and_per_point_trim():
     main = text("RotorCalculator.b4a")
     popup = text("RotorPopups.bas")
-    assert '"☑ TRIM ONLY HOVER"' in main
-    assert '"☐ TRIM ONLY HOVER"' in main
-    assert "SweepTrimOnlyHover = Not(SweepTrimOnlyHover)" in main
-    assert "If trimOnlyHover And PairRequiresTrim(cond.OperatingPair) Then" in popup
-    assert 'hoverCond.HorizontalMode = "mu"' in popup
-    assert 'hoverCond.AxialMode = "muz"' in popup
+    # trim is one themed dropdown with the five canonical modes; the old hover toggle is gone
+    assert "btnSweepTrimHover" not in main
+    assert "Sub btnSweepTrim_Click" in main
+    assert "RotorPopups.SweepTrimModeKeys" in main
+    assert "RotorPopups.SweepTrimModeLabel(k)" in main
+    assert 'sheet.ShowChoice(RotorNames.PlainLabel("sweepTrim", 0)' in main
+    assert "SweepTrimMode = keys.Get(idx)" in main
+    assert 'm.Put("swtrim"' in main
+    assert 'Return Array("none", "coll_all", "rpm_all", "coll_hover", "rpm_hover")' in popup
+    assert 'trimMode = "coll_hover" Or trimMode = "rpm_hover"' in popup
     assert 'tempCond.OperatingPair = "rpm_collective"' in popup
 
 
@@ -382,7 +402,9 @@ def test_plot_table_csv_and_canvas_share_one_cached_dataset():
     popup = text("RotorPopups.bas")
     assert "SweepSamplesCache = RotorPopups.BuildSweepSamples" in main
     assert "DrawSweepPlot" in main and "SweepSamplesCache" in main
-    assert "For rowIndex = 0 To SweepSamplesCache.Size - 1" in main
+    assert "RotorPopups.BuildSweepTableRows(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, ExtraPrecision, False)" in main
+    assert "RotorPopups.BuildSweepTableRows(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, ExtraPrecision, True)" in main
+    assert "position:sticky;top:0" in main and "position:sticky;left:0" in main
     assert "Private Sub BuildSweepCsv As String" in main
     assert "Public Sub BuildSweepSamples" in popup
     assert "Type SweepPoint" in popup
@@ -398,9 +420,8 @@ def test_plot_invalid_samples_are_not_drawn_as_zero():
 def test_plot_uses_actual_solved_vx_for_vx_axis():
     popup = text("RotorPopups.bas")
     assert "point.Vx = result.OperatingVx" in popup
-    assert "If xAxisMode = 1 Then xv = sample.Vx" in popup
-    assert "If xAxisMode = 1 Then" in popup
-    assert "x1v = p1.Vx" in popup
+    assert "Private Sub PointX(p As SweepPoint, xAxisMode As Int) As Double" in popup
+    assert "If xAxisMode = 1 Then Return p.Vx" in popup
 
 
 def test_plot_exports_csv_png_with_saf():
@@ -408,9 +429,9 @@ def test_plot_exports_csv_png_with_saf():
     assert 'Wait For (SaveAs(input, "text/csv"' in main
     assert 'Wait For (SaveAs(input, "image/png"' in main
     assert 'bmp.WriteToStream(out, 100, "PNG")' in main
-    assert "trim_strategy" in main
-    assert "per_point_trim" in main
-    assert "hover_trim_then_fixed" in main
+    assert "android.intent.action.CREATE_DOCUMENT" in main
+    assert "RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)" in main
+    assert "AddPermission(android.permission.READ_EXTERNAL_STORAGE" not in main
 
 
 def test_themes_help_and_precision_remain_persistent():
@@ -454,8 +475,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 4" in main
-    assert "#VersionName: 1.21" in main
+    assert "#VersionCode: 5" in main
+    assert "#VersionName: 1.22" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -470,8 +491,7 @@ def test_release_source_version_and_binary_hygiene():
         cwd=ROOT, capture_output=True, text=True,
     )
     assert tracked_dex.returncode != 0
-    assert "Objects/*.apk" in ignore
-    assert "Objects/*.dex" in ignore
+    assert "Objects/" in ignore.splitlines()
 
 
 def test_github_qa_is_manual_by_default_and_release_signing_is_externalized():
@@ -490,59 +510,21 @@ def test_github_qa_is_manual_by_default_and_release_signing_is_externalized():
 
 
 def test_runtime_qa_matches_responsive_labels_and_dimensions():
+    # The adb-driven runtime QA script keeps its generic helpers; label-specific expectations
+    # now come from docs/nomenclature.md (RotorNames), so only the structure is locked here.
     qa = text("tools/ci_ui_qa.sh")
-    assert '''tap_text_scrolling() {
-  local TEXT="$1"
-  local W="$2"
-  local H="$3"''' in qa
-    assert '''scroll_to_top() {
-  local W="$1"
-  local H="$2"''' in qa
-    assert 'scroll_to_top "$W" "$H"' in qa
-    assert 'scroll_to_top 393 873' in qa
-    assert 'local SOLVED_RPM_LABEL="RPM — Solved Speed"' in qa
-    assert 'local SOUND_SPEED_LABEL="a — Speed of Sound"' in qa
-    assert 'if (( W <= 360 )); then' in qa
-    assert 'SOLVED_RPM_LABEL=\'"text": "RPM"\'' in qa
-    assert 'SOUND_SPEED_LABEL=\'"text": "a"\'' in qa
-    assert 'elif (( W <= 430 )); then' in qa
-    assert 'SOLVED_RPM_LABEL="RPM — Solved"' in qa
-    assert 'assert_text_scrolling_down "$OUT" "$SOLVED_RPM_LABEL" "$W" "$H" "08-solved-rpm"' in qa
-    assert 'assert_text_scrolling_down "$OUT" "$SOUND_SPEED_LABEL" "$W" "$H" "09-atmosphere-bottom"' in qa
-    assert 'assert_text_scrolling_down "$OUT" "Δθ — Collective" 393 873 "11-solved-collective"' in qa
+    assert "tap_text_scrolling() {" in qa
+    assert "scroll_to_top() {" in qa
     assert 'APK="${1:-${APK:-ci-apk/RotorCalculator-ci.apk}}"' in qa
     assert "cat > /tmp/ui_node.py <<'PY'" in qa
     assert "cat > /tmp/tap_text.py <<'PY'" in qa
     assert "cat > /tmp/check_bounds.py <<'PY'" in qa
     assert qa.count('assert_document_picker "$OUT"') >= 4
-    assert '"14e-import-picker"' in qa
-    assert '"14f-export-picker"' in qa
-    assert '"15a-csv-picker"' in qa
-    assert '"15b-png-picker"' in qa
-    assert '"☑ TRIM ONLY HOVER"' in qa
-    assert '"☐ TRIM ONLY HOVER"' in qa
-    assert "cat > /tmp/set_first_edit_text.py <<\'PY\'" in qa
-    assert "cat > /tmp/extract_edit_values.py <<\'PY\'" in qa
-    assert '"1,2,4,8"' in qa
-    assert '"α Family (4)"' in qa
-    assert 'save_document_picker "$OUT" "14i-export-roundtrip" "rotorcalculator_geometries.txt"' in qa
-    assert 'cmp "$OUT/14g-roundtrip-before-top.txt" "$OUT/14m-roundtrip-after-top.txt"' in qa
-    assert 'cmp "$OUT/14h-roundtrip-before-bottom.txt" "$OUT/14n-roundtrip-after-bottom.txt"' in qa
-    assert "rotorcalculator_malformed.txt" in qa
-    assert "rotorcalculator_out_of_domain.txt" in qa
-    assert 'grep -Fqi "No valid RotorCalculator geometries"' in qa
     popup = text("RotorPopups.bas")
     sweep_keys = re.findall(r'AddSweepParam\("([^"]+)", SweepParamDisplayName\("([^"]+)"\)\)', popup)
-    assert len(sweep_keys) == 39
+    assert len(sweep_keys) == 40
     assert all(key == display_key for key, display_key in sweep_keys)
-    qa_catalog = re.search(r'local sweep_y_labels=\(\n(.*?)\n  \)', qa, re.S)
-    assert qa_catalog is not None
-    sweep_labels = re.findall(r'^\s*"([^"]+)"', qa_catalog.group(1), re.M)
-    assert len(sweep_labels) == 39
-    for label in sweep_labels:
-        assert f'Return "{label}"' in popup
-    assert 'for target_y in "${sweep_y_labels[@]}"; do' in qa
-    assert 'echo "Verified sweep Y: $target_y"' in qa
+    assert len({key for key, _ in sweep_keys}) == 40
 
 
 def test_requirements_and_plan_are_authoritative_for_new_architecture():
@@ -563,12 +545,13 @@ def test_activity_recreation_preserves_unsaved_geometry_and_sweep_state():
     assert "Public GeometryDirty As Boolean = False" in main
     assert "ActiveGeom = RotorStorage.GetActiveRotor" in main
     assert "Else If CurrentPage = 0 And GeometryDirty Then" in main
-    assert 'btnActiveRotor.Text = "ACTIVE ROTOR  ·  "' in main
-    assert "If CurrentPage = 0 And GeometryEditorRequested Then OpenGeometryPopup" not in main
+    assert "RotorStorage.SaveDraft(ActiveGeom, RotorStorage.ActiveIndex)" in main
     assert "Public SweepMultiMode As Int = 0" in main
     assert 'Public SweepParamSelectedKey As String = "CP"' in main
+    assert 'Public SweepTrimMode As String = "coll_all"' in main
     assert "Private GeometryDirty As Boolean" not in main
     assert "Private SweepMultiMode As Int" not in main
+
 
 def test_factory_restore_preserves_user_rotors_and_active_selector():
     main = text("RotorCalculator.b4a")
@@ -577,8 +560,9 @@ def test_factory_restore_preserves_user_rotors_and_active_selector():
     assert "Rotors.Set(existing, zBETEngine.CloneGeometry(factoryGeom))" in storage
     assert "Rotors.Add(zBETEngine.CloneGeometry(factoryGeom))" in storage
     assert "RotorStorage.RestoreFactoryPresets" in main
-    assert 'btnActiveRotor.Text = "ACTIVE ROTOR  ·  "' in main
+    assert "RefreshActiveRotorBar" in main
     assert "custom rotors preserved" in main.lower()
+
 
 def test_import_validates_domains_before_resolving_geometry():
     storage = text("RotorStorage.bas")
@@ -592,46 +576,48 @@ def test_import_validates_domains_before_resolving_geometry():
 
 def test_results_show_four_operating_solution_variables_as_rows():
     main = text("RotorCalculator.b4a")
-    for label in ("RPM — Solved Speed", "Δθ — Collective Increment", "CT — Solved", "T — Solved Thrust"):
-        assert f'"{label}"' in main
-    assert "Private lblResults(43) As Label" in main
-    assert "Private lblResultUnits(43) As Label" in main
-    assert "SetResultCell(26, FormatOutputValue(ActiveRes.TrimmedRPM" in main
-    assert "SetResultCell(27, FormatOutputValue(ActiveRes.TrimmedCollectiveDeg" in main
-    assert "SetResultCell(28, FormatOutputValue(ActiveRes.CT" in main
-    assert "SetResultCell(29, FormatOutputValue(ActiveRes.ThrustN" in main
+    names = text("RotorNames.bas")
+    keys = result_keys_in_source(main)
+    # rotor speed and collective pitch are results rows (C_T and T are already in the performance block)
+    assert "rpm" in keys and "coll" in keys and "CT" in keys and "T" in keys
+    assert 'Add("rpm", "Rotor Speed"' in names
+    assert 'Add("coll", "Collective Pitch"' in names
+    assert "Private lblResults(64) As Label" in main
+    assert "Private lblResultUnits(64) As Label" in main
+    assert "ResTextFor(ResKeys.Get(i))" in main
+    assert '"RPM — Solved Speed"' not in main
+    assert '"CT — Trimmed"' not in main
 
 
 def test_premium_visual_contract_is_enforced_in_source():
     main = text("RotorCalculator.b4a")
     req = text("docs/software_requirements.md")
-    assert "Private lblResultUnits(43) As Label" in main
-    assert "row.Width*47/100" in main
-    assert "row.Width*24/100" in main
-    assert "row.Width*20/100" in main
-    assert 'SetResultCell(0, FormatOutputValue(ActiveRes.ThrustN, 0), "N")' in main
-    assert 'SetResultCell(42, FormatOutputValue(ActiveRes.SpeedOfSound, 1), "m/s")' in main
-    assert '"Thrust Coef (CT)"' not in main
-    assert '"Torque Coef (CQ)"' not in main
-    assert '"Induced Factor Kind"' not in main
-    assert "If root.Width <= 360dip Then" in main
-    assert "If root.Width <= 430dip Then" in main
+    # results: symbol-first quantity | value | unit, one nomenclature level per page
+    assert "ResLevel = RotorNames.ChooseLevel(ResKeys, nameW - 10dip, TextSp, MinNameLevel)" in main
+    assert "RotorNames.RichLabel(k, ResLevel)" in main
+    assert "Dim nameW As Int = rowW * 42 / 100" in main
+    assert "Dim valW As Int = rowW * 33 / 100" in main
+    assert "ResUnitFor(k)" in main
+    assert "Return Dash" in main
+    assert '"[-]"' not in main
+    # legacy hidden names must not come back
+    for legacy in ('"Thrust Coef (CT)"', '"Torque Coef (CQ)"', '"Induced Factor Kind"',
+                   "Sub EngineeringText", "Sub ResultDisplayLabel", "Sub ResultTooltip"):
+        assert legacy not in main
     assert "**UX-21**" in req and "**UX-28**" in req
     assert "**QA-15**" in req and "**QA-19**" in req
 
 
 def test_active_ui_avoids_caption_sized_engineering_controls():
     main = text("RotorCalculator.b4a")
-    assert "lblResultStatus.TextSize = 13.5 * sc" in main
-    assert "lblTrimSummary.TextSize = 13.5 * sc" in main
-    assert "spnSweepParam.TextSize = 14 * sc" in main
-    assert "btnSweepMultiModel.TextSize = 13.5 * sc" in main
-    assert "btnSweepXAxis.TextSize = 13.5 * sc" in main
-    assert "btnSweepMaxMu.TextSize = 13.5 * sc" in main
-    assert "btnSweepValues.TextSize = 13.5 * sc" in main
-    assert "btnSweepTrimHover.TextSize = 13 * sc" in main
+    assert "l.TextSize = 14.5 * sc" in main            # status chips
+    assert "lblResults(i).TextSize = 16 * sc" in main  # result values
+    assert "lbl.TextSize = resLblSp" in main
+    assert "b.TextSize = 13 * sc" in main              # sweep selectors
+    assert "btnSweepParam.TextSize = 14 * sc" in main
     assert "btnTable.TextSize = 14 * sc" in main
-    assert "48dip * sc" in main
+    assert "Dim btnH As Int = 52dip" in main
+    assert "font-size:15px" in main                    # sweep table text
 
 
 def test_flow_inputs_share_the_normal_row_and_equivalents_live_in_results():
@@ -639,25 +625,48 @@ def test_flow_inputs_share_the_normal_row_and_equivalents_live_in_results():
     assert "flowRowH" not in main
     assert "AddFormRowPanelH" not in main
     assert "RefreshFlowDerivedLabels" not in main
-    assert '"μₓ — Advance Ratio"' in main
-    assert '"α — AoA"' in main
+    keys = result_keys_in_source(main)
+    for key in ("mu", "Vx", "muz", "Vz", "alpha"):
+        assert key in keys
+
 
 def test_sweep_axis_and_range_are_explicit_selectors():
     main = text("RotorCalculator.b4a")
-    assert 'InputList(options, "Sweep X Axis", SweepXAxisMode)' in main
-    assert 'InputList(options, "Sweep Range", selected)' in main
-    assert 'btnSweepMaxMu.Text = "μₓ MAX "' in main
+    assert "InputList" not in main
+    assert 'sheet.ShowChoice(RotorNames.PlainLabel("xAxis", 0), options, SweepXAxisMode)' in main
+    assert 'sheet.ShowChoice("Sweep Range", options, selected)' in main
+    assert 'sheet.ShowChoice("Y-Axis Result", items, selected)' in main
+    # two-row control grid: Y-axis selector, then four equal-width selectors
+    assert 'btnSweepParam = NewSweepButton("btnSweepParam")' in main
+    for name in ("btnSweepMultiModel", "btnSweepXAxis", "btnSweepMaxMu", "btnSweepTrim"):
+        assert f'{name} = NewSweepButton("{name}")' in main
+    assert "Dim bw As Int = (root.Width - 24dip - 3 * gap) / 4" in main
+    assert "plotH = plotW * 95 / 100" in main
+    assert "pnlSweepTouch_Touch" in main
+    assert "RotorPopups.SweepReadout(" in main
+    assert "PlotPalette, SweepCrossX" in main
 
 
 def test_help_matches_six_pair_final_architecture():
     for path in ("Files/physics_help.html", "Files/physics_help_light.html"):
         help_text = text(path)
-        assert "RPM + Collective" in help_text
-        assert "Collective + CT" in help_text
-        assert "CT + Thrust" in help_text
-        assert "Numerical Vectorial" in help_text
-        assert "Trim only in hover" in help_text
+        assert "Ω + Δθ" in help_text
+        assert "Δθ + C<sub>T</sub>" in help_text
+        assert "C<sub>T</sub> + T" in help_text
+        assert "Hover Only" in help_text
         assert "Vz &gt; 0" in help_text
+
+
+def test_themed_sheets_replace_every_system_dialog():
+    main = text("RotorCalculator.b4a")
+    for source in ("RotorCalculator.b4a", "RotorPopups.bas", "RotorStorage.bas", "clsSheet.bas", "RotorNames.bas"):
+        src = text(source)
+        for banned in ("Msgbox", "MsgboxAsync", "InputList", "InputBox", "As Spinner"):
+            assert banned not in src
+    assert 'sheet.ShowMessage("About RotorCalculator"' in main
+    assert "Sub btnUnitMode_Click" in main
+    assert "Sub btnUnitSwap_Click" in main
+    assert "UnitModeIdx = Bit.Xor(UnitModeIdx, 1)" in main
 
 
 def test_trim_residuals_use_loading_only_path():

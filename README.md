@@ -14,7 +14,7 @@ Developed by Gustavo José Zambrano.
 ## Capabilities
 
 - **Blade Element Theory (BET)**: Numerical integration over the blade radius with non-uniform chord distributions and non-linear or linear blade twist.
-- **Inflow Models**: Momentum Theory hover equilibrium, Glauert forward flight, Coleman Simple, Coleman-Feingold, and Drees harmonic inflow gradients ($K_x, K_y$).
+- **Inflow Models**: Uniform, Coleman, Coleman-Feingold, and Drees first-harmonic inflow gradients ($K_x, K_y$) closed with Momentum Theory.
 - **Tip-Loss Corrections**: None ($B = 1.0$), Fixed factor ($B = 0.97$), and dynamic Sissingh coupling ($B = 1 - \sqrt{2 C_T}/N_b$).
 - **Compressibility Corrections**: Prandtl-Glauert subsonic correction on lift curve slope with advancing tip Mach ($M_{\text{adv}}$) monitoring.
 - **Profile Drag Integration**: 2D Gauss-Legendre quadrature (16 radial nodes, 24 azimuthal nodes) for exact numerical-vectorial profile drag ($C_{H0}, C_{Q0}$).
@@ -23,11 +23,14 @@ Developed by Gustavo José Zambrano.
   - Automatic collective trimming to Target Thrust ($T$).
   - Automatic collective trimming to Target Thrust Coefficient ($C_T$).
   - Automatic RPM trim.
+  - Sweep trim dropdown: No Trim, Collective or Rotor Speed trimmed at every point or at hover only.
 - **Flow Angle Conventions**:
   - Horizontal: Advance ratio $\mu_x \ge 0$ and forward airspeed $V_x$.
   - Axial: Disk angle of attack $\alpha$ ($\alpha > 0$ denotes wind arriving from below), vertical climb rate $V_z$, and vertical advance ratio $\mu_z$.
-- **Parameter Sweeps**: Full multi-curve parametric sweeps vs advance ratio ($\mu_x$) across 39 aerodynamic variables, featuring high-DPI interactive canvas plots and CSV/PNG export.
-- **Rotor Management**: Built-in factory presets (UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, eVTOL) with full local persistence, custom CRUD, reordering drag-and-drop, and JSON backup/restore.
+- **Parameter Sweeps**: Full multi-curve parametric sweeps vs advance ratio ($\mu_x$) over dimensional and coefficient outputs. Plots are static with a tap readout, three selectable palettes, and CSV/PNG export.
+- **Rotor Management**: Built-in factory presets (UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, eVTOL) with local persistence, custom create/duplicate/delete, and import/export of the versioned text geometry database (Settings).
+- **Coupled Geometry Editing**: Every geometry quantity is editable; radius and solidity scale chords preserving $\sigma_{ref}$, taper keeps $\sigma_{ref}$, and $	heta_{twist}$ keeps mean pitch.
+- **Help**: Long-press any label for contextual help; an offline physics manual (MathML) is bundled. Labels follow `docs/nomenclature.md`.
 
 ---
 
@@ -67,4 +70,4 @@ npm --prefix web test
 
 ## License
 
-See [LICENSE.txt](LICENSE.txt) if provided. All rights reserved by Gustavo José Zambrano.
+RotorCalculator is licensed under the GNU General Public License v3.0. See [LICENSE.txt](LICENSE.txt). Copyright Gustavo José Zambrano.

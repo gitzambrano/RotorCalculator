@@ -31,7 +31,8 @@ Sub Process_Globals
 		ThetaTip As Double, _
 		TipLossMode As String, _
 		TipLossB As Double, _
-		UsePrandtlGlauert As Boolean)
+		UsePrandtlGlauert As Boolean, _
+		NominalRPM As Double)
 	
 	Type FlightCondition ( _
 		AltitudeM As Double, _
@@ -66,7 +67,7 @@ Sub Process_Globals
 		EffectiveLiftSlope As Double, TrimmedRPM As Double, TrimmedCollectiveDeg As Double, TrimmedTheta0Deg As Double, _
 		OperatingMu As Double, OperatingMuZ As Double, OperatingVx As Double, OperatingVz As Double, OperatingAlphaDeg As Double, _
 		AltitudeM As Double, TemperatureC As Double, DensityRho As Double, PressurePa As Double, SpeedOfSound As Double, _
-		SolutionValid As Boolean, CompressibilityWarning As Boolean, StatusMessage As String)
+		SolutionValid As Boolean, CompressibilityWarning As Boolean, CompressibilityInvalid As Boolean, StatusMessage As String)
 
 	' Nós e pesos de quadratura de Gauss-Legendre (16 nós radiais, 24 nós azimutais)
 	Private GL_X16() As Double
@@ -130,6 +131,7 @@ Public Sub CreateDefaultGeometry As RotorGeometry
 	g.TipLossMode = "none"
 	g.TipLossB = 0.97
 	g.UsePrandtlGlauert = False
+	g.NominalRPM = 390.0
 	Return ResolveSolidity(g)
 End Sub
 
@@ -187,6 +189,7 @@ Public Sub CloneGeometry(src As RotorGeometry) As RotorGeometry
 	dst.TipLossMode = src.TipLossMode
 	dst.TipLossB = src.TipLossB
 	dst.UsePrandtlGlauert = src.UsePrandtlGlauert
+	dst.NominalRPM = src.NominalRPM
 	Return dst
 End Sub
 
@@ -278,6 +281,8 @@ Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
 	' Defensive domain guards. UI validates too, but the engine must remain safe when called directly.
 	geom.Radius = Max(0.02, Min(50.0, geom.Radius))
 	geom.RPM = Max(1.0, Min(30000.0, geom.RPM))
+	If geom.NominalRPM <= 0.0 Then geom.NominalRPM = geom.RPM
+	geom.NominalRPM = Max(1.0, Min(30000.0, geom.NominalRPM))
 	geom.NBlades = Max(1, Min(16, geom.NBlades))
 	geom.RootCutout = Max(0.0, Min(0.95, geom.RootCutout))
 	geom.ChordRoot = Max(0.0001, Min(2.0 * geom.Radius, geom.ChordRoot))
@@ -377,6 +382,108 @@ Public Sub ScaleChordsToAspectRatio(geom As RotorGeometry, targetAR As Double) A
 	g.ChordRoot = g.ChordRoot * scale
 	g.ChordTip = g.ChordTip * scale
 	g.SolidityMode = "chords"
+	Return ResolveSolidity(g)
+End Sub
+
+' ---- Fully coupled planform editing (reference planform c(x)=c0+(c1-c0)x) ----
+' Keys (SI, rad): R, Nb, x0, c0, c1, taper, sigmaRef, sigmaAct, sigmaT, AR, A, Ab, Aact,
+' thRoot, thTip, thTwist, th75
+Public Sub GetGeometryQuantity(geom As RotorGeometry, key As String) As Double
+	Dim g As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	Select key
+		Case "R"
+			Return g.Radius
+		Case "Nb"
+			Return g.NBlades
+		Case "x0"
+			Return g.RootCutout
+		Case "c0"
+			Return g.ChordRoot
+		Case "c1"
+			Return g.ChordTip
+		Case "taper"
+			Return TaperRatio(g)
+		Case "sigmaRef"
+			Return g.SigmaRef
+		Case "sigmaAct"
+			Return g.SigmaGeom
+		Case "sigmaT"
+			Return g.SigmaThrust
+		Case "AR"
+			Return ReferenceAspectRatio(g)
+		Case "A"
+			Return cPI * g.Radius * g.Radius
+		Case "Ab"
+			Return ReferenceBladeArea(g)
+		Case "Aact"
+			Return ActiveBladeArea(g)
+		Case "thRoot"
+			Return g.ThetaRoot
+		Case "thTip"
+			Return g.ThetaTip
+		Case "thTwist"
+			Return g.ThetaTip - g.ThetaRoot
+		Case "th75"
+			Return g.ThetaRoot + (g.ThetaTip - g.ThetaRoot) * 0.75
+	End Select
+	Return 0.0
+End Sub
+
+' Returns a clamped, solidity-resolved CLONE; the caller's geometry is never mutated.
+Public Sub SetGeometryQuantity(geom As RotorGeometry, key As String, value As Double) As RotorGeometry
+	Dim g As RotorGeometry = ResolveSolidity(CloneGeometry(geom))
+	g.SolidityMode = "chords"
+	Dim cur As Double = 0.0
+	Dim scale As Double = 1.0
+	Dim mean As Double
+	Select key
+		Case "R", "A"
+			Dim newR As Double = value
+			If key = "A" Then newR = Sqrt(Max(0.0, value) / cPI)
+			Return ScaleRadiusPreserveReference(g, newR)
+		Case "Nb"
+			g.NBlades = Max(1, Min(16, Round(value)))
+		Case "x0"
+			g.RootCutout = Max(0.0, Min(0.95, value))
+		Case "c0"
+			g.ChordRoot = value
+		Case "c1"
+			g.ChordTip = value
+		Case "taper"
+			' keep sigmaRef: c0(1+t)/2 constant
+			Dim t As Double = Max(0.01, Min(10.0, value))
+			Dim cm As Double = 0.5 * (g.ChordRoot + g.ChordTip)
+			g.ChordRoot = 2.0 * cm / (1.0 + t)
+			g.ChordTip = t * g.ChordRoot
+		Case "sigmaRef", "sigmaAct", "sigmaT", "AR", "Ab", "Aact"
+			cur = GetGeometryQuantity(g, key)
+			If cur <= 1.0e-12 Or value <= 0.0 Then Return g
+			If key = "AR" Then
+				scale = cur / value
+			Else
+				scale = value / cur
+			End If
+			g.ChordRoot = g.ChordRoot * scale
+			g.ChordTip = g.ChordTip * scale
+		Case "thRoot"
+			g.ThetaRoot = value
+		Case "thTip"
+			g.ThetaTip = value
+		Case "thTwist"
+			mean = 0.5 * (g.ThetaRoot + g.ThetaTip)
+			g.ThetaRoot = mean - 0.5 * value
+			g.ThetaTip = mean + 0.5 * value
+		Case "th75"
+			Dim sh As Double = value - (g.ThetaRoot + (g.ThetaTip - g.ThetaRoot) * 0.75)
+			g.ThetaRoot = g.ThetaRoot + sh
+			g.ThetaTip = g.ThetaTip + sh
+	End Select
+	g.ThetaRoot = Max(-cPI / 2.0, Min(cPI / 2.0, g.ThetaRoot))
+	g.ThetaTip = Max(-cPI / 2.0, Min(cPI / 2.0, g.ThetaTip))
+	If key = "thRoot" Or key = "thTip" Or key = "thTwist" Or key = "th75" Then
+		g.PitchMode = "linear_twist"
+		g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)
+	End If
 	Return ResolveSolidity(g)
 End Sub
 
@@ -914,6 +1021,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.Initialize
 	res.SolutionValid = True
 	res.CompressibilityWarning = False
+	res.CompressibilityInvalid = False
 	res.StatusMessage = "VALID"
 	
 	' Caller already supplied the resolved operating RPM, collective and kinematics.
@@ -946,6 +1054,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.EffectiveLiftSlope = GetLiftSlope(g, c.Mu, c.SpeedOfSound)
 	If g.UsePrandtlGlauert And res.AdvancingTipMach >= 0.80 Then
 		res.CompressibilityWarning = True
+		If res.AdvancingTipMach >= 1.0 Then res.CompressibilityInvalid = True
 		res.StatusMessage = "CAUTION: Prandtl-Glauert outside recommended Mat < 0.80 range"
 	End If
 	

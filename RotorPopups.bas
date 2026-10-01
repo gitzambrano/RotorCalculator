@@ -21,7 +21,13 @@ Sub Process_Globals
 	
 	' Complete catalog of ALL selectable parameters for μₓ-sweeps
 	Public SweepParamKeys As List
+	' Last plot geometry (px / axis units) so the caller can map a touch x to an axis value.
+	Public LastPlotLeft As Float
+	Public LastPlotW As Float
+	Public LastXMax As Double
 	Public SweepParamLabels As List
+	Private dpIdx As Int
+	Private dpRem As Float
 	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
 		MuZ As Double, InflowModel As String, Value As Double, Valid As Boolean, RPM As Double, _
 		CollectiveDeg As Double, CT As Double, ThrustN As Double)
@@ -93,6 +99,7 @@ Public Sub Initialize
 		SweepParamLabels.Initialize
 		
 		AddSweepParam("CT", SweepParamDisplayName("CT"))
+		AddSweepParam("CTs", SweepParamDisplayName("CTs"))
 		AddSweepParam("CP", SweepParamDisplayName("CP"))
 		AddSweepParam("CQi", SweepParamDisplayName("CQi"))
 		AddSweepParam("CQ0", SweepParamDisplayName("CQ0"))
@@ -134,49 +141,137 @@ Public Sub Initialize
 	End If
 End Sub
 
-Private Sub SweepParamDisplayName(paramKey As String) As String
-	Select paramKey
-		Case "CT": Return "CT — Thrust Coeff"
-		Case "CP", "CQ": Return "CQ — Torque Coeff"
-		Case "CQi": Return "CQ,i — Induced Coeff"
-		Case "CQ0": Return "CQ,0 — Profile Coeff"
-		Case "CH": Return "CH — In-Plane"
-		Case "CHi": Return "CH,i — Induced H"
-		Case "CH0": Return "CH,0 — Profile H"
-		Case "CY": Return "CY — Side Force"
-		Case "CMx": Return "CMx — Roll Moment"
-		Case "CMy": Return "CMy — Pitch Moment"
-		Case "CPair": Return "CP,air — Air Power"
-		Case "lambda": Return "λ — Total Inflow"
-		Case "lambda_i": Return "λi — Induced Inflow"
-		Case "L_D_eff": Return "(L/D)eff — Effective L/D"
-		Case "FoM": Return "FM — Figure of Merit"
-		Case "Kx": Return "Kx — Longitudinal Inflow"
-		Case "Ky": Return "Ky — Lateral Inflow"
-		Case "chi": Return "χ — Wake Skew Angle [deg]"
-		Case "Mat": Return "Madv — Advancing Mach"
-		Case "PowerKW": Return "Pshaft — Shaft Power [kW]"
-		Case "PowerHP": Return "Pshaft — Shaft Power [hp]"
-		Case "ThrustN": Return "T — Thrust [N]"
-		Case "ThrustKgf": Return "T — Thrust [kgf]"
-		Case "TorqueNm": Return "Q — Shaft Torque [N·m]"
-		Case "DragHN": Return "H — In-Plane Force [N]"
-		Case "B": Return "B — Tip-Loss Factor"
-		Case "TipSpeed": Return "ΩR — Tip Speed [m/s]"
-		Case "RPM": Return "RPM — Solved Speed"
-		Case "Collective": Return "Δθ — Collective Increment [deg]"
-		Case "Mu": Return "μₓ — Advance Ratio"
-		Case "Vx": Return "Vx — Airspeed [m/s]"
-		Case "MuZ": Return "μz — Axial Ratio"
-		Case "Vz": Return "Vz — Climb Speed [m/s]"
-		Case "Alpha": Return "α — Angle of Attack [deg]"
-		Case "Altitude": Return "h — Altitude [m]"
-		Case "Temperature": Return "Tamb — Temperature [°C]"
-		Case "Density": Return "ρ — Air Density [kg/m³]"
-		Case "Pressure": Return "p — Ambient Pressure [Pa]"
-		Case "SoundSpeed": Return "a — Speed of Sound [m/s]"
-		Case Else: Return paramKey
+' ---------------------------------------------------------------------------
+' Parameter metadata (canonical names per docs/nomenclature.md)
+' Returns Array(Full, Short, Symbol(plain, "_" subscripts), Unit)
+' ---------------------------------------------------------------------------
+Private Sub SweepInfo(k As String) As String()
+	Dim d As String = Chr(8211)
+	Select k
+		Case "CT": Return Array As String("Thrust Coefficient", "Thrust Coeff", "C_T", d)
+		Case "CTs": Return Array As String("Blade Loading", "Blade Loading", "C_T/σ", d)
+		Case "CP", "CQ": Return Array As String("Torque Coefficient", "Torque Coeff", "C_Q", d)
+		Case "CQi": Return Array As String("Induced Torque Coefficient", "Induced Torque", "C_Qi", d)
+		Case "CQ0": Return Array As String("Profile Torque Coefficient", "Profile Torque", "C_Q0", d)
+		Case "CH": Return Array As String("In-Plane Force Coefficient", "In-Plane Coeff", "C_H", d)
+		Case "CHi": Return Array As String("Induced In-Plane Coefficient", "Induced In-Plane", "C_Hi", d)
+		Case "CH0": Return Array As String("Profile In-Plane Coefficient", "Profile In-Plane", "C_H0", d)
+		Case "CY": Return Array As String("Side Force Coefficient", "Side Force Coeff", "C_Y", d)
+		Case "CMx": Return Array As String("Roll Moment Coefficient", "Roll Coeff", "C_Mx", d)
+		Case "CMy": Return Array As String("Pitch Moment Coefficient", "Pitch Coeff", "C_My", d)
+		Case "CPair": Return Array As String("Air Power Coefficient", "Air Power Coeff", "C_Pair", d)
+		Case "lambda": Return Array As String("Total Inflow Ratio", "Inflow Ratio", "λ", d)
+		Case "lambda_i": Return Array As String("Induced Inflow Ratio", "Induced Inflow", "λ_i", d)
+		Case "L_D_eff": Return Array As String("Effective Lift-to-Drag Ratio", "Effective L/D", "(L/D)_e", d)
+		Case "FoM": Return Array As String("Figure of Merit", "Figure of Merit", "FM", d)
+		Case "Kx": Return Array As String("Longitudinal Inflow Gradient", "Long Gradient", "K_x", d)
+		Case "Ky": Return Array As String("Lateral Inflow Gradient", "Lat Gradient", "K_y", d)
+		Case "chi": Return Array As String("Wake Skew Angle", "Wake Skew", "χ", "deg")
+		Case "Mat": Return Array As String("Advancing Tip Mach Number", "Advancing Mach", "M_adv", d)
+		Case "PowerKW": Return Array As String("Shaft Power", "Power", "P", "kW")
+		Case "PowerHP": Return Array As String("Shaft Power", "Power", "P", "hp")
+		Case "ThrustN": Return Array As String("Thrust", "Thrust", "T", "N")
+		Case "ThrustKgf": Return Array As String("Thrust", "Thrust", "T", "kgf")
+		Case "TorqueNm": Return Array As String("Shaft Torque", "Torque", "Q", "N·m")
+		Case "DragHN": Return Array As String("In-Plane Force", "In-Plane Force", "H", "N")
+		Case "B": Return Array As String("Tip-Loss Factor", "Tip Factor", "B", d)
+		Case "TipSpeed": Return Array As String("Tip Speed", "Tip Speed", "ΩR", "m/s")
+		Case "RPM": Return Array As String("Rotor Speed", "Rotor Speed", "Ω", "rpm")
+		Case "Collective": Return Array As String("Collective Pitch", "Collective", "Δθ", "deg")
+		Case "Mu": Return Array As String("Advance Ratio", "Advance Ratio", "μ_x", d)
+		Case "Vx": Return Array As String("Forward Airspeed", "Airspeed", "V_x", "m/s")
+		Case "MuZ": Return Array As String("Axial Flow Ratio", "Axial Ratio", "μ_z", d)
+		Case "Vz": Return Array As String("Climb Speed", "Climb Speed", "V_z", "m/s")
+		Case "Alpha": Return Array As String("Disk Angle of Attack", "Disk AoA", "α", "deg")
+		Case "Altitude": Return Array As String("Pressure Altitude", "Altitude", "h", "m")
+		Case "Temperature": Return Array As String("Ambient Temperature", "Temperature", "T_amb", "°C")
+		Case "Density": Return Array As String("Air Density", "Density", "ρ", "kg/m³")
+		Case "Pressure": Return Array As String("Ambient Pressure", "Pressure", "p", "Pa")
+		Case "SoundSpeed": Return Array As String("Speed of Sound", "Sound Speed", "a", "m/s")
+		Case Else: Return Array As String(k, k, k, Chr(8211))
 	End Select
+End Sub
+
+Public Sub SweepParamFullName(key As String) As String
+	Dim i() As String = SweepInfo(key)
+	Return i(0)
+End Sub
+
+Public Sub SweepParamShortName(key As String) As String
+	Dim i() As String = SweepInfo(key)
+	Return i(1)
+End Sub
+
+' Plain-text symbol with "_" subscripts (CSV / accessibility).
+Public Sub SweepParamSymbol(key As String) As String
+	Dim i() As String = SweepInfo(key)
+	Return i(2)
+End Sub
+
+' Unit text; dimensionless = en dash.
+Public Sub SweepParamUnit(key As String) As String
+	Dim i() As String = SweepInfo(key)
+	Return i(3)
+End Sub
+
+' Symbol with real subscripts where the glyphs exist (digits, x, i, e, o, a); otherwise unchanged.
+' Draws text where "_xyz" segments become a smaller lowered subscript (canvas has no spans).
+Private Sub DrawRichText(cvs As Canvas, text As String, x As Float, y As Float, face As Typeface, fs As Float, col As Int, align As String)
+	Dim m As Matcher = Regex.Matcher("_([A-Za-z0-9]+)", text)
+	Dim segs As List
+	segs.Initialize
+	Dim prev As Int = 0
+	Do While m.Find
+		If m.GetStart(0) > prev Then segs.Add(Array As Object(text.SubString2(prev, m.GetStart(0)), False))
+		segs.Add(Array As Object(m.Group(1), True))
+		prev = m.GetEnd(0)
+	Loop
+	If prev < text.Length Then segs.Add(Array As Object(text.SubString(prev), False))
+	Dim total As Float = 0
+	For i = 0 To segs.Size - 1
+		Dim sg() As Object = segs.Get(i)
+		Dim isSub As Boolean = sg(1)
+		Dim sz As Float = fs
+		If isSub Then sz = fs * 0.72
+		total = total + cvs.MeasureStringWidth(sg(0), face, sz)
+	Next
+	Dim cx As Float = x
+	If align = "CENTER" Then cx = x - total / 2
+	If align = "RIGHT" Then cx = x - total
+	For j = 0 To segs.Size - 1
+		Dim sg2() As Object = segs.Get(j)
+		Dim isSub2 As Boolean = sg2(1)
+		Dim sz2 As Float = fs
+		Dim dy As Float = 0
+		If isSub2 Then
+			sz2 = fs * 0.72
+			dy = fs * 0.22 * 1dip
+		End If
+		cvs.DrawText(sg2(0), cx, y + dy, face, sz2, col, "LEFT")
+		cx = cx + cvs.MeasureStringWidth(sg2(0), face, sz2)
+	Next
+End Sub
+
+Public Sub PrettySymbol(sym As String) As String
+	Dim p As Int = sym.IndexOf("_")
+	If p < 0 Then Return sym
+	Dim tail As String = sym.SubString(p + 1)
+	Dim plainSet As String = "0123456789xieoa"
+	Dim subSet As String = Chr(8320) & Chr(8321) & Chr(8322) & Chr(8323) & Chr(8324) & Chr(8325) & Chr(8326) & Chr(8327) & Chr(8328) & Chr(8329) & Chr(8339) & Chr(7522) & Chr(8337) & Chr(8338) & Chr(8336)
+	Dim sb As StringBuilder
+	sb.Initialize
+	For i = 0 To tail.Length - 1
+		Dim ch As String = tail.SubString2(i, i + 1)
+		Dim ix As Int = plainSet.IndexOf(ch)
+		If ix < 0 Then Return sym
+		sb.Append(subSet.SubString2(ix, ix + 1))
+	Next
+	Return sym.SubString2(0, p) & sb.ToString
+End Sub
+
+' Spinner label: Full name + symbol.
+Private Sub SweepParamDisplayName(paramKey As String) As String
+	Return SweepParamFullName(paramKey) & " " & PrettySymbol(SweepParamSymbol(paramKey))
 End Sub
 
 Private Sub AddSweepParam(key As String, label As String)
@@ -184,13 +279,10 @@ Private Sub AddSweepParam(key As String, label As String)
 	SweepParamLabels.Add(label)
 End Sub
 
-Private Sub SweepPlotTitle(paramKey As String) As String
-	Return SweepParamDisplayName(paramKey)
-End Sub
-
 Public Sub SweepParamDigits(paramKey As String) As Int
 	Select paramKey
 		Case "CT": Return 5
+		Case "CTs": Return 4
 		Case "CP", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair": Return 6
 		Case "lambda", "lambda_i": Return 5
 		Case "L_D_eff": Return 2
@@ -208,10 +300,14 @@ Public Sub SweepParamDigits(paramKey As String) As Int
 	End Select
 End Sub
 
-' Extracts the target parameter value from the results data structure
-Public Sub ExtractParamValue(res As RotorResults, paramKey As String) As Double
+' Legacy extractor (no blade-loading support: needs sigma).
+' sigma = thrust-weighted solidity, used only by "CTs" (CT/sigma).
+Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As Double) As Double
 	Select Case paramKey
 		Case "CT": Return res.CT
+		Case "CTs"
+			If sigma > 0 Then Return res.CT / sigma
+			Return 0
 		Case "CP", "CQ": Return res.CQ
 		Case "CQi": Return res.CQi
 		Case "CQ0": Return res.CQ0
@@ -254,6 +350,53 @@ Public Sub ExtractParamValue(res As RotorResults, paramKey As String) As Double
 	End Select
 End Sub
 
+Private Sub GeomSigma(geom As RotorGeometry) As Double
+	Dim g As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(geom))
+	If g.SigmaThrust > 0 Then Return g.SigmaThrust
+	Return g.SigmaRef
+End Sub
+
+' ---------------------------------------------------------------------------
+' Trim modes
+' ---------------------------------------------------------------------------
+Public Sub SweepTrimModeKeys As List
+	Return Array("none", "coll_all", "rpm_all", "coll_hover", "rpm_hover")
+End Sub
+
+Public Sub SweepTrimModeLabel(key As String) As String
+	Dim dot As String = " " & Chr(183) & " "
+	Select key
+		Case "coll_all": Return "Trim Collective " & Chr(916) & Chr(952) & dot & "Every Point"
+		Case "rpm_all": Return "Trim Rotor Speed " & Chr(937) & dot & "Every Point"
+		Case "coll_hover": Return "Trim Collective " & Chr(916) & Chr(952) & dot & "Hover Only"
+		Case "rpm_hover": Return "Trim Rotor Speed " & Chr(937) & dot & "Hover Only"
+		Case Else: Return "No Trim (Fixed Controls)"
+	End Select
+End Sub
+
+' Sets the operating pair so that collective (rpmTrim=False) or RPM (rpmTrim=True) is solved to the target.
+Private Sub ApplyTrimPair(c As FlightCondition, rpmTrim As Boolean, kind As String, tgt As Double, baseRPM As Double, baseColl As Double)
+	c.RPM = baseRPM
+	c.CollectiveDeg = baseColl
+	If rpmTrim Then
+		c.OperatingPair = "collective_" & kind
+	Else
+		c.OperatingPair = "rpm_" & kind
+	End If
+	If kind = "ct" Then
+		c.TargetCT = tgt
+	Else
+		c.TargetThrustN = tgt
+	End If
+End Sub
+
+' ---------------------------------------------------------------------------
+' Curves
+' ---------------------------------------------------------------------------
+Public Sub SweepPointsPerCurve As Int
+	Return 25
+End Sub
+
 ' Returns the number of visible curves for the selected family.
 Public Sub SweepCurveCount(multiCurveMode As Int, familyValues As List) As Int
 	If multiCurveMode = 0 Then Return 4
@@ -273,48 +416,177 @@ Private Sub SweepFamilyLabel(multiCurveMode As Int, curveIndex As Int, familyVal
 			Case Else: Return "Drees"
 		End Select
 	Else If multiCurveMode = 1 Then
-		Return "α=" & NumberFormat2(familyValue, 1, 1, 1, False) & "°"
+		Return Chr(945) & "=" & FmtNum(familyValue, 1) & Chr(176)
 	Else If multiCurveMode = 2 Then
-		Return "Vz=" & NumberFormat2(familyValue, 1, 1, 1, False) & " m/s"
+		Return "Vz=" & FmtNum(familyValue, 1) & " m/s"
 	Else If multiCurveMode = 3 Then
-		Return "μz=" & NumberFormat2(familyValue, 1, 3, 3, False)
+		Return Chr(956) & "z=" & FmtNum(familyValue, 3)
 	End If
 	Return "Active"
 End Sub
 
-Private Sub SweepCurveColor(curveIndex As Int, multiCurveMode As Int, lightTheme As Boolean) As Int
-	If multiCurveMode = 0 Then
-		If lightTheme Then
-			Select curveIndex
-				Case 0: Return 0xFF667085
-				Case 1: Return 0xFF2585A5
-				Case 2: Return 0xFF007F95
-				Case Else: Return 0xFF172033
-			End Select
-		Else
-			Select curveIndex
-				Case 0: Return 0xFF64748B
-				Case 1: Return 0xFF38BDF8
-				Case 2: Return 0xFF00E5FF
-				Case Else: Return 0xFFBAE6FD
-			End Select
+' ---------------------------------------------------------------------------
+' Palettes: 0 Aero, 1 Colorblind Safe (Okabe-Ito), 2 Print
+' ---------------------------------------------------------------------------
+Public Sub PlotPaletteCount As Int
+	Return 3
+End Sub
+
+Public Sub PlotPaletteName(i As Int) As String
+	Select i
+		Case 1: Return "Colorblind Safe"
+		Case 2: Return "Print"
+		Case Else: Return "Aero"
+	End Select
+End Sub
+
+Public Sub PlotColor(paletteIndex As Int, curveIndex As Int, lightTheme As Boolean) As Int
+	Dim idx As Int = curveIndex Mod 8
+	Select paletteIndex
+		Case 1
+			If lightTheme Then
+				Dim a() As Int = Array As Int(0xFF0072B2, 0xFFE69F00, 0xFF009E73, 0xFFD55E00, 0xFF3A9AD0, 0xFFCC79A7, 0xFF9A8700, 0xFF000000)
+				Return a(idx)
+			Else
+				Dim b() As Int = Array As Int(0xFF56B4E9, 0xFFE69F00, 0xFF009E73, 0xFFF0E442, 0xFFD55E00, 0xFFCC79A7, 0xFF3A8BD0, 0xFFFFFFFF)
+				Return b(idx)
+			End If
+		Case 2
+			If lightTheme Then
+				Dim c() As Int = Array As Int(0xFF000000, 0xFFB00020, 0xFF0033A0, 0xFF1B7A1B, 0xFF6A1B9A, 0xFF8C4A00, 0xFF006064, 0xFF555555)
+				Return c(idx)
+			Else
+				Dim d() As Int = Array As Int(0xFFFFFFFF, 0xFFFF6B6B, 0xFF6CB2FF, 0xFF5BE37D, 0xFFD39BFF, 0xFFFFB04A, 0xFF4DD0E1, 0xFFBDBDBD)
+				Return d(idx)
+			End If
+		Case Else
+			If lightTheme Then
+				Dim e() As Int = Array As Int(0xFF007F95, 0xFFB45309, 0xFFC026A3, 0xFF4D7C0F, 0xFF2563EB, 0xFFBE123C, 0xFF7C3AED, 0xFF334155)
+				Return e(idx)
+			Else
+				Dim f() As Int = Array As Int(0xFF00E5FF, 0xFFFFB300, 0xFFFF4DD2, 0xFFA3E635, 0xFF60A5FA, 0xFFFB7185, 0xFFC4B5FD, 0xFFE2E8F0)
+				Return f(idx)
+			End If
+	End Select
+End Sub
+
+' Dash pattern per curve index (idx Mod 4 = 0 is solid and handled separately).
+Private Sub DashPattern(curveIndex As Int) As Float()
+	Select curveIndex Mod 4
+		Case 1: Return Array As Float(9dip, 5dip)
+		Case 2: Return Array As Float(2dip, 4dip)
+		Case Else: Return Array As Float(10dip, 4dip, 2dip, 4dip)
+	End Select
+End Sub
+
+Private Sub DrawPatterned(cvs As Canvas, x1 As Float, y1 As Float, x2 As Float, y2 As Float, col As Int, stroke As Float, pat() As Float)
+	Dim dx As Float = x2 - x1
+	Dim dy As Float = y2 - y1
+	Dim segLen As Float = Sqrt(dx * dx + dy * dy)
+	If segLen < 0.01 Then Return
+	Dim pos As Float = 0
+	Dim guard As Int = 0
+	Do While pos < segLen And guard < 500
+		guard = guard + 1
+		Dim stepLen As Float = Min(dpRem, segLen - pos)
+		If dpIdx Mod 2 = 0 Then
+			cvs.DrawLine(x1 + dx * pos / segLen, y1 + dy * pos / segLen, x1 + dx * (pos + stepLen) / segLen, y1 + dy * (pos + stepLen) / segLen, col, stroke)
 		End If
-	End If
-	Dim idx As Int = curveIndex Mod 9
-	If lightTheme Then
-		Dim lightCols() As Int = Array As Int(0xFF334155, 0xFF0369A1, 0xFF007F95, 0xFF047857, 0xFF7C3AED, 0xFFB45309, 0xFFBE123C, 0xFF475569, 0xFF0F766E)
-		Return lightCols(idx)
-	Else
-		Dim darkCols() As Int = Array As Int(0xFF94A3B8, 0xFF38BDF8, 0xFF00E5FF, 0xFF34D399, 0xFFA78BFA, 0xFFFBBF24, 0xFFFB7185, 0xFFE2E8F0, 0xFF5EEAD4)
-		Return darkCols(idx)
-	End If
+		pos = pos + stepLen
+		dpRem = dpRem - stepLen
+		If dpRem <= 0.001 Then
+			dpIdx = (dpIdx + 1) Mod pat.Length
+			dpRem = Max(1dip, pat(dpIdx))
+		End If
+	Loop
 End Sub
 
-Private Sub PairRequiresTrim(pair As String) As Boolean
-	Return pair <> "rpm_collective"
+Private Sub DrawMarker(cvs As Canvas, shape As Int, x As Float, y As Float, r As Float, col As Int)
+	Select shape Mod 4
+		Case 0
+			cvs.DrawCircle(x, y, r, col, True, 1dip)
+		Case 1
+			Dim rc As Rect
+			rc.Initialize(x - r, y - r, x + r, y + r)
+			cvs.DrawRect(rc, col, True, 1dip)
+		Case 2
+			Dim tp As Path
+			tp.Initialize(x, y - r * 1.2)
+			tp.LineTo(x + r * 1.1, y + r * 0.9)
+			tp.LineTo(x - r * 1.1, y + r * 0.9)
+			tp.LineTo(x, y - r * 1.2)
+			cvs.DrawPath(tp, col, True, 1dip)
+		Case Else
+			Dim dp As Path
+			dp.Initialize(x, y - r * 1.3)
+			dp.LineTo(x + r * 1.1, y)
+			dp.LineTo(x, y + r * 1.3)
+			dp.LineTo(x - r * 1.1, y)
+			dp.LineTo(x, y - r * 1.3)
+			cvs.DrawPath(dp, col, True, 1dip)
+	End Select
 End Sub
 
-' Builds the single authoritative dataset used by plot, table and CSV.
+' ---------------------------------------------------------------------------
+' Number formatting and nice ticks
+' ---------------------------------------------------------------------------
+' Fixed-decimal formatting that never prints negative zero.
+Private Sub FmtNum(v As Double, dec As Int) As String
+	dec = Max(0, Min(8, dec))
+	Dim s As String = NumberFormat2(v, 1, dec, dec, False)
+	If s.StartsWith("-") Then
+		Dim allZero As Boolean = True
+		For i = 1 To s.Length - 1
+			Dim ch As String = s.SubString2(i, i + 1)
+			If ch <> "0" And ch <> "." And ch <> "," Then allZero = False
+		Next
+		If allZero Then s = s.SubString(1)
+	End If
+	Return s
+End Sub
+
+' False for NaN / infinity / sentinel values.
+Private Sub IsNum(v As Double) As Boolean
+	Return v > -1.0e300 And v < 1.0e300
+End Sub
+
+' 1-2-5 step for the requested raw step size.
+Private Sub NiceStep(raw As Double) As Double
+	If raw <= 0 Then Return 1
+	Dim mag As Double = Power(10, Floor(Logarithm(raw, 10)))
+	Dim f As Double = raw / mag
+	If f <= 1.5 Then
+		Return mag
+	Else If f <= 3.5 Then
+		Return 2 * mag
+	Else If f <= 7.5 Then
+		Return 5 * mag
+	End If
+	Return 10 * mag
+End Sub
+
+Private Sub StepDecimals(stepV As Double) As Int
+	Return Max(0, -Floor(Logarithm(stepV, 10) + 0.000001))
+End Sub
+
+Private Sub SuperInt(e As Int) As String
+	Dim digs As String = Chr(8304) & Chr(185) & Chr(178) & Chr(179) & Chr(8308) & Chr(8309) & Chr(8310) & Chr(8311) & Chr(8312) & Chr(8313)
+	Dim s As String = NumberFormat2(Abs(e), 1, 0, 0, False)
+	Dim sb As StringBuilder
+	sb.Initialize
+	If e < 0 Then sb.Append(Chr(8315))
+	For i = 0 To s.Length - 1
+		Dim dg As Int = s.SubString2(i, i + 1)
+		sb.Append(digs.SubString2(dg, dg + 1))
+	Next
+	Return sb.ToString
+End Sub
+
+' ---------------------------------------------------------------------------
+' Dataset
+' ---------------------------------------------------------------------------
+' Builds the single authoritative dataset used by plot, table and CSV (curve-major, 25 points per curve).
+' trimMode: none | coll_all | rpm_all | coll_hover | rpm_hover (see SweepTrimModeKeys).
 Public Sub BuildSweepSamples( _
 	geom As RotorGeometry, _
 	cond As FlightCondition, _
@@ -322,32 +594,75 @@ Public Sub BuildSweepSamples( _
 	multiCurveMode As Int, _
 	maxMu As Double, _
 	familyValues As List, _
-	trimOnlyHover As Boolean _
+	trimMode As String _
 ) As List
 	Dim samples As List
 	samples.Initialize
-	Dim nPoints As Int = 25
+	Dim nPoints As Int = SweepPointsPerCurve
 	Dim nCurves As Int = SweepCurveCount(multiCurveMode, familyValues)
-	
-	Dim fixedTrimValid As Boolean = False
-	Dim fixedRPM As Double = cond.RPM
-	Dim fixedCollective As Double = cond.CollectiveDeg
-	If trimOnlyHover And PairRequiresTrim(cond.OperatingPair) Then
-		Dim hoverCond As FlightCondition = zBETEngine.CloneCondition(cond)
-		hoverCond.HorizontalMode = "mu"
-		hoverCond.HorizontalValue = 0.0
-		hoverCond.AxialMode = "muz"
-		hoverCond.AxialValue = 0.0
-		Dim hoverState() As Object = zBETEngine.ResolveOperatingState(geom, hoverCond)
-		Dim hoverStatus As String = hoverState(2)
-		If hoverStatus = "VALID" Then
-			Dim solvedHover As FlightCondition = hoverState(1)
-			fixedRPM = solvedHover.RPM
-			fixedCollective = solvedHover.CollectiveDeg
-			fixedTrimValid = True
+	Dim sigma As Double = GeomSigma(geom)
+
+	' Baseline operating point of the active condition.
+	Dim live As RotorResults = zBETEngine.Calculate(geom, cond)
+	Dim baseRPM As Double = cond.RPM
+	Dim baseColl As Double = cond.CollectiveDeg
+	If live.SolutionValid Then
+		baseRPM = live.TrimmedRPM
+		baseColl = live.TrimmedCollectiveDeg
+	End If
+
+	' Thrust target: Conditions target (CT or T); fall back to current thrust.
+	Dim pair As String = cond.OperatingPair
+	Dim collKind As String = "thrust"
+	Dim collTgt As Double = 0
+	If pair.Contains("ct") And cond.TargetCT > 0 Then
+		collKind = "ct"
+		collTgt = cond.TargetCT
+	Else If pair.Contains("thrust") And cond.TargetThrustN > 0 Then
+		collKind = "thrust"
+		collTgt = cond.TargetThrustN
+	Else If live.SolutionValid Then
+		collKind = "thrust"
+		collTgt = live.ThrustN
+	End If
+	' RPM trim: prefer a dimensional (thrust) target; CT-only is non-unique when collective is fixed.
+	Dim rpmKind As String = collKind
+	Dim rpmTgt As Double = collTgt
+	If collKind = "ct" And live.SolutionValid And live.CT > 0 Then
+		rpmKind = "thrust"
+		rpmTgt = collTgt * live.ThrustN / live.CT
+	End If
+	Dim trimOK As Boolean = collTgt > 0
+
+	Dim isHover As Boolean = (trimMode = "coll_hover" Or trimMode = "rpm_hover")
+	Dim rpmTrim As Boolean = (trimMode = "rpm_all" Or trimMode = "rpm_hover")
+	Dim fixedValid As Boolean = True
+	Dim fixedRPM As Double = baseRPM
+	Dim fixedColl As Double = baseColl
+	If isHover Then
+		fixedValid = False
+		If trimOK Then
+			Dim hc As FlightCondition = zBETEngine.CloneCondition(cond)
+			hc.HorizontalMode = "mu"
+			hc.HorizontalValue = 0.0
+			hc.AxialMode = "muz"
+			hc.AxialValue = 0.0
+			If rpmTrim Then
+				ApplyTrimPair(hc, True, rpmKind, rpmTgt, baseRPM, baseColl)
+			Else
+				ApplyTrimPair(hc, False, collKind, collTgt, baseRPM, baseColl)
+			End If
+			Dim hs() As Object = zBETEngine.ResolveOperatingState(geom, hc)
+			Dim hStatus As String = hs(2)
+			If hStatus = "VALID" Then
+				Dim sh As FlightCondition = hs(1)
+				fixedRPM = sh.RPM
+				fixedColl = sh.CollectiveDeg
+				fixedValid = True
+			End If
 		End If
 	End If
-	
+
 	For curveIndex = 0 To nCurves - 1
 		Dim familyValue As Double = 0.0
 		If multiCurveMode >= 1 And multiCurveMode <= 3 And familyValues.IsInitialized And familyValues.Size > curveIndex Then
@@ -359,7 +674,7 @@ Public Sub BuildSweepSamples( _
 			Dim muValue As Double = pointIndex * maxMu / (nPoints - 1)
 			tempCond.HorizontalMode = "mu"
 			tempCond.HorizontalValue = muValue
-			
+
 			If multiCurveMode = 0 Then
 				Select curveIndex
 					Case 0: tempCond.InflowModel = "uniform"
@@ -377,7 +692,7 @@ Public Sub BuildSweepSamples( _
 				tempCond.AxialMode = "muz"
 				tempCond.AxialValue = familyValue
 			End If
-			
+
 			Dim point As SweepPoint
 			point.Initialize
 			point.CurveLabel = curveLabel
@@ -385,24 +700,40 @@ Public Sub BuildSweepSamples( _
 			point.AxialMode = tempCond.AxialMode
 			point.AxialValue = tempCond.AxialValue
 			point.InflowModel = tempCond.InflowModel
-			If trimOnlyHover And PairRequiresTrim(cond.OperatingPair) Then
-				If fixedTrimValid Then
-					tempCond.OperatingPair = "rpm_collective"
-					tempCond.RPM = fixedRPM
-					tempCond.CollectiveDeg = fixedCollective
-				Else
-					point.Valid = False
-					samples.Add(point)
-					Continue
-				End If
+
+			Dim skip As Boolean = False
+			Select trimMode
+				Case "coll_all"
+					If trimOK Then ApplyTrimPair(tempCond, False, collKind, collTgt, baseRPM, baseColl) Else skip = True
+				Case "rpm_all"
+					If trimOK Then ApplyTrimPair(tempCond, True, rpmKind, rpmTgt, baseRPM, baseColl) Else skip = True
+				Case "coll_hover", "rpm_hover"
+					If fixedValid Then
+						tempCond.OperatingPair = "rpm_collective"
+						tempCond.RPM = fixedRPM
+						tempCond.CollectiveDeg = fixedColl
+					Else
+						skip = True
+					End If
+				Case Else
+					If live.SolutionValid Then
+						tempCond.OperatingPair = "rpm_collective"
+						tempCond.RPM = baseRPM
+						tempCond.CollectiveDeg = baseColl
+					End If
+			End Select
+			If skip Then
+				point.Valid = False
+				samples.Add(point)
+				Continue
 			End If
-			
+
 			Dim result As RotorResults = zBETEngine.Calculate(geom, tempCond)
 			point.Valid = result.SolutionValid
 			If result.SolutionValid Then
 				point.Vx = result.OperatingVx
 				point.MuZ = result.OperatingMuZ
-				point.Value = ExtractParamValue(result, paramKey)
+				point.Value = ExtractParamValueS(result, paramKey, sigma)
 				point.RPM = result.TrimmedRPM
 				point.CollectiveDeg = result.TrimmedCollectiveDeg
 				point.CT = result.CT
@@ -414,7 +745,172 @@ Public Sub BuildSweepSamples( _
 	Return samples
 End Sub
 
-' Renders the universal dataset. xAxisMode: 0=mu, 1=Vx [m/s].
+' ---------------------------------------------------------------------------
+' Readout / table helpers
+' ---------------------------------------------------------------------------
+Private Sub PointX(p As SweepPoint, xAxisMode As Int) As Double
+	If xAxisMode = 1 Then Return p.Vx
+	Return p.Mu
+End Sub
+
+' Index (into samples) of the valid point of the given curve closest to xValue; -1 if none.
+Public Sub SweepNearestIndex(samples As List, curveIndex As Int, xAxisMode As Int, xValue As Double) As Int
+	Dim n As Int = SweepPointsPerCurve
+	Dim best As Int = -1
+	Dim bestD As Double = 1.0e300
+	For i = 0 To n - 1
+		Dim idx As Int = curveIndex * n + i
+		If idx >= samples.Size Then Exit
+		Dim p As SweepPoint = samples.Get(idx)
+		If p.Valid Then
+			Dim dd As Double = Abs(PointX(p, xAxisMode) - xValue)
+			If dd < bestD Then
+				bestD = dd
+				best = idx
+			End If
+		End If
+	Next
+	Return best
+End Sub
+
+' Multi-line text: header with x value, then one line per curve with the nearest point value.
+Public Sub SweepReadout(samples As List, paramKey As String, xAxisMode As Int, xValue As Double, extraPrecision As Int) As String
+	Dim n As Int = SweepPointsPerCurve
+	Dim nCurves As Int = Max(1, samples.Size / n)
+	Dim dig As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
+	Dim xKey As String = "Mu"
+	Dim xDig As Int = 3
+	If xAxisMode = 1 Then
+		xKey = "Vx"
+		xDig = 1
+	End If
+	Dim unit As String = SweepParamUnit(paramKey)
+	If unit = Chr(8211) Then unit = "" Else unit = " " & unit
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(PrettySymbol(SweepParamSymbol(xKey))).Append(" = ").Append(FmtNum(xValue, xDig))
+	Dim xu As String = SweepParamUnit(xKey)
+	If xu <> Chr(8211) Then sb.Append(" ").Append(xu)
+	For c = 0 To nCurves - 1
+		Dim ix As Int = SweepNearestIndex(samples, c, xAxisMode, xValue)
+		Dim lbl As String = ""
+		If c * n < samples.Size Then
+			Dim p0 As SweepPoint = samples.Get(c * n)
+			lbl = p0.CurveLabel
+		End If
+		sb.Append(CRLF).Append(lbl).Append(": ")
+		If ix < 0 Then
+			sb.Append(Chr(8211))
+		Else
+			Dim p As SweepPoint = samples.Get(ix)
+			sb.Append(FmtNum(p.Value, dig)).Append(unit)
+		End If
+	Next
+	Return sb.ToString
+End Sub
+
+' Number of leading x columns in BuildSweepTableRows: 1 (mu) or 2 (mu, Vx of curve 0).
+Public Sub SweepTableXCols(xAxisMode As Int) As Int
+	If xAxisMode = 1 Then Return 2
+	Return 1
+End Sub
+
+' WIDE table: List of String() rows. Row 0 = headers (with units). One row per x grid point.
+' Columns: mu [, Vx of first curve when xAxisMode=1], then one column per curve.
+' forCsv: plain "_" symbols, "." decimals, "-" for n/a and dimensionless.
+Public Sub BuildSweepTableRows(samples As List, paramKey As String, xAxisMode As Int, extraPrecision As Int, forCsv As Boolean) As List
+	Dim rows As List
+	rows.Initialize
+	Dim n As Int = SweepPointsPerCurve
+	Dim nCurves As Int = Max(1, samples.Size / n)
+	Dim xc As Int = SweepTableXCols(xAxisMode)
+	Dim dig As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
+	Dim na As String = Chr(8211)
+	If forCsv Then na = "-"
+	Dim hdr(xc + nCurves) As String
+	hdr(0) = SymText("Mu", forCsv) & HdrUnit("Mu", na, forCsv)
+	If xc = 2 Then hdr(1) = SymText("Vx", forCsv) & HdrUnit("Vx", na, forCsv)
+	For c = 0 To nCurves - 1
+		Dim lbl As String = ""
+		If c * n < samples.Size Then
+			Dim p0 As SweepPoint = samples.Get(c * n)
+			lbl = p0.CurveLabel
+		End If
+		hdr(xc + c) = lbl & " " & SymText(paramKey, forCsv) & HdrUnit(paramKey, na, forCsv)
+	Next
+	rows.Add(hdr)
+	For i = 0 To n - 1
+		Dim row(xc + nCurves) As String
+		Dim pf As SweepPoint = samples.Get(i)
+		row(0) = TblNum(pf.Mu, 3, forCsv)
+		If xc = 2 Then
+			If pf.Valid Then row(1) = TblNum(pf.Vx, 1, forCsv) Else row(1) = na
+		End If
+		For c = 0 To nCurves - 1
+			Dim idx As Int = c * n + i
+			row(xc + c) = na
+			If idx < samples.Size Then
+				Dim p As SweepPoint = samples.Get(idx)
+				If p.Valid Then row(xc + c) = TblNum(p.Value, dig, forCsv)
+			End If
+		Next
+		rows.Add(row)
+	Next
+	Return rows
+End Sub
+
+' True when (x, v) lies on one of the curves (linear interpolation, tolerance 1% of the data span).
+Private Sub LiveOnCurve(samples As List, nPoints As Int, nCurves As Int, xAxisMode As Int, x As Double, v As Double, yMin As Double, yMax As Double) As Boolean
+	Dim span As Double = yMax - yMin
+	If span < 1.0e-12 Then span = Max(1.0e-9, Abs(v) * 0.01)
+	Dim tol As Double = 0.01 * span
+	For c = 0 To nCurves - 1
+		For i = 0 To nPoints - 2
+			Dim p1 As SweepPoint = samples.Get(c * nPoints + i)
+			Dim p2 As SweepPoint = samples.Get(c * nPoints + i + 1)
+			If p1.Valid And p2.Valid Then
+				Dim x1 As Double = PointX(p1, xAxisMode)
+				Dim x2 As Double = PointX(p2, xAxisMode)
+				If x >= Min(x1, x2) - 1.0e-9 And x <= Max(x1, x2) + 1.0e-9 Then
+					Dim t As Double = 0
+					If Abs(x2 - x1) > 1.0e-12 Then t = (x - x1) / (x2 - x1)
+					If Abs(p1.Value + t * (p2.Value - p1.Value) - v) <= tol Then Return True
+				End If
+			End If
+		Next
+	Next
+	Return False
+End Sub
+
+Private Sub SymText(key As String, plain As Boolean) As String
+	If plain Then Return SweepParamSymbol(key)
+	Return PrettySymbol(SweepParamSymbol(key))
+End Sub
+
+' Header unit suffix: CSV always carries [unit] ("-" if dimensionless); on screen dimensionless gets none.
+Private Sub HdrUnit(key As String, dimless As String, forCsv As Boolean) As String
+	If forCsv = False And SweepParamUnit(key) = Chr(8211) Then Return ""
+	Return " [" & UnitText(key, dimless) & "]"
+End Sub
+
+Private Sub UnitText(key As String, dimless As String) As String
+	Dim u As String = SweepParamUnit(key)
+	If u = Chr(8211) Then Return dimless
+	Return u
+End Sub
+
+Private Sub TblNum(v As Double, dec As Int, forCsv As Boolean) As String
+	Dim s As String = FmtNum(v, dec)
+	If forCsv Then s = s.Replace(",", ".")
+	Return s
+End Sub
+
+' ---------------------------------------------------------------------------
+' Plot
+' ---------------------------------------------------------------------------
+' Renders the dataset. xAxisMode: 0=mu, 1=Vx [m/s]. paletteIndex: 0..PlotPaletteCount-1.
+' crossX: crosshair x (axis units); pass -1 (or any value outside 0..xMax) for none.
+' Tip: at narrow widths give the plot a tall aspect (height >= ~0.95 * width) for a larger plot area.
 Public Sub DrawSweepPlot( _
 	widthPx As Int, _
 	heightPx As Int, _
@@ -426,13 +922,15 @@ Public Sub DrawSweepPlot( _
 	xAxisMode As Int, _
 	lightTheme As Boolean, _
 	extraPrecision As Int, _
-	samples As List _
+	samples As List, _
+	paletteIndex As Int, _
+	crossX As Double _
 ) As Bitmap
 	Dim bmp As Bitmap
 	bmp.InitializeMutable(widthPx, heightPx)
 	Dim cvs As Canvas
 	cvs.Initialize2(bmp)
-	
+
 	Dim colBg As Int
 	Dim colGrid As Int
 	Dim colText As Int
@@ -441,41 +939,48 @@ Public Sub DrawSweepPlot( _
 	If lightTheme Then
 		colBg = 0xFFFFFFFF
 		colGrid = 0xFFD9E1EA
-		colText = 0xFF475467
+		colText = 0xFF344054
 		colCurrent = 0xFFAA5A00
 		colAccent = 0xFF007F95
 	Else
 		colBg = 0xFF10141C
-		colGrid = 0xFF202A36
-		colText = 0xFF8F9CAE
+		colGrid = 0xFF2A3544
+		colText = 0xFFB4BFCE
 		colCurrent = 0xFFFFB300
 		colAccent = 0xFF00E5FF
 	End If
 	cvs.DrawColor(colBg)
-	
-	Dim nPoints As Int = 25
+
+	Dim wDip As Float = widthPx / 1dip
+	Dim fs As Float = 12
+	If wDip >= 400 Then fs = 13
+	If wDip >= 600 Then fs = 14
+	Dim lineH As Float = (fs + 6) * 1dip
+	Dim nPoints As Int = SweepPointsPerCurve
 	Dim nCurves As Int = Max(1, samples.Size / nPoints)
-	Dim legendCols As Int = nCurves
-	If widthPx < 540dip Then
-		If multiCurveMode = 0 Then
-			legendCols = Min(2, nCurves)
-		Else
-			legendCols = Min(3, nCurves)
+	Dim padX As Float = 8dip
+	If wDip < 400 Then padX = 6dip
+
+	' --- Legend layout (own band above the plot) ---
+	Dim legX(nCurves) As Float
+	Dim legRow(nCurves) As Int
+	Dim curX As Float = padX
+	Dim curRow As Int = 0
+	For i = 0 To nCurves - 1
+		Dim lp As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
+		Dim itemW As Float = 28dip + cvs.MeasureStringWidth(lp.CurveLabel, Typeface.DEFAULT_BOLD, fs) + 12dip
+		If curX > padX And curX + itemW > widthPx - padX Then
+			curRow = curRow + 1
+			curX = padX
 		End If
-	Else If nCurves > 5 Then
-		legendCols = Min(4, nCurves)
-	End If
-	If legendCols < 1 Then legendCols = 1
-	Dim legendRows As Int = Ceil(nCurves / legendCols)
-	Dim mLeft As Float = 64dip
-	If widthPx < 390dip Then mLeft = 82dip
-	Dim mRight As Float = 22dip
-	Dim mTop As Float = 38dip + legendRows * 18dip
-	Dim mBottom As Float = 44dip
-	Dim plotW As Float = widthPx - mLeft - mRight
-	Dim plotH As Float = heightPx - mTop - mBottom
-	If plotW <= 10 Or plotH <= 10 Then Return bmp
-	
+		legX(i) = curX
+		legRow(i) = curRow
+		curX = curX + itemW
+	Next
+	Dim legendRows As Int = curRow + 1
+
+	' --- Y data range ---
+	Dim sigma As Double = GeomSigma(geom)
 	Dim yMin As Double = 1.0e99
 	Dim yMax As Double = -1.0e99
 	Dim xMax As Double = 0.0
@@ -486,119 +991,206 @@ Public Sub DrawSweepPlot( _
 			validCount = validCount + 1
 			If sample.Value < yMin Then yMin = sample.Value
 			If sample.Value > yMax Then yMax = sample.Value
-			Dim xv As Double = sample.Mu
-			If xAxisMode = 1 Then xv = sample.Vx
+			Dim xv As Double = PointX(sample, xAxisMode)
 			If xv > xMax Then xMax = xv
 		End If
 	Next
-	
 	Dim liveRes As RotorResults = zBETEngine.Calculate(geom, cond)
 	Dim liveValid As Boolean = liveRes.SolutionValid And liveRes.OperatingMu >= 0 And liveRes.OperatingMu <= maxMu
 	Dim liveValue As Double = 0.0
 	Dim liveX As Double = 0.0
 	If liveValid Then
-		liveValue = ExtractParamValue(liveRes, paramKey)
+		liveValue = ExtractParamValueS(liveRes, paramKey, sigma)
 		liveX = liveRes.OperatingMu
 		If xAxisMode = 1 Then liveX = liveRes.OperatingVx
+		' The marker uses the live (conditions) trim; the curves use the sweep trim mode. Show the marker
+		' only when it lies on a curve, so it never floats off the data it is compared with.
+		liveValid = LiveOnCurve(samples, nPoints, nCurves, xAxisMode, liveX, liveValue, yMin, yMax)
+	End If
+	If liveValid Then
 		If liveValue < yMin Then yMin = liveValue
 		If liveValue > yMax Then yMax = liveValue
 		If liveX > xMax Then xMax = liveX
 	End If
-	
 	If validCount = 0 And liveValid = False Then
-		cvs.DrawText("No valid operating points in this sweep.", widthPx * 0.5, heightPx * 0.5, Typeface.DEFAULT_BOLD, 13, colText, "CENTER")
+		cvs.DrawText("No valid operating points in this sweep.", widthPx * 0.5, heightPx * 0.5, Typeface.DEFAULT_BOLD, fs, colText, "CENTER")
 		Return bmp
-	End If
-	If yMax <= yMin Then
-		Dim padFlat As Double = Max(0.1, Abs(yMax) * 0.1)
-		yMin = yMin - padFlat
-		yMax = yMax + padFlat
-	Else
-		Dim yPad As Double = 0.08 * (yMax - yMin)
-		yMin = yMin - yPad
-		yMax = yMax + yPad
 	End If
 	If xAxisMode = 0 Then xMax = maxMu
 	If xMax <= 1.0e-12 Then xMax = 1.0
-	' Reserve actual rendered tick width, including Android font scaling.
-	For tickIndex = 0 To 5
-		Dim tickValue As Double = yMin + tickIndex / 5.0 * (yMax - yMin)
-		Dim tickDigits As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
-		Dim tickText As String = NumberFormat2(tickValue, 1, tickDigits, tickDigits, False)
-		mLeft = Max(mLeft, cvs.MeasureStringWidth(tickText, Typeface.MONOSPACE, 12.5) + 12dip)
+
+	' --- Y scaling and nice ticks ---
+	Dim m As Double = Max(Abs(yMin), Abs(yMax))
+	Dim sExp As Int = 0
+	If m > 0 And m < 0.01 Then sExp = Floor(Logarithm(m, 10))
+	If m >= 100000 Then sExp = Floor(Logarithm(m, 10))
+	Dim yScale As Double = Power(10, sExp)
+	Dim ys0 As Double = yMin / yScale
+	Dim ys1 As Double = yMax / yScale
+	If ys1 - ys0 < 0.000000001 * Max(1, Abs(ys1)) Then
+		Dim padFlat As Double = Max(0.1, Abs(ys1) * 0.1)
+		ys0 = ys0 - padFlat
+		ys1 = ys1 + padFlat
+	Else
+		Dim yPad As Double = 0.04 * (ys1 - ys0)
+		ys0 = ys0 - yPad
+		ys1 = ys1 + yPad
+	End If
+	Dim yStep As Double = NiceStep((ys1 - ys0) / 5)
+	Dim yLo As Double = Floor(ys0 / yStep) * yStep
+	Dim yHi As Double = Ceil(ys1 / yStep) * yStep
+	If yHi - yLo < yStep Then yHi = yLo + yStep
+	Dim yTicks As Int = Round((yHi - yLo) / yStep)
+	Dim yDec As Int = StepDecimals(yStep) + Max(0, Min(1, extraPrecision))
+
+	' --- Axis titles ---
+	Dim sy As String = PrettySymbol(SweepParamSymbol(paramKey))
+	Dim unitY As String = SweepParamUnit(paramKey)
+	Dim unitPart As String = ""
+	If sExp <> 0 Then
+		unitPart = Chr(215) & "10" & SuperInt(sExp)
+		If unitY <> Chr(8211) Then unitPart = unitPart & " " & unitY
+	Else If unitY <> Chr(8211) Then
+		unitPart = unitY
+	End If
+	Dim tail As String = ""
+	If unitPart <> "" Then tail = " [" & unitPart & "]"
+	Dim yTitle As String = SweepParamFullName(paramKey) & " " & sy & tail
+	If cvs.MeasureStringWidth(yTitle, Typeface.DEFAULT_BOLD, fs) > widthPx - 2 * padX Then yTitle = SweepParamShortName(paramKey) & " " & sy & tail
+	If cvs.MeasureStringWidth(yTitle, Typeface.DEFAULT_BOLD, fs) > widthPx - 2 * padX Then yTitle = sy & tail
+	Dim xKey As String = "Mu"
+	If xAxisMode = 1 Then xKey = "Vx"
+	Dim xu As String = SweepParamUnit(xKey)
+	Dim xTail As String = ""
+	If xu <> Chr(8211) Then xTail = " [" & xu & "]"
+	Dim xTitle As String = SweepParamFullName(xKey) & " " & PrettySymbol(SweepParamSymbol(xKey)) & xTail
+
+	' --- Margins ---
+	Dim mLeft As Float = 30dip
+	For k = 0 To yTicks
+		Dim tw As Float = cvs.MeasureStringWidth(FmtNum(yLo + k * yStep, yDec), Typeface.MONOSPACE, fs)
+		mLeft = Max(mLeft, tw + 10dip)
 	Next
-	plotW = widthPx - mLeft - mRight
-	If plotW <= 10 Then Return bmp
-	
+	Dim mRight As Float = 14dip
+	If wDip < 400 Then mRight = 10dip
+	Dim mTop As Float = lineH + 4dip + legendRows * lineH + 4dip + lineH * 0.9
+	Dim mBottom As Float = lineH * 2 + 4dip
+	Dim plotW As Float = widthPx - mLeft - mRight
+	Dim plotH As Float = heightPx - mTop - mBottom
+	If plotW <= 10 Or plotH <= 10 Then Return bmp
+
+	' --- Titles and legend ---
+	DrawRichText(cvs, yTitle, padX, lineH * 0.8, Typeface.DEFAULT_BOLD, fs, colAccent, "LEFT")
+	For i = 0 To nCurves - 1
+		Dim ly As Float = lineH + 4dip + legRow(i) * lineH + lineH * 0.55
+		Dim lc As Int = PlotColor(paletteIndex, i, lightTheme)
+		Dim lpt As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
+		If i Mod 4 = 0 Then
+			cvs.DrawLine(legX(i), ly, legX(i) + 22dip, ly, lc, 2.5dip)
+		Else
+			Dim lpat() As Float = DashPattern(i)
+			dpIdx = 0
+			dpRem = lpat(0)
+			DrawPatterned(cvs, legX(i), ly, legX(i) + 22dip, ly, lc, 2.5dip, lpat)
+		End If
+		DrawMarker(cvs, i, legX(i) + 11dip, ly, 3dip, lc)
+		cvs.DrawText(lpt.CurveLabel, legX(i) + 26dip, ly + fs * 0.35 * 1dip, Typeface.DEFAULT_BOLD, fs, lc, "LEFT")
+	Next
+
+	' --- Grid + tick labels ---
 	Dim plotRect As Rect
 	plotRect.Initialize(mLeft, mTop, mLeft + plotW, mTop + plotH)
+	LastPlotLeft = mLeft
+	LastPlotW = plotW
+	LastXMax = xMax
 	cvs.DrawRect(plotRect, colGrid, False, 1.5dip)
-	For gridY = 0 To 5
-		Dim gy As Float = mTop + plotH - gridY / 5.0 * plotH
+	For k = 0 To yTicks
+		Dim tv As Double = yLo + k * yStep
+		Dim gy As Float = mTop + plotH - (tv - yLo) / (yHi - yLo) * plotH
 		cvs.DrawLine(mLeft, gy, mLeft + plotW, gy, colGrid, 1dip)
-		Dim yGridValue As Double = yMin + gridY / 5.0 * (yMax - yMin)
-		Dim yDigits As Int = SweepParamDigits(paramKey) + Max(0, Min(1, extraPrecision))
-		Dim yText As String = NumberFormat2(yGridValue, 1, yDigits, yDigits, False)
-		cvs.DrawText(yText, mLeft - 6dip, gy + 4dip, Typeface.MONOSPACE, 12.5, colText, "RIGHT")
+		cvs.DrawText(FmtNum(tv, yDec), mLeft - 5dip, gy + fs * 0.35 * 1dip, Typeface.MONOSPACE, fs, colText, "RIGHT")
 	Next
-	Dim xTickCount As Int = 5
-	If widthPx < 390dip Then xTickCount = 4
-	For gridX = 0 To xTickCount
-		Dim gx As Float = mLeft + gridX / xTickCount * plotW
+	Dim xTarget As Double = 5
+	If wDip < 400 Then xTarget = 4
+	Dim xStep As Double = NiceStep(xMax / xTarget)
+	Dim xDec As Int = StepDecimals(xStep)
+	Dim xTickMax As Int = Floor(xMax / xStep + 0.0001)
+	For k = 0 To xTickMax
+		Dim gx As Float = mLeft + (k * xStep) / xMax * plotW
 		cvs.DrawLine(gx, mTop, gx, mTop + plotH, colGrid, 1dip)
-		Dim xGridValue As Double = gridX / xTickCount * xMax
-		Dim xDigits As Int = 2
-		If xAxisMode = 1 Then xDigits = 1
-		cvs.DrawText(NumberFormat2(xGridValue, 1, xDigits, xDigits, False), gx, mTop + plotH + 18dip, Typeface.MONOSPACE, 12, colText, "CENTER")
+		Dim ax As String = "CENTER"
+		Dim tickTxt As String = FmtNum(k * xStep, xDec)
+		Dim tickX As Float = gx
+		If k = 0 Then
+			ax = "LEFT"
+		Else
+			' keep the label inside the bitmap (last tick sits near the right edge)
+			Dim halfW As Float = cvs.MeasureStringWidth(tickTxt, Typeface.MONOSPACE, fs) / 2 + 2dip
+			tickX = Max(halfW, Min(gx, widthPx - halfW))
+		End If
+		cvs.DrawText(tickTxt, tickX, mTop + plotH + lineH * 0.85, Typeface.MONOSPACE, fs, colText, ax)
 	Next
-	
-	cvs.DrawText(SweepPlotTitle(paramKey), widthPx * 0.5, 16dip, Typeface.DEFAULT_BOLD, 13, colAccent, "CENTER")
-	Dim xTitle As String = "Advance Ratio μₓ"
-	If xAxisMode = 1 Then xTitle = "Airspeed Vx (m/s)"
-	cvs.DrawText(xTitle, mLeft + plotW * 0.5, mTop + plotH + 34dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
-	
-	' Curves are stored curve-major, 25 samples per curve.
+	DrawRichText(cvs, xTitle, mLeft + plotW * 0.5, mTop + plotH + lineH * 1.85, Typeface.DEFAULT_BOLD, fs, colText, "CENTER")
+
+	' --- Curves: distinct hue + dash pattern + marker every 4 points ---
 	For curveIndex = 0 To nCurves - 1
-		Dim curveColor As Int = SweepCurveColor(curveIndex, multiCurveMode, lightTheme)
-		Dim stroke As Float = 2.2dip
-		If multiCurveMode = 4 Then stroke = 3.0dip
+		Dim curveColor As Int = PlotColor(paletteIndex, curveIndex, lightTheme)
+		Dim stroke As Float = 2.4dip
+		Dim pat() As Float = DashPattern(curveIndex)
+		dpIdx = 0
+		dpRem = pat(0)
 		For pointIndex = 0 To nPoints - 2
 			Dim p1 As SweepPoint = samples.Get(curveIndex * nPoints + pointIndex)
 			Dim p2 As SweepPoint = samples.Get(curveIndex * nPoints + pointIndex + 1)
 			If p1.Valid And p2.Valid Then
-				Dim x1v As Double = p1.Mu
-				Dim x2v As Double = p2.Mu
-				If xAxisMode = 1 Then
-					x1v = p1.Vx
-					x2v = p2.Vx
+				Dim x1 As Float = mLeft + PointX(p1, xAxisMode) / xMax * plotW
+				Dim x2 As Float = mLeft + PointX(p2, xAxisMode) / xMax * plotW
+				Dim y1 As Float = mTop + plotH - (p1.Value / yScale - yLo) / (yHi - yLo) * plotH
+				Dim y2 As Float = mTop + plotH - (p2.Value / yScale - yLo) / (yHi - yLo) * plotH
+				If curveIndex Mod 4 = 0 Then
+					cvs.DrawLine(x1, y1, x2, y2, curveColor, stroke)
+				Else
+					DrawPatterned(cvs, x1, y1, x2, y2, curveColor, stroke, pat)
 				End If
-				Dim x1 As Float = mLeft + x1v / xMax * plotW
-				Dim x2 As Float = mLeft + x2v / xMax * plotW
-				Dim y1 As Float = mTop + plotH - (p1.Value - yMin) / (yMax - yMin) * plotH
-				Dim y2 As Float = mTop + plotH - (p2.Value - yMin) / (yMax - yMin) * plotH
-				cvs.DrawLine(x1, y1, x2, y2, curveColor, stroke)
+			Else
+				dpIdx = 0
+				dpRem = pat(0)
+			End If
+		Next
+		For pointIndex = 0 To nPoints - 1
+			If (pointIndex + curveIndex) Mod 4 = 0 Then
+				Dim pm As SweepPoint = samples.Get(curveIndex * nPoints + pointIndex)
+				If pm.Valid Then
+					Dim mx As Float = mLeft + PointX(pm, xAxisMode) / xMax * plotW
+					Dim my As Float = mTop + plotH - (pm.Value / yScale - yLo) / (yHi - yLo) * plotH
+					DrawMarker(cvs, curveIndex, mx, my, 3.5dip, curveColor)
+				End If
 			End If
 		Next
 	Next
-	
-	' Responsive legend occupies its own band, never the data rectangle.
-	Dim legendCellW As Float = (widthPx - 24dip) / legendCols
-	For legendIndex = 0 To nCurves - 1
-		Dim legendRow As Int = Floor(legendIndex / legendCols)
-		Dim legendCol As Int = legendIndex Mod legendCols
-		Dim legendX As Float = 12dip + legendCol * legendCellW
-		Dim legendY As Float = 33dip + legendRow * 18dip
-		Dim legendPoint As SweepPoint = samples.Get(legendIndex * nPoints)
-		Dim legendColor As Int = SweepCurveColor(legendIndex, multiCurveMode, lightTheme)
-		cvs.DrawLine(legendX, legendY, legendX + 9dip, legendY, legendColor, 2.5dip)
-		Dim legendSize As Float = 10.5
-		If legendCols <= 2 Then legendSize = 11.5
-		cvs.DrawText(legendPoint.CurveLabel, legendX + 12dip, legendY + 4dip, Typeface.DEFAULT_BOLD, legendSize, legendColor, "LEFT")
-	Next
-	
+
+	' --- Crosshair ---
+	If IsNum(crossX) And crossX >= 0 And crossX <= xMax Then
+		Dim cx As Float = mLeft + crossX / xMax * plotW
+		cvs.DrawLine(cx, mTop, cx, mTop + plotH, colText, 1.2dip)
+		For curveIndex = 0 To nCurves - 1
+			Dim ni As Int = SweepNearestIndex(samples, curveIndex, xAxisMode, crossX)
+			If ni >= 0 Then
+				Dim pn As SweepPoint = samples.Get(ni)
+				Dim nx As Float = mLeft + PointX(pn, xAxisMode) / xMax * plotW
+				Dim ny As Float = mTop + plotH - (pn.Value / yScale - yLo) / (yHi - yLo) * plotH
+				Dim cc As Int = PlotColor(paletteIndex, curveIndex, lightTheme)
+				cvs.DrawCircle(nx, ny, 6dip, colBg, True, 1dip)
+				cvs.DrawCircle(nx, ny, 6dip, cc, False, 2dip)
+				cvs.DrawCircle(nx, ny, 2.5dip, cc, True, 1dip)
+			End If
+		Next
+	End If
+
+	' --- Active operating point ---
 	If liveValid Then
 		Dim liveCx As Float = mLeft + liveX / xMax * plotW
-		Dim liveCy As Float = mTop + plotH - (liveValue - yMin) / (yMax - yMin) * plotH
+		Dim liveCy As Float = mTop + plotH - (liveValue / yScale - yLo) / (yHi - yLo) * plotH
 		cvs.DrawCircle(liveCx, liveCy, 5dip, colCurrent, True, 1dip)
 		cvs.DrawCircle(liveCx, liveCy, 9dip, colCurrent, False, 1.5dip)
 	End If

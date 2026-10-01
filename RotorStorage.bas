@@ -10,7 +10,7 @@ Sub Process_Globals
 	Private Const FILENAME As String = "rotors_db.txt"
 	Private Const ACTIVE_INDEX_FILENAME As String = "active_rotor.txt"
 	Private Const SCHEMA_TAG As String = "ROTORCALCULATOR_GEOMETRIES"
-	Private Const SCHEMA_VERSION As Int = 2
+	Private Const SCHEMA_VERSION As Int = 3
 	Public Rotors As List
 	Public ActiveIndex As Int = 0
 End Sub
@@ -42,12 +42,13 @@ End Sub
 
 Private Sub NewPreset(Name As String, Radius As Double, NBlades As Int, RootCutout As Double, _
 	ChordAxis As Double, ChordTip As Double, ThetaRootDeg As Double, ThetaTipDeg As Double, _
-	LiftSlope As Double, Cd0 As Double, TipLossMode As String, TipLossB As Double, PG As Boolean) As RotorGeometry
+	LiftSlope As Double, Cd0 As Double, TipLossMode As String, TipLossB As Double, PG As Boolean, NomRPM As Double) As RotorGeometry
 	Dim g As RotorGeometry
 	g.Initialize
 	g.Name = Name
 	g.Radius = Radius
-	g.RPM = 390.0 ' runtime placeholder; Conditions owns operating RPM.
+	g.RPM = NomRPM ' runtime placeholder; Conditions owns operating RPM.
+	g.NominalRPM = NomRPM
 	g.NBlades = NBlades
 	g.RootCutout = RootCutout
 	g.SolidityMode = "chords"
@@ -68,13 +69,13 @@ End Sub
 Public Sub CreateDefaultPresets As List
 	Dim presets As List
 	presets.Initialize
-	presets.Add(NewPreset("Sikorsky UH-60 Black Hawk", 8.18, 4, 0.15, 0.53, 0.53, 14.0, -4.0, 5.73, 0.0088, "sissingh", 0.97, True))
-	presets.Add(NewPreset("Bell 206 JetRanger", 5.08, 2, 0.12, 0.33, 0.33, 12.0, 2.0, 5.73, 0.0090, "fixed", 0.97, False))
-	presets.Add(NewPreset("Eurocopter Bo 105", 4.92, 4, 0.14, 0.27, 0.27, 11.0, 3.0, 5.73, 0.0092, "sissingh", 0.97, True))
-	presets.Add(NewPreset("Robinson R44", 5.03, 2, 0.10, 0.25, 0.25, 10.0, 4.0, 5.73, 0.0090, "fixed", 0.97, False))
+	presets.Add(NewPreset("Sikorsky UH-60 Black Hawk", 8.18, 4, 0.15, 0.53, 0.53, 14.0, -4.0, 5.73, 0.0088, "sissingh", 0.97, True, 258.0))
+	presets.Add(NewPreset("Bell 206 JetRanger", 5.08, 2, 0.12, 0.33, 0.33, 12.0, 2.0, 5.73, 0.0090, "fixed", 0.97, False, 394.0))
+	presets.Add(NewPreset("Eurocopter Bo 105", 4.92, 4, 0.14, 0.27, 0.27, 11.0, 3.0, 5.73, 0.0092, "sissingh", 0.97, True, 424.0))
+	presets.Add(NewPreset("Robinson R44", 5.03, 2, 0.10, 0.25, 0.25, 10.0, 4.0, 5.73, 0.0090, "fixed", 0.97, False, 408.0))
 	' Legacy DJI/eVTOL presets defined root chord at the cutout. These c0 values preserve that active-span law.
-	presets.Add(NewPreset("DJI Matrice 300 Drone", 0.27, 2, 0.10, 0.0472222222, 0.025, 16.0, 4.0, 5.65, 0.0120, "none", 1.0, False))
-	presets.Add(NewPreset("eVTOL Conceptual Rotor", 1.40, 5, 0.15, 0.1488235294, 0.09, 18.0, 4.0, 5.85, 0.0095, "sissingh", 0.97, True))
+	presets.Add(NewPreset("DJI Matrice 300 Drone", 0.27, 2, 0.10, 0.0472222222, 0.025, 16.0, 4.0, 5.65, 0.0120, "none", 1.0, False, 5300.0))
+	presets.Add(NewPreset("eVTOL Conceptual Rotor", 1.40, 5, 0.15, 0.1488235294, 0.09, 18.0, 4.0, 5.85, 0.0095, "sissingh", 0.97, True, 1160.0))
 	Return presets
 End Sub
 
@@ -145,8 +146,15 @@ Private Sub SerializeRotor(g As RotorGeometry) As String
 	sb.Append(g.ChordRoot).Append("|").Append(g.ChordTip).Append("|")
 	sb.Append(g.ThetaRoot).Append("|").Append(g.ThetaTip).Append("|")
 	sb.Append(g.LiftSlope0).Append("|").Append(g.Cd0).Append("|")
-	sb.Append(g.TipLossMode).Append("|").Append(g.TipLossB).Append("|").Append(pg)
+	sb.Append(g.TipLossMode).Append("|").Append(g.TipLossB).Append("|").Append(pg).Append("|").Append(g.NominalRPM)
 	Return sb.ToString
+End Sub
+
+' Migration default: tip speed 210 m/s (R > 1 m) or 120 m/s (small rotors/props).
+Private Sub DefaultNominalRPM(radius As Double) As Double
+	Dim vtip As Double = 120.0
+	If radius > 1.0 Then vtip = 210.0
+	Return 60.0 * vtip / (2.0 * cPI * Max(0.02, radius))
 End Sub
 
 Private Sub ParseV2Rotor(parts() As String) As RotorGeometry
@@ -169,6 +177,9 @@ Private Sub ParseV2Rotor(parts() As String) As RotorGeometry
 	g.TipLossMode = parts(11)
 	g.TipLossB = parts(12)
 	g.UsePrandtlGlauert = (parts(13) = "1")
+	If parts.Length >= 15 Then g.NominalRPM = parts(14) Else g.NominalRPM = DefaultNominalRPM(g.Radius)
+	If g.NominalRPM <= 0 Then g.NominalRPM = DefaultNominalRPM(g.Radius)
+	g.RPM = g.NominalRPM
 	Return g
 End Sub
 
@@ -199,6 +210,7 @@ Private Sub ParseLegacyRotor(parts() As String) As RotorGeometry
 	g.TipLossMode = parts(17)
 	If parts.Length >= 19 Then g.TipLossB = parts(18) Else g.TipLossB = 0.97
 	If parts.Length >= 20 Then g.UsePrandtlGlauert = (parts(19) = "1") Else g.UsePrandtlGlauert = False
+	g.NominalRPM = DefaultNominalRPM(g.Radius)
 	Return zBETEngine.ResolveSolidity(g)
 End Sub
 
@@ -223,7 +235,7 @@ Public Sub ParseDatabaseText(Text As String) As List
 		Dim parts() As String = Regex.Split("\|", line)
 		If parts.Length >= 2 And parts(0) = SCHEMA_TAG Then
 			version = parts(1)
-		Else If version = 2 And parts.Length >= 14 And parts(0) = "R" Then
+		Else If (version = 2 Or version = 3) And parts.Length >= 14 And parts(0) = "R" Then
 			Try
 				Dim importedGeom As RotorGeometry = ParseV2Rotor(parts)
 				If IsImportedGeometryValid(importedGeom) Then
@@ -407,4 +419,37 @@ Public Sub ResetToDefaults
 	ActiveIndex = 0
 	SaveRotors
 	SaveActiveIndex
+End Sub
+
+' ---------------------------------------------------------------------------
+' Unsaved-geometry draft (survives process death; separate from the library file)
+' ---------------------------------------------------------------------------
+Public Sub SaveDraft(g As RotorGeometry, baseIndex As Int)
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(SCHEMA_TAG).Append("|").Append(SCHEMA_VERSION).Append(CRLF)
+	sb.Append(SerializeRotor(g)).Append(CRLF)
+	sb.Append("BASE|").Append(baseIndex).Append(CRLF)
+	File.WriteString(GetDataDir, "geometry_draft.txt", sb.ToString)
+End Sub
+
+Public Sub ClearDraft
+	If File.Exists(GetDataDir, "geometry_draft.txt") Then File.Delete(GetDataDir, "geometry_draft.txt")
+End Sub
+
+' Returns the draft geometry (Null-initialized when none). baseIndex(0) receives the library index it was based on.
+Public Sub LoadDraft(baseIndex() As Int) As RotorGeometry
+	Dim none As RotorGeometry
+	If File.Exists(GetDataDir, "geometry_draft.txt") = False Then Return none
+	Try
+		Dim text As String = File.ReadString(GetDataDir, "geometry_draft.txt")
+		Dim list As List = ParseDatabaseText(text)
+		If list.Size = 0 Then Return none
+		For Each ln As String In Regex.Split("\r?\n", text)
+			If ln.StartsWith("BASE|") Then baseIndex(0) = ln.SubString(5).Trim
+		Next
+		Return list.Get(0)
+	Catch
+		Return none
+	End Try
 End Sub
