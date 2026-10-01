@@ -244,3 +244,10 @@ export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
     return null;
   }
 }
+
+export function resetToFactoryPresets(): StoredRotor[] {
+  const presets = getFactoryPresets();
+  saveStoredRotors(presets);
+  setActiveRotorId(presets[0].id);
+  return presets;
+}

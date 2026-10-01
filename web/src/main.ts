@@ -6,7 +6,12 @@ import {
   cloneGeometry,
   createDefaultCondition,
   createDefaultGeometry,
+  referenceAspectRatio,
+  referenceBladeArea,
   resolveSolidity,
+  scaleChordsToAspectRatio,
+  scaleChordsToSigmaRef,
+  scaleRadiusPreserveReference,
   type FlightCondition,
   type RotorGeometry,
   type RotorResults,
@@ -16,6 +21,7 @@ import {
   getFactoryPresets,
   importRotorsJSON,
   loadStoredRotors,
+  resetToFactoryPresets,
   saveStoredRotors,
   setActiveRotorId,
   type StoredRotor,
@@ -33,6 +39,13 @@ import {
   SWEEP_PARAMS,
 } from "./sweep";
 
+// Option Selector Interface
+interface OptionItem {
+  id: string;
+  label: string;
+  desc?: string;
+}
+
 // State Management
 let storedRotors: StoredRotor[] = loadStoredRotors();
 let activeRotorId: string = getActiveRotorId();
@@ -46,6 +59,14 @@ let currentPage: "geometry" | "conditions" | "results" = "geometry";
 let currentTheme: "dark" | "light" = (localStorage.getItem("rotor_theme") as "dark" | "light") || "dark";
 let unitSystem: "si" | "imperial" = (localStorage.getItem("rotor_units") as "si" | "imperial") || "si";
 let extraPrecision: number = parseInt(localStorage.getItem("rotor_extra_precision") || "0", 10);
+let angleFormat: "0/360" | "-180/180" = (localStorage.getItem("rotor_angle_format") as "0/360" | "-180/180") || "0/360";
+
+// Preferred Output Units
+let prefThrustUnit = localStorage.getItem("rotor_pref_thrust") || (unitSystem === "imperial" ? "lbf" : "N");
+let prefPowerUnit = localStorage.getItem("rotor_pref_power") || (unitSystem === "imperial" ? "hp" : "kW");
+let prefTorqueUnit = localStorage.getItem("rotor_pref_torque") || (unitSystem === "imperial" ? "lb·ft" : "N·m");
+let prefSpeedUnit = localStorage.getItem("rotor_pref_speed") || (unitSystem === "imperial" ? "kt" : "m/s");
+let prefPressureUnit = localStorage.getItem("rotor_pref_pressure") || "hPa";
 
 // Sweep Modal State
 let sweepSelectedParam = "CP";
@@ -53,6 +74,9 @@ let sweepMultiMode = 0;
 let sweepXAxisMode: "mu" | "vx" = "mu";
 let sweepMaxMu = 0.4;
 let sweepTableVisible = false;
+
+// Flags
+let isInternalSync = false;
 
 // Initialize Root App DOM
 const app = document.getElementById("app");
@@ -62,15 +86,15 @@ app.innerHTML = `
   <main class="app-shell">
     <header class="topbar">
       <div class="brand-row">
-        <img class="brand-icon" src="${iconUrl}" alt="RotorCalculator Icon" />
-        <div class="brand-title">
-          RotorCalculator
-          <span class="version-badge">v1.22</span>
+        <div class="brand-left">
+          <img class="brand-icon" src="${iconUrl}" alt="RotorCalculator Icon" />
+          <div class="brand-title">
+            RotorCalculator
+            <span class="version-badge">v1.22</span>
+          </div>
         </div>
         <div class="header-actions">
-          <button class="icon-btn" id="btn-header-unit" title="Unit Converter">⇄</button>
-          <button class="icon-btn" id="btn-header-help" title="Physics Help">?</button>
-          <button class="icon-btn" id="btn-header-settings" title="Settings">⚙</button>
+          <button class="icon-btn" id="btn-main-menu" aria-label="More options" title="More options">⋮</button>
         </div>
       </div>
       <nav class="tabs-nav" aria-label="Calculator sections">
@@ -81,10 +105,25 @@ app.innerHTML = `
       </nav>
     </header>
 
+    <!-- 3-Dot Popup Menu -->
+    <div class="popup-menu" id="main-popup-menu" hidden>
+      <button type="button" class="popup-menu-item" data-action="settings">⚙️&nbsp;&nbsp;Settings</button>
+      <button type="button" class="popup-menu-item" data-action="units">⇄&nbsp;&nbsp;Quick Unit Converter</button>
+      <button type="button" class="popup-menu-item" data-action="help">📖&nbsp;&nbsp;Physics &amp; Equations</button>
+      <div class="popup-menu-divider"></div>
+      <button type="button" class="popup-menu-item" data-action="restore">↺&nbsp;&nbsp;Restore Factory Presets</button>
+      <button type="button" class="popup-menu-item" data-action="export">⤓&nbsp;&nbsp;Export Rotor Geometries</button>
+      <button type="button" class="popup-menu-item" data-action="import">⤒&nbsp;&nbsp;Import Rotor Geometries</button>
+      <div class="popup-menu-divider"></div>
+      <a class="popup-menu-item" href="mailto:flightdyn@gmail.com?subject=RotorCalculator%20Feedback" id="feedback-link">✉&nbsp;&nbsp;Send Feedback</a>
+      <button type="button" class="popup-menu-item" data-action="about">ℹ&nbsp;&nbsp;About RotorCalculator</button>
+      <button type="button" class="popup-menu-item" data-action="privacy">🔒&nbsp;&nbsp;Privacy Policy</button>
+    </div>
+
     <div class="content-area" id="content-area">
       <!-- PAGE 0: GEOMETRY -->
       <section class="page active" id="page-geometry">
-        <div class="active-rotor-bar" id="active-rotor-bar">
+        <div class="active-rotor-bar" id="active-rotor-bar" title="Click to switch or manage rotors">
           <div>
             <div class="active-rotor-tag">ACTIVE ROTOR (CLICK TO SWITCH)</div>
             <div class="active-rotor-name" id="display-active-rotor-name">UH-60 Black Hawk</div>
@@ -130,12 +169,12 @@ app.innerHTML = `
           <button class="row-unit-btn" id="unit-chord-tip">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Reference blade solidity Nb*c_mean / (pi*R).">Ref. Solidity</button>
-          <input class="row-input" type="number" step="0.001" id="inp-sigma-ref" value="0.0825" />
+          <button class="row-label-btn" data-tip="Reference blade solidity Nb*c_mean / (pi*R). Editing scales chords to match.">Ref. Solidity</button>
+          <input class="row-input" type="number" step="0.0001" id="inp-sigma-ref" value="0.0825" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade aspect ratio R / c_mean.">Aspect Ratio</button>
+          <button class="row-label-btn" data-tip="Blade aspect ratio R / c_mean. Editing scales chords to match.">Aspect Ratio</button>
           <input class="row-input" type="number" step="0.1" id="inp-aspect-ratio" value="15.4" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
@@ -169,12 +208,12 @@ app.innerHTML = `
         <div class="engineering-row">
           <button class="row-label-btn" data-tip="Total rotor disk swept area A = pi * R^2.">Disk Area</button>
           <div class="row-derived-val" id="drv-disk-area">210.2</div>
-          <button class="row-unit-btn" disabled>m²</button>
+          <button class="row-unit-btn" id="unit-disk-area">m²</button>
         </div>
         <div class="engineering-row">
           <button class="row-label-btn" data-tip="Active lifting planform area of all blades combined.">Active Blade Area</button>
           <div class="row-derived-val" id="drv-blade-area">14.74</div>
-          <button class="row-unit-btn" disabled>m²</button>
+          <button class="row-unit-btn" id="unit-blade-area">m²</button>
         </div>
         <div class="engineering-row">
           <button class="row-label-btn" data-tip="Total built-in geometric twist (tip pitch minus root pitch).">Total Twist</button>
@@ -229,28 +268,28 @@ app.innerHTML = `
           <button class="row-unit-btn" id="unit-temperature">°C</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" id="btn-toggle-horiz-mode" title="Toggle between advance ratio mu and forward airspeed Vx">μx ▾</button>
+          <button class="row-label-btn" id="btn-toggle-horiz-mode" title="Click to choose between advance ratio mu and forward airspeed Vx">μx ▾</button>
           <input class="row-input" type="number" step="0.01" id="inp-horiz-val" value="0.00" />
           <button class="row-unit-btn" id="unit-horiz-val">[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" id="btn-toggle-axial-mode" title="Toggle between inflow angle alpha, climb speed Vz, and axial ratio muz">α ▾</button>
+          <button class="row-label-btn" id="btn-toggle-axial-mode" title="Click to choose between inflow angle alpha, climb speed Vz, and axial ratio muz">α ▾</button>
           <input class="row-input" type="number" step="0.5" id="inp-axial-val" value="0.0" />
           <button class="row-unit-btn" id="unit-axial-val">deg</button>
         </div>
 
         <div class="section-header">Operating Constraints</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Trim mode solver constraint: Manual Collective, Target Thrust, or Target CT.">Trim Mode</button>
-          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">Target CT</button>
+          <button class="row-label-btn" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust.">Trim Mode</button>
+          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">RPM + Target CT</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
-        <div class="engineering-row">
+        <div class="engineering-row" id="row-operating-1">
           <button class="row-label-btn" id="lbl-operating-1">RPM</button>
           <input class="row-input" type="number" step="1" id="inp-operating-1" value="258" />
           <button class="row-unit-btn" id="unit-operating-1">rpm</button>
         </div>
-        <div class="engineering-row">
+        <div class="engineering-row" id="row-operating-2">
           <button class="row-label-btn" id="lbl-operating-2">Target CT</button>
           <input class="row-input" type="number" step="0.0005" id="inp-operating-2" value="0.0065" />
           <button class="row-unit-btn" id="unit-operating-2">[-]</button>
@@ -345,6 +384,20 @@ app.innerHTML = `
       </section>
     </div>
 
+    <!-- MODAL: OPTION SELECTOR (DROP-DOWN MODAL) -->
+    <div class="modal-overlay" id="modal-options-selector">
+      <div class="modal-card options-modal-card">
+        <div class="modal-header">
+          <div class="modal-title" id="options-selector-title">Select Option</div>
+          <button class="modal-close-btn" data-close="modal-options-selector">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="options-list" id="options-selector-list"></div>
+          <button class="action-btn" data-close="modal-options-selector" style="width: 100%; height: 44px;">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL: ROTOR MANAGER -->
     <div class="modal-overlay" id="modal-rotor-manager">
       <div class="modal-card">
@@ -432,11 +485,11 @@ app.innerHTML = `
             <div>
               <label style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Quantity Category</label>
               <select class="sweep-select" id="converter-category" style="width: 100%; margin-top: 4px;">
-                <option value="Speed">Speed & Velocity</option>
-                <option value="Thrust">Force & Thrust</option>
+                <option value="Speed">Speed &amp; Velocity</option>
+                <option value="Thrust">Force &amp; Thrust</option>
                 <option value="Power">Power</option>
-                <option value="Torque">Torque & Moment</option>
-                <option value="Radius">Length & Chord</option>
+                <option value="Torque">Torque &amp; Moment</option>
+                <option value="Radius">Length &amp; Chord</option>
                 <option value="Pressure">Pressure</option>
                 <option value="Density">Fluid Density</option>
               </select>
@@ -468,31 +521,116 @@ app.innerHTML = `
     <div class="modal-overlay" id="modal-settings">
       <div class="modal-card">
         <div class="modal-header">
-          <div class="modal-title">CALCULATOR SETTINGS</div>
+          <div class="modal-title">SETTINGS</div>
           <button class="modal-close-btn" data-close="modal-settings">×</button>
         </div>
         <div class="modal-body">
-          <div style="display: flex; flex-direction: column; gap: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-size: 15px; font-weight: 700;">Theme</div>
-                <div style="font-size: 12px; color: var(--text-muted);">Dark Stealth Cockpit or Light Technical</div>
+          <div class="settings-form-grid">
+            <div class="settings-section-title">Interface Options</div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Theme</div>
+                <div class="settings-row-sub">Dark Stealth Cockpit or Light Technical</div>
               </div>
-              <button class="action-btn" id="btn-setting-theme" style="width: 110px;">${currentTheme === "dark" ? "DARK" : "LIGHT"}</button>
+              <select class="settings-select" id="setting-theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-size: 15px; font-weight: 700;">Units Presentation</div>
-                <div style="font-size: 12px; color: var(--text-muted);">Default presentation units for outputs</div>
+
+            <div class="settings-section-title">Output Units and Format</div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Result Units System</div>
+                <div class="settings-row-sub">Dimensional outputs display</div>
               </div>
-              <button class="action-btn" id="btn-setting-units" style="width: 110px;">${unitSystem === "si" ? "SI (METRIC)" : "IMPERIAL"}</button>
+              <select class="settings-select" id="setting-units-system">
+                <option value="si">SI (Metric)</option>
+                <option value="imperial">Imperial</option>
+              </select>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-size: 15px; font-weight: 700;">Display Precision</div>
-                <div style="font-size: 12px; color: var(--text-muted);">Standard decimal digits or +1 Extra</div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Output Format</div>
+                <div class="settings-row-sub">Decimal precision for results</div>
               </div>
-              <button class="action-btn" id="btn-setting-precision" style="width: 110px;">${extraPrecision === 1 ? "+1 DECIMAL" : "STANDARD"}</button>
+              <select class="settings-select" id="setting-precision">
+                <option value="0">Standard</option>
+                <option value="1">+1 Extra Decimal</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Angle Interval</div>
+                <div class="settings-row-sub">Range representation for angles</div>
+              </div>
+              <select class="settings-select" id="setting-angle-format">
+                <option value="0/360">0° to 360°</option>
+                <option value="-180/180">-180° to +180°</option>
+              </select>
+            </div>
+
+            <div class="settings-section-title">Preferred Dimensional Units</div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Thrust Unit</div>
+              </div>
+              <select class="settings-select" id="setting-thrust-unit">
+                <option value="N">N</option>
+                <option value="lbf">lbf</option>
+                <option value="kgf">kgf</option>
+                <option value="kN">kN</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Power Unit</div>
+              </div>
+              <select class="settings-select" id="setting-power-unit">
+                <option value="kW">kW</option>
+                <option value="hp">hp</option>
+                <option value="W">W</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Torque Unit</div>
+              </div>
+              <select class="settings-select" id="setting-torque-unit">
+                <option value="N·m">N·m</option>
+                <option value="lb·ft">lb·ft</option>
+                <option value="kgf·m">kgf·m</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Speed Unit</div>
+              </div>
+              <select class="settings-select" id="setting-speed-unit">
+                <option value="m/s">m/s</option>
+                <option value="kt">kt</option>
+                <option value="km/h">km/h</option>
+                <option value="mph">mph</option>
+                <option value="ft/s">ft/s</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Pressure Unit</div>
+              </div>
+              <select class="settings-select" id="setting-pressure-unit">
+                <option value="hPa">hPa</option>
+                <option value="Pa">Pa</option>
+                <option value="mbar">mbar</option>
+                <option value="psi">psi</option>
+                <option value="atm">atm</option>
+                <option value="mmHg">mmHg</option>
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 18px;">
+              <button class="action-btn" id="btn-settings-reset" style="flex: 1; height: 44px; color: var(--accent-amber);">RESTORE DEFAULTS</button>
+              <button class="action-btn" id="btn-settings-save" style="flex: 1; height: 44px; color: var(--accent-green);">SAVE SETTINGS</button>
             </div>
           </div>
         </div>
@@ -501,30 +639,158 @@ app.innerHTML = `
 
     <!-- MODAL: HELP -->
     <div class="modal-overlay" id="modal-help">
-      <div class="modal-card">
+      <div class="modal-card" style="width: min(100%, 780px);">
         <div class="modal-header">
-          <div class="modal-title">THEORETICAL MODEL & EQUATIONS</div>
+          <div class="modal-title">PHYSICS &amp; EQUATIONS REFERENCE</div>
           <button class="modal-close-btn" data-close="modal-help">×</button>
         </div>
-        <div class="modal-body" style="font-size: 13.5px; line-height: 1.6; color: var(--text-main);">
-          <h3 style="color: var(--accent); margin-bottom: 8px;">zBET Blade Element Theory</h3>
-          <p style="margin-bottom: 12px;">RotorCalculator implements high-fidelity Blade Element Theory (BET) numerically coupled with Momentum Theory for rotary wings and propellers.</p>
-          <h4 style="color: var(--accent-green); margin-bottom: 6px;">1. Inflow Equation</h4>
-          <p style="margin-bottom: 12px; font-family: monospace; background: var(--header-bg); padding: 8px; border-radius: 6px;">
-            λi = CT / [2 * B² * √(μ² + (μz + λi)²)]
-          </p>
-          <h4 style="color: var(--accent-green); margin-bottom: 6px;">2. Thrust & Torque Coefficients</h4>
-          <p style="margin-bottom: 12px; font-family: monospace; background: var(--header-bg); padding: 8px; border-radius: 6px;">
-            CT = (a₀ / 2) * [θ₂ + ½ μ² θ₀ - λ i₁ - ½ μ λ₁s i₁]<br>
-            CQ = CQ,i + CQ,0<br>
-            CQ,i = k_ind * λi * CT + μz * CT - μ * CH,i
-          </p>
-          <h4 style="color: var(--accent-green); margin-bottom: 6px;">3. Sign Conventions</h4>
-          <p style="margin-bottom: 12px;">
-            • Advance ratio: μ = Vx / (ΩR) ≥ 0<br>
-            • Disk Angle of attack: α &gt; 0 indicates wind blowing from below (nose-up pitch).<br>
-            • Climb velocity: Vz &gt; 0 is vertical descent / climb flow convention.
-          </p>
+        <div class="modal-body">
+          <div class="help-content">
+            <p class="lead" style="color: var(--text-muted); margin-bottom: 16px;">
+              Offline aerodynamic and numerical reference for the Blade Element Theory (zBET) solver implemented in RotorCalculator.
+            </p>
+
+            <h2>1. Coordinate &amp; Sign Conventions</h2>
+            <table class="help-table">
+              <thead><tr><th>Quantity</th><th>Positive Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><b>+x, Vx</b></td><td>Forward, in the rotor hub reference plane.</td></tr>
+                <tr><td><b>+y</b></td><td>Starboard / right side of rotorcraft.</td></tr>
+                <tr><td><b>+z</b></td><td>Downward through the rotor disk.</td></tr>
+                <tr><td><b>Vz &gt; 0</b></td><td>Climb rate: relative wind arrives from above and flows downward.</td></tr>
+                <tr><td><b>μz &gt; 0</b></td><td>Downward relative-flow ratio along +z.</td></tr>
+                <tr><td><b>α &gt; 0</b></td><td>Angle of attack: relative wind arrives from below the disk.</td></tr>
+                <tr><td><b>T &gt; 0</b></td><td>Upward rotor thrust, opposing +z.</td></tr>
+                <tr><td><b>λi ≥ 0</b></td><td>Induced downwash velocity ratio in +z direction.</td></tr>
+              </tbody>
+            </table>
+            <div class="eq">μ = Vx / (ΩR)</div>
+            <div class="eq">μz = Vz / (ΩR) = −μ tan(α)</div>
+            <div class="eq">λ = μz + λi</div>
+            <div class="note"><b>Equivalent Inputs:</b> α, Vz, and μz describe the same axial flow state. They are alternative representations, not additive terms.</div>
+
+            <h2>2. Reference Blade Geometry</h2>
+            <p>Geometry uses a reference linear planform from the rotor axis to the tip. Root cutout defines where the active lifting blade begins without altering the reference chord law.</p>
+            <div class="eq">c(x) = c0 + (c1 − c0)x, &nbsp; 0 ≤ x ≤ 1</div>
+            <div class="eq">Sref,b = R (c0 + c1) / 2</div>
+            <div class="eq">AR = R² / Sref,b = 2R / (c0 + c1)</div>
+            <div class="eq">σref = Nb Sref,b / (πR²) = Nb / (π AR)</div>
+            <div class="eq">σgeom = (Nb / πR) ∫[x0..1] c(x) dx</div>
+            <div class="eq">σthrust = 3 ∫[x0..1] x² σ(x) dx</div>
+            <p>Editing Radius scales c0 and c1 proportionally, preserving σref, AR, and taper. Editing σref or AR scales both chords accordingly.</p>
+
+            <h2>3. Collective &amp; Operating Constraints (6 Trim Modes)</h2>
+            <p>Operating collective is a uniform pitch increment applied along the blade:</p>
+            <div class="eq">θroot,op = θroot + Δθ &nbsp;&nbsp;&nbsp; θtip,op = θtip + Δθ</div>
+            <table class="help-table">
+              <thead><tr><th>Prescribed Operating Pair</th><th>Solved Quantities</th></tr></thead>
+              <tbody>
+                <tr><td><b>RPM + Target CT</b></td><td>Collective Δθ and Thrust</td></tr>
+                <tr><td><b>RPM + Target Thrust</b></td><td>Collective Δθ and CT</td></tr>
+                <tr><td><b>RPM + Collective Δθ</b></td><td>Direct evaluation of CT and Thrust</td></tr>
+                <tr><td><b>Collective Δθ + Target CT</b></td><td>RPM and Thrust (when uniquely determined)</td></tr>
+                <tr><td><b>Collective Δθ + Target Thrust</b></td><td>RPM and CT</td></tr>
+                <tr><td><b>Target CT + Target Thrust</b></td><td>RPM and Collective Δθ</td></tr>
+              </tbody>
+            </table>
+
+            <h2>4. Mean Inflow &amp; Momentum Closure</h2>
+            <div class="eq">CT,momentum = 2 B² λi √(μ² + λ²)</div>
+            <div class="eq">CT,BET = CT,BET(μ, λ, pitch, geometry, inflow gradients)</div>
+            <p>zBET solves λi ≥ 0 iteratively such that blade-element thrust and momentum theory are mutually consistent.</p>
+
+            <h2>5. Inflow Gradient Models</h2>
+            <table class="help-table">
+              <thead><tr><th>Model</th><th>Formulation &amp; Harmonic Gradients</th></tr></thead>
+              <tbody>
+                <tr><td><b>Uniform</b></td><td>Benchmark without first-harmonic gradients (Kx = 0, Ky = 0).</td></tr>
+                <tr><td><b>Coleman Simple</b></td><td>Longitudinal gradient based on wake skew χ: Kx = tan(χ/2).</td></tr>
+                <tr><td><b>Coleman-Feingold</b></td><td>Longitudinal and lateral gradients with empirical factors.</td></tr>
+                <tr><td><b>Drees</b></td><td>Classical formulation: Kx = (4/3) [1 - cos(χ) - 1.8 μ²] / sin(χ), Ky = -2 μ.</td></tr>
+              </tbody>
+            </table>
+            <div class="eq">λd(x,ψ) = λ + x [λ1c cos(ψ) + λ1s sin(ψ)]</div>
+
+            <h2>6. Profile Drag, Tip Loss &amp; Compressibility</h2>
+            <h3>Profile Drag</h3>
+            <p>RotorCalculator evaluates profile drag using high-precision <b>Numerical Vectorial</b> 24-point Gauss-Legendre quadrature in both radial and azimuthal directions.</p>
+            <h3>Tip Loss</h3>
+            <p>Available models: <b>None</b> (B=1.0), <b>Fixed B</b>, and <b>Sissingh</b> thrust-coupled:</p>
+            <div class="eq">B(Sissingh) = 1 − √(2 CT) / Nb</div>
+            <h3>Prandtl-Glauert Compressibility</h3>
+            <div class="eq">Meff = (ΩR / asound) √(0.75² + 0.5 μ²)</div>
+            <div class="eq">a(Meff) = a0 / √max(0.01, 1 − Meff²), &nbsp; Meff ≤ 0.85</div>
+
+            <h2>7. Torque, Power &amp; Induced Factor (kind)</h2>
+            <div class="eq">CQ = CQ,i + CQ,0</div>
+            <div class="eq">Pshaft = Q Ω</div>
+            <div class="eq">CQ,i = kind λi CT + μz CT − μ CH,i</div>
+            <div class="eq">CP,air = kind λi CT + μz CT + CQ,0 + μ CH,0 = CQ + μ CH</div>
+            <p><b>kind</b> is the empirical induced power factor entered in Conditions (default 1.15).</p>
+
+            <h2>8. Efficiency Metrics</h2>
+            <div class="eq">FoM = [CT^(3/2) / √2] / [kind CT^(3/2) / √2 + CQ,0]</div>
+            <div class="eq">(L/D)eff = μ CT / CP,air</div>
+
+            <h2>9. Parameter Sweeps</h2>
+            <p>Any aerodynamic result can be plotted across advance ratio μx (or airspeed Vx). Supported multi-curve families include α, Vz, μz, and Inflow Models. Hover trim locking is available.</p>
+
+            <h2>10. Summary of Aerodynamic Coefficients</h2>
+            <table class="help-table">
+              <thead><tr><th>Coefficient</th><th>Definition &amp; Normalization</th></tr></thead>
+              <tbody>
+                <tr><td><b>CT</b></td><td>T / [ρ A (ΩR)²]</td></tr>
+                <tr><td><b>CQ, CPshaft</b></td><td>Q / [ρ A (ΩR)² R] = Pshaft / [ρ A (ΩR)³]</td></tr>
+                <tr><td><b>CQ,i, CQ,0</b></td><td>Induced and profile torque coefficients</td></tr>
+                <tr><td><b>CH, CH,i, CH,0</b></td><td>Total, induced, and profile longitudinal in-plane force coefficients</td></tr>
+                <tr><td><b>CY</b></td><td>Lateral side force coefficient</td></tr>
+                <tr><td><b>CMx, CMy</b></td><td>Hub roll and pitch moment coefficients</td></tr>
+                <tr><td><b>CP,air</b></td><td>Air power coefficient CQ + μ CH</td></tr>
+              </tbody>
+            </table>
+
+            <h2>11. Scope &amp; Applicable Regimes</h2>
+            <ul>
+              <li>Linear lift slope and baseline zero-lift drag coefficient cd0.</li>
+              <li>Numerical integration over 0 ≤ r/R ≤ B and 0 ≤ ψ ≤ 2π.</li>
+              <li>Ideal for conceptual design, eVTOL sizing, helicopter performance analysis, and educational simulation.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ABOUT -->
+    <div class="modal-overlay" id="modal-about">
+      <div class="modal-card" style="width: min(100%, 420px); text-align: center;">
+        <div class="modal-header">
+          <div class="modal-title">ABOUT ROTORCALCULATOR</div>
+          <button class="modal-close-btn" data-close="modal-about">×</button>
+        </div>
+        <div class="modal-body" style="padding: 24px;">
+          <img src="${iconUrl}" alt="RotorCalculator" style="width: 64px; height: 64px; border-radius: 12px; margin-bottom: 12px;" />
+          <h2 style="font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 4px;">RotorCalculator</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">High-Precision Blade Element Theory (zBET)</p>
+          <p style="font-size: 14px; margin-bottom: 6px;">Version 1.22 (Web &amp; PWA Edition)</p>
+          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 20px;">Gustavo José Zambrano</p>
+          <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PRIVACY -->
+    <div class="modal-overlay" id="modal-privacy">
+      <div class="modal-card" style="width: min(100%, 540px);">
+        <div class="modal-header">
+          <div class="modal-title">PRIVACY POLICY</div>
+          <button class="modal-close-btn" data-close="modal-privacy">×</button>
+        </div>
+        <div class="modal-body" style="font-size: 13.5px; line-height: 1.6;">
+          <h3 style="color: var(--accent); margin-bottom: 8px;">100% Offline &amp; Private</h3>
+          <p style="margin-bottom: 12px;">RotorCalculator runs entirely client-side in your web browser. No telemetry, analytics, personal information, or flight geometry data is collected, stored, or transmitted to external servers.</p>
+          <h3 style="color: var(--accent); margin-bottom: 8px;">Local Storage</h3>
+          <p style="margin-bottom: 12px;">Saved rotor configurations and user preferences are retained purely in your device's browser localStorage. You can export or clear your saved data at any time.</p>
+          <button class="action-btn" data-close="modal-privacy" style="width: 100%; height: 42px; margin-top: 14px;">CLOSE</button>
         </div>
       </div>
     </div>
@@ -538,8 +804,6 @@ const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) 
 
 function applyTheme(): void {
   document.documentElement.dataset.theme = currentTheme;
-  const btn = byId<HTMLButtonElement>("btn-setting-theme");
-  if (btn) btn.textContent = currentTheme === "dark" ? "DARK" : "LIGHT";
 }
 
 function updateTabIndicator(): void {
@@ -567,6 +831,38 @@ function activatePage(page: "geometry" | "conditions" | "results", swipeDir?: "l
   updateTabIndicator();
 }
 
+// Option Selector Modal
+function showOptionPicker(
+  title: string,
+  options: OptionItem[],
+  currentSelectedId: string,
+  onSelect: (id: string) => void
+): void {
+  byId("options-selector-title").textContent = title;
+  const list = byId("options-selector-list");
+  list.innerHTML = "";
+  options.forEach((opt) => {
+    const item = document.createElement("div");
+    const isSel = opt.id === currentSelectedId;
+    item.className = `option-item ${isSel ? "selected" : ""}`;
+    item.innerHTML = `
+      <div class="option-text-group">
+        <div class="option-label">${opt.label}</div>
+        ${opt.desc ? `<div class="option-desc">${opt.desc}</div>` : ""}
+      </div>
+      <div class="option-radio">
+        <div class="option-radio-inner"></div>
+      </div>
+    `;
+    item.addEventListener("click", () => {
+      closeModal("modal-options-selector");
+      onSelect(opt.id);
+    });
+    list.appendChild(item);
+  });
+  openModal("modal-options-selector");
+}
+
 // Recalculate & Render UI
 function recalculate(): void {
   activeGeom = resolveSolidity(activeGeom);
@@ -580,19 +876,25 @@ function renderDerivedGeometry(): void {
   byId("drv-sigma-thrust").textContent = formatResultValue(activeGeom.sigmaThrust, 4, extraPrecision);
   const taper = activeGeom.chordRoot > 0 ? activeGeom.chordTip / activeGeom.chordRoot : 1;
   byId("drv-taper").textContent = formatResultValue(taper, 3, extraPrecision);
+
   const diskArea = Math.PI * activeGeom.radius * activeGeom.radius;
-  byId("drv-disk-area").textContent = formatResultValue(diskArea, 1, extraPrecision);
-  const bladeArea = activeGeom.nBlades * 0.5 * (activeGeom.chordRoot + activeGeom.chordTip) * activeGeom.radius * (1 - activeGeom.rootCutout);
-  byId("drv-blade-area").textContent = formatResultValue(bladeArea, 2, extraPrecision);
+  const diskAreaUnit = byId("unit-disk-area")?.textContent?.trim() || "m²";
+  const diskAreaVal = convertValue(diskArea, "m²", diskAreaUnit);
+  byId("drv-disk-area").textContent = formatResultValue(diskAreaVal, 1, extraPrecision);
+
+  const bladeArea = referenceBladeArea(activeGeom) * activeGeom.nBlades * (1.0 - activeGeom.rootCutout);
+  const bladeAreaUnit = byId("unit-blade-area")?.textContent?.trim() || "m²";
+  const bladeAreaVal = convertValue(bladeArea, "m²", bladeAreaUnit);
+  byId("drv-blade-area").textContent = formatResultValue(bladeAreaVal, 2, extraPrecision);
+
   const twist = ((activeGeom.thetaTip - activeGeom.thetaRoot) * 180) / Math.PI;
   byId("drv-twist").textContent = `${formatResultValue(twist, 1, extraPrecision)}°`;
 }
 
 function renderResults(): void {
   const r = activeResults;
-  const isImp = unitSystem === "imperial";
 
-  // Badges
+  // Status Badges
   const badgeModel = byId("badge-model-status");
   const txtModel = byId("txt-model-status");
   txtModel.textContent = r.solutionValid ? (r.compressibilityWarning ? "CAUTION" : "CONVERGED") : "INVALID";
@@ -601,34 +903,34 @@ function renderResults(): void {
   const summary = byId("txt-solution-summary");
   summary.textContent = `θ0 = ${r.trimmedCollectiveDeg.toFixed(1)}° | RPM = ${r.trimmedRPM.toFixed(0)}`;
 
-  // Dimensional values (convert to imperial if requested)
-  const thrust = isImp ? r.thrustLbf : r.thrustN;
-  byId("res-thrust").textContent = formatResultValue(thrust, isImp ? 0 : 0, extraPrecision);
-  byId("unit-res-thrust").textContent = isImp ? "lbf" : "N";
+  // Dimensional Performance
+  const thrust = convertValue(r.thrustN, "N", prefThrustUnit);
+  byId("res-thrust").textContent = formatResultValue(thrust, 0, extraPrecision);
+  byId("unit-res-thrust").textContent = prefThrustUnit;
 
-  const power = isImp ? r.powerShaftHP : r.powerShaftKW;
+  const power = convertValue(r.powerShaftKW * 1000.0, "W", prefPowerUnit);
   byId("res-power").textContent = formatResultValue(power, 1, extraPrecision);
-  byId("unit-res-power").textContent = isImp ? "hp" : "kW";
+  byId("unit-res-power").textContent = prefPowerUnit;
 
-  const torque = isImp ? r.torqueLbft : r.torqueNm;
+  const torque = convertValue(r.torqueNm, "N·m", prefTorqueUnit);
   byId("res-torque").textContent = formatResultValue(torque, 1, extraPrecision);
-  byId("unit-res-torque").textContent = isImp ? "lb·ft" : "N·m";
+  byId("unit-res-torque").textContent = prefTorqueUnit;
 
-  const dragH = isImp ? r.dragHN * 0.224808943 : r.dragHN;
+  const dragH = convertValue(r.dragHN, "N", prefThrustUnit);
   byId("res-drag-h").textContent = formatResultValue(dragH, 1, extraPrecision);
-  byId("unit-res-drag-h").textContent = isImp ? "lbf" : "N";
+  byId("unit-res-drag-h").textContent = prefThrustUnit;
 
-  const sideY = isImp ? r.sideForceYLbf : r.sideForceYN;
+  const sideY = convertValue(r.sideForceYN, "N", prefThrustUnit);
   byId("res-side-y").textContent = formatResultValue(sideY, 1, extraPrecision);
-  byId("unit-res-side-y").textContent = isImp ? "lbf" : "N";
+  byId("unit-res-side-y").textContent = prefThrustUnit;
 
-  const rollMx = isImp ? r.rollMomentLbft : r.rollMomentNm;
+  const rollMx = convertValue(r.rollMomentNm, "N·m", prefTorqueUnit);
   byId("res-roll-mx").textContent = formatResultValue(rollMx, 1, extraPrecision);
-  byId("unit-res-roll-mx").textContent = isImp ? "lb·ft" : "N·m";
+  byId("unit-res-roll-mx").textContent = prefTorqueUnit;
 
-  const pitchMy = isImp ? r.pitchMomentLbft : r.pitchMomentNm;
+  const pitchMy = convertValue(r.pitchMomentNm, "N·m", prefTorqueUnit);
   byId("res-pitch-my").textContent = formatResultValue(pitchMy, 1, extraPrecision);
-  byId("unit-res-pitch-my").textContent = isImp ? "lb·ft" : "N·m";
+  byId("unit-res-pitch-my").textContent = prefTorqueUnit;
 
   // Aerodynamic Coefficients
   byId("res-ct").textContent = formatResultValue(r.CT, 5, extraPrecision);
@@ -657,34 +959,128 @@ function renderResults(): void {
   byId("res-rpm").textContent = formatResultValue(r.trimmedRPM, 1, extraPrecision);
   byId("res-coll").textContent = formatResultValue(r.trimmedCollectiveDeg, 2, extraPrecision);
   byId("res-op-mu").textContent = formatResultValue(r.operatingMu, 4, extraPrecision);
-  byId("res-op-vx").textContent = formatResultValue(isImp ? r.operatingVx * 1.94384449 : r.operatingVx, 1, extraPrecision);
-  byId("unit-res-vx").textContent = isImp ? "kt" : "m/s";
+
+  const vx = convertValue(r.operatingVx, "m/s", prefSpeedUnit);
+  byId("res-op-vx").textContent = formatResultValue(vx, 1, extraPrecision);
+  byId("unit-res-vx").textContent = prefSpeedUnit;
 
   byId("res-op-muz").textContent = formatResultValue(r.operatingMuZ, 4, extraPrecision);
-  byId("res-op-vz").textContent = formatResultValue(isImp ? r.operatingVz * 196.85 : r.operatingVz, 2, extraPrecision);
-  byId("unit-res-vz").textContent = isImp ? "ft/min" : "m/s";
+
+  const vzUnit = unitSystem === "imperial" ? "ft/min" : "m/s";
+  const vz = convertValue(r.operatingVz, "m/s", vzUnit);
+  byId("res-op-vz").textContent = formatResultValue(vz, 2, extraPrecision);
+  byId("unit-res-vz").textContent = vzUnit;
 
   byId("res-op-alpha").textContent = formatResultValue(r.operatingAlphaDeg, 2, extraPrecision);
-  byId("res-op-vtip").textContent = formatResultValue(isImp ? r.tipSpeed * 3.28084 : r.tipSpeed, 1, extraPrecision);
-  byId("unit-res-vtip").textContent = isImp ? "ft/s" : "m/s";
+
+  const vtipUnit = unitSystem === "imperial" ? "ft/s" : "m/s";
+  const vtip = convertValue(r.tipSpeed, "m/s", vtipUnit);
+  byId("res-op-vtip").textContent = formatResultValue(vtip, 1, extraPrecision);
+  byId("unit-res-vtip").textContent = vtipUnit;
 
   byId("res-op-mtip").textContent = formatResultValue(r.tipSpeed / r.speedOfSound, 3, extraPrecision);
   byId("res-op-madv").textContent = formatResultValue(r.advancingTipMach, 3, extraPrecision);
 
-  byId("res-op-alt").textContent = formatResultValue(isImp ? r.altitudeM * 3.28084 : r.altitudeM, 0, extraPrecision);
-  byId("unit-res-alt").textContent = isImp ? "ft" : "m";
+  const altUnit = unitSystem === "imperial" ? "ft" : "m";
+  const alt = convertValue(r.altitudeM, "m", altUnit);
+  byId("res-op-alt").textContent = formatResultValue(alt, 0, extraPrecision);
+  byId("unit-res-alt").textContent = altUnit;
 
-  byId("res-op-temp").textContent = formatResultValue(isImp ? r.temperatureC * 1.8 + 32 : r.temperatureC, 1, extraPrecision);
+  const tempUnit = unitSystem === "imperial" ? "°F" : "°C";
+  const temp = convertValue(r.temperatureC, "°C", tempUnit);
+  byId("res-op-temp").textContent = formatResultValue(temp, 1, extraPrecision);
+
   byId("res-op-rho").textContent = formatResultValue(r.densityRho, 4, extraPrecision);
-  byId("res-op-pres").textContent = formatResultValue(r.pressurePa / 100, 1, extraPrecision);
-  byId("res-op-sound").textContent = formatResultValue(isImp ? r.speedOfSound * 3.28084 : r.speedOfSound, 1, extraPrecision);
-  byId("unit-res-sound").textContent = isImp ? "ft/s" : "m/s";
+
+  const pres = convertValue(r.pressurePa, "Pa", prefPressureUnit);
+  byId("res-op-pres").textContent = formatResultValue(pres, 1, extraPrecision);
+  byId("unit-res-pres").textContent = prefPressureUnit;
+
+  const aSound = convertValue(r.speedOfSound, "m/s", vtipUnit);
+  byId("res-op-sound").textContent = formatResultValue(aSound, 1, extraPrecision);
+  byId("unit-res-sound").textContent = vtipUnit;
+}
+
+// Operating Controls Setup
+function refreshOperatingControls(): void {
+  const pair = activeCond.operatingPair;
+  const p1 = byId<HTMLInputElement>("inp-operating-1");
+  const p2 = byId<HTMLInputElement>("inp-operating-2");
+  const l1 = byId("lbl-operating-1");
+  const l2 = byId("lbl-operating-2");
+  const u1 = byId("unit-operating-1");
+  const u2 = byId("unit-operating-2");
+
+  const btnTrim = byId("btn-trim-mode");
+  const pairLabels: Record<string, string> = {
+    rpm_collective: "RPM + Collective",
+    rpm_ct: "RPM + Target CT",
+    rpm_thrust: "RPM + Target Thrust",
+    collective_ct: "Collective + Target CT",
+    collective_thrust: "Collective + Target Thrust",
+    ct_thrust: "Target CT + Target Thrust",
+  };
+  btnTrim.textContent = pairLabels[pair] || "RPM + Target CT";
+
+  const thrustUnit = prefThrustUnit;
+
+  if (pair === "rpm_collective") {
+    l1.textContent = "RPM";
+    u1.textContent = "rpm";
+    p1.value = activeCond.rpm.toFixed(0);
+
+    l2.textContent = "Collective Δθ";
+    u2.textContent = "deg";
+    p2.value = activeCond.collectiveDeg.toFixed(2);
+  } else if (pair === "rpm_ct") {
+    l1.textContent = "RPM";
+    u1.textContent = "rpm";
+    p1.value = activeCond.rpm.toFixed(0);
+
+    l2.textContent = "Target CT";
+    u2.textContent = "[-]";
+    p2.value = activeCond.targetCT.toFixed(5);
+  } else if (pair === "rpm_thrust") {
+    l1.textContent = "RPM";
+    u1.textContent = "rpm";
+    p1.value = activeCond.rpm.toFixed(0);
+
+    l2.textContent = "Target Thrust";
+    u2.textContent = thrustUnit;
+    p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
+  } else if (pair === "collective_ct") {
+    l1.textContent = "Collective Δθ";
+    u1.textContent = "deg";
+    p1.value = activeCond.collectiveDeg.toFixed(2);
+
+    l2.textContent = "Target CT";
+    u2.textContent = "[-]";
+    p2.value = activeCond.targetCT.toFixed(5);
+  } else if (pair === "collective_thrust") {
+    l1.textContent = "Collective Δθ";
+    u1.textContent = "deg";
+    p1.value = activeCond.collectiveDeg.toFixed(2);
+
+    l2.textContent = "Target Thrust";
+    u2.textContent = thrustUnit;
+    p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
+  } else if (pair === "ct_thrust") {
+    l1.textContent = "Target CT";
+    u1.textContent = "[-]";
+    p1.value = activeCond.targetCT.toFixed(5);
+
+    l2.textContent = "Target Thrust";
+    u2.textContent = thrustUnit;
+    p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
+  }
 }
 
 // Load Rotor Data into Inputs
 function loadRotorToUI(rotor: StoredRotor): void {
   currentRotor = rotor;
   activeGeom = cloneGeometry(rotor.geom);
+  isInternalSync = true;
+
   byId("display-active-rotor-name").textContent = rotor.name;
   byId<HTMLInputElement>("inp-rotor-name").value = rotor.name;
 
@@ -700,7 +1096,7 @@ function loadRotorToUI(rotor: StoredRotor): void {
   byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
 
   byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
-  byId<HTMLInputElement>("inp-aspect-ratio").value = (activeGeom.radius / activeGeom.chordRoot).toFixed(1);
+  byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
 
   const thRootUnit = byId("unit-theta-root")?.textContent?.trim() || "deg";
   const degRoot = (activeGeom.thetaRoot * 180) / Math.PI;
@@ -714,24 +1110,47 @@ function loadRotorToUI(rotor: StoredRotor): void {
   byId<HTMLInputElement>("inp-lift-slope").value = convertValue(activeGeom.liftSlope0, "rad⁻¹", a0Unit).toFixed(2);
 
   byId<HTMLInputElement>("inp-cd0").value = activeGeom.cd0.toString();
-  byId<HTMLButtonElement>("btn-tiploss-mode").textContent = activeGeom.tipLossMode.toUpperCase();
+
+  const tipModes: Record<string, string> = { none: "NONE", fixed: "FIXED B", sissingh: "SISSINGH" };
+  byId<HTMLButtonElement>("btn-tiploss-mode").textContent = tipModes[activeGeom.tipLossMode] || "SISSINGH";
   byId<HTMLInputElement>("inp-tiploss-b").value = activeGeom.tipLossB.toString();
+
   byId<HTMLButtonElement>("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "ON (PG)" : "OFF";
   byId<HTMLButtonElement>("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent-green)" : "var(--text-muted)";
+
+  refreshOperatingControls();
   recalculate();
+  isInternalSync = false;
 }
 
+// Bidirectional Input Listeners & Cross-Updating
 function bindInputListeners(): void {
-  // Geometry Inputs
-  const onGeomChange = () => {
-    activeGeom.name = byId<HTMLInputElement>("inp-rotor-name").value.trim() || "Custom Rotor";
+  // 1. Radius R Change (scales chords to preserve Aspect Ratio & Solidity)
+  byId("inp-radius").addEventListener("input", () => {
+    if (isInternalSync) return;
     const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
-    const rVal = parseFloat(byId<HTMLInputElement>("inp-radius").value) || 5.0;
-    activeGeom.radius = convertValue(rVal, rUnit, "m");
+    const rVal = parseFloat(byId<HTMLInputElement>("inp-radius").value);
+    if (rVal > 0) {
+      isInternalSync = true;
+      const rSI = convertValue(rVal, rUnit, "m");
+      activeGeom = scaleRadiusPreserveReference(activeGeom, rSI);
 
-    activeGeom.nBlades = parseInt(byId<HTMLInputElement>("inp-nblades").value, 10) || 4;
-    activeGeom.rootCutout = parseFloat(byId<HTMLInputElement>("inp-cutout").value) || 0.15;
+      const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+      const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+      byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
+      byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
+      byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+      byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
 
+      recalculate();
+      isInternalSync = false;
+    }
+  });
+
+  // 2. Chords, Blades, or Cutout Change (recalculates Solidity & Aspect Ratio)
+  const onDirectPlanformChange = () => {
+    if (isInternalSync) return;
+    isInternalSync = true;
     const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
     const cRootVal = parseFloat(byId<HTMLInputElement>("inp-chord-root").value) || 0.3;
     activeGeom.chordRoot = convertValue(cRootVal, cRootUnit, "m");
@@ -740,92 +1159,173 @@ function bindInputListeners(): void {
     const cTipVal = parseFloat(byId<HTMLInputElement>("inp-chord-tip").value) || 0.3;
     activeGeom.chordTip = convertValue(cTipVal, cTipUnit, "m");
 
-    const thRootUnit = byId("unit-theta-root")?.textContent?.trim() || "deg";
-    const tRoot = parseFloat(byId<HTMLInputElement>("inp-theta-root").value) || 0;
-    const tRootDeg = convertValue(tRoot, thRootUnit, "deg");
-    activeGeom.thetaRoot = (tRootDeg * Math.PI) / 180;
+    activeGeom.nBlades = parseInt(byId<HTMLInputElement>("inp-nblades").value, 10) || 4;
+    activeGeom.rootCutout = parseFloat(byId<HTMLInputElement>("inp-cutout").value) || 0.15;
 
-    const thTipUnit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
-    const tTip = parseFloat(byId<HTMLInputElement>("inp-theta-tip").value) || 0;
-    const tTipDeg = convertValue(tTip, thTipUnit, "deg");
-    activeGeom.thetaTip = (tTipDeg * Math.PI) / 180;
+    activeGeom.solidityMode = "chords";
+    activeGeom = resolveSolidity(activeGeom);
 
-    const a0Unit = byId("unit-lift-slope")?.textContent?.trim() || "rad⁻¹";
-    const a0Val = parseFloat(byId<HTMLInputElement>("inp-lift-slope").value) || 5.73;
-    activeGeom.liftSlope0 = convertValue(a0Val, a0Unit, "rad⁻¹");
+    byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+    byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
 
-    activeGeom.cd0 = parseFloat(byId<HTMLInputElement>("inp-cd0").value) || 0.009;
-    activeGeom.tipLossB = parseFloat(byId<HTMLInputElement>("inp-tiploss-b").value) || 0.97;
-    byId("display-active-rotor-name").textContent = activeGeom.name;
     recalculate();
+    isInternalSync = false;
   };
 
-  [
-    "inp-rotor-name",
-    "inp-radius",
-    "inp-nblades",
-    "inp-cutout",
-    "inp-chord-root",
-    "inp-chord-tip",
-    "inp-theta-root",
-    "inp-theta-tip",
-    "inp-lift-slope",
-    "inp-cd0",
-    "inp-tiploss-b",
-  ].forEach((id) => byId(id).addEventListener("input", onGeomChange));
+  ["inp-chord-root", "inp-chord-tip", "inp-nblades", "inp-cutout"].forEach((id) => {
+    byId(id).addEventListener("input", onDirectPlanformChange);
+  });
+
+  // 3. Solidity Change (scales chords to match target sigma_ref)
+  byId("inp-sigma-ref").addEventListener("input", () => {
+    if (isInternalSync) return;
+    const sVal = parseFloat(byId<HTMLInputElement>("inp-sigma-ref").value);
+    if (sVal > 0) {
+      isInternalSync = true;
+      activeGeom = scaleChordsToSigmaRef(activeGeom, sVal);
+
+      const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+      const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+      byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
+      byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
+      byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
+
+      recalculate();
+      isInternalSync = false;
+    }
+  });
+
+  // 4. Aspect Ratio Change (scales chords to match target aspect ratio)
+  byId("inp-aspect-ratio").addEventListener("input", () => {
+    if (isInternalSync) return;
+    const arVal = parseFloat(byId<HTMLInputElement>("inp-aspect-ratio").value);
+    if (arVal > 0) {
+      isInternalSync = true;
+      activeGeom = scaleChordsToAspectRatio(activeGeom, arVal);
+
+      const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+      const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+      byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
+      byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
+      byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+
+      recalculate();
+      isInternalSync = false;
+    }
+  });
+
+  // Other Geometry inputs
+  byId("inp-rotor-name").addEventListener("input", () => {
+    activeGeom.name = byId<HTMLInputElement>("inp-rotor-name").value.trim() || "Custom Rotor";
+    byId("display-active-rotor-name").textContent = activeGeom.name;
+  });
+
+  byId("inp-theta-root").addEventListener("input", () => {
+    const unit = byId("unit-theta-root")?.textContent?.trim() || "deg";
+    const val = parseFloat(byId<HTMLInputElement>("inp-theta-root").value) || 0;
+    activeGeom.thetaRoot = (convertValue(val, unit, "deg") * Math.PI) / 180;
+    recalculate();
+  });
+
+  byId("inp-theta-tip").addEventListener("input", () => {
+    const unit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
+    const val = parseFloat(byId<HTMLInputElement>("inp-theta-tip").value) || 0;
+    activeGeom.thetaTip = (convertValue(val, unit, "deg") * Math.PI) / 180;
+    recalculate();
+  });
+
+  byId("inp-lift-slope").addEventListener("input", () => {
+    const unit = byId("unit-lift-slope")?.textContent?.trim() || "rad⁻¹";
+    const val = parseFloat(byId<HTMLInputElement>("inp-lift-slope").value) || 5.73;
+    activeGeom.liftSlope0 = convertValue(val, unit, "rad⁻¹");
+    recalculate();
+  });
+
+  byId("inp-cd0").addEventListener("input", () => {
+    activeGeom.cd0 = parseFloat(byId<HTMLInputElement>("inp-cd0").value) || 0.009;
+    recalculate();
+  });
+
+  byId("inp-tiploss-b").addEventListener("input", () => {
+    activeGeom.tipLossB = parseFloat(byId<HTMLInputElement>("inp-tiploss-b").value) || 0.97;
+    recalculate();
+  });
 
   // Condition Inputs
-  const onCondChange = () => {
-    const altUnit = byId("unit-altitude")?.textContent?.trim() || "m";
-    const altVal = parseFloat(byId<HTMLInputElement>("inp-altitude").value) || 0;
-    activeCond.altitudeM = convertValue(altVal, altUnit, "m");
+  byId("inp-altitude").addEventListener("input", () => {
+    const unit = byId("unit-altitude")?.textContent?.trim() || "m";
+    const val = parseFloat(byId<HTMLInputElement>("inp-altitude").value) || 0;
+    activeCond.altitudeM = convertValue(val, unit, "m");
+    recalculate();
+  });
 
-    const tempUnit = byId("unit-temperature")?.textContent?.trim() || "°C";
-    const tempVal = parseFloat(byId<HTMLInputElement>("inp-temperature").value) || 15;
-    activeCond.temperatureC = convertValue(tempVal, tempUnit, "°C");
+  byId("inp-temperature").addEventListener("input", () => {
+    const unit = byId("unit-temperature")?.textContent?.trim() || "°C";
+    const val = parseFloat(byId<HTMLInputElement>("inp-temperature").value) || 15;
+    activeCond.temperatureC = convertValue(val, unit, "°C");
+    recalculate();
+  });
 
-    const horizVal = parseFloat(byId<HTMLInputElement>("inp-horiz-val").value) || 0;
+  byId("inp-horiz-val").addEventListener("input", () => {
+    const val = parseFloat(byId<HTMLInputElement>("inp-horiz-val").value) || 0;
     if (activeCond.horizontalMode === "vx") {
-      const vxUnit = byId("unit-horiz-val")?.textContent?.trim() || "m/s";
-      activeCond.horizontalValue = convertValue(horizVal, vxUnit, "m/s");
+      const unit = byId("unit-horiz-val")?.textContent?.trim() || "m/s";
+      activeCond.horizontalValue = convertValue(val, unit, "m/s");
     } else {
-      activeCond.horizontalValue = horizVal;
+      activeCond.horizontalValue = val;
     }
+    recalculate();
+  });
 
-    const axialVal = parseFloat(byId<HTMLInputElement>("inp-axial-val").value) || 0;
+  byId("inp-axial-val").addEventListener("input", () => {
+    const val = parseFloat(byId<HTMLInputElement>("inp-axial-val").value) || 0;
     if (activeCond.axialMode === "vz") {
-      const vzUnit = byId("unit-axial-val")?.textContent?.trim() || "m/s";
-      activeCond.axialValue = convertValue(axialVal, vzUnit, "m/s");
+      const unit = byId("unit-axial-val")?.textContent?.trim() || "m/s";
+      activeCond.axialValue = convertValue(val, unit, "m/s");
     } else {
-      activeCond.axialValue = axialVal;
+      activeCond.axialValue = val;
     }
+    recalculate();
+  });
 
-    activeCond.rpm = parseFloat(byId<HTMLInputElement>("inp-operating-1").value) || 258;
-    const op2Val = parseFloat(byId<HTMLInputElement>("inp-operating-2").value) || 0;
-    if (activeCond.operatingPair === "rpm_ct") {
-      activeCond.targetCT = op2Val;
-    } else if (activeCond.operatingPair === "rpm_thrust") {
-      const tUnit = byId("unit-operating-2")?.textContent?.trim() || "N";
-      activeCond.targetThrustN = convertValue(op2Val, tUnit, "N");
-    } else {
-      activeCond.collectiveDeg = op2Val;
-    }
+  byId("inp-kind").addEventListener("input", () => {
     activeCond.kInd = parseFloat(byId<HTMLInputElement>("inp-kind").value) || 1.15;
+    recalculate();
+  });
+
+  // Operating Pair Inputs (1 and 2)
+  const onOperatingInput1 = () => {
+    const val = parseFloat(byId<HTMLInputElement>("inp-operating-1").value) || 0;
+    const pair = activeCond.operatingPair;
+    if (pair === "rpm_collective" || pair === "rpm_ct" || pair === "rpm_thrust") {
+      activeCond.rpm = val;
+    } else if (pair === "collective_ct" || pair === "collective_thrust") {
+      activeCond.collectiveDeg = val;
+    } else if (pair === "ct_thrust") {
+      activeCond.targetCT = val;
+    }
     recalculate();
   };
 
-  [
-    "inp-altitude",
-    "inp-temperature",
-    "inp-horiz-val",
-    "inp-axial-val",
-    "inp-operating-1",
-    "inp-operating-2",
-    "inp-kind",
-  ].forEach((id) => byId(id).addEventListener("input", onCondChange));
+  const onOperatingInput2 = () => {
+    const val = parseFloat(byId<HTMLInputElement>("inp-operating-2").value) || 0;
+    const pair = activeCond.operatingPair;
+    if (pair === "rpm_collective") {
+      activeCond.collectiveDeg = val;
+    } else if (pair === "rpm_ct" || pair === "collective_ct") {
+      activeCond.targetCT = val;
+    } else if (pair === "rpm_thrust" || pair === "collective_thrust" || pair === "ct_thrust") {
+      const unit = byId("unit-operating-2")?.textContent?.trim() || "N";
+      activeCond.targetThrustN = convertValue(val, unit, "N");
+    }
+    recalculate();
+  };
+
+  byId("inp-operating-1").addEventListener("input", onOperatingInput1);
+  byId("inp-operating-2").addEventListener("input", onOperatingInput2);
 }
 
-// Dialog Controls
+// Modal Control Helpers
 function openModal(id: string): void {
   byId(id)?.classList.add("open");
 }
@@ -848,19 +1348,512 @@ function bindModalListeners(): void {
     });
   });
 
-  byId("btn-header-settings").addEventListener("click", () => openModal("modal-settings"));
-  byId("btn-header-help").addEventListener("click", () => openModal("modal-help"));
-  byId("btn-header-unit").addEventListener("click", () => {
-    populateConverterUnits();
-    openModal("modal-unit-converter");
+  // Topbar 3-Dot Popup Menu Toggle
+  const menuBtn = byId("btn-main-menu");
+  const menu = byId("main-popup-menu");
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.hidden = !menu.hidden;
   });
+
+  document.addEventListener("click", (e) => {
+    if (!menu.hidden && !(e.target as HTMLElement)?.closest(".popup-menu") && e.target !== menuBtn) {
+      menu.hidden = true;
+    }
+  });
+
+  // Popup Menu Item Handlers
+  menu.querySelectorAll<HTMLButtonElement>(".popup-menu-item[data-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      menu.hidden = true;
+      const action = btn.dataset.action;
+      if (action === "settings") {
+        openModal("modal-settings");
+      } else if (action === "units") {
+        populateConverterUnits();
+        openModal("modal-unit-converter");
+      } else if (action === "help") {
+        openModal("modal-help");
+      } else if (action === "restore") {
+        if (confirm("Restore factory rotor presets? Any unsaved edits will be reset.")) {
+          storedRotors = resetToFactoryPresets();
+          loadRotorToUI(storedRotors[0]);
+          alert("Factory rotor presets restored successfully.");
+        }
+      } else if (action === "export") {
+        byId<HTMLButtonElement>("btn-manager-export").click();
+      } else if (action === "import") {
+        byId<HTMLButtonElement>("btn-manager-import").click();
+      } else if (action === "about") {
+        openModal("modal-about");
+      } else if (action === "privacy") {
+        openModal("modal-privacy");
+      }
+    });
+  });
+
   byId("active-rotor-bar").addEventListener("click", () => {
     renderRotorManagerList();
     openModal("modal-rotor-manager");
   });
+
   byId("btn-open-sweep").addEventListener("click", () => {
     initSweepModal();
     openModal("modal-sweep");
+  });
+}
+
+// Selector Dropdown Buttons (Modal Option Selectors)
+function bindSelectorButtons(): void {
+  // 1. Airfoil Selection Modal
+  const airfoils: { id: string; name: string; a0: number; cd0: number; desc: string }[] = [
+    { id: "naca0012", name: "NACA 0012", a0: 5.73, cd0: 0.009, desc: "Symmetrical classical benchmark rotor airfoil" },
+    { id: "naca23012", name: "NACA 23012", a0: 5.85, cd0: 0.0085, desc: "Moderate camber, low profile pitching moment" },
+    { id: "vr7", name: "VR-7", a0: 5.9, cd0: 0.0095, desc: "High transonic drag-divergence Boeing Vertol section" },
+    { id: "sc1095", name: "SC1095", a0: 6.0, cd0: 0.0088, desc: "Sikorsky advanced main rotor high-lift airfoil" },
+    { id: "clarky", name: "Clark Y", a0: 5.65, cd0: 0.01, desc: "Flat-bottom high efficiency propeller section" },
+    { id: "selig8036", name: "Selig S8036", a0: 5.7, cd0: 0.011, desc: "Low Reynolds number optimized UAV/drone airfoil" },
+  ];
+
+  byId("btn-select-airfoil").addEventListener("click", () => {
+    const curA0 = activeGeom.liftSlope0;
+    const curCd0 = activeGeom.cd0;
+    let currentId = "sc1095";
+    const match = airfoils.find((af) => Math.abs(af.a0 - curA0) < 0.05 && Math.abs(af.cd0 - curCd0) < 0.001);
+    if (match) currentId = match.id;
+
+    showOptionPicker(
+      "Airfoil Section · sets a0 and Cd0",
+      airfoils.map((af) => ({
+        id: af.id,
+        label: af.name,
+        desc: `a0 = ${af.a0} rad⁻¹ · Cd0 = ${af.cd0} — ${af.desc}`,
+      })),
+      currentId,
+      (selectedId) => {
+        const sel = airfoils.find((af) => af.id === selectedId);
+        if (sel) {
+          activeGeom.liftSlope0 = sel.a0;
+          activeGeom.cd0 = sel.cd0;
+          byId("btn-select-airfoil").textContent = sel.name;
+          byId<HTMLInputElement>("inp-lift-slope").value = sel.a0.toString();
+          byId<HTMLInputElement>("inp-cd0").value = sel.cd0.toString();
+          recalculate();
+        }
+      }
+    );
+  });
+
+  // 2. Trim Mode Modal (All 6 pairs)
+  const trimModes: { id: FlightCondition["operatingPair"]; label: string; desc: string }[] = [
+    { id: "rpm_ct", label: "RPM + Target CT", desc: "Prescribe RPM & Target CT; solves Collective Δθ and Thrust" },
+    { id: "rpm_thrust", label: "RPM + Target Thrust", desc: "Prescribe RPM & Target Thrust; solves Collective Δθ and CT" },
+    { id: "rpm_collective", label: "RPM + Collective Δθ", desc: "Prescribe RPM & Collective pitch increment; direct evaluation" },
+    { id: "collective_ct", label: "Collective Δθ + Target CT", desc: "Prescribe Collective & CT; solves unique rotor RPM" },
+    { id: "collective_thrust", label: "Collective Δθ + Target Thrust", desc: "Prescribe Collective & Thrust; solves rotor RPM and CT" },
+    { id: "ct_thrust", label: "Target CT + Target Thrust", desc: "Prescribe Target CT & Thrust; solves both RPM and Collective" },
+  ];
+
+  byId("btn-trim-mode").addEventListener("click", () => {
+    showOptionPicker(
+      "Trim Mode · prescribe any two",
+      trimModes,
+      activeCond.operatingPair,
+      (modeId) => {
+        if (activeResults.solutionValid) {
+          activeCond.rpm = activeResults.trimmedRPM;
+          activeCond.collectiveDeg = activeResults.trimmedCollectiveDeg;
+          activeCond.targetCT = Math.max(1e-6, activeResults.CT);
+          activeCond.targetThrustN = Math.max(1.0, activeResults.thrustN);
+        }
+        activeCond.operatingPair = modeId as FlightCondition["operatingPair"];
+        refreshOperatingControls();
+        recalculate();
+      }
+    );
+  });
+
+  // 3. Tip-Loss Model Modal
+  const tipModes: { id: RotorGeometry["tipLossMode"]; label: string; desc: string }[] = [
+    { id: "none", label: "None", desc: "Full aerodynamic span effective (B = 1.0)" },
+    { id: "fixed", label: "Fixed B", desc: "Prescribed tip-loss factor entered in Tip Factor B" },
+    { id: "sissingh", label: "Sissingh", desc: "Iterated thrust-dependent tip-loss factor: B = 1 - √(2CT)/Nb" },
+  ];
+
+  byId("btn-tiploss-mode").addEventListener("click", () => {
+    showOptionPicker(
+      "Tip-Loss Model",
+      tipModes,
+      activeGeom.tipLossMode,
+      (modeId) => {
+        activeGeom.tipLossMode = modeId as RotorGeometry["tipLossMode"];
+        const labels: Record<string, string> = { none: "NONE", fixed: "FIXED B", sissingh: "SISSINGH" };
+        byId("btn-tiploss-mode").textContent = labels[activeGeom.tipLossMode];
+        recalculate();
+      }
+    );
+  });
+
+  // 4. Compressibility Model Modal
+  const compModes: { id: string; label: string; desc: string }[] = [
+    { id: "off", label: "Off", desc: "No subsonic compressibility correction" },
+    { id: "on", label: "On (Prandtl-Glauert)", desc: "Compressibility scaling on lift slope via effective Mach Meff" },
+  ];
+
+  byId("btn-compressibility").addEventListener("click", () => {
+    showOptionPicker(
+      "Compressibility Model",
+      compModes,
+      activeGeom.usePrandtlGlauert ? "on" : "off",
+      (selId) => {
+        activeGeom.usePrandtlGlauert = selId === "on";
+        byId("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "ON (PG)" : "OFF";
+        byId("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent-green)" : "var(--text-muted)";
+        recalculate();
+      }
+    );
+  });
+
+  // 5. Inflow Model Modal
+  const inflowModes: { id: FlightCondition["inflowModel"]; label: string; desc: string }[] = [
+    { id: "uniform", label: "Uniform", desc: "Benchmark without first-harmonic gradients (Kx = 0, Ky = 0)" },
+    { id: "coleman_simple", label: "Coleman Simple", desc: "Longitudinal gradient proportional to wake skew angle" },
+    { id: "coleman_feingold", label: "Coleman-Feingold", desc: "Longitudinal and lateral gradients with empirical factors" },
+    { id: "drees", label: "Drees", desc: "Classical forward-flight longitudinal & lateral formulation" },
+  ];
+
+  byId("btn-inflow-model").addEventListener("click", () => {
+    showOptionPicker(
+      "Inflow Model",
+      inflowModes,
+      activeCond.inflowModel,
+      (selId) => {
+        activeCond.inflowModel = selId as FlightCondition["inflowModel"];
+        const labels: Record<string, string> = {
+          uniform: "Uniform",
+          coleman_simple: "Coleman Simple",
+          coleman_feingold: "Coleman-Feingold",
+          drees: "Drees",
+        };
+        byId("btn-inflow-model").textContent = labels[activeCond.inflowModel];
+        recalculate();
+      }
+    );
+  });
+
+  // 6. Horizontal Flow Representation Modal (mu vs Vx)
+  const horizModes: { id: "mu" | "vx"; label: string; desc: string }[] = [
+    { id: "mu", label: "Advance Ratio μx [-]", desc: "Non-dimensional forward speed Vx / (ΩR)" },
+    { id: "vx", label: "Airspeed Vx", desc: "Dimensional horizontal forward speed" },
+  ];
+
+  byId("btn-toggle-horiz-mode").addEventListener("click", () => {
+    showOptionPicker(
+      "Horizontal Flow Representation",
+      horizModes,
+      activeCond.horizontalMode,
+      (selId) => {
+        if (selId === "vx") {
+          activeCond.horizontalMode = "vx";
+          activeCond.horizontalValue = activeResults.operatingVx;
+          byId("btn-toggle-horiz-mode").textContent = "Vx ▾";
+          byId("unit-horiz-val").textContent = prefSpeedUnit;
+          byId<HTMLInputElement>("inp-horiz-val").value = convertValue(activeCond.horizontalValue, "m/s", prefSpeedUnit).toFixed(1);
+        } else {
+          activeCond.horizontalMode = "mu";
+          activeCond.horizontalValue = activeResults.operatingMu;
+          byId("btn-toggle-horiz-mode").textContent = "μx ▾";
+          byId("unit-horiz-val").textContent = "[-]";
+          byId<HTMLInputElement>("inp-horiz-val").value = activeCond.horizontalValue.toFixed(3);
+        }
+        recalculate();
+      }
+    );
+  });
+
+  // 7. Axial Flow Representation Modal (alpha vs vz vs muz)
+  const axialModes: { id: "alpha" | "vz" | "muz"; label: string; desc: string }[] = [
+    { id: "alpha", label: "Angle of Attack α [deg]", desc: "Rotor disk angle of attack (α > 0 for climb/wind from below)" },
+    { id: "vz", label: "Climb Speed Vz", desc: "Dimensional vertical velocity (Vz > 0 downward through disk)" },
+    { id: "muz", label: "Axial Ratio μz [-]", desc: "Non-dimensional axial velocity Vz / (ΩR)" },
+  ];
+
+  byId("btn-toggle-axial-mode").addEventListener("click", () => {
+    showOptionPicker(
+      "Axial Flow Representation",
+      axialModes,
+      activeCond.axialMode,
+      (selId) => {
+        activeCond.axialMode = selId as "alpha" | "vz" | "muz";
+        if (selId === "alpha") {
+          activeCond.axialValue = activeResults.operatingAlphaDeg;
+          byId("btn-toggle-axial-mode").textContent = "α ▾";
+          byId("unit-axial-val").textContent = "deg";
+          byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(1);
+        } else if (selId === "vz") {
+          activeCond.axialValue = activeResults.operatingVz;
+          const vzUnit = unitSystem === "imperial" ? "ft/min" : "m/s";
+          byId("btn-toggle-axial-mode").textContent = "Vz ▾";
+          byId("unit-axial-val").textContent = vzUnit;
+          byId<HTMLInputElement>("inp-axial-val").value = convertValue(activeCond.axialValue, "m/s", vzUnit).toFixed(2);
+        } else {
+          activeCond.axialValue = activeResults.operatingMuZ;
+          byId("btn-toggle-axial-mode").textContent = "μz ▾";
+          byId("unit-axial-val").textContent = "[-]";
+          byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(4);
+        }
+        recalculate();
+      }
+    );
+  });
+}
+
+// Unit Buttons Binding with Modal Picker
+function bindUnitButtons(): void {
+  const configs = [
+    {
+      btnId: "unit-radius",
+      fieldName: "Radius R",
+      units: ["m", "ft", "in"],
+      getSI: () => activeGeom.radius,
+      setSI: (v: number) => {
+        activeGeom = scaleRadiusPreserveReference(activeGeom, v);
+      },
+      updateUI: (val: number, u: string) => {
+        byId<HTMLInputElement>("inp-radius").value = val.toFixed(2);
+        const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+        const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+        byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
+        byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
+        byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+        byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
+      },
+    },
+    {
+      btnId: "unit-chord-root",
+      fieldName: "Root Chord c0",
+      units: ["m", "ft", "in", "mm"],
+      getSI: () => activeGeom.chordRoot,
+      setSI: (v: number) => { activeGeom.chordRoot = v; activeGeom = resolveSolidity(activeGeom); },
+      updateUI: (val: number) => {
+        byId<HTMLInputElement>("inp-chord-root").value = val.toFixed(3);
+        byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+        byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
+      },
+    },
+    {
+      btnId: "unit-chord-tip",
+      fieldName: "Tip Chord c1",
+      units: ["m", "ft", "in", "mm"],
+      getSI: () => activeGeom.chordTip,
+      setSI: (v: number) => { activeGeom.chordTip = v; activeGeom = resolveSolidity(activeGeom); },
+      updateUI: (val: number) => {
+        byId<HTMLInputElement>("inp-chord-tip").value = val.toFixed(3);
+        byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+        byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
+      },
+    },
+    {
+      btnId: "unit-theta-root",
+      fieldName: "Root Pitch",
+      units: ["deg", "rad"],
+      getSI: () => (activeGeom.thetaRoot * 180) / Math.PI,
+      setSI: (v: number) => { activeGeom.thetaRoot = (v * Math.PI) / 180; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-theta-root").value = val.toFixed(1); },
+    },
+    {
+      btnId: "unit-theta-tip",
+      fieldName: "Tip Pitch",
+      units: ["deg", "rad"],
+      getSI: () => (activeGeom.thetaTip * 180) / Math.PI,
+      setSI: (v: number) => { activeGeom.thetaTip = (v * Math.PI) / 180; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-theta-tip").value = val.toFixed(1); },
+    },
+    {
+      btnId: "unit-lift-slope",
+      fieldName: "Lift Slope a0",
+      units: ["rad⁻¹", "deg⁻¹"],
+      getSI: () => activeGeom.liftSlope0,
+      setSI: (v: number) => { activeGeom.liftSlope0 = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-lift-slope").value = val.toFixed(2); },
+    },
+    {
+      btnId: "unit-altitude",
+      fieldName: "Altitude",
+      units: ["m", "ft", "km"],
+      getSI: () => activeCond.altitudeM,
+      setSI: (v: number) => { activeCond.altitudeM = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-altitude").value = val.toFixed(0); },
+    },
+    {
+      btnId: "unit-temperature",
+      fieldName: "Temperature",
+      units: ["°C", "°F", "K"],
+      getSI: () => activeCond.temperatureC,
+      setSI: (v: number) => { activeCond.temperatureC = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-temperature").value = val.toFixed(1); },
+    },
+    {
+      btnId: "unit-horiz-val",
+      fieldName: "Horizontal Airspeed Vx",
+      units: ["m/s", "kt", "km/h", "mph", "ft/s"],
+      getSI: () => activeCond.horizontalValue,
+      setSI: (v: number) => { activeCond.horizontalValue = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-horiz-val").value = val.toFixed(1); },
+      onlyWhen: () => activeCond.horizontalMode === "vx",
+    },
+    {
+      btnId: "unit-axial-val",
+      fieldName: "Climb Speed Vz",
+      units: ["m/s", "ft/min", "km/h"],
+      getSI: () => activeCond.axialValue,
+      setSI: (v: number) => { activeCond.axialValue = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-axial-val").value = val.toFixed(2); },
+      onlyWhen: () => activeCond.axialMode === "vz",
+    },
+    {
+      btnId: "unit-operating-1",
+      fieldName: "Operating Constraint 1",
+      units: ["rpm", "rad/s"],
+      getSI: () => activeCond.rpm,
+      setSI: (v: number) => { activeCond.rpm = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-operating-1").value = val.toFixed(0); },
+      onlyWhen: () => activeCond.operatingPair.startsWith("rpm_"),
+    },
+    {
+      btnId: "unit-operating-2",
+      fieldName: "Target Thrust",
+      units: ["N", "lbf", "kN", "kgf"],
+      getSI: () => activeCond.targetThrustN || 45000,
+      setSI: (v: number) => { activeCond.targetThrustN = v; },
+      updateUI: (val: number) => { byId<HTMLInputElement>("inp-operating-2").value = val.toFixed(0); },
+      onlyWhen: () => activeCond.operatingPair.includes("thrust"),
+    },
+    {
+      btnId: "unit-disk-area",
+      fieldName: "Disk Area",
+      units: ["m²", "ft²"],
+      getSI: () => Math.PI * activeGeom.radius * activeGeom.radius,
+      setSI: () => {},
+      updateUI: () => renderDerivedGeometry(),
+    },
+    {
+      btnId: "unit-blade-area",
+      fieldName: "Blade Area",
+      units: ["m²", "ft²"],
+      getSI: () => referenceBladeArea(activeGeom) * activeGeom.nBlades * (1.0 - activeGeom.rootCutout),
+      setSI: () => {},
+      updateUI: () => renderDerivedGeometry(),
+    },
+  ];
+
+  configs.forEach((cfg) => {
+    const btn = document.getElementById(cfg.btnId) as HTMLButtonElement | null;
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+      if (cfg.onlyWhen && !cfg.onlyWhen()) return;
+      const curUnit = btn.textContent?.trim() || cfg.units[0];
+
+      showOptionPicker(
+        `Unit · ${cfg.fieldName}`,
+        cfg.units.map((u) => ({ id: u, label: u })),
+        curUnit,
+        (selectedUnit) => {
+          btn.textContent = selectedUnit;
+          const si = cfg.getSI();
+          const converted = convertValue(si, cfg.units[0], selectedUnit);
+          cfg.updateUI(converted, selectedUnit);
+          recalculate();
+        }
+      );
+    });
+  });
+}
+
+// Rotor Actions (Save, Copy, Delete, New, Import, Export)
+function bindRotorActionButtons(): void {
+  byId("btn-geom-save").addEventListener("click", () => {
+    currentRotor.name = activeGeom.name;
+    currentRotor.geom = cloneGeometry(activeGeom);
+    saveStoredRotors(storedRotors);
+    const saveBtn = byId("btn-geom-save");
+    saveBtn.textContent = "SAVED ✓";
+    setTimeout(() => (saveBtn.textContent = "SAVE"), 1500);
+  });
+
+  byId("btn-geom-copy").addEventListener("click", () => {
+    const copyRotor: StoredRotor = {
+      id: `custom-${Date.now()}`,
+      name: `${activeGeom.name} (Copy)`,
+      geom: cloneGeometry(activeGeom),
+    };
+    storedRotors.push(copyRotor);
+    saveStoredRotors(storedRotors);
+    loadRotorToUI(copyRotor);
+    setActiveRotorId(copyRotor.id);
+  });
+
+  byId("btn-geom-delete").addEventListener("click", () => {
+    if (storedRotors.length <= 1) {
+      alert("Cannot delete the only remaining rotor.");
+      return;
+    }
+    if (confirm(`Delete current rotor "${activeGeom.name}"?`)) {
+      storedRotors = storedRotors.filter((r) => r.id !== currentRotor.id);
+      saveStoredRotors(storedRotors);
+      loadRotorToUI(storedRotors[0]);
+      setActiveRotorId(storedRotors[0].id);
+    }
+  });
+
+  byId("btn-manager-new").addEventListener("click", () => {
+    const newRotor: StoredRotor = {
+      id: `custom-${Date.now()}`,
+      name: `Custom Rotor ${storedRotors.length + 1}`,
+      geom: createDefaultGeometry(),
+    };
+    storedRotors.push(newRotor);
+    saveStoredRotors(storedRotors);
+    loadRotorToUI(newRotor);
+    setActiveRotorId(newRotor.id);
+    closeModal("modal-rotor-manager");
+  });
+
+  byId("btn-manager-export").addEventListener("click", () => {
+    const jsonStr = JSON.stringify(storedRotors, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rotorcalculator_geometries_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  byId("btn-manager-import").addEventListener("click", () => {
+    byId<HTMLInputElement>("file-import-input").click();
+  });
+
+  byId<HTMLInputElement>("file-import-input").addEventListener("change", (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      const imported = importRotorsJSON(content);
+      if (imported && imported.length > 0) {
+        storedRotors = imported;
+        saveStoredRotors(storedRotors);
+        loadRotorToUI(storedRotors[0]);
+        setActiveRotorId(storedRotors[0].id);
+        renderRotorManagerList();
+        alert(`Successfully imported ${imported.length} rotor geometries.`);
+      } else {
+        alert("Failed to parse rotor geometries JSON.");
+      }
+    };
+    reader.readAsText(file);
   });
 }
 
@@ -987,339 +1980,6 @@ function renderRotorManagerList(): void {
   });
 }
 
-// Rotor Actions (Save, Copy, Delete, New, Import, Export)
-function bindRotorActionButtons(): void {
-  byId("btn-geom-save").addEventListener("click", () => {
-    currentRotor.name = activeGeom.name;
-    currentRotor.geom = cloneGeometry(activeGeom);
-    saveStoredRotors(storedRotors);
-    const saveBtn = byId("btn-geom-save");
-    saveBtn.textContent = "SAVED ✓";
-    setTimeout(() => (saveBtn.textContent = "SAVE"), 1500);
-  });
-
-  byId("btn-geom-copy").addEventListener("click", () => {
-    const copyRotor: StoredRotor = {
-      id: `custom-${Date.now()}`,
-      name: `${activeGeom.name} (Copy)`,
-      geom: cloneGeometry(activeGeom),
-    };
-    storedRotors.push(copyRotor);
-    saveStoredRotors(storedRotors);
-    loadRotorToUI(copyRotor);
-    setActiveRotorId(copyRotor.id);
-  });
-
-  byId("btn-geom-delete").addEventListener("click", () => {
-    if (storedRotors.length <= 1) {
-      alert("Cannot delete the only remaining rotor.");
-      return;
-    }
-    if (confirm(`Delete current rotor "${activeGeom.name}"?`)) {
-      storedRotors = storedRotors.filter((r) => r.id !== currentRotor.id);
-      saveStoredRotors(storedRotors);
-      loadRotorToUI(storedRotors[0]);
-      setActiveRotorId(storedRotors[0].id);
-    }
-  });
-
-  byId("btn-manager-new").addEventListener("click", () => {
-    const newRotor: StoredRotor = {
-      id: `custom-${Date.now()}`,
-      name: `Custom Rotor ${storedRotors.length + 1}`,
-      geom: createDefaultGeometry(),
-    };
-    storedRotors.push(newRotor);
-    saveStoredRotors(storedRotors);
-    loadRotorToUI(newRotor);
-    setActiveRotorId(newRotor.id);
-    closeModal("modal-rotor-manager");
-  });
-
-  byId("btn-manager-export").addEventListener("click", () => {
-    const jsonStr = JSON.stringify(storedRotors, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rotorcalculator_geometries_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  byId("btn-manager-import").addEventListener("click", () => {
-    byId<HTMLInputElement>("file-import-input").click();
-  });
-
-  byId<HTMLInputElement>("file-import-input").addEventListener("change", (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const content = evt.target?.result as string;
-      const imported = importRotorsJSON(content);
-      if (imported && imported.length > 0) {
-        storedRotors = imported;
-        saveStoredRotors(storedRotors);
-        loadRotorToUI(storedRotors[0]);
-        setActiveRotorId(storedRotors[0].id);
-        renderRotorManagerList();
-        alert(`Successfully imported ${imported.length} rotor geometries.`);
-      } else {
-        alert("Failed to parse rotor geometries JSON.");
-      }
-    };
-    reader.readAsText(file);
-  });
-}
-
-// Toggles & Selection Modals (Horizontal flow, Axial flow, Trim mode, Airfoil, Tip loss)
-function bindSelectorButtons(): void {
-  // Horizontal Flow Toggle
-  byId("btn-toggle-horiz-mode").addEventListener("click", () => {
-    if (activeCond.horizontalMode === "mu") {
-      activeCond.horizontalMode = "vx";
-      activeCond.horizontalValue = activeResults.operatingVx;
-      byId("btn-toggle-horiz-mode").textContent = "Vx ▾";
-      byId("unit-horiz-val").textContent = unitSystem === "imperial" ? "kt" : "m/s";
-    } else {
-      activeCond.horizontalMode = "mu";
-      activeCond.horizontalValue = activeResults.operatingMu;
-      byId("btn-toggle-horiz-mode").textContent = "μx ▾";
-      byId("unit-horiz-val").textContent = "[-]";
-    }
-    byId<HTMLInputElement>("inp-horiz-val").value = activeCond.horizontalValue.toFixed(2);
-    recalculate();
-  });
-
-  // Axial Flow Toggle (alpha -> vz -> muz)
-  byId("btn-toggle-axial-mode").addEventListener("click", () => {
-    if (activeCond.axialMode === "alpha") {
-      activeCond.axialMode = "vz";
-      activeCond.axialValue = activeResults.operatingVz;
-      byId("btn-toggle-axial-mode").textContent = "Vz ▾";
-      byId("unit-axial-val").textContent = unitSystem === "imperial" ? "ft/min" : "m/s";
-    } else if (activeCond.axialMode === "vz") {
-      activeCond.axialMode = "muz";
-      activeCond.axialValue = activeResults.operatingMuZ;
-      byId("btn-toggle-axial-mode").textContent = "μz ▾";
-      byId("unit-axial-val").textContent = "[-]";
-    } else {
-      activeCond.axialMode = "alpha";
-      activeCond.axialValue = activeResults.operatingAlphaDeg;
-      byId("btn-toggle-axial-mode").textContent = "α ▾";
-      byId("unit-axial-val").textContent = "deg";
-    }
-    byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(1);
-    recalculate();
-  });
-
-  // Trim Mode Toggle
-  byId("btn-trim-mode").addEventListener("click", () => {
-    const modes: FlightCondition["operatingPair"][] = ["rpm_ct", "rpm_thrust", "rpm_collective"];
-    const labels = ["Target CT", "Target Thrust", "Manual Collective"];
-    const currentIdx = modes.indexOf(activeCond.operatingPair);
-    const nextIdx = (currentIdx + 1) % modes.length;
-    activeCond.operatingPair = modes[nextIdx];
-    byId("btn-trim-mode").textContent = labels[nextIdx];
-
-    if (activeCond.operatingPair === "rpm_ct") {
-      byId("lbl-operating-2").textContent = "Target CT";
-      byId<HTMLInputElement>("inp-operating-2").value = (activeCond.targetCT || 0.0065).toString();
-      byId("unit-operating-2").textContent = "[-]";
-    } else if (activeCond.operatingPair === "rpm_thrust") {
-      byId("lbl-operating-2").textContent = "Target Thrust";
-      byId<HTMLInputElement>("inp-operating-2").value = (activeCond.targetThrustN || 45000).toString();
-      byId("unit-operating-2").textContent = unitSystem === "imperial" ? "lbf" : "N";
-    } else {
-      byId("lbl-operating-2").textContent = "Collective θ0";
-      byId<HTMLInputElement>("inp-operating-2").value = (activeCond.collectiveDeg || 12).toString();
-      byId("unit-operating-2").textContent = "deg";
-    }
-    recalculate();
-  });
-
-  // Tip Loss Mode Toggle
-  byId("btn-tiploss-mode").addEventListener("click", () => {
-    const modes: RotorGeometry["tipLossMode"][] = ["none", "fixed", "sissingh"];
-    const curIdx = modes.indexOf(activeGeom.tipLossMode);
-    const nextIdx = (curIdx + 1) % modes.length;
-    activeGeom.tipLossMode = modes[nextIdx];
-    byId("btn-tiploss-mode").textContent = activeGeom.tipLossMode.toUpperCase();
-    recalculate();
-  });
-
-  // Compressibility Toggle
-  byId("btn-compressibility").addEventListener("click", () => {
-    activeGeom.usePrandtlGlauert = !activeGeom.usePrandtlGlauert;
-    byId("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "ON (PG)" : "OFF";
-    byId("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent-green)" : "var(--text-muted)";
-    recalculate();
-  });
-
-  // Inflow Model Toggle
-  byId("btn-inflow-model").addEventListener("click", () => {
-    const models: FlightCondition["inflowModel"][] = ["uniform", "coleman_simple", "coleman_feingold", "drees"];
-    const labels = ["Uniform", "Coleman Simple", "Coleman-Feingold", "Drees"];
-    const curIdx = models.indexOf(activeCond.inflowModel);
-    const nextIdx = (curIdx + 1) % models.length;
-    activeCond.inflowModel = models[nextIdx];
-    byId("btn-inflow-model").textContent = labels[nextIdx];
-    recalculate();
-  });
-
-  // Airfoil Selection Button
-  byId("btn-select-airfoil").addEventListener("click", () => {
-    const airfoils = [
-      { name: "NACA 0012", a0: 5.73, cd0: 0.009 },
-      { name: "NACA 23012", a0: 5.85, cd0: 0.0085 },
-      { name: "VR-7", a0: 5.9, cd0: 0.0095 },
-      { name: "SC1095", a0: 6.0, cd0: 0.0088 },
-      { name: "Clark Y", a0: 5.65, cd0: 0.01 },
-      { name: "Selig S8036", a0: 5.7, cd0: 0.011 },
-    ];
-    const choice = prompt(
-      `Select Airfoil:\n1. NACA 0012\n2. NACA 23012\n3. VR-7\n4. SC1095\n5. Clark Y\n6. Selig S8036\nEnter number (1-6):`,
-      "4"
-    );
-    const idx = parseInt(choice || "", 10) - 1;
-    if (idx >= 0 && idx < airfoils.length) {
-      const selected = airfoils[idx];
-      activeGeom.liftSlope0 = selected.a0;
-      activeGeom.cd0 = selected.cd0;
-      byId("btn-select-airfoil").textContent = selected.name;
-      byId<HTMLInputElement>("inp-lift-slope").value = selected.a0.toString();
-      byId<HTMLInputElement>("inp-cd0").value = selected.cd0.toString();
-      recalculate();
-    }
-  });
-}
-
-function bindUnitButtons(): void {
-  const configs = [
-    {
-      btnId: "unit-radius",
-      inpId: "inp-radius",
-      units: ["m", "ft", "in"],
-      getSI: () => activeGeom.radius,
-      setSI: (v: number) => { activeGeom.radius = v; },
-      decimals: 2,
-    },
-    {
-      btnId: "unit-chord-root",
-      inpId: "inp-chord-root",
-      units: ["m", "ft", "in", "mm"],
-      getSI: () => activeGeom.chordRoot,
-      setSI: (v: number) => { activeGeom.chordRoot = v; },
-      decimals: 3,
-    },
-    {
-      btnId: "unit-chord-tip",
-      inpId: "inp-chord-tip",
-      units: ["m", "ft", "in", "mm"],
-      getSI: () => activeGeom.chordTip,
-      setSI: (v: number) => { activeGeom.chordTip = v; },
-      decimals: 3,
-    },
-    {
-      btnId: "unit-theta-root",
-      inpId: "inp-theta-root",
-      units: ["deg", "rad"],
-      getSI: () => (activeGeom.thetaRoot * 180) / Math.PI,
-      setSI: (v: number) => { activeGeom.thetaRoot = (v * Math.PI) / 180; },
-      decimals: 1,
-    },
-    {
-      btnId: "unit-theta-tip",
-      inpId: "inp-theta-tip",
-      units: ["deg", "rad"],
-      getSI: () => (activeGeom.thetaTip * 180) / Math.PI,
-      setSI: (v: number) => { activeGeom.thetaTip = (v * Math.PI) / 180; },
-      decimals: 1,
-    },
-    {
-      btnId: "unit-lift-slope",
-      inpId: "inp-lift-slope",
-      units: ["rad⁻¹", "deg⁻¹"],
-      getSI: () => activeGeom.liftSlope0,
-      setSI: (v: number) => { activeGeom.liftSlope0 = v; },
-      decimals: 2,
-    },
-    {
-      btnId: "unit-altitude",
-      inpId: "inp-altitude",
-      units: ["m", "ft", "km"],
-      getSI: () => activeCond.altitudeM,
-      setSI: (v: number) => { activeCond.altitudeM = v; },
-      decimals: 0,
-    },
-    {
-      btnId: "unit-temperature",
-      inpId: "inp-temperature",
-      units: ["°C", "°F", "K"],
-      getSI: () => activeCond.temperatureC,
-      setSI: (v: number) => { activeCond.temperatureC = v; },
-      decimals: 1,
-    },
-    {
-      btnId: "unit-horiz-val",
-      inpId: "inp-horiz-val",
-      units: ["m/s", "kt", "km/h", "mph"],
-      getSI: () => activeCond.horizontalValue,
-      setSI: (v: number) => { activeCond.horizontalValue = v; },
-      decimals: 1,
-      onlyWhen: () => activeCond.horizontalMode === "vx",
-    },
-    {
-      btnId: "unit-axial-val",
-      inpId: "inp-axial-val",
-      units: ["m/s", "ft/min", "km/h"],
-      getSI: () => activeCond.axialValue,
-      setSI: (v: number) => { activeCond.axialValue = v; },
-      decimals: 2,
-      onlyWhen: () => activeCond.axialMode === "vz",
-    },
-    {
-      btnId: "unit-operating-1",
-      inpId: "inp-operating-1",
-      units: ["rpm", "rad/s"],
-      getSI: () => activeCond.rpm,
-      setSI: (v: number) => { activeCond.rpm = v; },
-      decimals: 0,
-    },
-    {
-      btnId: "unit-operating-2",
-      inpId: "inp-operating-2",
-      units: ["N", "lbf", "kN", "kgf"],
-      getSI: () => activeCond.targetThrustN || 45000,
-      setSI: (v: number) => { activeCond.targetThrustN = v; },
-      decimals: 0,
-      onlyWhen: () => activeCond.operatingPair === "rpm_thrust",
-    },
-  ];
-
-  configs.forEach((cfg) => {
-    const btn = document.getElementById(cfg.btnId) as HTMLButtonElement | null;
-    const inp = document.getElementById(cfg.inpId) as HTMLInputElement | null;
-    if (!btn || !inp) return;
-
-    btn.addEventListener("click", () => {
-      if (cfg.onlyWhen && !cfg.onlyWhen()) return;
-      const curUnit = btn.textContent?.trim() || cfg.units[0];
-      const curIdx = cfg.units.indexOf(curUnit);
-      const nextIdx = (curIdx + 1) % cfg.units.length;
-      const nextUnit = cfg.units[nextIdx];
-      const curVal = parseFloat(inp.value) || 0;
-      const convertedVal = convertValue(curVal, curUnit, nextUnit);
-      inp.value = convertedVal.toFixed(cfg.decimals);
-      btn.textContent = nextUnit;
-      const siVal = convertValue(convertedVal, nextUnit, cfg.units[0]);
-      cfg.setSI(siVal);
-      recalculate();
-    });
-  });
-}
-
 // Parameter Sweep Modal Setup
 function initSweepModal(): void {
   const selectParam = byId<HTMLSelectElement>("sweep-select-param");
@@ -1352,7 +2012,6 @@ function initSweepModal(): void {
     const meta = SWEEP_PARAMS.find((p) => p.key === sweepSelectedParam) || SWEEP_PARAMS[0];
     drawSweepCanvas(canvas, curves, currentOpPoint, sweepXAxisMode, meta, currentTheme);
 
-    // Update Table if visible
     if (sweepTableVisible) {
       renderSweepTable(curves, meta);
     }
@@ -1363,7 +2022,6 @@ function initSweepModal(): void {
   byId("sweep-select-xaxis").onchange = updateSweepPlot;
   byId("sweep-select-maxmu").onchange = updateSweepPlot;
 
-  // Toggle Table
   byId("btn-sweep-toggle-table").onclick = () => {
     sweepTableVisible = !sweepTableVisible;
     byId("sweep-table-container").style.display = sweepTableVisible ? "block" : "none";
@@ -1371,7 +2029,6 @@ function initSweepModal(): void {
     if (sweepTableVisible) updateSweepPlot();
   };
 
-  // Export CSV
   byId("btn-sweep-export-csv").onclick = () => {
     const { curves } = runParameterSweep(activeGeom, activeCond, sweepSelectedParam, sweepMultiMode, sweepMaxMu, 25);
     const meta = SWEEP_PARAMS.find((p) => p.key === sweepSelectedParam) || SWEEP_PARAMS[0];
@@ -1385,7 +2042,6 @@ function initSweepModal(): void {
     URL.revokeObjectURL(url);
   };
 
-  // Export PNG
   byId("btn-sweep-export-png").onclick = () => {
     const url = canvas.toDataURL("image/png");
     const a = document.createElement("a");
@@ -1479,14 +2135,11 @@ function initSwipeNavigation(): void {
     const dy = endY - startY;
     const dt = Date.now() - startTime;
 
-    // Minimum swipe threshold & horizontal velocity check
     if (dt < 400 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       if (dx < 0) {
-        // Swiped Left -> Move forward
         if (currentPage === "geometry") activatePage("conditions", "left");
         else if (currentPage === "conditions") activatePage("results", "left");
       } else {
-        // Swiped Right -> Move back
         if (currentPage === "results") activatePage("conditions", "right");
         else if (currentPage === "conditions") activatePage("geometry", "right");
       }
@@ -1494,27 +2147,87 @@ function initSwipeNavigation(): void {
   }, { passive: true });
 }
 
-// Settings Toggle Listeners
+// Settings Modal Binding & Persistence
 function bindSettingsListeners(): void {
-  byId("btn-setting-theme").addEventListener("click", () => {
-    currentTheme = currentTheme === "dark" ? "light" : "dark";
+  const selTheme = byId<HTMLSelectElement>("setting-theme");
+  const selUnits = byId<HTMLSelectElement>("setting-units-system");
+  const selPrec = byId<HTMLSelectElement>("setting-precision");
+  const selAngle = byId<HTMLSelectElement>("setting-angle-format");
+  const selThrust = byId<HTMLSelectElement>("setting-thrust-unit");
+  const selPower = byId<HTMLSelectElement>("setting-power-unit");
+  const selTorque = byId<HTMLSelectElement>("setting-torque-unit");
+  const selSpeed = byId<HTMLSelectElement>("setting-speed-unit");
+  const selPres = byId<HTMLSelectElement>("setting-pressure-unit");
+
+  // Load current values
+  const syncSettingsToUI = () => {
+    selTheme.value = currentTheme;
+    selUnits.value = unitSystem;
+    selPrec.value = extraPrecision.toString();
+    selAngle.value = angleFormat;
+    selThrust.value = prefThrustUnit;
+    selPower.value = prefPowerUnit;
+    selTorque.value = prefTorqueUnit;
+    selSpeed.value = prefSpeedUnit;
+    selPres.value = prefPressureUnit;
+  };
+  syncSettingsToUI();
+
+  byId("btn-settings-save").addEventListener("click", () => {
+    currentTheme = selTheme.value as "dark" | "light";
+    unitSystem = selUnits.value as "si" | "imperial";
+    extraPrecision = parseInt(selPrec.value, 10);
+    angleFormat = selAngle.value as "0/360" | "-180/180";
+    prefThrustUnit = selThrust.value;
+    prefPowerUnit = selPower.value;
+    prefTorqueUnit = selTorque.value;
+    prefSpeedUnit = selSpeed.value;
+    prefPressureUnit = selPres.value;
+
     localStorage.setItem("rotor_theme", currentTheme);
-    applyTheme();
-  });
-
-  byId("btn-setting-units").addEventListener("click", () => {
-    unitSystem = unitSystem === "si" ? "imperial" : "si";
     localStorage.setItem("rotor_units", unitSystem);
-    byId("btn-setting-units").textContent = unitSystem === "si" ? "SI (METRIC)" : "IMPERIAL";
-    renderResults();
+    localStorage.setItem("rotor_extra_precision", extraPrecision.toString());
+    localStorage.setItem("rotor_angle_format", angleFormat);
+    localStorage.setItem("rotor_pref_thrust", prefThrustUnit);
+    localStorage.setItem("rotor_pref_power", prefPowerUnit);
+    localStorage.setItem("rotor_pref_torque", prefTorqueUnit);
+    localStorage.setItem("rotor_pref_speed", prefSpeedUnit);
+    localStorage.setItem("rotor_pref_pressure", prefPressureUnit);
+
+    applyTheme();
+    refreshOperatingControls();
+    recalculate();
+    closeModal("modal-settings");
   });
 
-  byId("btn-setting-precision").addEventListener("click", () => {
-    extraPrecision = extraPrecision === 0 ? 1 : 0;
-    localStorage.setItem("rotor_extra_precision", extraPrecision.toString());
-    byId("btn-setting-precision").textContent = extraPrecision === 1 ? "+1 DECIMAL" : "STANDARD";
-    renderDerivedGeometry();
-    renderResults();
+  byId("btn-settings-reset").addEventListener("click", () => {
+    if (confirm("Reset all settings to factory defaults?")) {
+      currentTheme = "dark";
+      unitSystem = "si";
+      extraPrecision = 0;
+      angleFormat = "0/360";
+      prefThrustUnit = "N";
+      prefPowerUnit = "kW";
+      prefTorqueUnit = "N·m";
+      prefSpeedUnit = "m/s";
+      prefPressureUnit = "hPa";
+
+      localStorage.removeItem("rotor_theme");
+      localStorage.removeItem("rotor_units");
+      localStorage.removeItem("rotor_extra_precision");
+      localStorage.removeItem("rotor_angle_format");
+      localStorage.removeItem("rotor_pref_thrust");
+      localStorage.removeItem("rotor_pref_power");
+      localStorage.removeItem("rotor_pref_torque");
+      localStorage.removeItem("rotor_pref_speed");
+      localStorage.removeItem("rotor_pref_pressure");
+
+      syncSettingsToUI();
+      applyTheme();
+      refreshOperatingControls();
+      recalculate();
+      closeModal("modal-settings");
+    }
   });
 }
 
@@ -1571,7 +2284,6 @@ function initApp(): void {
     });
   });
 
-  // Handle Window Resize for responsive layout & canvas
   window.addEventListener("resize", () => {
     updateTabIndicator();
   });

@@ -42,7 +42,13 @@ export interface FlightCondition {
   inflowModel: "uniform" | "coleman_simple" | "coleman_feingold" | "drees";
   profileDragModel: "numerical_vectorial" | "analytical_vectorial" | "analytical_tangential";
   inducedTorqueModel: "energy_balance" | "analytical_bet";
-  operatingPair: "rpm_collective" | "rpm_ct" | "rpm_thrust" | "collective_ct" | "collective_thrust";
+  operatingPair:
+    | "rpm_collective"
+    | "rpm_ct"
+    | "rpm_thrust"
+    | "collective_ct"
+    | "collective_thrust"
+    | "ct_thrust";
   rpm: number;
   collectiveDeg: number;
   targetThrustN: number;
@@ -189,7 +195,7 @@ export function createDefaultCondition(): FlightCondition {
     operatingPair: "rpm_ct",
     rpm: 258.0,
     collectiveDeg: 0.0,
-    targetThrustN: 0.0,
+    targetThrustN: 70000.0,
     targetCT: 0.0065,
     kInd: 1.15,
     fxColeman: 1.0,
@@ -256,6 +262,51 @@ export function resolveSolidity(geom: RotorGeometry): RotorGeometry {
     g.chordTip = g.chordRoot;
   }
   return g;
+}
+
+export function referenceBladeArea(geom: RotorGeometry): number {
+  return (geom.radius * (geom.chordRoot + geom.chordTip)) / 2.0;
+}
+
+export function referenceAspectRatio(geom: RotorGeometry): number {
+  const area = referenceBladeArea(geom);
+  if (area <= 1.0e-12) return 0.0;
+  return (geom.radius * geom.radius) / area;
+}
+
+export function scaleRadiusPreserveReference(geom: RotorGeometry, newRadius: number): RotorGeometry {
+  const g = cloneGeometry(geom);
+  const oldRadius = Math.max(0.02, g.radius);
+  newRadius = Math.max(0.02, Math.min(50.0, newRadius));
+  const scale = newRadius / oldRadius;
+  g.radius = newRadius;
+  g.chordRoot = g.chordRoot * scale;
+  g.chordTip = g.chordTip * scale;
+  g.solidityMode = "chords";
+  return resolveSolidity(g);
+}
+
+export function scaleChordsToSigmaRef(geom: RotorGeometry, targetSigma: number): RotorGeometry {
+  const g = resolveSolidity(cloneGeometry(geom));
+  targetSigma = Math.max(1.0e-5, Math.min(1.0, targetSigma));
+  if (g.sigmaRef <= 1.0e-12) return g;
+  const scale = targetSigma / g.sigmaRef;
+  g.chordRoot = g.chordRoot * scale;
+  g.chordTip = g.chordTip * scale;
+  g.solidityMode = "chords";
+  return resolveSolidity(g);
+}
+
+export function scaleChordsToAspectRatio(geom: RotorGeometry, targetAR: number): RotorGeometry {
+  const g = resolveSolidity(cloneGeometry(geom));
+  targetAR = Math.max(0.1, Math.min(1000.0, targetAR));
+  const currentAR = referenceAspectRatio(g);
+  if (currentAR <= 1.0e-12) return g;
+  const scale = currentAR / targetAR;
+  g.chordRoot = g.chordRoot * scale;
+  g.chordTip = g.chordTip * scale;
+  g.solidityMode = "chords";
+  return resolveSolidity(g);
 }
 
 export function getSolidityCoeffs(geom: RotorGeometry): [number, number] {
@@ -613,6 +664,99 @@ export function solveCollective(
   return [0.5 * (curLo + curHi), true];
 }
 
+function addDistinctRPMRoot(roots: number[], candidate: number): void {
+  const tol = Math.max(0.05, 1.0e-5 * Math.max(1.0, Math.abs(candidate)));
+  for (const existing of roots) {
+    if (Math.abs(existing - candidate) <= tol) return;
+  }
+  roots.push(candidate);
+}
+
+function bisectRPMBracket(
+  baseGeom: RotorGeometry,
+  sourceCond: FlightCondition,
+  collectiveDeg: number,
+  targetKind: "ct" | "thrust",
+  targetValue: number,
+  lo: number,
+  hi: number,
+  fLo: number
+): [number, boolean] {
+  let curLo = lo;
+  let curHi = hi;
+  let curFLo = fLo;
+  for (let iter = 1; iter <= 90; iter++) {
+    const mid = 0.5 * (curLo + curHi);
+    const midObj = candidateResidual(baseGeom, sourceCond, mid, collectiveDeg, targetKind, targetValue);
+    if (!midObj[1]) return [sourceCond.rpm, false];
+    const fm = midObj[0];
+    if (Math.abs(fm) < 1.0e-9 || Math.abs(curHi - curLo) < 1.0e-7) return [mid, true];
+    if ((curFLo <= 0 && fm >= 0) || (curFLo >= 0 && fm <= 0)) {
+      curHi = mid;
+    } else {
+      curLo = mid;
+      curFLo = fm;
+    }
+  }
+  return [0.5 * (curLo + curHi), true];
+}
+
+function nearestRPMRoot(roots: number[], seedRPM: number): number {
+  let best = roots[0];
+  let bestDistance = Math.abs(best - seedRPM);
+  for (let i = 1; i < roots.length; i++) {
+    const candidate = roots[i];
+    const dist = Math.abs(candidate - seedRPM);
+    if (dist < bestDistance) {
+      best = candidate;
+      bestDistance = dist;
+    }
+  }
+  return best;
+}
+
+export function solveRPM(
+  baseGeom: RotorGeometry,
+  sourceCond: FlightCondition,
+  collectiveDeg: number,
+  targetKind: "ct" | "thrust",
+  targetValue: number
+): [number, boolean, "none" | "unique" | "multiple"] {
+  const roots: number[] = [];
+  let prevRPM = 10.0;
+  let prevObj = candidateResidual(baseGeom, sourceCond, prevRPM, collectiveDeg, targetKind, targetValue);
+  let prevValid = prevObj[1];
+  let prevF = 0.0;
+  if (prevValid) {
+    prevF = prevObj[0];
+    if (Math.abs(prevF) < 1.0e-9) addDistinctRPMRoot(roots, prevRPM);
+  }
+
+  for (let i = 1; i <= 80; i++) {
+    const rpmCandidate = 10.0 * Math.pow(3000.0, i / 80.0);
+    const obj = candidateResidual(baseGeom, sourceCond, rpmCandidate, collectiveDeg, targetKind, targetValue);
+    const currentValid = obj[1];
+    if (currentValid) {
+      const f = obj[0];
+      if (Math.abs(f) < 1.0e-9) addDistinctRPMRoot(roots, rpmCandidate);
+      if (prevValid && prevF * f < 0.0) {
+        const bracket = bisectRPMBracket(baseGeom, sourceCond, collectiveDeg, targetKind, targetValue, prevRPM, rpmCandidate, prevF);
+        if (bracket[1]) addDistinctRPMRoot(roots, bracket[0]);
+      }
+      prevF = f;
+    }
+    prevRPM = rpmCandidate;
+    prevValid = currentValid;
+  }
+
+  if (roots.length === 0) return [sourceCond.rpm, false, "none"];
+  if (targetKind === "ct" && roots.length !== 1) return [sourceCond.rpm, false, "multiple"];
+
+  const selectedRPM = nearestRPMRoot(roots, sourceCond.rpm);
+  const status: "unique" | "multiple" = roots.length > 1 ? "multiple" : "unique";
+  return [selectedRPM, true, status];
+}
+
 export function resolveOperatingState(
   geom: RotorGeometry,
   cond: FlightCondition
@@ -635,7 +779,6 @@ export function resolveOperatingState(
         const [solColl, solOk] = solveCollective(baseGeom, c, rpm, "ct", c.targetCT);
         collective = solColl;
         ok = solOk;
-        if (!ok) status = "INVALID: Target CT cannot be trimmed with given geometry";
       }
       break;
     }
@@ -647,7 +790,25 @@ export function resolveOperatingState(
         const [solColl, solOk] = solveCollective(baseGeom, c, rpm, "thrust", c.targetThrustN);
         collective = solColl;
         ok = solOk;
-        if (!ok) status = "INVALID: Target Thrust cannot be trimmed with given RPM";
+      }
+      break;
+    }
+    case "collective_ct": {
+      if (c.targetCT <= 0) {
+        ok = false;
+        status = "INVALID: Collective + CT target must be positive";
+      } else if (c.horizontalMode === "mu" && c.axialMode !== "vz" && !baseGeom.usePrandtlGlauert) {
+        ok = false;
+        status = "INVALID: Collective + CT is non-unique at this flight/model state";
+      } else {
+        const [solRPM, solOk, rootStatus] = solveRPM(baseGeom, c, collective, "ct", c.targetCT);
+        rpm = solRPM;
+        ok = solOk;
+        if (!ok) {
+          status = rootStatus === "multiple"
+            ? "INVALID: Collective + CT is non-unique at this flight/model state"
+            : "INVALID: Collective + CT has no RPM solution at this flight/model state";
+        }
       }
       break;
     }
@@ -656,31 +817,34 @@ export function resolveOperatingState(
         ok = false;
         status = "INVALID: Target Thrust must be positive";
       } else {
-        // Approximate RPM solve for fixed collective
-        let rLo = 10.0;
-        let rHi = 5000.0;
-        let [rSol, rOk] = [rpm, false];
-        for (let iter = 1; iter <= 60; iter++) {
-          const rMid = 0.5 * (rLo + rHi);
-          const [resVal, resValid] = candidateResidual(baseGeom, c, rMid, collective, "thrust", c.targetThrustN);
-          if (resValid) {
-            if (Math.abs(resVal) < 1.0) {
-              rSol = rMid;
-              rOk = true;
-              break;
-            }
-            if (resVal < 0) rLo = rMid;
-            else rHi = rMid;
-          } else {
-            rLo = rMid;
-          }
-        }
-        if (rOk) rpm = rSol;
-        ok = rOk;
-        if (!ok) status = "INVALID: Target Thrust cannot be trimmed with given collective";
+        const [solRPM, solOk] = solveRPM(baseGeom, c, collective, "thrust", c.targetThrustN);
+        rpm = solRPM;
+        ok = solOk;
       }
       break;
     }
+    case "ct_thrust": {
+      if (c.targetCT <= 0 || c.targetThrustN <= 0) {
+        ok = false;
+        status = "INVALID: Target CT and Target Thrust must be positive";
+      } else {
+        const area = Math.PI * baseGeom.radius * baseGeom.radius;
+        const vtipReq = Math.sqrt(c.targetThrustN / (c.rho * area * c.targetCT));
+        rpm = (vtipReq / baseGeom.radius) * 60.0 / (2.0 * Math.PI);
+        if (rpm < 1.0 || rpm > 30000.0) {
+          ok = false;
+        } else {
+          const [solColl, solOk] = solveCollective(baseGeom, c, rpm, "ct", c.targetCT);
+          collective = solColl;
+          ok = solOk;
+        }
+      }
+      break;
+    }
+  }
+
+  if (!ok && status === "VALID") {
+    status = "INVALID: selected operating constraints could not be trimmed";
   }
 
   if (!ok) return [baseGeom, c, status];
