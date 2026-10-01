@@ -222,6 +222,173 @@ export function exportRotorsJSON(rotors: StoredRotor[]): string {
   );
 }
 
+export function exportRotorsDatabaseText(rotors: StoredRotor[]): string {
+  const lines: string[] = ["ROTORCALCULATOR_GEOMETRIES|2"];
+  for (const r of rotors) {
+    const g = r.geom;
+    const cleanName = (g.name || r.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
+    const pg = g.usePrandtlGlauert ? "1" : "0";
+    lines.push(
+      [
+        "R",
+        cleanName || "Custom Rotor",
+        g.radius,
+        g.nBlades,
+        g.rootCutout,
+        g.chordRoot,
+        g.chordTip,
+        g.thetaRoot,
+        g.thetaTip,
+        g.liftSlope0,
+        g.cd0,
+        g.tipLossMode || "fixed",
+        g.tipLossB ?? 0.97,
+        pg,
+      ].join("|")
+    );
+  }
+  return lines.join("\n") + "\n";
+}
+
+function isImportedGeometryValid(g: RotorGeometry): boolean {
+  if (!g.name || !g.name.trim()) return false;
+  if (!Number.isFinite(g.radius) || g.radius < 0.02 || g.radius > 50.0) return false;
+  if (!Number.isInteger(g.nBlades) || g.nBlades < 1 || g.nBlades > 16) return false;
+  if (!Number.isFinite(g.rootCutout) || g.rootCutout < 0.0 || g.rootCutout > 0.95) return false;
+  if (!Number.isFinite(g.chordRoot) || g.chordRoot <= 0.0 || g.chordRoot > 2.0 * g.radius) return false;
+  if (!Number.isFinite(g.chordTip) || g.chordTip <= 0.0 || g.chordTip > 2.0 * g.radius) return false;
+  if (!Number.isFinite(g.thetaRoot) || Math.abs(g.thetaRoot) > Math.PI / 2.0) return false;
+  if (!Number.isFinite(g.thetaTip) || Math.abs(g.thetaTip) > Math.PI / 2.0) return false;
+  if (!Number.isFinite(g.liftSlope0) || g.liftSlope0 < 0.1 || g.liftSlope0 > 10.0) return false;
+  if (!Number.isFinite(g.cd0) || g.cd0 < 0.0 || g.cd0 > 0.5) return false;
+  if (g.tipLossMode !== "none" && g.tipLossMode !== "fixed" && g.tipLossMode !== "sissingh") return false;
+  if (g.tipLossMode === "fixed") {
+    if (!Number.isFinite(g.tipLossB) || g.tipLossB <= g.rootCutout || g.tipLossB > 1.0) return false;
+  }
+  return true;
+}
+
+export function parseDatabaseText(text: string): StoredRotor[] | null {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+  if (lines.length === 0) return null;
+
+  let version = 0;
+  const imported: StoredRotor[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const parts = line.split("|");
+    if (parts.length >= 2 && parts[0] === "ROTORCALCULATOR_GEOMETRIES") {
+      version = parseInt(parts[1], 10) || 2;
+    } else if (version === 2 && parts.length >= 14 && parts[0] === "R") {
+      try {
+        const name = parts[1].trim() || "Imported Rotor";
+        const radius = parseFloat(parts[2]);
+        const nBlades = parseInt(parts[3], 10);
+        const rootCutout = parseFloat(parts[4]);
+        const chordRoot = parseFloat(parts[5]);
+        const chordTip = parseFloat(parts[6]);
+        const thetaRoot = parseFloat(parts[7]);
+        const thetaTip = parseFloat(parts[8]);
+        const liftSlope0 = parseFloat(parts[9]);
+        const cd0 = parseFloat(parts[10]);
+        const tipLossMode = (parts[11] as "none" | "fixed" | "sissingh") || "fixed";
+        const tipLossB = parseFloat(parts[12]);
+        const usePrandtlGlauert = parts[13] === "1";
+
+        const rawGeom: RotorGeometry = {
+          name,
+          radius,
+          rpm: 390.0,
+          nBlades,
+          rootCutout,
+          solidityMode: "chords",
+          sigmaRef: 0.08,
+          sigmaGeom: 0.07,
+          sigmaThrust: 0.075,
+          chordRoot,
+          chordTip,
+          pitchMode: "linear_twist",
+          theta0: 0.5 * (thetaRoot + thetaTip),
+          thetaRoot,
+          thetaTip,
+          liftSlope0,
+          cd0,
+          tipLossMode,
+          tipLossB,
+          usePrandtlGlauert,
+        };
+
+        if (isImportedGeometryValid(rawGeom)) {
+          const resolved = resolveSolidity(rawGeom);
+          imported.push({
+            id: `imported-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+            name: resolved.name,
+            geom: resolved,
+          });
+        }
+      } catch (err) {
+        console.warn(`Skipping invalid imported rotor line ${i}:`, err);
+      }
+    } else if (parts.length >= 18) {
+      // Legacy v1 line format
+      try {
+        const name = parts[0].trim() || "Imported Rotor";
+        const radius = parseFloat(parts[1]);
+        const nBlades = parseInt(parts[3], 10);
+        const rootCutout = parseFloat(parts[4]);
+        const oldRoot = parseFloat(parts[9]);
+        const tip = parseFloat(parts[10]);
+        const chordRoot = rootCutout < 0.999 ? oldRoot - ((tip - oldRoot) * rootCutout) / (1.0 - rootCutout) : oldRoot;
+        const chordTip = tip;
+        const liftSlope0 = parseFloat(parts[11]);
+        const cd0 = parseFloat(parts[12]);
+        const thetaRoot = parseFloat(parts[15]);
+        const thetaTip = parseFloat(parts[16]);
+        const tipLossMode = (parts[17] as "none" | "fixed" | "sissingh") || "fixed";
+        const tipLossB = parts.length >= 19 ? parseFloat(parts[18]) : 0.97;
+        const usePrandtlGlauert = parts.length >= 20 ? parts[19] === "1" : false;
+
+        const rawGeom: RotorGeometry = {
+          name,
+          radius,
+          rpm: 390.0,
+          nBlades,
+          rootCutout,
+          solidityMode: "chords",
+          sigmaRef: 0.08,
+          sigmaGeom: 0.07,
+          sigmaThrust: 0.075,
+          chordRoot,
+          chordTip,
+          pitchMode: "linear_twist",
+          theta0: 0.5 * (thetaRoot + thetaTip),
+          thetaRoot,
+          thetaTip,
+          liftSlope0,
+          cd0,
+          tipLossMode,
+          tipLossB,
+          usePrandtlGlauert,
+        };
+
+        if (isImportedGeometryValid(rawGeom)) {
+          const resolved = resolveSolidity(rawGeom);
+          imported.push({
+            id: `imported-v1-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+            name: resolved.name,
+            geom: resolved,
+          });
+        }
+      } catch (err) {
+        console.warn(`Skipping invalid legacy rotor line ${i}:`, err);
+      }
+    }
+  }
+
+  return imported.length > 0 ? imported : null;
+}
+
 export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
   try {
     const data = JSON.parse(jsonStr);
@@ -243,6 +410,22 @@ export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
     console.error("Failed to parse rotor JSON:", err);
     return null;
   }
+}
+
+/**
+ * Universal importer: accepts either APK database format (ROTORCALCULATOR_GEOMETRIES|2)
+ * or JSON export format from web.
+ */
+export function importRotorsUniversal(content: string): StoredRotor[] | null {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    const jsonRes = importRotorsJSON(trimmed);
+    if (jsonRes && jsonRes.length > 0) return jsonRes;
+  }
+
+  return parseDatabaseText(trimmed);
 }
 
 export function resetToFactoryPresets(): StoredRotor[] {

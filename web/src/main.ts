@@ -17,9 +17,12 @@ import {
   type RotorResults,
 } from "./engine";
 import {
+  exportRotorsDatabaseText,
+  exportRotorsJSON,
   getActiveRotorId,
   getFactoryPresets,
   importRotorsJSON,
+  importRotorsUniversal,
   loadStoredRotors,
   resetToFactoryPresets,
   saveStoredRotors,
@@ -422,7 +425,7 @@ app.innerHTML = `
             <button class="action-btn" id="btn-manager-import" style="flex: 1;">IMPORT</button>
             <button class="action-btn" id="btn-manager-export" style="flex: 1;">EXPORT</button>
           </div>
-          <input type="file" id="file-import-input" accept=".json,application/json,text/plain" style="display: none;" />
+          <input type="file" id="file-import-input" accept=".txt,.json,application/json,text/plain" style="display: none;" />
         </div>
       </div>
     </div>
@@ -712,6 +715,22 @@ app.innerHTML = `
                 <option value="atm">atm</option>
                 <option value="mmHg">mmHg</option>
               </select>
+            </div>
+
+            <div class="settings-section-title">Geometry Backup &amp; Transfer</div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Import Geometries</div>
+                <div class="settings-row-sub">Restore or merge a shared backup</div>
+              </div>
+              <button type="button" class="action-btn" id="btn-settings-import" style="min-width: 90px; height: 38px; font-size: 13.5px; font-weight: 700;">IMPORT</button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-label">Export Geometries</div>
+                <div class="settings-row-sub">Backup all saved rotor geometries</div>
+              </div>
+              <button type="button" class="action-btn" id="btn-settings-export" style="min-width: 90px; height: 38px; font-size: 13.5px; font-weight: 700;">EXPORT</button>
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 18px;">
@@ -2074,18 +2093,31 @@ function bindRotorActionButtons(): void {
     });
   });
 
-  byId("btn-manager-export").addEventListener("click", () => {
-    const jsonStr = JSON.stringify(storedRotors, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
+  function downloadGeometriesBackup(): void {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const txt = exportRotorsDatabaseText(storedRotors);
+    const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rotorcalculator_geometries_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `rotors_db_${dateStr}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  byId("btn-manager-export").addEventListener("click", () => {
+    downloadGeometriesBackup();
+  });
+
+  byId("btn-settings-export")?.addEventListener("click", () => {
+    downloadGeometriesBackup();
   });
 
   byId("btn-manager-import").addEventListener("click", () => {
+    byId<HTMLInputElement>("file-import-input").click();
+  });
+
+  byId("btn-settings-import")?.addEventListener("click", () => {
     byId<HTMLInputElement>("file-import-input").click();
   });
 
@@ -2095,9 +2127,9 @@ function bindRotorActionButtons(): void {
     const reader = new FileReader();
     reader.onload = (evt) => {
       const content = evt.target?.result as string;
-      const imported = importRotorsJSON(content);
+      const imported = importRotorsUniversal(content);
       if (!imported || imported.length === 0) {
-        alert("Failed to parse valid rotor geometries from file.");
+        alert("Failed to parse valid rotor geometries from file. Supported formats: RotorCalculator backup (.txt) or (.json).");
         return;
       }
       const conflicting = imported.filter((imp) =>

@@ -421,14 +421,14 @@ html, body {
   background: var(--row-border);
 }
 
-/* 3-Column Engineering Rows */
+/* 3-Column Engineering Rows — Exact B4A APK 31% | 39% | 20% proportions */
 .engineering-row {
   display: grid;
-  grid-template-columns: 32% 1fr 22%;
-  gap: 6px;
+  grid-template-columns: 31% 39% 20%;
+  gap: 2%;
   min-height: 52px;
   align-items: center;
-  padding: 3px 6px;
+  padding: 3px 3%;
   background: var(--row-1);
   border-bottom: 1px solid var(--row-border);
 }
@@ -589,13 +589,14 @@ input[type="text"].row-input {
   color: var(--accent-red);
 }
 
+/* Results Page Layout — Exact B4A APK 47% | 24% | 20% proportions (36% | 32% | 25% on mobile) */
 .result-row {
   display: grid;
-  grid-template-columns: 36% 1fr 22%;
-  gap: 6px;
+  grid-template-columns: 47% 24% 20%;
+  gap: 2%;
   min-height: 44px;
   align-items: center;
-  padding: 2px 8px;
+  padding: 2px 3%;
   background: var(--row-1);
   border-bottom: 1px solid var(--row-border);
   cursor: pointer;
@@ -1099,9 +1100,9 @@ input[type="text"].row-input {
     font-size: 17.5px;
   }
   .engineering-row {
-    grid-template-columns: 34% 1fr 22%;
-    gap: 4px;
-    padding: 2px 4px;
+    grid-template-columns: 31% 39% 20%;
+    gap: 2%;
+    padding: 2px 3%;
   }
   .row-label-btn {
     font-size: 15px;
@@ -1125,9 +1126,9 @@ input[type="text"].row-input {
     font-size: 13px;
   }
   .result-row {
-    grid-template-columns: 36% 1fr 22%;
-    gap: 4px;
-    padding: 2px 6px;
+    grid-template-columns: 36% 32% 25%;
+    gap: 2%;
+    padding: 2px 2%;
   }
   .result-label {
     font-size: 15px;
@@ -1181,9 +1182,9 @@ input[type="text"].row-input {
     font-size: 12.5px;
   }
   .engineering-row {
-    grid-template-columns: 34% 1fr 22%;
-    gap: 3px;
-    padding: 2px 3px;
+    grid-template-columns: 31% 39% 20%;
+    gap: 2%;
+    padding: 2px 2%;
   }
   .row-label-btn {
     font-size: 14px;
@@ -1204,8 +1205,9 @@ input[type="text"].row-input {
     font-size: 14px;
   }
   .result-row {
-    grid-template-columns: 35% 1fr 22%;
-    padding: 2px 4px;
+    grid-template-columns: 36% 32% 25%;
+    gap: 2%;
+    padding: 2px 2%;
   }
   .result-label {
     font-size: 14.5px;
