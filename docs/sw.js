@@ -1,9 +1,9 @@
-const CACHE_NAME = "rotorcalculator-web-1790849353203";
+const CACHE_NAME = "rotorcalculator-web-1790853642920";
 const PRECACHE = [
   "./",
   "./.nojekyll",
-  "./assets/index-DuRnptAP.js",
-  "./assets/style-yFEOCHzj.css",
+  "./assets/index-BvSb1a3v.js",
+  "./assets/style-DfKjbhim.css",
   "./icon.png",
   "./index.html",
   "./manifest.webmanifest"

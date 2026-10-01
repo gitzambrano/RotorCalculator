@@ -1,6 +1,7 @@
 # B4A Build intermediates
 Objects/
 eval-screenshots/
+screenshots_mobile/
 AutoBackups/
 
 # Python & Environment cache

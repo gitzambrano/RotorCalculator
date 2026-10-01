@@ -38,6 +38,7 @@ import {
   runParameterSweep,
   SWEEP_PARAMS,
 } from "./sweep";
+import { getResponsiveInputLabel, getResultDisplayLabel } from "./labels";
 
 // Option Selector Interface
 interface OptionItem {
@@ -148,116 +149,116 @@ app.innerHTML = `
 
         <div class="section-header">Blade Geometry</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Descriptive name of this rotor geometry.">Rotor Name</button>
+          <button class="row-label-btn" data-tip="Descriptive name of this rotor geometry." data-canonical="Rotor Name">Rotor Name</button>
           <input class="row-input" type="text" id="inp-rotor-name" value="" />
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Rotor radius measured from shaft axis to blade tip.">Radius R</button>
+          <button class="row-label-btn" data-tip="Rotor radius measured from shaft axis to blade tip." data-canonical="Radius R">Radius R</button>
           <input class="row-input" type="number" step="0.01" id="inp-radius" value="8.18" />
           <button class="row-unit-btn" id="unit-radius">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Total number of main rotor blades.">Blade Count</button>
+          <button class="row-label-btn" data-tip="Total number of main rotor blades." data-canonical="Blade Count">Blade Count</button>
           <input class="row-input" type="number" step="1" id="inp-nblades" value="4" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Non-dimensional radial station r0/R where the active lifting blade starts.">Root Cutout</button>
+          <button class="row-label-btn" data-tip="Non-dimensional radial station r0/R where the active lifting blade starts." data-canonical="Root Cutout">Root Cutout</button>
           <input class="row-input" type="number" step="0.01" id="inp-cutout" value="0.15" />
           <button class="row-unit-btn" disabled>r/R</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade chord extrapolated to the rotational shaft center.">Root Chord c0</button>
+          <button class="row-label-btn" data-tip="Blade chord extrapolated to the rotational shaft center." data-canonical="Root Chord c0">Root Chord c0</button>
           <input class="row-input" type="number" step="0.001" id="inp-chord-root" value="0.53" />
           <button class="row-unit-btn" id="unit-chord-root">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade chord at physical tip station r/R = 1.0.">Tip Chord c1</button>
+          <button class="row-label-btn" data-tip="Blade chord at physical tip station r/R = 1.0." data-canonical="Tip Chord c1">Tip Chord c1</button>
           <input class="row-input" type="number" step="0.001" id="inp-chord-tip" value="0.53" />
           <button class="row-unit-btn" id="unit-chord-tip">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Reference blade solidity Nb*c_mean / (pi*R). Editing scales chords to match.">Ref. Solidity</button>
+          <button class="row-label-btn" data-tip="Reference blade solidity Nb*c_mean / (pi*R). Editing scales chords to match." data-canonical="Reference Solidity">Ref. Solidity</button>
           <input class="row-input" type="number" step="0.0001" id="inp-sigma-ref" value="0.0825" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade aspect ratio R / c_mean. Editing scales chords to match.">Aspect Ratio</button>
+          <button class="row-label-btn" data-tip="Blade aspect ratio R / c_mean. Editing scales chords to match." data-canonical="Aspect Ratio">Aspect Ratio</button>
           <input class="row-input" type="number" step="0.1" id="inp-aspect-ratio" value="15.4" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Aerodynamic incidence angle at cutout station r0.">Root Pitch</button>
+          <button class="row-label-btn" data-tip="Aerodynamic incidence angle at cutout station r0." data-canonical="Root Pitch">Root Pitch</button>
           <input class="row-input" type="number" step="0.1" id="inp-theta-root" value="14.0" />
           <button class="row-unit-btn" id="unit-theta-root">deg</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Aerodynamic incidence angle at blade tip station r=R.">Tip Pitch</button>
+          <button class="row-label-btn" data-tip="Aerodynamic incidence angle at blade tip station r=R." data-canonical="Tip Pitch">Tip Pitch</button>
           <input class="row-input" type="number" step="0.1" id="inp-theta-tip" value="-4.0" />
           <button class="row-unit-btn" id="unit-theta-tip">deg</button>
         </div>
 
         <div class="section-header">Derived Geometry</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Geometric physical solidity: active lifting blade area divided by disk area.">Geom. Solidity</button>
+          <button class="row-label-btn" data-tip="Geometric physical solidity: active lifting blade area divided by disk area." data-canonical="Geometric Solidity">Geom. Solidity</button>
           <div class="row-derived-val" id="drv-sigma-geom">0.0701</div>
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Thrust-weighted solidity according to Wayne Johnson BET formulation.">Thrust Solidity</button>
+          <button class="row-label-btn" data-tip="Thrust-weighted solidity according to Wayne Johnson BET formulation." data-canonical="Thrust Solidity">Thrust Solidity</button>
           <div class="row-derived-val" id="drv-sigma-thrust">0.0754</div>
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Ratio of tip chord c1 to root chord c0.">Taper Ratio</button>
+          <button class="row-label-btn" data-tip="Ratio of tip chord c1 to root chord c0." data-canonical="Taper Ratio">Taper Ratio</button>
           <div class="row-derived-val" id="drv-taper">1.000</div>
           <button class="row-unit-btn" disabled>c1/c0</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Total rotor disk swept area A = pi * R^2.">Disk Area</button>
+          <button class="row-label-btn" data-tip="Total rotor disk swept area A = pi * R^2." data-canonical="Disk Area">Disk Area</button>
           <div class="row-derived-val" id="drv-disk-area">210.2</div>
           <button class="row-unit-btn" id="unit-disk-area">m²</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Active lifting planform area of all blades combined.">Active Blade Area</button>
+          <button class="row-label-btn" data-tip="Active lifting planform area of all blades combined." data-canonical="Active Blade Area">Active Blade Area</button>
           <div class="row-derived-val" id="drv-blade-area">14.74</div>
           <button class="row-unit-btn" id="unit-blade-area">m²</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Total built-in geometric twist (tip pitch minus root pitch).">Total Twist</button>
+          <button class="row-label-btn" data-tip="Total built-in geometric twist (tip pitch minus root pitch)." data-canonical="Total Twist">Total Twist</button>
           <div class="row-derived-val" id="drv-twist">-18.0°</div>
           <button class="row-unit-btn" disabled>deg</button>
         </div>
 
         <div class="section-header">Rotor Aerodynamics</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Select aerodynamic airfoil polar section.">Airfoil</button>
+          <button class="row-label-btn" data-tip="Select aerodynamic airfoil polar section." data-canonical="Airfoil">Airfoil</button>
           <button class="action-btn" id="btn-select-airfoil" style="height: 44px;">SC1095</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="2D lift curve slope a0 (typically 5.7 to 6.0 rad^-1).">Lift Slope a0</button>
+          <button class="row-label-btn" data-tip="2D lift curve slope a0 (typically 5.7 to 6.0 rad^-1)." data-canonical="Lift Slope a0">Lift Slope a0</button>
           <input class="row-input" type="number" step="0.01" id="inp-lift-slope" value="5.73" />
           <button class="row-unit-btn" id="unit-lift-slope">rad⁻¹</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="2D zero-lift profile drag coefficient cd0.">Profile cd0</button>
+          <button class="row-label-btn" data-tip="2D zero-lift profile drag coefficient cd0." data-canonical="Profile cd0">Profile cd0</button>
           <input class="row-input" type="number" step="0.0001" id="inp-cd0" value="0.0088" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Tip-loss model (none, fixed factor B, or Sissingh momentum coupling).">Tip Loss</button>
+          <button class="row-label-btn" data-tip="Tip-loss model (none, fixed factor B, or Sissingh momentum coupling)." data-canonical="Tip Loss">Tip Loss</button>
           <button class="action-btn" id="btn-tiploss-mode" style="height: 44px;">Sissingh</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Fixed tip loss factor B (active when tip loss is set to Fixed).">Tip Factor B</button>
+          <button class="row-label-btn" data-tip="Fixed tip loss factor B (active when tip loss is set to Fixed)." data-canonical="Tip Factor B">Tip Factor B</button>
           <input class="row-input" type="number" step="0.005" id="inp-tiploss-b" value="0.97" />
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Prandtl-Glauert subsonic compressibility correction on blade lift slope.">Compressibility</button>
+          <button class="row-label-btn" data-tip="Prandtl-Glauert subsonic compressibility correction on blade lift slope." data-canonical="Compressibility">Compressibility</button>
           <button class="action-btn" id="btn-compressibility" style="height: 44px; color: var(--accent-green);">ON (PG)</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
@@ -267,12 +268,12 @@ app.innerHTML = `
       <section class="page" id="page-conditions">
         <div class="section-header">Atmosphere & Flow</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Flight geometric/pressure altitude in ISA atmosphere.">Altitude</button>
+          <button class="row-label-btn" data-tip="Flight geometric/pressure altitude in ISA atmosphere." data-canonical="Altitude">Altitude</button>
           <input class="row-input" type="number" step="50" id="inp-altitude" value="0" />
           <button class="row-unit-btn" id="unit-altitude">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Outside ambient air temperature.">Temperature</button>
+          <button class="row-label-btn" data-tip="Outside ambient air temperature." data-canonical="Temperature">Temperature</button>
           <input class="row-input" type="number" step="1" id="inp-temperature" value="15" />
           <button class="row-unit-btn" id="unit-temperature">°C</button>
         </div>
@@ -289,24 +290,24 @@ app.innerHTML = `
 
         <div class="section-header">Operating Constraints</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust.">Trim Mode</button>
+          <button class="row-label-btn" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim Mode">Trim Mode</button>
           <button class="action-btn" id="btn-trim-mode" style="height: 44px;">RPM + Target CT</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row" id="row-operating-1">
-          <button class="row-label-btn" id="lbl-operating-1">RPM</button>
+          <button class="row-label-btn" id="lbl-operating-1" data-canonical="RPM">RPM</button>
           <input class="row-input" type="number" step="1" id="inp-operating-1" value="258" />
           <button class="row-unit-btn" id="unit-operating-1">rpm</button>
         </div>
         <div class="engineering-row" id="row-operating-2">
-          <button class="row-label-btn" id="lbl-operating-2">Target CT</button>
+          <button class="row-label-btn" id="lbl-operating-2" data-canonical="Target CT">Target CT</button>
           <input class="row-input" type="number" step="0.0005" id="inp-operating-2" value="0.0065" />
           <button class="row-unit-btn" id="unit-operating-2">[-]</button>
         </div>
 
         <div class="section-header">Aerodynamic Model</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Inflow model formulation (Uniform, Coleman Simple, Coleman-Feingold, or Drees).">Inflow Model</button>
+          <button class="row-label-btn" data-tip="Inflow model formulation (Uniform, Coleman Simple, Coleman-Feingold, or Drees)." data-canonical="Inflow Model">Inflow Model</button>
           <button class="action-btn" id="btn-inflow-model" style="height: 44px;">Coleman-Feingold</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
@@ -316,7 +317,7 @@ app.innerHTML = `
           <button class="row-unit-btn" disabled>[-]</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Vectorial 2D Gauss-Legendre quadrature along radial blade stations and azimuth.">Profile Drag</button>
+          <button class="row-label-btn" data-tip="Vectorial 2D Gauss-Legendre quadrature along radial blade stations and azimuth." data-canonical="Profile Drag">Profile Drag</button>
           <div class="row-derived-val" style="color: var(--accent); font-size: 14px;">Numerical Vectorial</div>
           <button class="row-unit-btn" disabled>—</button>
         </div>
@@ -341,55 +342,55 @@ app.innerHTML = `
         </div>
 
         <div class="section-header">Dimensional Performance</div>
-        <div class="result-row" data-param="ThrustN"><div class="result-label">T — Thrust</div><div class="result-val" id="res-thrust">---</div><div class="result-unit" id="unit-res-thrust">N</div></div>
-        <div class="result-row" data-param="PowerKW"><div class="result-label">Pshaft — Shaft Power</div><div class="result-val" id="res-power">---</div><div class="result-unit" id="unit-res-power">kW</div></div>
-        <div class="result-row" data-param="TorqueNm"><div class="result-label">Q — Shaft Torque</div><div class="result-val" id="res-torque">---</div><div class="result-unit" id="unit-res-torque">N·m</div></div>
-        <div class="result-row" data-param="DragHN"><div class="result-label">H — In-Plane Force</div><div class="result-val" id="res-drag-h">---</div><div class="result-unit" id="unit-res-drag-h">N</div></div>
-        <div class="result-row" data-param="CY"><div class="result-label">Y — Side Force</div><div class="result-val" id="res-side-y">---</div><div class="result-unit" id="unit-res-side-y">N</div></div>
-        <div class="result-row" data-param="CMx"><div class="result-label">Mx — Roll Moment</div><div class="result-val" id="res-roll-mx">---</div><div class="result-unit" id="unit-res-roll-mx">N·m</div></div>
-        <div class="result-row" data-param="CMy"><div class="result-label">My — Pitch Moment</div><div class="result-val" id="res-pitch-my">---</div><div class="result-unit" id="unit-res-pitch-my">N·m</div></div>
+        <div class="result-row" data-param="ThrustN" data-canonical="T — Thrust"><div class="result-label" data-canonical="T — Thrust">T — Thrust</div><div class="result-val" id="res-thrust">---</div><div class="result-unit" id="unit-res-thrust">N</div></div>
+        <div class="result-row" data-param="PowerKW" data-canonical="Pshaft — Shaft Power"><div class="result-label" data-canonical="Pshaft — Shaft Power">Pshaft — Shaft Power</div><div class="result-val" id="res-power">---</div><div class="result-unit" id="unit-res-power">kW</div></div>
+        <div class="result-row" data-param="TorqueNm" data-canonical="Q — Shaft Torque"><div class="result-label" data-canonical="Q — Shaft Torque">Q — Shaft Torque</div><div class="result-val" id="res-torque">---</div><div class="result-unit" id="unit-res-torque">N·m</div></div>
+        <div class="result-row" data-param="DragHN" data-canonical="H — In-Plane Force"><div class="result-label" data-canonical="H — In-Plane Force">H — In-Plane Force</div><div class="result-val" id="res-drag-h">---</div><div class="result-unit" id="unit-res-drag-h">N</div></div>
+        <div class="result-row" data-param="CY" data-canonical="Y — Side Force"><div class="result-label" data-canonical="Y — Side Force">Y — Side Force</div><div class="result-val" id="res-side-y">---</div><div class="result-unit" id="unit-res-side-y">N</div></div>
+        <div class="result-row" data-param="CMx" data-canonical="Mx — Roll Moment"><div class="result-label" data-canonical="Mx — Roll Moment">Mx — Roll Moment</div><div class="result-val" id="res-roll-mx">---</div><div class="result-unit" id="unit-res-roll-mx">N·m</div></div>
+        <div class="result-row" data-param="CMy" data-canonical="My — Pitch Moment"><div class="result-label" data-canonical="My — Pitch Moment">My — Pitch Moment</div><div class="result-val" id="res-pitch-my">---</div><div class="result-unit" id="unit-res-pitch-my">N·m</div></div>
 
         <div class="section-header">Aerodynamic Coefficients</div>
-        <div class="result-row" data-param="CT"><div class="result-label">CT — Thrust Coeff</div><div class="result-val" id="res-ct">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CP"><div class="result-label">CQ — Torque Coeff</div><div class="result-val" id="res-cq">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CQi"><div class="result-label">CQ,i — Induced Coeff</div><div class="result-val" id="res-cqi">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CQ0"><div class="result-label">CQ,0 — Profile Coeff</div><div class="result-val" id="res-cq0">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CH"><div class="result-label">CH — In-Plane Coeff</div><div class="result-val" id="res-ch">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CHi"><div class="result-label">CH,i — Induced H</div><div class="result-val" id="res-chi">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CH0"><div class="result-label">CH,0 — Profile H</div><div class="result-val" id="res-ch0">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CY"><div class="result-label">CY — Side Force Coeff</div><div class="result-val" id="res-cy">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CMx"><div class="result-label">CMx — Roll Moment Coeff</div><div class="result-val" id="res-cmx">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CMy"><div class="result-label">CMy — Pitch Moment Coeff</div><div class="result-val" id="res-cmy">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CPair"><div class="result-label">CP,air — Air Power Coeff</div><div class="result-val" id="res-cpair">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CT" data-canonical="CT — Thrust Coeff"><div class="result-label" data-canonical="CT — Thrust Coeff">CT — Thrust Coeff</div><div class="result-val" id="res-ct">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CP" data-canonical="CQ — Torque Coeff"><div class="result-label" data-canonical="CQ — Torque Coeff">CQ — Torque Coeff</div><div class="result-val" id="res-cq">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CQi" data-canonical="CQ,i — Induced Coeff"><div class="result-label" data-canonical="CQ,i — Induced Coeff">CQ,i — Induced Coeff</div><div class="result-val" id="res-cqi">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CQ0" data-canonical="CQ,0 — Profile Coeff"><div class="result-label" data-canonical="CQ,0 — Profile Coeff">CQ,0 — Profile Coeff</div><div class="result-val" id="res-cq0">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CH" data-canonical="CH — In-Plane Coeff"><div class="result-label" data-canonical="CH — In-Plane Coeff">CH — In-Plane Coeff</div><div class="result-val" id="res-ch">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CHi" data-canonical="CH,i — Induced H"><div class="result-label" data-canonical="CH,i — Induced H">CH,i — Induced H</div><div class="result-val" id="res-chi">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CH0" data-canonical="CH,0 — Profile H"><div class="result-label" data-canonical="CH,0 — Profile H">CH,0 — Profile H</div><div class="result-val" id="res-ch0">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CY" data-canonical="CY — Side Force Coeff"><div class="result-label" data-canonical="CY — Side Force Coeff">CY — Side Force Coeff</div><div class="result-val" id="res-cy">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CMx" data-canonical="CMx — Roll Moment Coeff"><div class="result-label" data-canonical="CMx — Roll Moment Coeff">CMx — Roll Moment Coeff</div><div class="result-val" id="res-cmx">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CMy" data-canonical="CMy — Pitch Moment Coeff"><div class="result-label" data-canonical="CMy — Pitch Moment Coeff">CMy — Pitch Moment Coeff</div><div class="result-val" id="res-cmy">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="CPair" data-canonical="CP,air — Air Power Coeff"><div class="result-label" data-canonical="CP,air — Air Power Coeff">CP,air — Air Power Coeff</div><div class="result-val" id="res-cpair">---</div><div class="result-unit">[-]</div></div>
 
         <div class="section-header">Efficiency</div>
-        <div class="result-row" data-param="FoM"><div class="result-label">FM — Figure of Merit</div><div class="result-val" id="res-fom">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="L_D_eff"><div class="result-label">(L/D)eff — Effective L/D</div><div class="result-val" id="res-ld-eff">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="FoM" data-canonical="FM — Figure of Merit"><div class="result-label" data-canonical="FM — Figure of Merit">FM — Figure of Merit</div><div class="result-val" id="res-fom">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="L_D_eff" data-canonical="(L/D)eff — Effective L/D"><div class="result-label" data-canonical="(L/D)eff — Effective L/D">(L/D)eff — Effective L/D</div><div class="result-val" id="res-ld-eff">---</div><div class="result-unit">[-]</div></div>
 
         <div class="section-header">Inflow & Wake</div>
-        <div class="result-row" data-param="lambda"><div class="result-label">λ — Total Inflow</div><div class="result-val" id="res-lambda">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="lambda_i"><div class="result-label">λi — Induced Inflow</div><div class="result-val" id="res-lambdai">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="Kx"><div class="result-label">Kx — Longitudinal Inflow</div><div class="result-val" id="res-kx">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="Ky"><div class="result-label">Ky — Lateral Inflow</div><div class="result-val" id="res-ky">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="chi"><div class="result-label">χ — Wake Skew Angle</div><div class="result-val" id="res-chi">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row" data-param="B"><div class="result-label">B — Tip-Loss Factor</div><div class="result-val" id="res-bfactor">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="lambda" data-canonical="λ — Total Inflow"><div class="result-label" data-canonical="λ — Total Inflow">λ — Total Inflow</div><div class="result-val" id="res-lambda">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="lambda_i" data-canonical="λi — Induced Inflow"><div class="result-label" data-canonical="λi — Induced Inflow">λi — Induced Inflow</div><div class="result-val" id="res-lambdai">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="Kx" data-canonical="Kx — Longitudinal Inflow"><div class="result-label" data-canonical="Kx — Longitudinal Inflow">Kx — Longitudinal Inflow</div><div class="result-val" id="res-kx">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="Ky" data-canonical="Ky — Lateral Inflow"><div class="result-label" data-canonical="Ky — Lateral Inflow">Ky — Lateral Inflow</div><div class="result-val" id="res-ky">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-param="chi" data-canonical="χ — Wake Skew Angle"><div class="result-label" data-canonical="χ — Wake Skew Angle">χ — Wake Skew Angle</div><div class="result-val" id="res-chi">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-param="B" data-canonical="B — Tip-Loss Factor"><div class="result-label" data-canonical="B — Tip-Loss Factor">B — Tip-Loss Factor</div><div class="result-val" id="res-bfactor">---</div><div class="result-unit">[-]</div></div>
 
         <div class="section-header">Operating State & Atmosphere</div>
-        <div class="result-row"><div class="result-label">RPM — Solved Speed</div><div class="result-val" id="res-rpm">---</div><div class="result-unit">rpm</div></div>
-        <div class="result-row"><div class="result-label">θ0 — Solved Collective</div><div class="result-val" id="res-coll">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row"><div class="result-label">μx — Advance Ratio</div><div class="result-val" id="res-op-mu">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row"><div class="result-label">Vx — Airspeed</div><div class="result-val" id="res-op-vx">---</div><div class="result-unit" id="unit-res-vx">m/s</div></div>
-        <div class="result-row"><div class="result-label">μz — Axial Ratio</div><div class="result-val" id="res-op-muz">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row"><div class="result-label">Vz — Climb Speed</div><div class="result-val" id="res-op-vz">---</div><div class="result-unit" id="unit-res-vz">m/s</div></div>
-        <div class="result-row"><div class="result-label">α — Angle of Attack</div><div class="result-val" id="res-op-alpha">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row"><div class="result-label">ΩR — Tip Speed</div><div class="result-val" id="res-op-vtip">---</div><div class="result-unit" id="unit-res-vtip">m/s</div></div>
-        <div class="result-row"><div class="result-label">Mtip — Tip Mach</div><div class="result-val" id="res-op-mtip">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row"><div class="result-label">Madv — Advancing Mach</div><div class="result-val" id="res-op-madv">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row"><div class="result-label">h — Altitude</div><div class="result-val" id="res-op-alt">---</div><div class="result-unit" id="unit-res-alt">m</div></div>
-        <div class="result-row"><div class="result-label">Tamb — Temperature</div><div class="result-val" id="res-op-temp">---</div><div class="result-unit">°C</div></div>
-        <div class="result-row"><div class="result-label">ρ — Air Density</div><div class="result-val" id="res-op-rho">---</div><div class="result-unit">kg/m³</div></div>
-        <div class="result-row"><div class="result-label">p — Ambient Pressure</div><div class="result-val" id="res-op-pres">---</div><div class="result-unit" id="unit-res-pres">hPa</div></div>
-        <div class="result-row"><div class="result-label">a — Speed of Sound</div><div class="result-val" id="res-op-sound">---</div><div class="result-unit" id="unit-res-sound">m/s</div></div>
+        <div class="result-row" data-canonical="RPM — Solved Speed"><div class="result-label" data-canonical="RPM — Solved Speed">RPM — Solved Speed</div><div class="result-val" id="res-rpm">---</div><div class="result-unit">rpm</div></div>
+        <div class="result-row" data-canonical="θ0 — Solved Collective"><div class="result-label" data-canonical="θ0 — Solved Collective">θ0 — Solved Collective</div><div class="result-val" id="res-coll">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-canonical="μx — Advance Ratio"><div class="result-label" data-canonical="μx — Advance Ratio">μx — Advance Ratio</div><div class="result-val" id="res-op-mu">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-canonical="Vx — Airspeed"><div class="result-label" data-canonical="Vx — Airspeed">Vx — Airspeed</div><div class="result-val" id="res-op-vx">---</div><div class="result-unit" id="unit-res-vx">m/s</div></div>
+        <div class="result-row" data-canonical="μz — Axial Ratio"><div class="result-label" data-canonical="μz — Axial Ratio">μz — Axial Ratio</div><div class="result-val" id="res-op-muz">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-canonical="Vz — Climb Speed"><div class="result-label" data-canonical="Vz — Climb Speed">Vz — Climb Speed</div><div class="result-val" id="res-op-vz">---</div><div class="result-unit" id="unit-res-vz">m/s</div></div>
+        <div class="result-row" data-canonical="α — Angle of Attack"><div class="result-label" data-canonical="α — Angle of Attack">α — Angle of Attack</div><div class="result-val" id="res-op-alpha">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-canonical="ΩR — Tip Speed"><div class="result-label" data-canonical="ΩR — Tip Speed">ΩR — Tip Speed</div><div class="result-val" id="res-op-vtip">---</div><div class="result-unit" id="unit-res-vtip">m/s</div></div>
+        <div class="result-row" data-canonical="Mtip — Tip Mach"><div class="result-label" data-canonical="Mtip — Tip Mach">Mtip — Tip Mach</div><div class="result-val" id="res-op-mtip">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-canonical="Madv — Advancing Mach"><div class="result-label" data-canonical="Madv — Advancing Mach">Madv — Advancing Mach</div><div class="result-val" id="res-op-madv">---</div><div class="result-unit">[-]</div></div>
+        <div class="result-row" data-canonical="h — Altitude"><div class="result-label" data-canonical="h — Altitude">h — Altitude</div><div class="result-val" id="res-op-alt">---</div><div class="result-unit" id="unit-res-alt">m</div></div>
+        <div class="result-row" data-canonical="Tamb — Temperature"><div class="result-label" data-canonical="Tamb — Temperature">Tamb — Temperature</div><div class="result-val" id="res-op-temp">---</div><div class="result-unit">°C</div></div>
+        <div class="result-row" data-canonical="ρ — Air Density"><div class="result-label" data-canonical="ρ — Air Density">ρ — Air Density</div><div class="result-val" id="res-op-rho">---</div><div class="result-unit">kg/m³</div></div>
+        <div class="result-row" data-canonical="p — Ambient Pressure"><div class="result-label" data-canonical="p — Ambient Pressure">p — Ambient Pressure</div><div class="result-val" id="res-op-pres">---</div><div class="result-unit" id="unit-res-pres">hPa</div></div>
+        <div class="result-row" data-canonical="a — Speed of Sound"><div class="result-label" data-canonical="a — Speed of Sound">a — Speed of Sound</div><div class="result-val" id="res-op-sound">---</div><div class="result-unit" id="unit-res-sound">m/s</div></div>
       </section>
     </div>
 
@@ -898,6 +899,32 @@ function updateTabIndicator(): void {
   ind.style.transform = `translateX(${idx * 100}%)`;
 }
 
+export function updateResponsiveLabels(): void {
+  const w = window.innerWidth;
+  document.querySelectorAll<HTMLButtonElement>(".row-label-btn[data-canonical]").forEach((btn) => {
+    const canonical = btn.dataset.canonical || "";
+    btn.textContent = getResponsiveInputLabel(canonical, w);
+  });
+
+  const l1 = byId("lbl-operating-1");
+  if (l1 && l1.dataset.canonical) {
+    l1.textContent = getResponsiveInputLabel(l1.dataset.canonical, w);
+  }
+  const l2 = byId("lbl-operating-2");
+  if (l2 && l2.dataset.canonical) {
+    l2.textContent = getResponsiveInputLabel(l2.dataset.canonical, w);
+  }
+
+  document.querySelectorAll<HTMLElement>(".result-row").forEach((row) => {
+    const canonical = row.dataset.canonical;
+    if (!canonical) return;
+    const labelEl = row.querySelector<HTMLElement>(".result-label");
+    if (labelEl) {
+      labelEl.textContent = getResultDisplayLabel(canonical, w);
+    }
+  });
+}
+
 function activatePage(page: "geometry" | "conditions" | "results", swipeDir?: "left" | "right"): void {
   currentPage = page;
   document.querySelectorAll<HTMLButtonElement>(".tab-btn").forEach((btn) => {
@@ -908,12 +935,16 @@ function activatePage(page: "geometry" | "conditions" | "results", swipeDir?: "l
     p.classList.remove("swipe-in-left", "swipe-in-right");
   });
 
+  const contentArea = document.querySelector<HTMLElement>(".content-area");
+  if (contentArea) contentArea.scrollTop = 0;
+
   const activeEl = byId(`page-${page}`);
   if (activeEl && swipeDir) {
     activeEl.classList.add(swipeDir === "left" ? "swipe-in-left" : "swipe-in-right");
     setTimeout(() => activeEl.classList.remove("swipe-in-left", "swipe-in-right"), 200);
   }
   updateTabIndicator();
+  updateResponsiveLabels();
 }
 
 // Option Selector Modal
@@ -1084,6 +1115,8 @@ function renderResults(): void {
   const aSound = convertValue(r.speedOfSound, "m/s", vtipUnit);
   byId("res-op-sound").textContent = formatResultValue(aSound, 1, extraPrecision);
   byId("unit-res-sound").textContent = vtipUnit;
+
+  updateResponsiveLabels();
 }
 
 // Result Contextual Physics & Equation Tooltips
@@ -1100,12 +1133,17 @@ const RESULT_TOOLTIPS: Record<string, string> = {
   "CQ,i — Induced Coeff": "Induced torque/power contribution CQ,i from induced downwash velocity across the rotor disk.",
   "CQ,0 — Profile Coeff": "Profile-drag torque contribution CQ,0 integrated using the Numerical Vectorial method over radial and azimuthal elements.",
   "CH — In-Plane": "Total longitudinal in-plane force coefficient: CH = CH,i + CH,0.",
+  "CH — In-Plane Coeff": "Total longitudinal in-plane force coefficient: CH = CH,i + CH,0.",
   "CH,i — Induced H": "Induced contribution to longitudinal in-plane force coefficient.",
   "CH,0 — Profile H": "Numerical Vectorial profile-drag contribution to longitudinal in-plane force coefficient.",
   "CY — Side Force": "Non-dimensional rotor lateral side-force coefficient.",
+  "CY — Side Force Coeff": "Non-dimensional rotor lateral side-force coefficient.",
   "CMx — Roll Moment": "Non-dimensional rotor rolling-moment coefficient about the x-axis.",
+  "CMx — Roll Moment Coeff": "Non-dimensional rotor rolling-moment coefficient about the x-axis.",
   "CMy — Pitch Moment": "Non-dimensional rotor pitching-moment coefficient about the y-axis.",
+  "CMy — Pitch Moment Coeff": "Non-dimensional rotor pitching-moment coefficient about the y-axis.",
   "CP,air — Air Power": "Air-power coefficient from induced, axial-flow, profile, and translational aerodynamic energy terms.",
+  "CP,air — Air Power Coeff": "Air-power coefficient from induced, axial-flow, profile, and translational aerodynamic energy terms.",
   "FM — Figure of Merit": "Hover aerodynamic efficiency: FoM = CT^(3/2) / [√2 CPshaft]. Ratio of ideal induced power to actual required shaft power.",
   "(L/D)eff — Effective L/D": "Effective rotor lift-to-drag ratio in forward flight: (L/D)eff = μx CT / CP,air = T Vx / Pair.",
   "λ — Total Inflow": "Total inflow ratio normal to the rotor disk: λ = μz + λi.",
@@ -1135,13 +1173,12 @@ const RESULT_TOOLTIPS: Record<string, string> = {
 function bindResultRowTooltips(): void {
   document.querySelectorAll<HTMLElement>(".result-row").forEach((row) => {
     row.addEventListener("click", () => {
-      const labelEl = row.querySelector(".result-label");
-      const labelText = labelEl?.textContent?.trim() || "";
+      const canonical = row.dataset.canonical || row.querySelector(".result-label")?.getAttribute("data-canonical") || row.querySelector(".result-label")?.textContent?.trim() || "";
       const matched = Object.entries(RESULT_TOOLTIPS).find(([key]) => {
-        return labelText.startsWith(key) || key.startsWith(labelText) || labelText.includes(key);
+        return canonical === key || canonical.startsWith(key) || key.startsWith(canonical) || canonical.includes(key);
       });
-      const title = matched ? matched[0] : labelText;
-      const desc = matched ? matched[1] : `Computed aerodynamic or atmospheric metric for ${labelText}.`;
+      const title = matched ? matched[0] : canonical;
+      const desc = matched ? matched[1] : `Computed aerodynamic or atmospheric metric for ${canonical}.`;
 
       byId("result-tooltip-title").textContent = `About • ${title}`;
       byId("result-tooltip-desc").textContent = desc;
@@ -1178,52 +1215,65 @@ function refreshOperatingControls(): void {
 
   const thrustUnit = prefThrustUnit;
 
+  const w = window.innerWidth;
   if (pair === "rpm_collective") {
-    l1.textContent = "RPM";
+    l1.dataset.canonical = "RPM";
+    l1.textContent = getResponsiveInputLabel("RPM", w);
     u1.textContent = "rpm";
     p1.value = activeCond.rpm.toFixed(0);
 
-    l2.textContent = "Collective Δθ";
+    l2.dataset.canonical = "Collective Δθ";
+    l2.textContent = getResponsiveInputLabel("Collective Δθ", w);
     u2.textContent = "deg";
     p2.value = activeCond.collectiveDeg.toFixed(2);
   } else if (pair === "rpm_ct") {
-    l1.textContent = "RPM";
+    l1.dataset.canonical = "RPM";
+    l1.textContent = getResponsiveInputLabel("RPM", w);
     u1.textContent = "rpm";
     p1.value = activeCond.rpm.toFixed(0);
 
-    l2.textContent = "Target CT";
+    l2.dataset.canonical = "Target CT";
+    l2.textContent = getResponsiveInputLabel("Target CT", w);
     u2.textContent = "[-]";
     p2.value = activeCond.targetCT.toFixed(5);
   } else if (pair === "rpm_thrust") {
-    l1.textContent = "RPM";
+    l1.dataset.canonical = "RPM";
+    l1.textContent = getResponsiveInputLabel("RPM", w);
     u1.textContent = "rpm";
     p1.value = activeCond.rpm.toFixed(0);
 
-    l2.textContent = "Target Thrust";
+    l2.dataset.canonical = "Target Thrust";
+    l2.textContent = getResponsiveInputLabel("Target Thrust", w);
     u2.textContent = thrustUnit;
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   } else if (pair === "collective_ct") {
-    l1.textContent = "Collective Δθ";
+    l1.dataset.canonical = "Collective Δθ";
+    l1.textContent = getResponsiveInputLabel("Collective Δθ", w);
     u1.textContent = "deg";
     p1.value = activeCond.collectiveDeg.toFixed(2);
 
-    l2.textContent = "Target CT";
+    l2.dataset.canonical = "Target CT";
+    l2.textContent = getResponsiveInputLabel("Target CT", w);
     u2.textContent = "[-]";
     p2.value = activeCond.targetCT.toFixed(5);
   } else if (pair === "collective_thrust") {
-    l1.textContent = "Collective Δθ";
+    l1.dataset.canonical = "Collective Δθ";
+    l1.textContent = getResponsiveInputLabel("Collective Δθ", w);
     u1.textContent = "deg";
     p1.value = activeCond.collectiveDeg.toFixed(2);
 
-    l2.textContent = "Target Thrust";
+    l2.dataset.canonical = "Target Thrust";
+    l2.textContent = getResponsiveInputLabel("Target Thrust", w);
     u2.textContent = thrustUnit;
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   } else if (pair === "ct_thrust") {
-    l1.textContent = "Target CT";
+    l1.dataset.canonical = "Target CT";
+    l1.textContent = getResponsiveInputLabel("Target CT", w);
     u1.textContent = "[-]";
     p1.value = activeCond.targetCT.toFixed(5);
 
-    l2.textContent = "Target Thrust";
+    l2.dataset.canonical = "Target Thrust";
+    l2.textContent = getResponsiveInputLabel("Target Thrust", w);
     u2.textContent = thrustUnit;
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   }
@@ -2674,6 +2724,7 @@ function initApp(): void {
   bindSettingsListeners();
   initSwipeNavigation();
   initTooltips();
+  updateResponsiveLabels();
 
   window.addEventListener("beforeunload", (e) => {
     if (isGeometryDirty) {
@@ -2691,6 +2742,7 @@ function initApp(): void {
 
   window.addEventListener("resize", () => {
     updateTabIndicator();
+    updateResponsiveLabels();
   });
 }
 
