@@ -1,11 +1,11 @@
 {
   "name": "rotorcalculator-web",
   "private": true,
-  "version": "1.22.0",
+  "version": "1.23.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/inline-dist.mjs && node scripts/generate-sw.mjs && node scripts/copy-to-docs.mjs",
+    "build": "node scripts/sync-nomenclature.mjs && tsc --noEmit && vite build && node scripts/inline-dist.mjs && node scripts/offline-download.mjs && node scripts/generate-sw.mjs && node scripts/copy-to-docs.mjs",
     "test": "vitest run",
     "preview": "vite preview"
   },

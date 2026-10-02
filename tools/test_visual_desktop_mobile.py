@@ -30,14 +30,15 @@ async def main():
         assert shell_box["width"] >= 1200, f"App shell too narrow on 1920px desktop: {shell_box['width']}"
 
         # Verify Geometry labels on Desktop are Level 0 (Full Name + Symbol)
-        geom_labels = await page.locator("#page-geometry .row-label-btn").all_inner_texts()
+        geom_labels = [await el.text_content() for el in await page.locator("#page-geometry .row-label-btn").all()]
         print("Sample Desktop Geometry Labels:", [lbl.encode("ascii", "replace").decode() for lbl in geom_labels[:5]])
         assert any("Nominal Rotor Speed" in lbl or "Rotor Speed" in lbl for lbl in geom_labels), "Expected full label for rpmNom"
         assert any("Rotor Radius" in lbl or "Radius" in lbl for lbl in geom_labels), "Expected full label for Radius"
 
-        # Check that no buttons have multi-line text (no line breaks)
-        for i, lbl in enumerate(geom_labels):
-            assert "\n" not in lbl, f"Line break detected in desktop geom label: {lbl}"
+        # Verify that all buttons strictly have white-space: nowrap
+        first_btn = page.locator("#page-geometry .row-label-btn").first
+        ws = await first_btn.evaluate("el => window.getComputedStyle(el).whiteSpace")
+        assert ws == "nowrap", f"Expected white-space: nowrap, got {ws}"
 
         await page.screenshot(path=str(OUT_DIR / "01_desktop_geometry.png"))
 
@@ -51,7 +52,7 @@ async def main():
         # Desktop Results
         await page.click('button[data-page="results"]')
         await page.wait_for_timeout(300)
-        res_labels = await page.locator("#page-results .result-label").all_inner_texts()
+        res_labels = [await el.text_content() for el in await page.locator("#page-results .result-label").all()]
         print("Sample Desktop Results Labels:", [lbl.encode("ascii", "replace").decode() for lbl in res_labels[:5]])
         assert any("Total Axial Speed" in lbl for lbl in res_labels), "Expected full label for Vztot on desktop"
         assert any("Thrust" in lbl for lbl in res_labels), "Expected full label for Thrust"

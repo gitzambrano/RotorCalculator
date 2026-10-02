@@ -12,6 +12,7 @@ async def main():
         resp = await page.goto("https://gitzambrano.github.io/RotorCalculator/", wait_until="networkidle")
         print(f"HTTP Status: {resp.status}")
         
+        assert await page.locator(".version-badge").inner_text() == "v1.23"
         title = await page.title()
         print(f"Page Title: {title}")
         
@@ -22,8 +23,8 @@ async def main():
         # Test Results calculation
         await page.click('button[data-page="results"]')
         await page.wait_for_timeout(500)
-        thrust = await page.inner_text("#res-thrust")
-        power = await page.inner_text("#res-power")
+        thrust = await page.locator('.result-row[data-key="T"] .result-val').inner_text()
+        power = await page.locator('.result-row[data-key="P"] .result-val').inner_text()
         print(f"Results Tab: Thrust = {thrust} N | Power = {power} kW")
         
         # Test Conditions Tab

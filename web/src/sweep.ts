@@ -550,7 +550,7 @@ export function renderSweepTableHtml(
   const xc = xAxisMode === "mu" ? 1 : 2;
 
   let html = `
-    <div style="height: 100%; display: flex; flex-direction: column; background: ${bg}; color: ${fg}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">
+    <div style="height: 100%; display: flex; flex-direction: column; background: ${bg}; color: ${fg}; font-family: 'RotorRoboto', Roboto, sans-serif; font-size: 14px;">
       <div style="padding: 10px 14px; font-size: 13px; color: ${hintCol}; border-bottom: 1px solid ${grid}; display: flex; justify-content: space-between; align-items: center;">
         <span><strong>${strategy}</strong></span>
         ${cols > xc + 1 ? `<span style="font-size: 12px;">x columns stay frozen ↔</span>` : ""}
@@ -759,13 +759,14 @@ export function drawSweepCanvas(
   const yDec = stepDecimals(yStep) + Math.max(0, Math.min(1, extraPrecision));
 
   // Layout margins
-  const fs = width >= 600 ? 14 : width >= 400 ? 13 : 12;
+  const mobilePlot = typeof window !== "undefined" && window.innerWidth < 768;
+  const fs = mobilePlot ? 13 : width >= 600 ? 14 : width >= 400 ? 13 : 12;
   const lineH = fs + 6;
-  const mLeft = 70;
-  const mRight = 20;
-  const mTop = Math.round(lineH * 1.7 + 4);
+  const mLeft = mobilePlot ? 30 : 70;
+  const mRight = mobilePlot ? 14 : 20;
+  const mTop = mobilePlot ? 30 : Math.round(lineH * 1.7 + 4);
   const legendRows = Math.ceil(curves.length / 2);
-  const mBottom = Math.round(lineH * 2 + 6 + (curves.length > 1 ? legendRows * lineH + 4 : 0));
+  const mBottom = mobilePlot ? 65 : Math.round(lineH * 2 + 6 + (curves.length > 1 ? legendRows * lineH + 4 : 0));
   const pWidth = width - mLeft - mRight;
   const pHeight = height - mTop - mBottom;
 
@@ -775,8 +776,8 @@ export function drawSweepCanvas(
   }
 
   // Titles
-  ctx.fillStyle = titleCol;
-  ctx.font = `bold ${fs}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+  ctx.fillStyle = mobilePlot ? textCol : titleCol;
+  ctx.font = `bold ${fs}px 'RotorRoboto', Roboto, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   let unitPart = "";
@@ -786,13 +787,13 @@ export function drawSweepCanvas(
     unitPart = paramMeta.unit;
   }
   const yTitle = `${paramMeta.full} ${paramMeta.symbol}${unitPart ? ` [${unitPart}]` : ""}`;
-  ctx.fillText(yTitle, 10, Math.round(lineH * 0.3));
+  ctx.fillText(yTitle, mobilePlot ? 8 : 10, mobilePlot ? 0 : Math.round(lineH * 0.3));
 
   // Y-Grid & Ticks
   ctx.lineWidth = 1;
   ctx.strokeStyle = gridCol;
   ctx.fillStyle = textCol;
-  ctx.font = `${fs - 1}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace`;
+  ctx.font = `${mobilePlot ? fs : fs - 1}px 'RotorRoboto', Roboto, sans-serif`;
   ctx.textAlign = "right";
   ctx.textBaseline = "middle";
 
@@ -830,15 +831,15 @@ export function drawSweepCanvas(
 
   // X-Axis Title
   ctx.fillStyle = textCol;
-  ctx.font = `bold ${fs}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+  ctx.font = `bold ${fs}px 'RotorRoboto', Roboto, sans-serif`;
   ctx.textAlign = "center";
   const xTitle =
     xAxisMode === "mu"
-      ? "Advance Ratio μ_x [–]"
+      ? mobilePlot ? "Advance Ratio μₓ" : "Advance Ratio μ_x [–]"
       : xAxisMode === "vx"
       ? "Forward Airspeed V_x [m/s]"
       : "Advance-to-Inflow Ratio μ/λ [–]";
-  ctx.fillText(xTitle, mLeft + pWidth / 2, mTop + pHeight + lineH * 1.6);
+  ctx.fillText(xTitle, mLeft + pWidth / 2, mTop + pHeight + (mobilePlot ? 16 : lineH * 1.6));
 
   // Plot Curves with dash patterns & markers
   const dashPatterns = [
@@ -848,6 +849,14 @@ export function drawSweepCanvas(
     [8, 3, 2, 3],
   ];
 
+  const drawMarker = (index: number, x: number, y: number, radius: number) => {
+    ctx.beginPath();
+    if (!mobilePlot || index % 4 === 0) ctx.arc(x, y, radius, 0, Math.PI * 2);
+    else if (index % 4 === 1) ctx.rect(x - radius, y - radius, radius * 2, radius * 2);
+    else if (index % 4 === 2) { ctx.moveTo(x, y - radius); ctx.lineTo(x + radius, y + radius); ctx.lineTo(x - radius, y + radius); ctx.closePath(); }
+    else { ctx.moveTo(x, y - radius); ctx.lineTo(x + radius, y); ctx.lineTo(x, y + radius); ctx.lineTo(x - radius, y); ctx.closePath(); }
+    ctx.fill();
+  };
   curves.forEach((c, curveIdx) => {
     ctx.beginPath();
     ctx.strokeStyle = c.color;
@@ -878,10 +887,8 @@ export function drawSweepCanvas(
       const xPos = mLeft + (x / xMax) * pWidth;
       const yPos = mTop + pHeight - ((pt.val / yScale - yLo) / (yHi - yLo)) * pHeight;
 
-      ctx.beginPath();
-      ctx.arc(xPos, yPos, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = c.color;
-      ctx.fill();
+      drawMarker(curveIdx, xPos, yPos, mobilePlot ? 3 : 3.5);
     });
   });
 
@@ -959,7 +966,7 @@ export function drawSweepCanvas(
         ctx.fill();
 
         const vTxt = formatSig((bestPt as SweepPointData).val / yScale, paramMeta.digits + extraPrecision);
-        ctx.font = `bold ${fs - 2}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace`;
+        ctx.font = `bold ${fs - 2}px 'RotorRoboto', Roboto, sans-serif`;
         const vw = ctx.measureText(vTxt).width;
         let vx = nx + 9;
         let align: CanvasTextAlign = "left";
@@ -979,17 +986,19 @@ export function drawSweepCanvas(
 
   // Legend Below Plot
   if (curves.length > 1) {
-    let curX = mLeft;
-    let curY = mTop + pHeight + lineH * 2.8;
-    ctx.font = `bold ${fs - 1}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+    const legendLeft = mobilePlot ? 8 : mLeft;
+    let curX = legendLeft;
+    let curY = mTop + pHeight + (mobilePlot ? 40 : lineH * 2.8);
+    ctx.font = `bold ${fs - 1}px 'RotorRoboto', Roboto, sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
-    curves.forEach((c) => {
-      const itemW = 24 + ctx.measureText(c.label).width + 16;
-      if (curX > mLeft && curX + itemW > width - mRight) {
-        curX = mLeft;
-        curY += lineH;
+    curves.forEach((c, curveIdx) => {
+      const label = mobilePlot ? c.label.replace("Coleman-Feingold", "Coleman-FG") : c.label;
+      const itemW = (mobilePlot ? 18 : 24) + ctx.measureText(label).width + (mobilePlot ? 10 : 16);
+      if (curX > legendLeft && curX + itemW > width - mRight) {
+        curX = legendLeft;
+        curY += mobilePlot ? 14 : lineH;
       }
 
       ctx.strokeStyle = c.color;
@@ -999,13 +1008,11 @@ export function drawSweepCanvas(
       ctx.lineTo(curX + 18, curY);
       ctx.stroke();
 
-      ctx.beginPath();
-      ctx.arc(curX + 9, curY, 3, 0, Math.PI * 2);
       ctx.fillStyle = c.color;
-      ctx.fill();
+      drawMarker(curveIdx, curX + 9, curY, 3);
 
       ctx.fillStyle = c.color;
-      ctx.fillText(c.label, curX + 24, curY);
+      ctx.fillText(label, curX + (mobilePlot ? 18 : 24), curY);
 
       curX += itemW;
     });

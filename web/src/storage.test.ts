@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   getFactoryPresets,
   exportRotorsJSON,
@@ -6,6 +6,10 @@ import {
   parseDatabaseText,
   importRotorsJSON,
   importRotorsUniversal,
+  saveStoredRotors,
+  resetToFactoryPresets,
+  setActiveRotorId,
+  getActiveRotorId,
 } from "./storage";
 
 describe("Rotor Storage & Import/Export Parity", () => {
@@ -58,5 +62,59 @@ R|Bell 206 JetRanger|5.08|2|0.12|0.33|0.33|0.20943951023931953|0.034906585039886
     expect(fromJson?.length).toBe(presets.length);
     expect(fromTxt?.length).toBe(presets.length);
     expect(fromJson?.[0].name).toBe(fromTxt?.[0].name);
+  });
+});
+
+
+describe("Storage preservation and import validation", () => {
+  beforeEach(() => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    });
+  });
+
+  it("restores original factory values while preserving custom rotors and active identity", () => {
+    const presets = getFactoryPresets();
+    presets[0].geom.radius = 9;
+    const custom = { id: "custom-active", name: "My rotor", geom: { ...presets[1].geom, name: "My rotor" } };
+    saveStoredRotors([...presets, custom]);
+    setActiveRotorId(custom.id);
+    const restored = resetToFactoryPresets();
+    expect(restored).toHaveLength(presets.length + 1);
+    expect(restored.find((r) => r.id === custom.id)).toEqual(custom);
+    expect(restored[0].geom.radius).toBe(getFactoryPresets()[0].geom.radius);
+    expect(getActiveRotorId()).toBe(custom.id);
+  });
+
+  it("preserves renamed factory rotors without duplicating identity", () => {
+    const presets = getFactoryPresets();
+    presets[0].name = "My UH-60";
+    presets[0].geom.name = presets[0].name;
+    saveStoredRotors(presets);
+    const restored = resetToFactoryPresets();
+    expect(restored.some((r) => r.name === "My UH-60")).toBe(true);
+    expect(restored.some((r) => r.name === getFactoryPresets()[0].name)).toBe(true);
+    expect(new Set(restored.map((r) => r.id)).size).toBe(restored.length);
+  });
+
+  it("rejects invalid JSON geometry and makes imported identities independent", () => {
+    const valid = getFactoryPresets()[0];
+    const invalid = { ...valid, geom: { ...valid.geom, radius: -1 } };
+    const missing = { ...valid, geom: { radius: 1 } };
+    const imported = importRotorsJSON(JSON.stringify([invalid, missing, valid, valid]));
+    expect(imported).toHaveLength(2);
+    expect(imported![0].id).not.toBe(valid.id);
+    expect(imported![0].id).not.toBe(imported![1].id);
+  });
+
+  it("exports the library name even for a previously inconsistent copied geometry", () => {
+    const rotor = getFactoryPresets()[0];
+    rotor.name = "Copied rotor";
+    const imported = parseDatabaseText(exportRotorsDatabaseText([rotor]));
+    expect(imported![0].name).toBe("Copied rotor");
+    expect(imported![0].geom.name).toBe("Copied rotor");
   });
 });

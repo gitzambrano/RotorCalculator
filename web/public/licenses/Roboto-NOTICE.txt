@@ -1,0 +1,7 @@
+Roboto: Copyright 2011 Google Inc. All Rights Reserved.
+Licensed under the Apache License, Version 2.0.
+
+This WOFF2 subset was derived from the Roboto variable font bundled with
+the Android emulator used for native/web visual verification. The original
+font records the above copyright and license in its name table.
+The subset retains Latin, Greek and engineering/mathematical symbols.

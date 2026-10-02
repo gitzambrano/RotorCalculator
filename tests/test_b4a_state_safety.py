@@ -252,7 +252,7 @@ def test_trim_is_at_current_flight_condition_and_candidate_rpm_recomputes_mu():
 def test_numerical_vectorial_profile_drag_is_authoritative():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
-    assert 'btnDrag.Text = RotorNames.FullName("drag_numerical")' in main
+    assert 'btnDrag.Text = RotorNames.ShortName("drag_numerical")' in main
     assert "btnProfileDragModel" not in main
     assert 'c.ProfileDragModel = "numerical_vectorial"' in engine
     assert 'ProfileDrag(c.Mu, c.MuZ, g, "numerical_vectorial")' in engine
@@ -775,9 +775,11 @@ def test_abbreviations_documented_and_labels_single_line():
     doc = text("docs/nomenclature.md")
     m = re.search(r'Array As String\(("R", "Radius".*?)\)' + chr(10), names, re.S)
     vals = re.findall(r'"([^"]*)"', m.group(1))
-    for k, v in zip(vals[::2], vals[1::2]):
+    effective = dict(zip(vals[::2], vals[1::2]))
+    effective.update(re.findall(r'abbr\.Put\("([^"]+)", "([^"]+)"\)', names))
+    for k, v in effective.items():
         assert f"- `{k}`: {v}" in doc
-        assert "." not in re.sub(r"\b(?:Adv|Act|Geom|Thr|Prof|Ind|Rot|Eff)\.", "", v)
+        assert "." not in re.sub(r"\b(?:Adv|Act|Geom|Thr|Prof|Ind|Rot|Eff|Compres|Ret)\.", "", v)
     main = text("RotorCalculator.b4a")
     row = main.split("Private Sub CreateRowLabel", 1)[1].split("End Sub", 1)[0]
     assert "btn.SingleLine = True" in row and "SetTextLines(btn, 1)" in row

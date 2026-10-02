@@ -16,6 +16,18 @@ import { convertValue } from "./units";
 import { runParameterSweep } from "./sweep";
 
 describe("zBET Engine Numerical Physics", () => {
+  it("matches the shipped Android tropospheric atmosphere adapter", () => {
+    for (const [altitude, temperature] of [[0, 15], [3000, -4.5], [11000, -56.5], [20000, -100], [-1000, 80]]) {
+      const h = Math.max(-500, Math.min(11000, altitude));
+      const t = Math.max(-80, Math.min(60, temperature)) + 273.15;
+      const pressure = 101325 * Math.max(0.05, 1 - 0.0065 * h / 288.15) ** 5.2561;
+      const c = updateAtmosphere(createDefaultCondition(), altitude, temperature);
+      expect(c.altitudeM).toBe(h);
+      expect(c.pressurePa).toBeCloseTo(pressure, 9);
+      expect(c.rho).toBeCloseTo(pressure / (287.058 * t), 12);
+      expect(c.speedOfSound).toBeCloseTo(Math.sqrt(1.4 * 287.058 * t), 10);
+    }
+  });
   it("resolves planform geometry and solidities accurately", () => {
     const geom = createDefaultGeometry();
     const resolved = resolveSolidity(geom);

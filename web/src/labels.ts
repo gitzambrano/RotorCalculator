@@ -3,6 +3,8 @@
  * Authoritative specifications: docs/nomenclature.md & RotorNames.bas
  */
 
+import { APK_NOMENCLATURE } from "./apk-nomenclature";
+
 export interface NomenclatureEntry {
   key: string;
   full: string;
@@ -20,7 +22,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "name",
     full: "Rotor Name",
     short: "Name",
-    sym: "–",
+    sym: "",
     unit: "",
     body: "Identifier of the saved rotor. It appears in the rotor list and in exports.",
     eq: "",
@@ -28,8 +30,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   rpmNom: {
     key: "rpmNom",
-    full: "Nominal Rotor Speed",
-    short: "Nominal Speed",
+    full: "Rotor Speed",
+    short: "Rotor Speed",
     sym: "Ω_nom",
     unit: "rpm",
     body: "Design rotor speed stored with the rotor. It seeds the Conditions page.",
@@ -200,7 +202,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "airfoil",
     full: "Airfoil Section",
     short: "Airfoil",
-    sym: "–",
+    sym: "",
     unit: "–",
     body: "Blade section from the airfoil database. It provides the lift-curve slope and the profile drag coefficient.",
     eq: "C_l = a_0·α,  C_d = C_d0",
@@ -230,7 +232,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "tipModel",
     full: "Tip-Loss Model",
     short: "Tip Loss",
-    sym: "–",
+    sym: "",
     unit: "–",
     body: "How the loss of lift near the blade tip is modeled. None integrates the loading to the tip. Fixed cuts the loading at a user factor B. Sissingh derives B from the thrust coefficient.",
     eq: "x_max = B",
@@ -250,7 +252,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "comp",
     full: "Compressibility Correction",
     short: "Compressibility",
-    sym: "–",
+    sym: "",
     unit: "–",
     body: "Off keeps the lift-curve slope constant. Prandtl-Glauert raises it with the local Mach number (evaluated at 0.75R, capped at M = 0.85).",
     eq: "a = a_0 / √(1 − M²)",
@@ -332,7 +334,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "trim",
     full: "Trim Mode",
     short: "Trim",
-    sym: "–",
+    sym: "",
     unit: "–",
     body: "Chooses how the operating point is solved. None uses the typed collective and speed. Collective trim finds Δθ for the target. Speed trim finds Ω for the target.",
     eq: "T(Δθ, Ω) = T_target",
@@ -371,7 +373,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CTtgt: {
     key: "CTtgt",
     full: "Target Thrust Coefficient",
-    short: "Target Coefficient",
+    short: "Target CT",
     sym: "C_T",
     unit: "–",
     body: "Thrust coefficient the trim must reach. Exclusive with the target thrust.",
@@ -382,7 +384,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "inflow",
     full: "Inflow Model",
     short: "Inflow",
-    sym: "–",
+    sym: "",
     unit: "–",
     body: "How the induced velocity varies over the disk in forward flight. Uniform is momentum theory. The Coleman and Drees models add a longitudinal and lateral gradient tied to wake skew.",
     eq: "λ_i(x,ψ) = λ_i0 (1 + K_x x cosψ + K_y x sinψ)",
@@ -402,7 +404,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "drag",
     full: "Profile Drag Integration",
     short: "Drag Integration",
-    sym: "–",
+    sym: "",
     unit: "–",
     body: "Method used to integrate the section profile drag over the disk. Numerical integrates blade and azimuth by quadrature.",
     eq: "dD = ½ρ U² c C_d0 dr",
@@ -523,7 +525,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   Hi: {
     key: "Hi",
     full: "Induced In-Plane Force",
-    short: "Induced In-Plane",
+    short: "Induced In-Plane Force",
     sym: "H_i",
     unit: "N",
     body: "Induced part of the in-plane force, from the backward tilt of the lift vector.",
@@ -533,7 +535,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   H0: {
     key: "H0",
     full: "Profile In-Plane Force",
-    short: "Profile In-Plane",
+    short: "Profile In-Plane Force",
     sym: "H_0",
     unit: "N",
     body: "Profile-drag part of the in-plane force, integrated numerically. H = H_i + H_0.",
@@ -572,9 +574,9 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   vi: {
     key: "vi",
-    full: "Induced Velocity",
-    short: "Induced Velocity",
-    sym: "v_i",
+    full: "Induced Speed",
+    short: "Induced Speed",
+    sym: "V_i",
     unit: "m/s",
     body: "Mean velocity added to the air through the disk.",
     eq: "v_i = λ_i·ΩR",
@@ -583,7 +585,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CT: {
     key: "CT",
     full: "Thrust Coefficient",
-    short: "Thrust Coeff",
+    short: "Thrust Coeff.",
     sym: "C_T",
     unit: "–",
     body: "Thrust made non-dimensional by disk area and tip speed.",
@@ -593,7 +595,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CQ: {
     key: "CQ",
     full: "Torque Coefficient",
-    short: "Torque Coeff",
+    short: "Torque Coeff.",
     sym: "C_Q",
     unit: "–",
     body: "Torque non-dimensionalized by ρA(ΩR)²R. Equals the power coefficient C_P.",
@@ -603,7 +605,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CQi: {
     key: "CQi",
     full: "Induced Torque Coefficient",
-    short: "Induced Torque",
+    short: "Ind. Torque Coeff.",
     sym: "C_Qi",
     unit: "–",
     body: "Induced part of the torque coefficient.",
@@ -613,7 +615,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CQ0: {
     key: "CQ0",
     full: "Profile Torque Coefficient",
-    short: "Profile Torque",
+    short: "Prof. Torque Coeff.",
     sym: "C_Q0",
     unit: "–",
     body: "Profile-drag part of the torque coefficient.",
@@ -623,7 +625,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CH: {
     key: "CH",
     full: "In-Plane Force Coefficient",
-    short: "In-Plane Coeff",
+    short: "In-Plane Coeff.",
     sym: "C_H",
     unit: "–",
     body: "In-plane (drag-like) force coefficient. Sum of induced and profile parts.",
@@ -632,8 +634,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   CHi: {
     key: "CHi",
-    full: "Induced In-Plane Coefficient",
-    short: "Induced In-Plane",
+    full: "Induced In-Plane Force Coefficient",
+    short: "Ind. In-Plane Coeff.",
     sym: "C_Hi",
     unit: "–",
     body: "Induced part of the in-plane force coefficient, from the tilt of the lift vector.",
@@ -642,8 +644,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   CH0: {
     key: "CH0",
-    full: "Profile In-Plane Coefficient",
-    short: "Profile In-Plane",
+    full: "Profile In-Plane Force Coefficient",
+    short: "Prof. In-Plane Coeff.",
     sym: "C_H0",
     unit: "–",
     body: "Profile-drag part of the in-plane force coefficient.",
@@ -653,7 +655,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CY: {
     key: "CY",
     full: "Side Force Coefficient",
-    short: "Side Force Coeff",
+    short: "Side Force",
     sym: "C_Y",
     unit: "–",
     body: "Side force made non-dimensional like thrust.",
@@ -663,7 +665,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CMx: {
     key: "CMx",
     full: "Roll Moment Coefficient",
-    short: "Roll Coeff",
+    short: "Roll Moment",
     sym: "C_Mx",
     unit: "–",
     body: "Roll hub moment made non-dimensional. Rigid hub, no flapping.",
@@ -673,7 +675,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CMy: {
     key: "CMy",
     full: "Pitch Moment Coefficient",
-    short: "Pitch Coeff",
+    short: "Pitch Moment",
     sym: "C_My",
     unit: "–",
     body: "Pitch hub moment made non-dimensional. Rigid hub, no flapping.",
@@ -683,7 +685,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CPair: {
     key: "CPair",
     full: "Air Power Coefficient",
-    short: "Air Power Coeff",
+    short: "Air Power",
     sym: "C_Pair",
     unit: "–",
     body: "Power coefficient from the energy balance: induced, climb and profile terms.",
@@ -693,7 +695,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CLbar: {
     key: "CLbar",
     full: "Mean Lift Coefficient",
-    short: "Mean Lift",
+    short: "Mean Lift Coefficient",
     sym: "C̄_L",
     unit: "–",
     body: "Average section lift coefficient over the disk that carries the thrust, from the blade loading. A quick stall margin check against the section C_l,max.",
@@ -702,8 +704,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   Tc: {
     key: "Tc",
-    full: "Dynamic-Pressure Thrust Coefficient",
-    short: "Dynamic-Pressure Thrust",
+    full: "Dynamic Thrust Coefficient",
+    short: "Dynamic Thrust Coeff",
     sym: "T_c",
     unit: "–",
     body: "Thrust over the dynamic pressure of the free stream times disk area. Useful when the rotor is treated like a propeller or a lifting surface moving at V. Undefined in hover.",
@@ -712,8 +714,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   Pc: {
     key: "Pc",
-    full: "Dynamic-Pressure Power Coefficient",
-    short: "Dynamic-Pressure Power",
+    full: "Dynamic Power Coefficient",
+    short: "Dynamic Power Coeff",
     sym: "P_c",
     unit: "–",
     body: "Shaft power over ½ρV³A for the free-stream speed V. Undefined in hover.",
@@ -724,7 +726,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "CTs",
     full: "Blade Loading",
     short: "Blade Loading",
-    sym: "C_T/σ",
+    sym: "C_T/σ_TR",
     unit: "–",
     body: "Thrust coefficient per unit solidity. Indicates how hard the blades work; stall limits it near 0.12 to 0.15.",
     eq: "C_T / σ",
@@ -742,8 +744,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   LDe: {
     key: "LDe",
-    full: "Effective Lift-to-Drag Ratio",
-    short: "Effective L/D",
+    full: "Effective Lift/Drag Ratio",
+    short: "Eff. Lift/Drag",
     sym: "(L/D)_e",
     unit: "–",
     body: "Rotor lift times speed over power in forward flight. Zero in hover.",
@@ -783,7 +785,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   muLam: {
     key: "muLam",
     full: "Advance-to-Inflow Ratio",
-    short: "Advance-Inflow",
+    short: "Advance/Inflow",
     sym: "μ/λ",
     unit: "–",
     body: "In-plane flow over total axial inflow. Zero in hover and growing as the wake skews toward the disk plane. It sets the wake skew angle that drives the inflow gradients.",
@@ -842,7 +844,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   Mtip: {
     key: "Mtip",
-    full: "Hover Tip Mach Number",
+    full: "Tip Mach",
     short: "Tip Mach",
     sym: "M_tip",
     unit: "–",
@@ -852,8 +854,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   Madv: {
     key: "Madv",
-    full: "Advancing Tip Mach Number",
-    short: "Advancing Mach",
+    full: "Advancing Tip Mach",
+    short: "Adv. Mach",
     sym: "M_adv",
     unit: "–",
     body: "Mach number of the advancing blade tip. Compressibility effects start near 0.8 to 0.9.",
@@ -979,6 +981,8 @@ export function formatSubscripts(text: string): string {
   if (!text) return "";
   return text.replace(/_\{([^}]+)\}|_([A-Za-z0-9]+)/g, (_, g1, g2) => `<sub>${g1 || g2}</sub>`);
 }
+
+Object.assign(CANONICAL_NOMENCLATURE, APK_NOMENCLATURE);
 
 export function getNomenclature(key: string): NomenclatureEntry | undefined {
   if (CANONICAL_NOMENCLATURE[key]) return CANONICAL_NOMENCLATURE[key];
@@ -1164,93 +1168,117 @@ export function getResultDisplayLabel(canonical: string, width: number): string 
 // ====================================================================
 
 export const ABBREVIATIONS: Record<string, string> = {
-  R: "Radius",
-  Nb: "Blades",
-  x0: "Cutout",
-  c0: "Chord",
-  c1: "Chord",
-  taper: "Taper",
-  sigmaRef: "Solidity",
-  sigmaAct: "Solidity",
-  sigmaT: "Solidity",
-  AR: "AR",
-  A: "Area",
-  Ab: "Area",
-  Aact: "Area",
-  thRoot: "Pitch",
-  thTip: "Pitch",
-  thTwist: "Twist",
-  th75: "Pitch",
-  a0: "Slope",
-  Cd0: "Drag",
-  B: "Factor",
-  rpmNom: "Speed",
-  h: "Alt",
-  T0: "Temp",
-  mu: "Advance",
-  Vx: "Speed",
-  alpha: "AoA",
-  Vz: "Climb",
-  muz: "Axial",
-  rpm: "Speed",
-  coll: "Coll",
-  Ttgt: "Target",
-  CTtgt: "Target",
-  kind: "Factor",
-  T: "Thrust",
-  P: "Power",
-  Pi: "Induced",
-  P0: "Profile",
-  Pair: "Air Power",
-  Q: "Torque",
-  Qi: "Ind Torque",
-  Q0: "Prof Torque",
-  H: "Force",
-  Hi: "Ind In-Plane",
-  H0: "Prof In-Plane",
-  Y: "Force",
-  Mx: "Roll",
-  My: "Pitch",
-  DL: "Loading",
-  PL: "Loading",
-  vi: "Induced",
-  CT: "Thrust",
-  CQ: "Torque",
-  CQi: "Induced",
-  CQ0: "Profile",
-  CH: "Force",
-  CHi: "Induced",
-  CH0: "Profile",
-  CY: "Side",
-  CMx: "Roll",
-  CMy: "Pitch",
-  CPair: "Air",
-  CTs: "Loading",
-  CLbar: "Lift",
-  FM: "FM",
-  LDe: "L/D",
-  lam: "Inflow",
-  lami: "Induced",
-  lamh: "Hover",
-  muLam: "Ratio",
-  Tc: "Dyn",
-  Pc: "Dyn",
-  Mtip: "Mach",
-  Madv: "Mach",
-  OmR: "Tip",
-  rho: "Density",
-  p: "Pressure",
-  a: "Sound",
-  Bres: "Factor",
-  chi: "Skew",
-  Vztot: "Axial Speed",
-  Vadv: "Adv. Speed",
-  Vret: "Ret. Speed",
-  Mret: "Ret. Mach",
-  aoaAdv75: "Adv AoA",
-  aoaRet75: "Ret. AoA",
-  phiAdv75: "Adv. Inflow",
-  phiRet75: "Ret. Inflow",
+  "R": "Radius",
+  "Nb": "Blades",
+  "x0": "Root Cutout",
+  "c0": "Root Chord",
+  "c1": "Tip Chord",
+  "taper": "Taper",
+  "sigmaRef": "Geom. Solidity",
+  "sigmaAct": "Act. Solidity",
+  "sigmaT": "Thr. Solidity",
+  "AR": "Aspect",
+  "A": "Disk Area",
+  "Ab": "Geom. Area",
+  "Aact": "Act. Area",
+  "thRoot": "Root Pitch",
+  "thTip": "Tip Pitch",
+  "thTwist": "Twist",
+  "th75": "Pitch 75%",
+  "a0": "Lift Slope",
+  "Cd0": "Prof. Drag",
+  "B": "Tip Factor",
+  "rpmNom": "Rot. Speed",
+  "h": "Altitude",
+  "T0": "Temperature",
+  "mu": "Adv. Ratio",
+  "Vx": "Airspeed",
+  "alpha": "Disk AoA",
+  "Vz": "Climb Speed",
+  "muz": "Axial Ratio",
+  "rpm": "Rot. Speed",
+  "coll": "Collective",
+  "Ttgt": "Target Thrust",
+  "CTtgt": "Target CT",
+  "kind": "Ind. Factor",
+  "T": "Thrust",
+  "P": "Power",
+  "Pi": "Ind. Power",
+  "P0": "Prof. Power",
+  "Q": "Torque",
+  "H": "In-Plane Force",
+  "Y": "Side Force",
+  "Mx": "Roll Moment",
+  "My": "Pitch Moment",
+  "DL": "Disk Loading",
+  "PL": "Power Loading",
+  "vi": "Ind. Speed",
+  "CT": "Thrust",
+  "CQ": "Torque",
+  "CQi": "Ind. Torque",
+  "CQ0": "Prof. Torque",
+  "CH": "In-Plane",
+  "CHi": "Ind. In-Plane",
+  "CH0": "Prof. In-Plane",
+  "CY": "Side Force",
+  "CMx": "Roll Moment",
+  "CMy": "Pitch Moment",
+  "CPair": "Air Power",
+  "CTs": "Blade Load",
+  "CLbar": "Mean Lift",
+  "FM": "FM",
+  "LDe": "Eff. L/D",
+  "lam": "Inflow Ratio",
+  "lami": "Ind. Inflow",
+  "lamh": "Hover Inflow",
+  "muLam": "Advance/Inflow",
+  "Tc": "Dyn Thrust Coeff",
+  "Pc": "Dyn Power Coeff",
+  "Mtip": "Tip Mach",
+  "Madv": "Adv. Mach",
+  "OmR": "Tip Speed",
+  "rho": "Density",
+  "p": "Pressure",
+  "a": "Sound Speed",
+  "Bres": "Tip Factor",
+  "chi": "Wake Skew",
+  "Qi": "Ind. Torque",
+  "Q0": "Prof. Torque",
+  "Hi": "Ind. In-Plane Force",
+  "H0": "Prof. In-Plane Force",
+  "Pair": "Air Power",
+  "comp": "Compres.",
+  "drag": "Integration",
+  "Vztot": "Axial Speed",
+  "Vadv": "Adv. Speed",
+  "Vret": "Ret. Speed",
+  "Mret": "Ret. Mach",
+  "aoaAdv75": "Adv. AoA",
+  "aoaRet75": "Ret. AoA",
+  "phiAdv75": "Adv. Inflow",
+  "phiRet75": "Ret. Inflow",
+};
+
+export const NARROW_NAMES: Record<string, string> = {
+  "AR": "Aspect",
+  "CTtgt": "Target CT",
+  "CTs": "Blade Load",
+  "LDe": "Eff. L/D",
+  "T0": "Temp.",
+  "CT": "Thrust",
+  "CQ": "Torque",
+  "CQi": "Ind. Torque",
+  "CQ0": "Prof. Torque",
+  "CH": "In-Plane",
+  "CHi": "Ind. In-Plane",
+  "CH0": "Prof. In-Plane",
+  "Hi": "Ind. In-Plane",
+  "H0": "Prof. In-Plane",
+};
+
+export const MINIMUM_NAMES: Record<string, string> = {
+  "comp": "Comp.",
+  "drag": "Integ.",
 };
 
 export const GEOM_KEYS = [
@@ -1290,8 +1318,10 @@ export function getPlainLabel(key: string, level: number): string {
       return s ? `${item.full} ${s}` : item.full;
     case 1:
       return s ? `${item.short} ${s}` : item.short;
-    case 2:
-      return item.short;
+    case 2: {
+      const narrow = NARROW_NAMES[key] || ABBREVIATIONS[key] || item.short;
+      return !s || narrow === s ? narrow : `${narrow} ${s}`;
+    }
     case 3: {
       const a = ABBREVIATIONS[key] || item.short;
       if (!s || a === s) return a;
@@ -1299,7 +1329,7 @@ export function getPlainLabel(key: string, level: number): string {
     }
     default:
       if (s) return s;
-      return ABBREVIATIONS[key] || item.short;
+      return MINIMUM_NAMES[key] || ABBREVIATIONS[key] || item.short;
   }
 }
 
@@ -1313,7 +1343,8 @@ export function resultPlainLabel(key: string, level: number): string {
   let caption = item.full;
   if (level === 1) caption = item.short;
   if (level === 3) caption = ABBREVIATIONS[key] || item.short;
-  if (level === 4) return sym || caption;
+  if (level === 2) caption = NARROW_NAMES[key] || ABBREVIATIONS[key] || item.short;
+  if (level === 4) return sym || MINIMUM_NAMES[key] || ABBREVIATIONS[key] || item.short;
   if (!sym) return caption;
   return `${caption} ${sym}`;
 }
@@ -1322,7 +1353,7 @@ export function resultPlainLabel(key: string, level: number): string {
  * Result label HTML with subscripts matching RotorNames.ResultLabel (levels 0 -> 1 -> 3 -> 4)
  */
 export function resultLabelHtml(key: string, widthPx: number, fontSizePx = 15.5): string {
-  for (const level of [0, 1, 3, 4]) {
+  for (const level of [0, 1, 3, 2, 4]) {
     const caption = resultPlainLabel(key, level);
     if (measureTextWidth(caption, fontSizePx) <= widthPx) {
       return formatSubscripts(caption);
@@ -1371,7 +1402,7 @@ export function measureTextWidth(text: string, fontSizePx: number, fontWeight = 
   if (!measureCtx) {
     return text.replace(/_\{([^}]+)\}|_([A-Za-z0-9]+)/g, "$1$2").length * fontSizePx * 0.62;
   }
-  measureCtx.font = `${fontWeight} ${fontSizePx}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  measureCtx.font = `${fontWeight} ${fontSizePx}px "RotorRoboto", Roboto, sans-serif`;
   const subRegex = /_\{([^}]+)\}|_([A-Za-z0-9]+)/g;
   let total = 0;
   let prev = 0;
@@ -1379,17 +1410,17 @@ export function measureTextWidth(text: string, fontSizePx: number, fontWeight = 
   while ((match = subRegex.exec(text)) !== null) {
     const mainPart = text.slice(prev, match.index);
     if (mainPart) {
-      measureCtx.font = `${fontWeight} ${fontSizePx}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+      measureCtx.font = `${fontWeight} ${fontSizePx}px "RotorRoboto", Roboto, sans-serif`;
       total += measureCtx.measureText(mainPart).width;
     }
     const subText = match[1] || match[2];
-    measureCtx.font = `${fontWeight} ${fontSizePx * 0.72}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    measureCtx.font = `${fontWeight} ${fontSizePx * 0.72}px "RotorRoboto", Roboto, sans-serif`;
     total += measureCtx.measureText(subText).width;
     prev = match.index + match[0].length;
   }
   const remaining = text.slice(prev);
   if (remaining) {
-    measureCtx.font = `${fontWeight} ${fontSizePx}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    measureCtx.font = `${fontWeight} ${fontSizePx}px "RotorRoboto", Roboto, sans-serif`;
     total += measureCtx.measureText(remaining).width;
   }
   return total;

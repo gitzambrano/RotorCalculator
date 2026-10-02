@@ -218,18 +218,19 @@ export function createDefaultCondition(): FlightCondition {
 }
 
 export function updateAtmosphere(cond: FlightCondition, altM: number, tempC: number): FlightCondition {
-  const c = { ...cond, altitudeM: altM, temperatureC: tempC };
-  const h = Math.max(-500, Math.min(20000, altM));
+  // Match the shipped Android atmosphere adapter (Main.UpdateAtmosphere).
+  // This retains its rounded tropospheric constants and supported input range.
+  const h = Math.max(-500, Math.min(11000, altM));
+  const temperatureC = Math.max(-80, Math.min(60, tempC));
+  const c = { ...cond, altitudeM: h, temperatureC };
   const lapse = 0.0065;
   const t0 = 288.15;
   const p0 = 101325.0;
-  const g0 = 9.80665;
-  const rGas = 287.05287;
+  const rGas = 287.058;
   const gamma = 1.4;
 
-  const tIsa = t0 - lapse * h;
-  const p = p0 * Math.pow(1.0 - (lapse * h) / t0, g0 / (rGas * lapse));
-  const tKelvin = Math.max(100.0, tempC + 273.15);
+  const p = p0 * Math.pow(Math.max(0.05, 1.0 - (lapse * h) / t0), 5.2561);
+  const tKelvin = temperatureC + 273.15;
   const rho = p / (rGas * tKelvin);
   const a = Math.sqrt(gamma * rGas * tKelvin);
 

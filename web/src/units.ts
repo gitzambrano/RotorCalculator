@@ -24,6 +24,12 @@ export const UNIT_TABLE: Record<string, UnitConversion> = {
   m: { fromSI: (v) => v, toSI: (v) => v },
   ft: { fromSI: (v) => v * 3.2808399, toSI: (v) => v / 3.2808399 },
   in: { fromSI: (v) => v * 39.3700787, toSI: (v) => v / 39.3700787 },
+  cm: { fromSI: (v) => v * 100, toSI: (v) => v / 100 },
+  "m²": { fromSI: (v) => v, toSI: (v) => v },
+  "ft²": { fromSI: (v) => v / 0.3048 ** 2, toSI: (v) => v * 0.3048 ** 2 },
+  "in²": { fromSI: (v) => v / 0.0254 ** 2, toSI: (v) => v * 0.0254 ** 2 },
+  "cm²": { fromSI: (v) => v * 10000, toSI: (v) => v / 10000 },
+  "rad/s": { fromSI: (v) => v * Math.PI / 30, toSI: (v) => v * 30 / Math.PI },
   mm: { fromSI: (v) => v * 1000.0, toSI: (v) => v / 1000.0 },
   km: { fromSI: (v) => v / 1000.0, toSI: (v) => v * 1000.0 },
 
@@ -151,4 +157,26 @@ export function formatResultValue(val: number, decimals: number, extraPrecision 
     maximumFractionDigits: effectiveDecimals,
     useGrouping: true,
   });
+}
+
+/** Android Main.FormatKey presentation, without locale-dependent input widgets. */
+export function formatInputValue(key: string, value: number, unit = ""): string {
+  if (!Number.isFinite(value)) return "";
+  let digits: number;
+  if (key === "Nb") digits = 0;
+  else if (["x0", "taper", "B", "kind"].includes(key)) digits = 3;
+  else if (["sigmaRef", "sigmaAct", "sigmaT", "Cd0", "mu", "muz"].includes(key)) digits = 4;
+  else if (["AR", "a0", "T0"].includes(key)) digits = 2;
+  else if (key === "CTtgt") digits = 5;
+  else if (["rpm", "rpmNom", "Ttgt"].includes(key)) digits = 1;
+  else if (["thRoot", "thTip", "thTwist", "coll", "alpha"].includes(key)) digits = unit === "rad" ? 4 : 2;
+  else digits = Math.abs(value) >= 100 ? 1 : Math.abs(value) >= 10 ? 2 : Math.abs(value) >= 1 ? 3 : 4;
+  let minimum = digits;
+  if (["R", "c0", "c1", "h", "T0", "A", "Ab", "Aact", "Vx", "Vz"].includes(key)) minimum = Math.min(2, digits);
+  if (["thRoot", "thTip", "thTwist", "coll", "alpha"].includes(key)) minimum = Math.min(1, digits);
+  if (["rpm", "rpmNom", "Ttgt"].includes(key)) minimum = 0;
+  if (Math.abs(value) < 0.5 / 10 ** digits) value = 0;
+  let result = value.toFixed(digits);
+  while (result.includes(".") && result.endsWith("0") && result.length - result.indexOf(".") - 1 > minimum) result = result.slice(0, -1);
+  return result.endsWith(".") ? result.slice(0, -1) : result;
 }

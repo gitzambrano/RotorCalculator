@@ -341,3 +341,6 @@ Latest APK label correction: omit Section in full AoA names; abbreviated names a
 ### Pontuação das abreviações do APK (2026-10-01)
 
 Usar `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` e `Eff.` em todos os níveis abreviados. `Coeff` e `Dyn` permanecem sem ponto. Nomes completos e símbolos não mudam. O nível intermediário sem Force continua antes do símbolo.
+# Auditoria de paridade web — 2026-10-02
+
+Web alinhada ao Android 1.23: grid e nomes responsivos, edição de todas as grandezas de geometria, conversões SI, persistência de rascunhos/condições, CRUD e importação/exportação corrigidos, help desktop e download ZIP offline. Relatório e limites de validação: `docs/web-parity-audit.md`. Código Android e equações do rotor preservados. Pré-processamento atmosférico web alinhado às constantes e limites do APK, com tolerâncias documentadas. Distribuição 1.23 inclui APK validado, ZIP web offline e relatório de 135 pares de screenshots reais em três temas e nove configurações.

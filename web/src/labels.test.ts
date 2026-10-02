@@ -1,5 +1,8 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  CANONICAL_NOMENCLATURE,
+  measureTextWidth,
   chooseLevel,
   fitLabelSize,
   formatSubscripts,
@@ -113,18 +116,18 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getPlainLabel("sigmaRef", 1)).toBe("Geometric Solidity σ_geom");
       expect(getPlainLabel("T", 1)).toBe("Thrust T");
 
-      // Level 2: Short only
-      expect(getPlainLabel("R", 2)).toBe("Radius");
-      expect(getPlainLabel("Nb", 2)).toBe("Blades");
-      expect(getPlainLabel("c0", 2)).toBe("Root Chord");
-      expect(getPlainLabel("sigmaRef", 2)).toBe("Geometric Solidity");
+      // Level 2: Narrow caption + retained symbol
+      expect(getPlainLabel("R", 2)).toBe("Radius R");
+      expect(getPlainLabel("Nb", 2)).toBe("Blades N_b");
+      expect(getPlainLabel("c0", 2)).toBe("Root Chord c_R");
+      expect(getPlainLabel("sigmaRef", 2)).toBe("Geom. Solidity σ_geom");
 
       // Level 3: Abbreviation + Symbol
       expect(getPlainLabel("R", 3)).toBe("Radius R");
       expect(getPlainLabel("Nb", 3)).toBe("Blades N_b");
-      expect(getPlainLabel("c0", 3)).toBe("Chord c_R");
-      expect(getPlainLabel("sigmaRef", 3)).toBe("Solidity σ_geom");
-      expect(getPlainLabel("AR", 3)).toBe("AR"); // abbr == sym
+      expect(getPlainLabel("c0", 3)).toBe("Root Chord c_R");
+      expect(getPlainLabel("sigmaRef", 3)).toBe("Geom. Solidity σ_geom");
+      expect(getPlainLabel("AR", 3)).toBe("Aspect AR"); // distinct narrow caption
 
       // Level 4: Symbol only
       expect(getPlainLabel("R", 4)).toBe("R");
@@ -140,7 +143,7 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getRichLabelHtml("c0", 4)).toBe("c<sub>R</sub>");
       expect(getRichLabelHtml("Nb", 4)).toBe("N<sub>b</sub>");
       expect(getRichLabelHtml("CT", 4)).toBe("C<sub>T</sub>");
-      expect(getRichLabelHtml("c0", 3)).toBe("Chord c<sub>R</sub>");
+      expect(getRichLabelHtml("c0", 3)).toBe("Root Chord c<sub>R</sub>");
       expect(getRichLabelHtml("mu", 4, " ⇄")).toBe("μ<sub>x</sub><span class=\"label-suffix\"> ⇄</span>");
     });
 
@@ -160,7 +163,9 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
 
       // Ordinary phone width (e.g. 160px column) fits level 1 or 3
       const phoneLevel = chooseLevel(keys, 160, 1);
-      expect([1, 3]).toContain(phoneLevel);
+      for (const key of keys) {
+        expect(measureTextWidth(getPlainLabel(key, phoneLevel), 13)).toBeLessThanOrEqual(160);
+      }
 
       // Extremely tight width (e.g. 40px column) falls back to level 4 (Symbol only)
       const tightLevel = chooseLevel(keys, 40, 1);
@@ -195,12 +200,12 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
 
       // Level 1: Short + Symbol
       expect(resultPlainLabel("Vztot", 1)).toBe("Total Axial Speed V_{z,tot}");
-      expect(resultPlainLabel("Hi", 1)).toBe("Induced In-Plane H_i");
+      expect(resultPlainLabel("Hi", 1)).toBe("Induced In-Plane Force H_i");
       expect(resultPlainLabel("Pair", 1)).toBe("Air Power P_air");
 
       // Level 3: Abbreviation + Symbol
       expect(resultPlainLabel("Vztot", 3)).toBe("Axial Speed V_{z,tot}");
-      expect(resultPlainLabel("Hi", 3)).toBe("Ind In-Plane H_i");
+      expect(resultPlainLabel("Hi", 3)).toBe("Ind. In-Plane Force H_i");
       expect(resultPlainLabel("Pair", 3)).toBe("Air Power P_air");
 
       // Level 4: Symbol only
@@ -221,3 +226,34 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
   });
 });
 
+
+// Guard the visible nomenclature against drift from the installed Android source.
+describe("Current APK nomenclature source", () => {
+  it("shares every input/result caption and responsive fallback with RotorNames.bas", () => {
+    const source = readFileSync(new URL("../../RotorNames.bas", import.meta.url), "utf8");
+    const entries = [...source.matchAll(/^\s*Add\("([^"\n]+)", "([^"\n]*)", "([^"\n]*)", "([^"\n]*)"/gm)];
+    const base = source.match(/Dim ab\(\) As String = Array As String\(([^\n]+)\)/)![1];
+    const values = [...base.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
+    const abbr: Record<string, string> = {};
+    const narrow: Record<string, string> = {};
+    const minimum: Record<string, string> = {};
+    for (let i = 0; i < values.length; i += 2) abbr[values[i]] = values[i + 1];
+    for (const m of source.matchAll(/(abbr|narrowNames|minimumNames)\.Put\("([^"]+)", "([^"]+)"\)/g)) {
+      ({ abbr, narrowNames: narrow, minimumNames: minimum })[m[1] as "abbr" | "narrowNames" | "minimumNames"][m[2]] = m[3];
+    }
+    let compared = 0;
+    for (const [, key, full, short, sym] of entries) {
+      if (!CANONICAL_NOMENCLATURE[key]) continue;
+      compared++;
+      expect(CANONICAL_NOMENCLATURE[key], key).toMatchObject({ full, short, sym });
+      const captions = [full, short, narrow[key] || abbr[key] || short, abbr[key] || short];
+      for (const level of [0, 1, 2, 3, 4]) {
+        const caption = captions[level];
+        const expected = level === 4 ? sym || minimum[key] || abbr[key] || short
+          : !sym || (level >= 2 && caption === sym) ? caption : `${caption} ${sym}`;
+        expect(getPlainLabel(key, level), `${key} level ${level}`).toBe(expected);
+      }
+    }
+    expect(compared).toBeGreaterThan(90);
+  });
+});

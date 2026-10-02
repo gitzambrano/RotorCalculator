@@ -1026,3 +1026,20 @@ V_i=λ_i ΩR, V_{z,tot}=λ ΩR; V_adv=ΩR+V_x and V_ret=ΩR−V_x are tip tangen
 M_ret=|V_ret|/a; existing M_tip and M_adv keep their definitions.
 Acceptance: compiled diagnostic identities within 1e-10 absolute in degrees or m/s;
 integrated-load equivalence retains the established compiled reference-matrix tolerances.
+
+### Web/Android atmosphere adapter parity (1.23)
+
+The web atmosphere adapter now reproduces the shipped Android `Main.UpdateAtmosphere`
+tropospheric ideal-gas/lapse-rate model, with its rounded constants: R_air = 287.058
+J/(kg K), pressure exponent 5.2561, lapse rate 0.0065 K/m, T_ref = 288.15 K and
+p_ref = 101325 Pa. This preserves the Android engineering convention instead of
+mixing two rounded atmosphere implementations in the same product. Supported
+inputs match Android: altitude −500 to 11000 m and ambient temperature −80 to
+60 °C. The analytical rotor, inflow and drag equations are unchanged.
+
+Previously the web used R_air = 287.05287 and exponent g/(R_air L), producing
+approximately 1 N difference in the default UH-60 hover display. The adapter
+contract is verified at sea level, 3000 m, 11000 m and clamped endpoints:
+pressure agreement to 1e-9 Pa, density to 1e-12 kg/m³, sound speed to 1e-10 m/s.
+These are parity tolerances for the numerical formulas, not claims of physical
+atmosphere accuracy; real ambient density remains model dependent.

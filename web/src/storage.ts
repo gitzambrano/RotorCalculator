@@ -237,7 +237,7 @@ export function exportRotorsDatabaseText(rotors: StoredRotor[]): string {
   const lines: string[] = ["ROTORCALCULATOR_GEOMETRIES|3"];
   for (const r of rotors) {
     const g = r.geom;
-    const cleanName = (g.name || r.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
+    const cleanName = (r.name || g.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
     const pg = g.usePrandtlGlauert ? "1" : "0";
     const nomRpm = g.nominalRpm && g.nominalRpm > 0 ? g.nominalRpm : g.rpm;
     lines.push(
@@ -456,10 +456,17 @@ export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
     const validated: StoredRotor[] = [];
     for (const item of list) {
       if (item && item.name && item.geom) {
+        const name = String(item.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
+        const geom = { ...item.geom, name } as RotorGeometry;
+        if (!isImportedGeometryValid(geom)) continue;
+        const nominalRpm = geom.nominalRpm ?? geom.rpm;
+        if (!Number.isFinite(nominalRpm) || nominalRpm <= 0) continue;
+        geom.nominalRpm = nominalRpm;
+        geom.rpm = nominalRpm;
         validated.push({
-          id: item.id || `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          name: String(item.name).trim(),
-          geom: resolveSolidity(item.geom),
+          id: `imported-json-${Date.now()}-${validated.length}-${Math.random().toString(36).substring(2, 7)}`,
+          name,
+          geom: resolveSolidity(geom),
         });
       }
     }
@@ -487,8 +494,18 @@ export function importRotorsUniversal(content: string): StoredRotor[] | null {
 }
 
 export function resetToFactoryPresets(): StoredRotor[] {
-  const presets = getFactoryPresets();
-  saveStoredRotors(presets);
-  setActiveRotorId(presets[0].id);
-  return presets;
+  const rotors = loadStoredRotors();
+  for (const preset of getFactoryPresets()) {
+    const index = rotors.findIndex((rotor) => rotor.name.trim().toLowerCase() === preset.name.toLowerCase());
+    if (index >= 0) {
+      rotors[index] = { ...preset, id: rotors[index].id };
+    } else {
+      // A renamed preset is a custom rotor and keeps its identity.
+      if (rotors.some((rotor) => rotor.id === preset.id)) preset.id = `restored-${preset.id}-${Date.now()}`;
+      rotors.push(preset);
+    }
+  }
+  saveStoredRotors(rotors);
+  if (!rotors.some((rotor) => rotor.id === getActiveRotorId())) setActiveRotorId(rotors[0].id);
+  return rotors;
 }

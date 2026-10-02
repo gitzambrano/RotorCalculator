@@ -13,6 +13,8 @@ __pycache__/
 *.pyo
 .pytest_cache/
 qa-results/
+output/playwright/
+.playwright-cli/
 
 # Web dependencies and build
 node_modules/

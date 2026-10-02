@@ -19,7 +19,7 @@ try {
   const files = await listFiles(distPath);
   const assets = files
     .map((file) => relative(distPath, file).split(sep).join("/"))
-    .filter((file) => file !== "sw.js" && !file.endsWith(".map"))
+    .filter((file) => file !== "sw.js" && !file.endsWith(".map") && !file.endsWith(".zip") && !file.endsWith(".apk"))
     .map((file) => "./" + file);
 
   if (!assets.includes("./index.html")) assets.unshift("./index.html");
