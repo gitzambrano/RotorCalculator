@@ -653,6 +653,29 @@ export function stepDecimals(stepV: number): number {
   return Math.max(0, -Math.floor(Math.log10(stepV) + 0.000001));
 }
 
+/** Render canonical subscript symbols and scientific exponents on canvas. */
+function drawRichCanvasText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
+  ctx.save();
+  const font = ctx.font;
+  const size = Number(font.match(/([\d.]+)px/)?.[1]) || 13;
+  const small = font.replace(/[\d.]+px/, `${size * .72}px`);
+  const runs: { text: string; font: string; dy: number; width: number }[] = [];
+  let offset = 0;
+  const add = (part: string, f: string, dy: number) => { ctx.font = f; runs.push({ text: part, font: f, dy, width: ctx.measureText(part).width }); };
+  for (const match of text.matchAll(/([_^])(-?[A-Za-z0-9]+)/g)) {
+    add(text.slice(offset, match.index), font, 0);
+    add(match[2], small, match[1] === "_" ? size * .3 : -size * .3);
+    offset = match.index! + match[0].length;
+  }
+  add(text.slice(offset), font, 0);
+  const width = runs.reduce((n, run) => n + run.width, 0);
+  if (ctx.textAlign === "center") x -= width / 2;
+  else if (ctx.textAlign === "right" || ctx.textAlign === "end") x -= width;
+  ctx.textAlign = "left";
+  for (const run of runs) { ctx.font = run.font; ctx.fillText(run.text, x, y + run.dy); x += run.width; }
+  ctx.restore();
+}
+
 export function drawSweepCanvas(
   canvas: HTMLCanvasElement,
   curves: SweepCurve[],
@@ -787,7 +810,7 @@ export function drawSweepCanvas(
     unitPart = paramMeta.unit;
   }
   const yTitle = `${paramMeta.full} ${paramMeta.symbol}${unitPart ? ` [${unitPart}]` : ""}`;
-  ctx.fillText(yTitle, mobilePlot ? 8 : 10, mobilePlot ? 0 : Math.round(lineH * 0.3));
+  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, mobilePlot ? 4 : Math.round(lineH * 0.3));
 
   // Y-Grid & Ticks
   ctx.lineWidth = 1;
@@ -839,7 +862,7 @@ export function drawSweepCanvas(
       : xAxisMode === "vx"
       ? "Forward Airspeed V_x [m/s]"
       : "Advance-to-Inflow Ratio μ/λ [–]";
-  ctx.fillText(xTitle, mLeft + pWidth / 2, mTop + pHeight + (mobilePlot ? 16 : lineH * 1.6));
+  drawRichCanvasText(ctx, xTitle, mLeft + pWidth / 2, mTop + pHeight + (mobilePlot ? 16 : lineH * 1.6));
 
   // Plot Curves with dash patterns & markers
   const dashPatterns = [
