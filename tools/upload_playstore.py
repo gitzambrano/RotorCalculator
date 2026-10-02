@@ -414,9 +414,10 @@ def main() -> int:
             service.edits().commit(
                 packageName=args.package_name, editId=edit_id
             ).execute()
+            vc_str = uploaded_vc if not args.listings_only else (proj_vc or "current")
             print(
-                f"\n[OK] Committed VersionCode {uploaded_vc} "
-                f"to Google Play track '{args.track}' (status: {args.status}). "
+                f"\n[OK] Committed updates (VersionCode {vc_str}) "
+                f"to Google Play (track: '{args.track}', status: {args.status}). "
                 "Verify review and public availability in Play Console."
             )
 
