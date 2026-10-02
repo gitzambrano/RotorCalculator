@@ -996,7 +996,7 @@ export function drawSweepCanvas(
     curves.forEach((c, curveIdx) => {
       const label = mobilePlot ? c.label.replace("Coleman-Feingold", "Coleman-FG") : c.label;
       const itemW = (mobilePlot ? 18 : 24) + ctx.measureText(label).width + (mobilePlot ? 10 : 16);
-      if (curX > legendLeft && curX + itemW > width - mRight) {
+      if (curX > legendLeft && ((mobilePlot && curveIdx % 3 === 0) || curX + itemW > width - mRight)) {
         curX = legendLeft;
         curY += mobilePlot ? 14 : lineH;
       }

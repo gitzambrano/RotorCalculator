@@ -525,57 +525,23 @@ export function getBFactor(geom: RotorGeometry, ct: number): number {
 }
 
 export function getLiftSlope(geom: RotorGeometry, mu: number, soundSpeed: number): number {
-  let a = geom.liftSlope0;
-  if (geom.usePrandtlGlauert) {
-    const omega = (geom.rpm * 2.0 * Math.PI) / 60.0;
-    const vtip = omega * geom.radius;
-    const mat = (vtip * (1.0 + mu)) / soundSpeed;
-    if (mat < 0.95) {
-      a = a / Math.sqrt(Math.max(0.01, 1.0 - mat * mat));
-    } else {
-      a = a / Math.sqrt(Math.max(0.01, 1.0 - 0.95 * 0.95));
-    }
-  }
-  return a;
+  if (!geom.usePrandtlGlauert || soundSpeed <= 1) return geom.liftSlope0;
+  const vtip = geom.rpm * 2 * Math.PI / 60 * geom.radius;
+  const effectiveMach = Math.min(0.85, vtip / soundSpeed * Math.sqrt(0.75 ** 2 + 0.5 * mu ** 2));
+  return geom.liftSlope0 / Math.sqrt(Math.max(0.01, 1 - effectiveMach ** 2));
 }
 
-export function inflowGradients(
-  mu: number,
-  lam: number,
-  model: string,
-  fx: number,
-  fy: number
-): [number, number] {
-  let kx = 0.0;
-  let ky = 0.0;
+/** Canonical first-harmonic models: documentation §4 and compiled zBETEngine. */
+export function inflowGradients(mu: number, lam: number, model: string, fx: number, fy: number): [number, number] {
   const denom = Math.sqrt(mu * mu + lam * lam) + Math.abs(lam);
-  const chi = denom > 1e-15 ? 2.0 * Math.atan(mu / denom) : 0.0;
-
+  const tanHalf = denom > 1e-15 ? mu / denom : 0;
   switch (model) {
-    case "uniform":
-      kx = 0.0;
-      ky = 0.0;
-      break;
-    case "coleman_simple":
-      kx = Math.tan(0.5 * chi) * fx;
-      ky = 0.0;
-      break;
-    case "coleman_feingold":
-      kx = (1.2 * mu * fx) / (Math.abs(lam) + 1.2 * mu + 1e-12);
-      ky = 0.0;
-      break;
-    case "drees": {
-      const sinChi = Math.sin(chi);
-      if (Math.abs(sinChi) > 1e-8) {
-        kx = ((4.0 / 3.0) * (1.0 - Math.cos(chi) - 1.8 * mu * mu) / sinChi) * fx;
-      } else {
-        kx = 0.0;
-      }
-      ky = -2.0 * mu * fy;
-      break;
-    }
+    case "coleman_simple": return [tanHalf, 0];
+    case "coleman":
+    case "coleman_feingold": return [fx * 15 * Math.PI / 32 * tanHalf, -fy * 2 * mu];
+    case "drees": return [4 / 3 * (1 - 1.8 * mu * mu) * tanHalf, -2 * mu];
+    default: return [0, 0];
   }
-  return [kx, ky];
 }
 
 export function ctBet(
@@ -738,17 +704,8 @@ function candidateResidual(
   targetKind: "ct" | "thrust",
   targetValue: number
 ): [number, boolean] {
-  const g = resolveSolidity({
-    ...baseGeom,
-    rpm: candidateRPM,
-    theta0: (candidateCollectiveDeg * Math.PI) / 180.0,
-    thetaRoot: baseGeom.pitchMode === "linear_twist"
-      ? ((candidateCollectiveDeg + (baseGeom.thetaRoot - 0.5 * (baseGeom.thetaRoot + baseGeom.thetaTip)) * (180.0 / Math.PI)) * Math.PI) / 180.0
-      : (candidateCollectiveDeg * Math.PI) / 180.0,
-    thetaTip: baseGeom.pitchMode === "linear_twist"
-      ? ((candidateCollectiveDeg + (baseGeom.thetaTip - 0.5 * (baseGeom.thetaRoot + baseGeom.thetaTip)) * (180.0 / Math.PI)) * Math.PI) / 180.0
-      : (candidateCollectiveDeg * Math.PI) / 180.0,
-  });
+  const delta = candidateCollectiveDeg * Math.PI / 180;
+  const g = resolveSolidity({ ...baseGeom, rpm: candidateRPM, pitchMode: "linear_twist", thetaRoot: baseGeom.thetaRoot + delta, thetaTip: baseGeom.thetaTip + delta, theta0: .5 * (baseGeom.thetaRoot + baseGeom.thetaTip) + delta });
 
   const c = { ...sourceCond, rpm: candidateRPM, collectiveDeg: candidateCollectiveDeg };
   const res = calculateCoreResolvedMode(g, c, false);
@@ -1004,12 +961,11 @@ export function resolveOperatingState(
   c.collectiveDeg = collective;
   baseGeom.rpm = rpm;
 
-  const currentMid = 0.5 * (baseGeom.thetaRoot + baseGeom.thetaTip);
-  const targetRad = (collective * Math.PI) / 180.0;
-  const delta = targetRad - currentMid;
+  const delta = collective * Math.PI / 180;
+  baseGeom.pitchMode = "linear_twist";
   baseGeom.thetaRoot += delta;
   baseGeom.thetaTip += delta;
-  baseGeom.theta0 = targetRad;
+  baseGeom.theta0 = .5 * (baseGeom.thetaRoot + baseGeom.thetaTip);
 
   // Re-resolve mu and muZ with final RPM
   const omega = (rpm * 2.0 * Math.PI) / 60.0;

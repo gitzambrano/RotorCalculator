@@ -1,3 +1,5 @@
+import operatingReference from "./operating-reference.json";
+import referenceMatrix from "./engine-reference.json";
 import { describe, expect, it } from "vitest";
 import {
   calculate,
@@ -16,6 +18,33 @@ import { convertValue } from "./units";
 import { runParameterSweep } from "./sweep";
 
 describe("zBET Engine Numerical Physics", () => {
+  it("matches 200 Python reference cases, including the compiled B4A matrix and PG", () => {
+    const fields: Record<string, string> = { lambda: "inflowLambda", lambda_i: "inflowLambdaI" };
+    for (const row of referenceMatrix) {
+      const g = { ...createDefaultGeometry(), rpm: 430, nominalRpm: 430, radius: 5, chordRoot: .30, chordTip: .22, cd0: .009, thetaRoot: 12 * Math.PI / 180, thetaTip: 2 * Math.PI / 180, tipLossMode: "fixed" as const, tipLossB: .97, usePrandtlGlauert: row.pg };
+      const c = { ...createDefaultCondition(), rho: 1.225, speedOfSound: 340.3, rpm: 430, collectiveDeg: 4, operatingPair: "rpm_collective" as const, horizontalValue: row.mu, axialMode: "muz" as const, axialValue: row.z, inflowModel: row.model as "uniform" };
+      const r = calculate(g,c);
+      expect(r.solutionValid).toBe(true);
+      for (const [key, target] of Object.entries(row.expected)) {
+        const actual = (r as unknown as Record<string, number>)[fields[key] || key];
+        expect(Math.abs(actual - target), `${row.pg}/${row.mu}/${row.z}/${row.model}/${key}`).toBeLessThanOrEqual(2e-9 + 2e-7 * Math.abs(target));
+      }
+    }
+  });
+  it("matches the 18 compiled B4A operating-pair reference cases", () => {
+    for (const row of operatingReference) {
+      const g = { ...createDefaultGeometry(), rpm: 430, nominalRpm: 430, radius: 5, chordRoot: .30, chordTip: .22, cd0: .009, thetaRoot: 12 * Math.PI / 180, thetaTip: 2 * Math.PI / 180, tipLossMode: "fixed" as const, tipLossB: .97, usePrandtlGlauert: true };
+      const c = { ...createDefaultCondition(), rho: 1.225, speedOfSound: 340.3, rpm: 430, collectiveDeg: 4, operatingPair: row.pair as "rpm_collective", targetCT: row.ct, targetThrustN: row.thrust, horizontalValue: row.mu, axialMode: "muz" as const, axialValue: row.z };
+      const r = calculate(g,c);
+      expect(r.solutionValid).toBe(true);
+      expect(Math.abs(r.trimmedRPM - row.rpm)).toBeLessThan(.1 + 2e-4 * row.rpm);
+      expect(Math.abs(r.trimmedCollectiveDeg - row.collective)).toBeLessThan(2e-4);
+      for (const [key, target] of Object.entries(row.expected)) {
+        const field = key === "lambda" ? "inflowLambda" : key === "lambda_i" ? "inflowLambdaI" : key;
+        expect(Math.abs((r as unknown as Record<string, number>)[field] - target), `${row.pair}/${row.mu}/${row.z}/${key}`).toBeLessThanOrEqual(2e-8 + 3e-6 * Math.abs(target));
+      }
+    }
+  });
   it("matches the shipped Android tropospheric atmosphere adapter", () => {
     for (const [altitude, temperature] of [[0, 15], [3000, -4.5], [11000, -56.5], [20000, -100], [-1000, 80]]) {
       const h = Math.max(-500, Math.min(11000, altitude));
@@ -76,7 +105,7 @@ describe("zBET Engine Numerical Physics", () => {
     expect(res.thrustN).toBeGreaterThan(50000);
     expect(res.thrustN).toBeLessThan(90000);
     expect(res.trimmedRPM).toBeCloseTo(258, 0);
-    expect(res.trimmedCollectiveDeg).toBeGreaterThan(8.0);
+    expect(res.trimmedCollectiveDeg).toBeCloseTo(7.906888, 5);
     expect(res.trimmedCollectiveDeg).toBeLessThan(18.0);
     expect(res.bFactor).toBeGreaterThan(0.95);
     expect(res.bFactor).toBeLessThan(1.0);
