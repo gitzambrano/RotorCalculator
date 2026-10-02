@@ -118,3 +118,17 @@ describe("Storage preservation and import validation", () => {
     expect(imported![0].geom.name).toBe("Copied rotor");
   });
 });
+
+
+describe("Factory geometry matches Android definitions", () => {
+  it("preserves the original DJI and eVTOL active-span chord law through an APK-compatible backup", () => {
+    const presets = getFactoryPresets();
+    const imported = parseDatabaseText(exportRotorsDatabaseText(presets))!;
+    const drone = imported.find((rotor) => rotor.name === "DJI Matrice 300 Drone")!.geom;
+    const evtol = imported.find((rotor) => rotor.name === "eVTOL Conceptual Rotor")!.geom;
+    expect(drone.chordRoot).toBe(0.0472222222);
+    expect(evtol.chordRoot).toBe(0.1488235294);
+    expect(drone.chordRoot + (drone.chordTip - drone.chordRoot) * drone.rootCutout).toBeCloseTo(0.045, 10);
+    expect(evtol.chordRoot + (evtol.chordTip - evtol.chordRoot) * evtol.rootCutout).toBeCloseTo(0.14, 10);
+  });
+});

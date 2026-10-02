@@ -331,21 +331,21 @@ export function runParameterSweep(
 
   if (multiMode === 1) {
     // Alpha Family
-    const alphas = customFamilyValues && customFamilyValues.length >= 2 ? customFamilyValues : [-10, -5, 0, 5, 10];
+    const alphas = customFamilyValues && customFamilyValues.length >= 1 ? customFamilyValues : [-10, -5, 0, 5, 10];
     familyConfigs = alphas.map((a) => ({
       label: `α = ${a > 0 ? "+" : ""}${a}°`,
       patch: { axialMode: "alpha", axialValue: a },
     }));
   } else if (multiMode === 2) {
     // Vz Family
-    const vzs = customFamilyValues && customFamilyValues.length >= 2 ? customFamilyValues : [-10, -5, 0, 5, 10];
+    const vzs = customFamilyValues && customFamilyValues.length >= 1 ? customFamilyValues : [-10, -5, 0, 5, 10];
     familyConfigs = vzs.map((v) => ({
       label: `Vz = ${v > 0 ? "+" : ""}${v} m/s`,
       patch: { axialMode: "vz", axialValue: v },
     }));
   } else if (multiMode === 3) {
     // MuZ Family
-    const muzs = customFamilyValues && customFamilyValues.length >= 2 ? customFamilyValues : [-0.05, -0.025, 0, 0.025, 0.05];
+    const muzs = customFamilyValues && customFamilyValues.length >= 1 ? customFamilyValues : [-0.05, -0.025, 0, 0.025, 0.05];
     familyConfigs = muzs.map((m) => ({
       label: `μz = ${m > 0 ? "+" : ""}${m.toFixed(3)}`,
       patch: { axialMode: "muz", axialValue: m },
@@ -452,7 +452,7 @@ export function runParameterSweep(
 
   // Calculate current operating point
   let currentOpPoint = null;
-  if (live.solutionValid) {
+  if (live.solutionValid && Number.isFinite(meta.getValue(live, geom))) {
     const liveVal = meta.getValue(live, geom);
     const liveMuLam = derivedMuOverLambda(live);
     currentOpPoint = {
@@ -486,14 +486,14 @@ export function buildSweepTableRows(
   const dig = Math.max(0, paramMeta.digits + Math.min(1, Math.max(0, extraPrecision)));
 
   const sym = paramMeta.symbol;
-  const unitStr = paramMeta.unit && paramMeta.unit !== "–" ? ` [${paramMeta.unit}]` : " [–]";
+  const unitStr = paramMeta.unit && paramMeta.unit !== "–" ? ` [${paramMeta.unit}]` : (forCsv ? " [-]" : "");
 
   const hdr: string[] = [];
-  hdr[0] = forCsv ? "mu [-]" : "μ_x [–]";
+  hdr[0] = forCsv ? "μ_x [-]" : "μ_x";
   if (xAxisMode === "vx") {
-    hdr[1] = forCsv ? "Vx [m/s]" : "V_x [m/s]";
+    hdr[1] = "V_x [m/s]";
   } else if (xAxisMode === "muLam") {
-    hdr[1] = forCsv ? "mu/lambda [-]" : "μ/λ [–]";
+    hdr[1] = forCsv ? "μ/λ [-]" : "μ/λ";
   }
   for (let c = 0; c < nCurves; c++) {
     const lbl = curves[c].label;
@@ -509,7 +509,7 @@ export function buildSweepTableRows(
     if (xAxisMode === "vx") {
       row[1] = p0.valid ? p0.vx.toFixed(1) : na;
     } else if (xAxisMode === "muLam") {
-      row[1] = p0.valid ? p0.muLam.toFixed(2) : na;
+      row[1] = isSweepPointUsable(p0, "muLam") ? p0.muLam.toFixed(3) : na;
     }
     for (let c = 0; c < nCurves; c++) {
       const pt = curves[c].points[i];
@@ -676,6 +676,51 @@ function drawRichCanvasText(ctx: CanvasRenderingContext2D, text: string, x: numb
   ctx.restore();
 }
 
+export type SweepXAxis = "mu" | "vx" | "muLam";
+type OperatingMarker = { mu: number; vx: number; muLam?: number; val: number };
+
+export function sweepPointX(point: { mu: number; vx: number; muLam?: number }, axis: SweepXAxis): number {
+  return axis === "vx" ? point.vx : axis === "muLam" ? point.muLam ?? NaN : point.mu;
+}
+
+/** RotorPopups.XOk: the chosen axis must describe a finite, supported solution. */
+export function isSweepPointUsable(point: SweepPointData, axis: SweepXAxis): boolean {
+  const x = sweepPointX(point, axis);
+  return point.valid && point.mu <= 0.6001 && Number.isFinite(point.val) && Number.isFinite(x) && (axis !== "muLam" || x >= 0);
+}
+
+/** RotorPopups.CurveOrder retains original indices to avoid joining across invalid samples. */
+export function orderedSweepPoints(points: SweepPointData[], axis: SweepXAxis): { point: SweepPointData; index: number }[] {
+  return points.map((point, index) => ({ point, index })).filter(({ point }) => isSweepPointUsable(point, axis)).sort((a, b) => sweepPointX(a.point, axis) - sweepPointX(b.point, axis));
+}
+
+/** Exact native marker gate: requested μ range plus interpolated 1% curve-span tolerance. */
+export function visibleSweepMarker(curves: SweepCurve[], marker: OperatingMarker | null, axis: SweepXAxis): OperatingMarker | null {
+  if (!marker || !Number.isFinite(marker.val) || !Number.isFinite(sweepPointX(marker, axis)) || sweepPointX(marker, axis) < 0) return null;
+  const allPoints = curves.flatMap((curve) => curve.points);
+  const maxMu = Math.max(...allPoints.map((point) => point.mu));
+  if (marker.mu < 0 || marker.mu > maxMu) return null;
+  const usable = allPoints.filter((point) => isSweepPointUsable(point, axis));
+  if (!usable.length) return null;
+  let span = Math.max(...usable.map((point) => point.val)) - Math.min(...usable.map((point) => point.val));
+  if (span < 1e-12) span = Math.max(1e-9, Math.abs(marker.val) * 0.01);
+  const tolerance = 0.01 * span;
+  const x = sweepPointX(marker, axis);
+  for (const curve of curves) {
+    for (let index = 0; index < curve.points.length - 1; index++) {
+      const first = curve.points[index];
+      const second = curve.points[index + 1];
+      if (!isSweepPointUsable(first, axis) || !isSweepPointUsable(second, axis)) continue;
+      const x1 = sweepPointX(first, axis);
+      const x2 = sweepPointX(second, axis);
+      if (x < Math.min(x1, x2) - 1e-9 || x > Math.max(x1, x2) + 1e-9) continue;
+      const t = Math.abs(x2 - x1) > 1e-12 ? (x - x1) / (x2 - x1) : 0;
+      if (Math.abs(first.val + t * (second.val - first.val) - marker.val) <= tolerance) return marker;
+    }
+  }
+  return null;
+}
+
 export function drawSweepCanvas(
   canvas: HTMLCanvasElement,
   curves: SweepCurve[],
@@ -687,6 +732,7 @@ export function drawSweepCanvas(
   crossX = -1,
   extraPrecision = 0
 ): { plotLeft: number; plotWidth: number; xMax: number } {
+  currentOpPoint = visibleSweepMarker(curves, currentOpPoint, xAxisMode);
   const ctx = canvas.getContext("2d");
   if (!ctx) return { plotLeft: 0, plotWidth: 0, xMax: 1 };
 
@@ -728,7 +774,7 @@ export function drawSweepCanvas(
 
   curves.forEach((c) => {
     c.points.forEach((pt) => {
-      if (pt.valid) {
+      if (isSweepPointUsable(pt, xAxisMode)) {
         const x = getX(pt);
         if (x > xMax) xMax = x;
         if (pt.val < yMin) yMin = pt.val;
@@ -887,25 +933,26 @@ export function drawSweepCanvas(
     ctx.setLineDash(dashPatterns[curveIdx % dashPatterns.length]);
     let started = false;
 
-    c.points.forEach((pt) => {
-      if (!pt.valid) return;
+    let previousIndex = -1;
+    orderedSweepPoints(c.points, xAxisMode).forEach(({ point: pt, index }) => {
       const x = getX(pt);
       const xPos = mLeft + (x / xMax) * pWidth;
       const yPos = mTop + pHeight - ((pt.val / yScale - yLo) / (yHi - yLo)) * pHeight;
 
-      if (!started) {
+      if (!started || (xAxisMode !== "muLam" && index - previousIndex !== 1)) {
         ctx.moveTo(xPos, yPos);
         started = true;
       } else {
         ctx.lineTo(xPos, yPos);
       }
+      previousIndex = index;
     });
     ctx.stroke();
     ctx.setLineDash([]);
 
     // Markers every 4 points
     c.points.forEach((pt, ptIdx) => {
-      if (!pt.valid || (ptIdx + curveIdx) % 4 !== 0) return;
+      if (!isSweepPointUsable(pt, xAxisMode) || (ptIdx + curveIdx) % 4 !== 0) return;
       const x = getX(pt);
       const xPos = mLeft + (x / xMax) * pWidth;
       const yPos = mTop + pHeight - ((pt.val / yScale - yLo) / (yHi - yLo)) * pHeight;
@@ -960,7 +1007,7 @@ export function drawSweepCanvas(
       let bestPt: SweepPointData | null = null;
       let bestDist = Infinity;
       c.points.forEach((pt) => {
-        if (!pt.valid) return;
+        if (!isSweepPointUsable(pt, xAxisMode)) return;
         const x = getX(pt);
         const d = Math.abs(x - activeInspectionX);
         if (d < bestDist) {
@@ -1066,8 +1113,8 @@ export function getSweepReadoutText(
     let bestPt: SweepPointData | null = null;
     let bestDist = Infinity;
     c.points.forEach((pt) => {
-      if (!pt.valid) return;
-      const x = xAxisMode === "vx" ? pt.vx : xAxisMode === "muLam" ? pt.muLam : pt.mu;
+      if (!isSweepPointUsable(pt, xAxisMode)) return;
+      const x = sweepPointX(pt, xAxisMode);
       const d = Math.abs(x - crossX);
       if (d < bestDist) {
         bestDist = d;

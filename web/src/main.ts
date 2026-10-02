@@ -1,3 +1,4 @@
+import { QUICK_CONVERSIONS, quickConvert } from "./quick-converter";
 import "./style.css";
 import iconUrl from "./assets/icon.png";
 import headerIconUrl from "./assets/icon_header.png";
@@ -17,6 +18,7 @@ import {
   getGeometryQuantity,
   referenceAspectRatio,
   referenceBladeArea,
+  alphaFromMuZ,
   resolveSolidity,
   scaleChordsToAspectRatio,
   scaleChordsToSigmaRef,
@@ -132,7 +134,8 @@ try {
 
 let activeResults: RotorResults = calculate(activeGeom, activeCond);
 
-let currentPage: "geometry" | "conditions" | "results" = "geometry";
+const savedPage = localStorage.getItem("rotor_current_page");
+let currentPage: "geometry" | "conditions" | "results" = savedPage === "conditions" || savedPage === "results" ? savedPage : "geometry";
 let currentTheme: "dark" | "light" | "midnight" =
   (localStorage.getItem("rotor_theme") as "dark" | "light" | "midnight") || "dark";
 let unitSystem: "si" | "imperial" = (localStorage.getItem("rotor_units") as "si" | "imperial") || "si";
@@ -718,10 +721,18 @@ app.innerHTML = `
     <div class="modal-overlay" id="modal-unit-converter">
       <div class="modal-card">
         <div class="modal-header">
-          <div class="modal-title">ENGINEERING UNIT CONVERTER</div>
+          <div class="modal-title">QUICK UNIT CONVERTER</div>
           <button class="modal-close-btn" data-close="modal-unit-converter">×</button>
         </div>
         <div class="modal-body">
+          <div class="quick-converter">
+            <div class="quick-caption">CONVERSION</div>
+            <div class="quick-mode-row"><button class="action-btn" id="quick-converter-mode">kW → hp ▾</button><button class="action-btn" id="quick-converter-swap" aria-label="Swap conversion direction">⇄</button></div>
+            <label class="quick-caption" id="quick-converter-label" for="quick-converter-input">VALUE IN kW</label>
+            <input class="row-input" type="number" id="quick-converter-input" value="1" inputmode="decimal">
+            <div id="quick-converter-result" aria-live="polite">1.3410 hp</div>
+          </div>
+          <details class="advanced-converter"><summary>More unit conversions</summary>
           <div style="display: flex; flex-direction: column; gap: 12px;">
             <div>
               <label style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Quantity Category</label>
@@ -754,6 +765,7 @@ app.innerHTML = `
               <div style="font-size: 24px; font-weight: 800; color: var(--accent); margin-top: 4px;" id="converter-result-val">---</div>
             </div>
           </div>
+          </details>
         </div>
       </div>
     </div>
@@ -789,25 +801,6 @@ app.innerHTML = `
               </div>
               <button type="button" class="settings-btn" id="btn-setting-precision">STANDARD</button>
             </div>
-            <div class="settings-row" id="row-install-pwa">
-              <div class="settings-row-info">
-                <div class="settings-row-title">Install Web App</div>
-                <div class="settings-row-sub">Add RotorCalculator to home screen / desktop</div>
-              </div>
-              <button type="button" class="settings-btn" id="btn-install-pwa" style="color: var(--accent-green);">INSTALL</button>
-            </div>
-
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-title">Download Web App</div>
-                <div class="settings-row-sub">Offline ZIP with calculator and physics manuals</div>
-              </div>
-              <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.23</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.23.apk" download="RotorCalculator-1.23.apk">APK</a>
-            </div>
             <div class="settings-section-hdr">PLOTS</div>
             <div class="settings-row">
               <div class="settings-row-info">
@@ -838,6 +831,26 @@ app.innerHTML = `
                 <div class="settings-row-sub">Custom rotors are preserved</div>
               </div>
               <button type="button" class="settings-btn" id="btn-setting-restore" style="color: var(--accent-amber);">RESTORE</button>
+            </div>
+            <div class="settings-section-hdr">WEB APP</div>
+            <div class="settings-row" id="row-install-pwa">
+              <div class="settings-row-info">
+                <div class="settings-row-title">Install Web App</div>
+                <div class="settings-row-sub">Add RotorCalculator to home screen / desktop</div>
+              </div>
+              <button type="button" class="settings-btn" id="btn-install-pwa" style="color: var(--accent-green);">INSTALL</button>
+            </div>
+
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-title">Download Web App</div>
+                <div class="settings-row-sub">Offline ZIP with calculator and physics manuals</div>
+              </div>
+              <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.23</div><div class="settings-row-sub">Download the verified Android APK</div></div>
+              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.23.apk" download="RotorCalculator-1.23.apk">APK</a>
             </div>
           </div>
         </div>
@@ -1048,8 +1061,15 @@ export function updateResponsiveLabels(): void {
   });
 }
 
-function activatePage(page: "geometry" | "conditions" | "results", swipeDir?: "left" | "right"): void {
+function activatePage(page: "geometry" | "conditions" | "results", swipeDir?: "left" | "right", historyMode: "push" | "replace" | "none" = "push"): void {
+  const pageChanged = page !== currentPage;
   currentPage = page;
+  localStorage.setItem("rotor_current_page", page);
+  if (historyMode !== "none") {
+    const state = { rotorCalculator: true, page };
+    if (historyMode === "replace" || !pageChanged) history.replaceState(state, "");
+    else history.pushState(state, "");
+  }
   document.querySelectorAll<HTMLButtonElement>(".tab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.page === page);
   });
@@ -1767,7 +1787,7 @@ function updateActiveRotorBar(): void {
   const bar = byId("display-active-rotor-name");
   if (!bar) return;
   if (isGeometryDirty) {
-    bar.innerHTML = `${escapeHTML(currentRotor.name)} <span style="color: #FFB300; font-weight: bold; margin-left: 6px;">• * UNSAVED</span>`;
+    bar.innerHTML = `${escapeHTML(activeGeom.name)} <span style="color: #FFB300; font-weight: bold; margin-left: 6px;">• * UNSAVED</span>`;
   } else {
     bar.textContent = currentRotor.name;
   }
@@ -2107,6 +2127,41 @@ function closeModal(id: string): void {
   byId(id)?.style.removeProperty("z-index");
 }
 
+function bindBrowserBackNavigation(): void {
+  const isAppState = (state: unknown): state is { rotorCalculator: true; page?: string } =>
+    !!state && typeof state === "object" && (state as { rotorCalculator?: unknown }).rotorCalculator === true;
+  if (isAppState(history.state)) {
+    history.replaceState({ ...history.state, rotorCalculator: true, page: currentPage }, "");
+  } else {
+    history.replaceState({ rotorCalculator: true, page: currentPage }, "");
+    history.pushState({ rotorCalculator: true, page: currentPage, root: true }, "");
+  }
+  window.addEventListener("popstate", (event) => {
+    const openModals = Array.from(document.querySelectorAll<HTMLElement>(".modal-overlay.open"));
+    const top = openModals.sort((a, b) => (Number.parseInt(getComputedStyle(b).zIndex, 10) || 100) - (Number.parseInt(getComputedStyle(a).zIndex, 10) || 100))[0];
+    if (top) {
+      closeModal(top.id);
+      history.pushState({ rotorCalculator: true, page: currentPage }, "");
+      return;
+    }
+    if (!isAppState(event.state)) return;
+    const page = event.state.page;
+    if (page === "geometry" || page === "conditions" || page === "results") activatePage(page, "right", "none");
+  });
+}
+
+function nativeFallbackFlow(): { mu: number; muZ: number; vtip: number; vx: number } {
+  const rpm = Math.max(1, Math.min(30000, activeCond.rpm));
+  const radius = Math.max(0.02, activeGeom.radius);
+  const vtip = rpm * Math.PI / 30 * radius;
+  const mu = activeCond.horizontalMode === "vx" ? (vtip > 0 ? activeCond.horizontalValue / vtip : 0) : activeCond.horizontalValue;
+  let muZ = 0;
+  if (activeCond.axialMode === "vz") muZ = vtip > 0 ? activeCond.axialValue / vtip : 0;
+  else if (activeCond.axialMode === "alpha") muZ = -mu * Math.tan(activeCond.axialValue * Math.PI / 180);
+  else muZ = activeCond.axialValue;
+  return { mu, muZ, vtip, vx: mu * vtip };
+}
+
 function bindModalListeners(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-close]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -2117,7 +2172,7 @@ function bindModalListeners(): void {
 
   document.querySelectorAll<HTMLElement>(".modal-overlay").forEach((modal) => {
     modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.classList.remove("open");
+      if (e.target === modal) closeModal(modal.id);
     });
   });
 
@@ -2137,7 +2192,11 @@ function bindModalListeners(): void {
   byId("btn-menu-close").addEventListener("click", () => setMenuOpen(false));
   backdrop.addEventListener("click", () => setMenuOpen(false));
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !menu.hidden) setMenuOpen(false);
+    if (e.key !== "Escape") return;
+    if (!menu.hidden) { setMenuOpen(false); return; }
+    const openModals = Array.from(document.querySelectorAll<HTMLElement>(".modal-overlay.open"));
+    const top = openModals.sort((a, b) => (Number.parseInt(getComputedStyle(b).zIndex, 10) || 100) - (Number.parseInt(getComputedStyle(a).zIndex, 10) || 100))[0];
+    if (top) { e.preventDefault(); closeModal(top.id); }
   });
 
   document.addEventListener("click", (e) => {
@@ -2168,12 +2227,28 @@ function bindModalListeners(): void {
       } else if (action === "about") {
         openModal("modal-about");
       } else if (action === "privacy") {
-        openModal("modal-privacy");
+        const asset = currentTheme === "light" ? "./privacy_policy_light.html" : "./privacy_policy.html";
+        window.open(asset, "_blank", "noopener");
       }
     });
   });
 
   byId("active-rotor-bar").addEventListener("click", () => {
+    if ((document.querySelector<HTMLElement>(".app-shell")?.clientWidth || innerWidth) < 600) {
+      const choices = [
+        ...storedRotors.map(rotor => ({ id: `rotor:${rotor.id}`, label: rotor.name, desc: rotor.id === currentRotor.id ? "Current rotor" : "Select saved rotor" })),
+        { id: "new", label: "NEW ROTOR", desc: "Create a new rotor geometry" },
+        { id: "rename", label: "RENAME CURRENT ROTOR", desc: activeGeom.name },
+      ];
+      showOptionPicker("Active Rotor", choices, `rotor:${currentRotor.id}`, id => {
+        if (id === "new") { byId<HTMLButtonElement>("btn-manager-new").click(); return; }
+        if (id === "rename") { void renameActiveRotor(); return; }
+        const rotor = storedRotors.find(item => `rotor:${item.id}` === id);
+        if (!rotor || rotor.id === currentRotor.id) return;
+        resolveUnsavedGeometry("switching the active rotor", () => { setActiveRotorId(rotor.id); loadRotorToUI(rotor); });
+      });
+      return;
+    }
     renderRotorManagerList();
     openModal("modal-rotor-manager");
   });
@@ -2332,13 +2407,13 @@ function bindSelectorButtons(): void {
       (selId) => {
         if (selId === "vx") {
           activeCond.horizontalMode = "vx";
-          activeCond.horizontalValue = activeResults.operatingVx;
+          activeCond.horizontalValue = activeResults.solutionValid ? activeResults.operatingVx : nativeFallbackFlow().vx;
           byId("btn-toggle-horiz-mode").dataset.key = "Vx";
           byId("unit-horiz-val").textContent = prefSpeedUnit;
           byId<HTMLInputElement>("inp-horiz-val").value = convertValue(activeCond.horizontalValue, "m/s", prefSpeedUnit).toFixed(1);
         } else {
           activeCond.horizontalMode = "mu";
-          activeCond.horizontalValue = activeResults.operatingMu;
+          activeCond.horizontalValue = activeResults.solutionValid ? activeResults.operatingMu : nativeFallbackFlow().mu;
           byId("btn-toggle-horiz-mode").dataset.key = "mu";
           byId("unit-horiz-val").textContent = "–";
           byId<HTMLInputElement>("inp-horiz-val").value = activeCond.horizontalValue.toFixed(3);
@@ -2361,24 +2436,27 @@ function bindSelectorButtons(): void {
       axialModes,
       activeCond.axialMode,
       (selId) => {
-        if (selId === "alpha" && Math.abs(activeResults.operatingMu) < 1e-9 && Math.abs(activeResults.operatingMuZ) > 1e-9) {
+        const flow = nativeFallbackFlow();
+        const mu = activeResults.solutionValid ? activeResults.operatingMu : flow.mu;
+        const muZ = activeResults.solutionValid ? activeResults.operatingMuZ : flow.muZ;
+        if (selId === "alpha" && Math.abs(mu) < 1e-8 && Math.abs(muZ) > 1e-10) {
           showContextualHelpCustom("Axial Flow", "At zero horizontal speed, α cannot represent a nonzero axial flow. Keep Vz or μz, or set a nonzero horizontal speed first.");
           return;
         }
         activeCond.axialMode = selId as "alpha" | "vz" | "muz";
         if (selId === "alpha") {
-          activeCond.axialValue = activeResults.operatingAlphaDeg;
+          activeCond.axialValue = activeResults.solutionValid ? activeResults.operatingAlphaDeg : alphaFromMuZ(mu, muZ);
           byId("btn-toggle-axial-mode").dataset.key = "alpha";
           byId("unit-axial-val").textContent = "deg";
           byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(1);
         } else if (selId === "vz") {
-          activeCond.axialValue = activeResults.operatingVz;
+          activeCond.axialValue = activeResults.solutionValid ? activeResults.operatingVz : muZ * flow.vtip;
           byId("btn-toggle-axial-mode").dataset.key = "Vz";
           const vzUnit = unitSystem === "imperial" ? "ft/min" : "m/s";
           byId("unit-axial-val").textContent = vzUnit;
           byId<HTMLInputElement>("inp-axial-val").value = convertValue(activeCond.axialValue, "m/s", vzUnit).toFixed(2);
         } else {
-          activeCond.axialValue = activeResults.operatingMuZ;
+          activeCond.axialValue = muZ;
           byId("btn-toggle-axial-mode").dataset.key = "muz";
           byId("unit-axial-val").textContent = "–";
           byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(4);
@@ -2395,7 +2473,7 @@ function bindUnitButtons(): void {
     {
       btnId: "unit-radius",
       fieldName: "Radius R",
-      units: ["m", "ft", "in"],
+      units: ["m", "ft", "in", "cm", "mm"],
       getSI: () => activeGeom.radius,
       setSI: (v: number) => {
         activeGeom = scaleRadiusPreserveReference(activeGeom, v);
@@ -2571,6 +2649,42 @@ function bindUnitButtons(): void {
   });
 }
 
+function promptRotorName(title: string, initial: string, positive: string): Promise<string | null> {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.id = "modal-name-input"; overlay.className = "modal-overlay";
+    overlay.innerHTML = `<form class="modal-card rotor-name-dialog" role="dialog" aria-modal="true" aria-labelledby="name-dialog-title"><div class="modal-header"><div class="modal-title" id="name-dialog-title">${escapeHTML(title)}</div><button type="button" class="modal-close-btn">×</button></div><div class="modal-body"><label for="name-dialog-input">Name (max 32 characters)</label><input class="row-input" id="name-dialog-input" maxlength="32" autocomplete="off"><div class="name-dialog-actions"><button type="button" class="action-btn" id="name-dialog-cancel">Cancel</button><button type="submit" class="action-btn save">${escapeHTML(positive)}</button></div></div></form>`;
+    document.body.append(overlay);
+    const input = overlay.querySelector<HTMLInputElement>("input")!;
+    input.value = initial.slice(0,32);
+    const onBrowserBack = () => finish(null);
+    const finish = (value: string | null) => { document.removeEventListener("keydown", escape, true); window.removeEventListener("popstate", onBrowserBack); closeModal(overlay.id); overlay.remove(); resolve(value); };
+    const escape = (event: KeyboardEvent) => { if(event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); finish(null); } };
+    overlay.querySelector("form")!.onsubmit = event => { event.preventDefault(); finish(input.value.replace(/\|/g,"/").replace(/[\r\n]+/g," ").trim().slice(0,32)); };
+    overlay.querySelector<HTMLButtonElement>(".modal-close-btn")!.onclick = () => finish(null);
+    overlay.querySelector<HTMLButtonElement>("#name-dialog-cancel")!.onclick = () => finish(null);
+    overlay.onclick = event => { if(event.target === overlay) finish(null); };
+    document.addEventListener("keydown", escape, true); window.addEventListener("popstate", onBrowserBack); openModal(overlay.id); input.focus(); input.select();
+  });
+}
+
+async function renameActiveRotor(): Promise<void> {
+  const name = await promptRotorName("Rename Rotor", activeGeom.name, "Rename");
+  if (!name || name === activeGeom.name) return;
+  if (storedRotors.some(rotor => rotor.id !== currentRotor.id && rotor.name.toLowerCase() === name.toLowerCase())) { alert(`A rotor named ${name} already exists.`); return; }
+  activeGeom.name = name;
+  byId<HTMLInputElement>("inp-rotor-name").value = name;
+  markGeometryDirty(); updateActiveRotorBar();
+}
+
+async function copyRotorGeometry(geometry: RotorGeometry): Promise<void> {
+  const base = geometry.name.replace(/ (?:\(copy\)|copy(?: \d+)?)$/i, "");
+  const name = await promptRotorName("Copy Rotor", uniqueRotorName(`${base} Copy`), "Copy");
+  if (!name) return;
+  const copy: StoredRotor = { id: `custom-${Date.now()}`, name: uniqueRotorName(name), geom: cloneGeometry(geometry) };
+  copy.geom.name = copy.name; clearDraft(); storedRotors.push(copy); saveStoredRotors(storedRotors); setActiveRotorId(copy.id); loadRotorToUI(copy); renderRotorManagerList(); closeModal("modal-rotor-manager");
+}
+
 function uniqueRotorName(base: string, exceptId?: string): string {
   const clean = base.replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim() || "Custom Rotor";
   let name = clean;
@@ -2618,19 +2732,7 @@ function bindRotorActionButtons(): void {
     setTimeout(() => (saveBtn.textContent = "SAVE"), 1500);
   });
 
-  byId("btn-geom-copy").addEventListener("click", () => {
-    clearDraft();
-    const copyRotor: StoredRotor = {
-      id: `custom-${Date.now()}`,
-      name: uniqueRotorName(`${activeGeom.name} (Copy)`),
-      geom: cloneGeometry(activeGeom),
-    };
-    copyRotor.geom.name = copyRotor.name;
-    storedRotors.push(copyRotor);
-    saveStoredRotors(storedRotors);
-    loadRotorToUI(copyRotor);
-    setActiveRotorId(copyRotor.id);
-  });
+  byId("btn-geom-copy").addEventListener("click", () => { void copyRotorGeometry(activeGeom); });
 
   byId("btn-geom-delete").addEventListener("click", () => {
     if (storedRotors.length <= 1) {
@@ -2866,36 +2968,10 @@ function renderRotorManagerList(): void {
 
     item.querySelector('[data-act="rename"]')?.addEventListener("click", (e) => {
       e.stopPropagation();
-      const rename = () => {
-        const name = prompt("Rotor Name", rotor.name)?.trim();
-        if (!name) return;
-        rotor.name = uniqueRotorName(name, rotor.id);
-        rotor.geom.name = rotor.name;
-        saveStoredRotors(storedRotors);
-        if (currentRotor.id === rotor.id) {
-          activeGeom.name = rotor.name;
-          byId<HTMLInputElement>("inp-rotor-name").value = rotor.name;
-          updateActiveRotorBar();
-        }
-        renderRotorManagerList();
-      };
-      if (currentRotor.id === rotor.id) resolveUnsavedGeometry("renaming the rotor", rename);
-      else rename();
+      const rename = () => { if(currentRotor.id !== rotor.id) { setActiveRotorId(rotor.id); loadRotorToUI(rotor); } closeModal("modal-rotor-manager"); void renameActiveRotor(); };
+      if(currentRotor.id === rotor.id) rename(); else resolveUnsavedGeometry("switching rotors", rename);
     });
-
-    // Copy & Delete
-    item.querySelector('[data-act="copy"]')?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const duplicate: StoredRotor = {
-        id: `custom-${Date.now()}`,
-        name: uniqueRotorName(`${rotor.name} (Copy)`),
-        geom: cloneGeometry(rotor.geom),
-      };
-      duplicate.geom.name = duplicate.name;
-      storedRotors.push(duplicate);
-      saveStoredRotors(storedRotors);
-      renderRotorManagerList();
-    });
+    item.querySelector('[data-act="copy"]')?.addEventListener("click", e => { e.stopPropagation(); void copyRotorGeometry(rotor.geom); });
 
     item.querySelector('[data-act="delete"]')?.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -3234,6 +3310,20 @@ function renderSweepTable(curves: any[], meta: any): void {
 
 // Unit Converter Modal Logic
 function populateConverterUnits(): void {
+  let mode = 0;
+  const input = byId<HTMLInputElement>("quick-converter-input");
+  input.value = "1";
+  const renderQuick = () => {
+    const [from, to] = QUICK_CONVERSIONS[mode];
+    byId("quick-converter-mode").textContent = `${from} → ${to} ▾`;
+    byId("quick-converter-label").textContent = `VALUE IN ${from}`;
+    const value = Number(input.value.replace(",", "."));
+    byId("quick-converter-result").textContent = `${quickConvert(Number.isFinite(value) ? value : 0, mode).toFixed(4)} ${to}`;
+  };
+  byId("quick-converter-mode").onclick = () => showOptionPicker("Quick Unit Converter", QUICK_CONVERSIONS.map(([from,to],i) => ({ id: String(i), label: `${from} → ${to}` })), String(mode), value => { mode = Number(value); renderQuick(); });
+  byId("quick-converter-swap").onclick = () => { mode ^= 1; renderQuick(); };
+  input.oninput = renderQuick;
+  renderQuick();
   const catSelect = byId<HTMLSelectElement>("converter-category");
   const fromSelect = byId<HTMLSelectElement>("converter-from");
   const toSelect = byId<HTMLSelectElement>("converter-to");
@@ -3543,6 +3633,8 @@ function initApp(): void {
   initPwaInstall();
   updateResponsiveLabels();
   document.fonts.ready.then(updateResponsiveLabels);
+  activatePage(currentPage, undefined, "none");
+  bindBrowserBackNavigation();
 
   if (import.meta.env.PROD && "serviceWorker" in navigator && location.protocol !== "file:") {
     window.addEventListener("load", () => {

@@ -1,0 +1,12 @@
+<en-US>
+Added diagnostic flow quantities: total axial speed Vz,tot, advancing/retreating tip speeds, retreating Mach, and 75% section angles.
+Refined responsive engineering typography, subscripts, and abbreviation grammar.
+Enhanced offline help, theme persistence, and parameter sweep visuals.
+Verified aerodynamic momentum integration and numerical equivalence.
+</en-US>
+<pt-BR>
+Novas grandezas de diagnóstico: velocidade axial total Vz,tot, velocidades de ponta de pá avançando/recuando, Mach de recuo e ângulos de seção a 75% R.
+Tipografia técnica responsiva, subscritos matemáticos e gramática de abreviações refinados.
+Ajuda técnica offline aprimorada, persistência de temas e gráficos de variação de parâmetros.
+Integração aerodinâmica de momento e equivalência numérica validadas.
+</pt-BR>
