@@ -6,8 +6,14 @@
 
 @font-face {
   font-family: "RotorRoboto";
-  src: url("./assets/roboto.woff2") format("woff2");
-  font-weight: 100 900;
+  src: url("./assets/roboto-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "RotorRoboto";
+  src: url("./assets/roboto-bold.woff2") format("woff2");
+  font-weight: 700;
   font-display: swap;
 }
 
@@ -1899,7 +1905,24 @@ button:active { filter: brightness(1.15); }
 #quick-converter-result { height: 72px; margin-top: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; color: var(--accent-green); }
 .advanced-converter { margin-top: 16px; }
 .advanced-converter summary { cursor: pointer; padding: 12px 0; }
+.about-body { padding: 0 20px 20px; text-align: left; font-size: 16px; line-height: 19px; font-weight: 400; }
+.about-body p { margin: 0 0 18px; }
+.privacy-body { padding: 0; overflow: hidden; }
+#privacy-iframe { display: block; width: 100%; height: 100%; border: 0; }
+#modal-privacy .modal-card { height: min(94dvh,900px); }
 @media(max-width:767px) {
+  #modal-about { padding: 16px; backdrop-filter: none; background: rgba(0,0,0,.63); }
+  #modal-about .modal-card { width: 100% !important; max-width: 520px; border: none; border-radius: 20px; background: #121925; }
+  #modal-about .modal-header { padding: 18px 20px; min-height: 58px; border: none; background: transparent; }
+  #modal-about .modal-title { font-size: 18px; color: #fff; letter-spacing: 0; }
+  #modal-about .modal-close-btn { display: none; }
+  #modal-about .action-btn { height: 48px !important; background: var(--accent); color: var(--bg); border: none; border-radius: 12px; font-size: 16px; }
+  :root[data-theme="light"] #modal-about .modal-card { background: #fff; }
+  :root[data-theme="light"] #modal-about .modal-title { color: var(--text-main); }
+  :root[data-theme="midnight"] #modal-about .modal-card { background: #14234a; }
+  #modal-privacy { padding: 0; backdrop-filter: none; }
+  #modal-privacy .modal-card { width: 100vw !important; height: 100dvh; max-height: 100dvh; border: none; border-radius: 0; }
+  #modal-privacy .modal-header { height: 52px; min-height: 52px; padding: 0 4px 0 16px; border: none; }
   #modal-settings { padding: 16px 12px; backdrop-filter: none; background: rgba(0,0,0,.63); }
   #modal-settings .modal-card { width: 100% !important; height: calc(100dvh - 32px); max-height: calc(100dvh - 32px) !important; border: none; border-radius: 0; }
   #modal-settings .modal-header { height: 52px; min-height: 52px; padding: 0 4px 0 16px; background: var(--header-bg); border: none; }
@@ -1908,6 +1931,7 @@ button:active { filter: brightness(1.15); }
   #modal-settings .settings-section-hdr { height: 44px; flex-shrink: 0; padding: 16px 0 8px; margin: 0; font-size: 17px; }
   #modal-settings .settings-row { min-height: 84px; gap: 8px; padding: 12px 0; border: none; }
   #modal-settings .settings-row-info { gap: 0; }
+  #modal-settings .settings-row-info, #modal-settings .settings-btn { transform: translateY(10px); }
   #modal-settings .settings-row-title { font-size: 14px; white-space: normal; overflow: visible; }
   #modal-settings .settings-row-sub { font-size: 13px; font-weight: 400; line-height: 15px; }
   #modal-settings .settings-btn { flex: 0 0 44%; min-width: 0; max-width: none; height: 48px; border: none; border-radius: 4px; color: var(--accent) !important; }

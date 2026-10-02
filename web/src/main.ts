@@ -879,15 +879,13 @@ app.innerHTML = `
     <div class="modal-overlay" id="modal-about">
       <div class="modal-card" style="width: min(100%, 420px); text-align: center;">
         <div class="modal-header">
-          <div class="modal-title">ABOUT ROTORCALCULATOR</div>
+          <div class="modal-title">About RotorCalculator</div>
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
-        <div class="modal-body" style="padding: 24px;">
-          <img src="${iconUrl}" alt="RotorCalculator" style="width: 64px; height: 64px; border-radius: 12px; margin-bottom: 12px;" />
-          <h2 style="font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 4px;">RotorCalculator</h2>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">High-Precision Blade Element Theory (zBET)</p>
-          <p style="font-size: 14px; margin-bottom: 6px;">Version 1.23 (Web &amp; PWA Edition)</p>
-          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 20px;">Gustavo José Zambrano</p>
+        <div class="modal-body about-body">
+          <p>RotorCalculator v1.23</p>
+          <p>Rotor performance calculator based on analytical blade-element theory.<br>Notation follows Johnson and Leishman.</p>
+          <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
         </div>
       </div>
@@ -900,12 +898,8 @@ app.innerHTML = `
           <div class="modal-title">PRIVACY POLICY</div>
           <button class="modal-close-btn" data-close="modal-privacy">×</button>
         </div>
-        <div class="modal-body" style="font-size: 13.5px; line-height: 1.6;">
-          <h3 style="color: var(--accent); margin-bottom: 8px;">100% Offline &amp; Private</h3>
-          <p style="margin-bottom: 12px;">RotorCalculator runs entirely client-side in your web browser. No telemetry, analytics, personal information, or flight geometry data is collected, stored, or transmitted to external servers.</p>
-          <h3 style="color: var(--accent); margin-bottom: 8px;">Local Storage</h3>
-          <p style="margin-bottom: 12px;">Saved rotor configurations and user preferences are retained purely in your device's browser localStorage. You can export or clear your saved data at any time.</p>
-          <button class="action-btn" data-close="modal-privacy" style="width: 100%; height: 42px; margin-top: 14px;">CLOSE</button>
+        <div class="modal-body privacy-body">
+          <iframe id="privacy-iframe" title="RotorCalculator Privacy Policy"></iframe>
         </div>
       </div>
     </div>
@@ -2233,7 +2227,8 @@ function bindModalListeners(): void {
         openModal("modal-about");
       } else if (action === "privacy") {
         const asset = currentTheme === "light" ? "./privacy_policy_light.html" : "./privacy_policy.html";
-        window.open(asset, "_blank", "noopener");
+        byId<HTMLIFrameElement>("privacy-iframe").src = asset;
+        openModal("modal-privacy");
       }
     });
   });

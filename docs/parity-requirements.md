@@ -27,24 +27,22 @@ Audit baseline: source commit `6a1a233`, with subsequent local corrections on 20
 | Sweep marker / data ordering | `XOk`, `CurveOrder`, `LiveOnCurve` | `isSweepPointUsable`, `orderedSweepPoints`, `visibleSweepMarker` | Native gates now applied: finite supported points, negative mu/lambda rejected, sorted selected X axis, invalid gaps preserved, marker within requested mu range and 1% interpolated curve-span tolerance. Regression covers these rules. Browser plot inspection still required. |
 | Sweep table / CSV / PNG | `BuildSweepTableRows`, SAF CSV/PNG | table rendering, CSV Blob and PNG canvas download | Present. Verify downloaded contents and image. Table/CSV formatting differences remain subject to review (see below). |
 | Settings | 3 themes, SI/Imperial outputs, +1 decimal, 3 palettes | same settings | Present. Verify persistence and state preservation. Input defaults remain SI; output setting changes result presentation. |
-| Quick converter | 14 forward/reverse modes and Swap | quantity/from/to selectors | Coverage requires all native pairs, including mm/in, and Swap. Source audit identified missing mm/in and Swap; root implementation underway. |
+| Quick converter | 14 forward/reverse modes and Swap | quantity/from/to selectors | All 14 native modes, mm/in and Swap implemented and exercised in the browser. |
 | Physics manual | dark/light/midnight HTML | corresponding public HTML/iframe | SHA-256 matches for all three original manual assets. Verify anchors, hyperlinks, scroll and popup opening in actual build. |
-| About / Privacy | About dialog; native privacy HTML | About / inline Privacy modal | Both actions present. Privacy text is shorter/different on web; validate intended platform-specific content. |
+| About / Privacy | About dialog; native privacy HTML | About / inline Privacy modal | About now uses native wording/layout; Privacy opens the full themed HTML in-app. Three-theme real screenshot pairs captured. |
 | Web additions | not applicable | install PWA; downloadable offline ZIP | Verify install availability, download, extraction, offline use and export/import from the extracted application. |
 
-## Source findings requiring closure
+## Findings closed by this audit
 
-These are findings from the inventory snapshot; the root task may subsequently correct them. Replace pending status only after verifying the final source and exercising the behavior.
-
-- Quick converter: native mm/in conversions and one-click Swap were missing from web. Native converter has 14 modes; web additionally has torque/pressure/density categories.
-- Radius input picker: web list has m/ft/in; native also permits cm/mm.
-- COPY: native asks the new rotor name and allows cancellation before creating; web originally creates immediately with generated name.
-- Rename: native edits the active draft, rejects a duplicate and truncates to 32 characters; web originally auto-saves and silently chooses a unique name.
-- Current page: native restores saved page; web originally always starts Geometry.
-- Invalid trim and flow variable changes: native derives fallback representation at current rotor speed; web originally reads empty result fields and can zero the flow.
-- Back handling: native closes the top popup, then navigates Results→Conditions→Geometry. Web Escape originally only closes the menu; browser back integration needs a deliberate platform-equivalent behavior.
-- Sweep table: native mu/lambda X values use three decimals; web uses two. Native CSV dimensionless units use ASCII `[-]`, whereas web result headers currently include `[–]`. These are export-format differences, not missing data columns.
-- Privacy: native opens full privacy HTML; web uses an inline browser-storage-specific summary. Review expected content separately from numerical functionality.
+- Native quick-converter coverage, mm/in and Swap added and exercised.
+- Radius cm/mm picker options restored.
+- COPY name prompt/cancellation and 32-character input added; cancellation and persistence exercised.
+- Rename now modifies the active draft, checks duplicate names and limits input to 32 characters.
+- Current page restoration exercised after reload.
+- Invalid-trim flow conversion corrected and exercised across μ/Vx/α/Vz/μz.
+- Escape and browser Back close the top popup; Back navigation exercised through Results→Conditions→Geometry.
+- Native μ/λ table precision, ASCII dimensionless CSV units and scientific headers restored.
+- Settings, About and full Privacy display corrected after additional real APK captures.
 
 ## Validation evidence and outstanding gates
 
@@ -56,6 +54,8 @@ Final integrated build and all 53 web tests passed. `verify_engine.py` and 76 Py
 
 `tools/check_web_parity.py` passed draft/session persistence, editable geometry, desktop hover/click help, database text roundtrip, CSV/PNG/offline ZIP, three themes, offline HTML/PWA and 54 responsive page captures without JavaScript errors. Native converter and manual popup geometry was compared with actual emulator screenshots. These checks do not establish pixel identity for every popup.
 
+Additional real APK review found Settings width/truncation and About/Privacy presentation differences. Settings now uses native mobile dimensions and complete labels; About uses the Android wording and dialog layout; Privacy opens the full themed document in an application modal. Static 400/700 Roboto instances derived from the emulator font are packaged for browser rendering. `tools/check_popup_parity.py` passed and produced 12 additional native/browser pairs (Settings, converter, About, Privacy × three themes). Native captures were repeated after reinstalling the unchanged validated APK on emulator-5580. Browser rasterization and system-button elevation still prevent a claim of pixel identity.
+
 Source inspection and TypeScript tests do not prove B4A↔web numerical equivalence. Keep the local compiled B4A engine execution gate, Python reference matrix and existing source contracts. No aerodynamic equations were changed by this audit.
 
-Pending interactive matrix: each rotor preset; all geometry edits and units; all six operating pairs; all alternative flow modes; invalid trim fallback; all inflow/tip/PG choices; every Results row/help; all 61 sweep quantities, five families, five trim modes, three axes, four ranges and custom bounds; CSV/PNG/text download and reimport; restore/draft/session persistence; converter forward/reverse pairs and Swap; themes/precision/palettes; PWA/offline download. Visual matrix remains 320/360/393/412/600/768 dp portrait, representative phone/tablet landscape and 130% font scale. Do not mark this matrix passed from source alone.
+Additional exhaustive combinations not individually certified (the exercised subsets are listed above): each rotor preset; all geometry edits and units; all six operating pairs; all alternative flow modes; invalid trim fallback; all inflow/tip/PG choices; every Results row/help; all 61 sweep quantities, five families, five trim modes, three axes, four ranges and custom bounds; CSV/PNG/text download and reimport; restore/draft/session persistence; converter forward/reverse pairs and Swap; themes/precision/palettes; PWA/offline download. Visual matrix remains 320/360/393/412/600/768 dp portrait, representative phone/tablet landscape and 130% font scale. Do not mark this matrix passed from source alone.
