@@ -188,6 +188,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--listing-dir", type=Path, help="Store assets directory with listing-<language>.json, icon.png, feature-graphic.png and phone-screenshots/*.png")
     parser.add_argument("--contact-email", help="Public support email for the store listing")
+    parser.add_argument(
+        "--listings-only",
+        action="store_true",
+        help="Update store listings and assets only, skipping bundle upload and release tracks.",
+    )
     return parser.parse_args()
 
 
@@ -310,19 +315,20 @@ def main() -> int:
         edit_id = edit["id"]
         print(f"    Session Edit ID: {edit_id}")
 
-        print(f"--> Uploading AAB bundle ({file_size_mb:.2f} MB)...")
-        media = MediaFileUpload(
-            str(aab_path), mimetype="application/octet-stream", resumable=True
-        )
-        upload_request = service.edits().bundles().upload(
-            packageName=args.package_name, editId=edit_id, media_body=media
-        )
-        bundle_response = upload_request.execute()
-        uploaded_vc = bundle_response.get("versionCode")
-        sha256 = bundle_response.get("sha256")
-        print(f"    Upload complete! VersionCode: {uploaded_vc} (SHA256: {sha256[:16]}...)")
-        if proj_vc is not None and int(uploaded_vc) != proj_vc:
-            raise ValueError("Uploaded bundle versionCode does not match the local B4A project")
+        if not args.listings_only:
+            print(f"--> Uploading AAB bundle ({file_size_mb:.2f} MB)...")
+            media = MediaFileUpload(
+                str(aab_path), mimetype="application/octet-stream", resumable=True
+            )
+            upload_request = service.edits().bundles().upload(
+                packageName=args.package_name, editId=edit_id, media_body=media
+            )
+            bundle_response = upload_request.execute()
+            uploaded_vc = bundle_response.get("versionCode")
+            sha256 = bundle_response.get("sha256")
+            print(f"    Upload complete! VersionCode: {uploaded_vc} (SHA256: {sha256[:16]}...)")
+            if proj_vc is not None and int(uploaded_vc) != proj_vc:
+                raise ValueError("Uploaded bundle versionCode does not match the local B4A project")
 
         if args.contact_email:
             details = service.edits().details().get(packageName=args.package_name, editId=edit_id).execute()
@@ -374,26 +380,27 @@ def main() -> int:
                                 time.sleep(2 * (attempt + 1))
                 print(f"--> Prepared store listing and graphics: {language}")
 
-        # Configure release
-        release_data = {
-            "versionCodes": [str(uploaded_vc)],
-            "status": args.status,
-        }
-        if release_name:
-            release_data["name"] = release_name
-        if parsed_release_notes:
-            release_data["releaseNotes"] = parsed_release_notes
-        if args.status == "inProgress" and args.user_fraction is not None:
-            release_data["userFraction"] = args.user_fraction
+        if not args.listings_only:
+            # Configure release
+            release_data = {
+                "versionCodes": [str(uploaded_vc)],
+                "status": args.status,
+            }
+            if release_name:
+                release_data["name"] = release_name
+            if parsed_release_notes:
+                release_data["releaseNotes"] = parsed_release_notes
+            if args.status == "inProgress" and args.user_fraction is not None:
+                release_data["userFraction"] = args.user_fraction
 
-        print(f"--> Assigning VersionCode {uploaded_vc} to track '{args.track}' (status: {args.status})...")
-        track_body = {"track": args.track, "releases": [release_data]}
-        service.edits().tracks().update(
-            packageName=args.package_name,
-            editId=edit_id,
-            track=args.track,
-            body=track_body,
-        ).execute()
+            print(f"--> Assigning VersionCode {uploaded_vc} to track '{args.track}' (status: {args.status})...")
+            track_body = {"track": args.track, "releases": [release_data]}
+            service.edits().tracks().update(
+                packageName=args.package_name,
+                editId=edit_id,
+                track=args.track,
+                body=track_body,
+            ).execute()
 
         if args.validate_only:
             print("--> Validating edit session (dry-run)...")
