@@ -8,6 +8,7 @@ import {
   derivedOutput,
   derivedPc,
   derivedTc,
+  referenceAspectRatio,
   resolveOperatingState,
   type FlightCondition,
   type RotorGeometry,
@@ -196,6 +197,20 @@ export interface SweepPointData {
   collectiveDeg: number;
   ct: number;
   thrustN: number;
+  torqueNm?: number;
+  powerKW?: number;
+  piKW?: number;
+  p0KW?: number;
+  pparKW?: number;
+  cq?: number;
+  cp?: number;
+  ch?: number;
+  fom?: number;
+  machAdv?: number;
+  machRet?: number;
+  lambdaI?: number;
+  muZ?: number;
+  vz?: number;
 }
 
 export interface SweepCurve {
@@ -429,6 +444,9 @@ export function runParameterSweep(
       const res = calculate(geom, c);
       const val = res.solutionValid ? meta.getValue(res, geom) : 0;
       const muLam = res.solutionValid ? derivedMuOverLambda(res) : 0;
+      const vtip3 = Math.pow(res.tipSpeed, 3);
+      const diskArea = Math.PI * geom.radius * geom.radius;
+      const pDenom = (res.densityRho * diskArea * vtip3) / 1000;
       points.push({
         curveLabel: cfg.label,
         mu: muTarget,
@@ -440,6 +458,20 @@ export function runParameterSweep(
         collectiveDeg: res.trimmedCollectiveDeg,
         ct: res.CT,
         thrustN: res.thrustN,
+        torqueNm: res.torqueNm,
+        powerKW: res.powerShaftW / 1000,
+        piKW: res.CQi * pDenom,
+        p0KW: res.CQ0 * pDenom,
+        pparKW: res.CPair * pDenom,
+        cq: res.CQ,
+        cp: res.CQ,
+        ch: res.CH,
+        fom: res.FoM,
+        machAdv: res.advancingTipMach,
+        machRet: ((1 - res.operatingMu) * res.tipSpeed) / Math.max(1, res.speedOfSound),
+        lambdaI: res.inflowLambdaI,
+        muZ: res.operatingMuZ,
+        vz: res.operatingVz,
       });
     }
 
@@ -1129,4 +1161,105 @@ export function getSweepReadoutText(
     }
   });
   return lines.join("\n");
+}
+
+
+export function generateFullSweepCSV(
+  geom: RotorGeometry,
+  cond: FlightCondition,
+  curves: SweepCurve[],
+  xAxisMode: "mu" | "vx" | "muLam",
+  trimMode: SweepTrimModeKey,
+  extraPrecision = 0
+): string {
+  const baseRes = calculate(geom, cond);
+  const strategy = SWEEP_TRIM_MODES.find((m) => m.key === trimMode)?.label || "No Trim";
+  const lines = [
+    `# RotorCalculator Full Engineering Sweep Export`,
+    `# Generated: ${new Date().toISOString()}`,
+    `#`,
+    `# --- INPUT ROTOR GEOMETRY ---`,
+    `# Rotor Name: ${geom.name}`,
+    `# Radius R [m]: ${geom.radius.toFixed(3)}`,
+    `# Blade Count Nb: ${geom.nBlades}`,
+    `# Root Cutout (r/R): ${geom.rootCutout.toFixed(3)}`,
+    `# Root Chord c0 [m]: ${geom.chordRoot.toFixed(3)}`,
+    `# Tip Chord c_tip [m]: ${geom.chordTip.toFixed(3)}`,
+    `# Solidity sigma: ${geom.sigmaRef.toFixed(4)}`,
+    `# Aspect Ratio: ${referenceAspectRatio(geom).toFixed(2)}`,
+    `# Linear Twist Root [deg]: ${((geom.thetaRoot * 180) / Math.PI).toFixed(2)}`,
+    `# Linear Twist Tip [deg]: ${((geom.thetaTip * 180) / Math.PI).toFixed(2)}`,
+    `# Lift Curve Slope a0 [1/rad]: ${geom.liftSlope0.toFixed(2)}`,
+    `# Profile Drag Cd0: ${geom.cd0.toFixed(4)}`,
+    `# Tip Loss Mode: ${geom.tipLossMode}`,
+    `# Tip Loss Factor B: ${geom.tipLossB.toFixed(3)}`,
+    `# Compressibility Correction: ${geom.usePrandtlGlauert ? "On" : "Off"}`,
+    `# Nominal RPM: ${geom.nominalRpm?.toFixed(1) ?? geom.rpm.toFixed(1)}`,
+    `#`,
+    `# --- INPUT FLIGHT CONDITIONS & ISA ATMOSPHERE ---`,
+    `# Altitude [m]: ${cond.altitudeM.toFixed(1)}`,
+    `# Temperature [degC]: ${cond.temperatureC.toFixed(1)}`,
+    `# Air Density rho [kg/m3]: ${cond.rho.toFixed(4)}`,
+    `# Speed of Sound a [m/s]: ${cond.speedOfSound.toFixed(2)}`,
+    `# Inflow Model: ${cond.inflowModel}`,
+    `# Induced Power Factor kappa: ${cond.kInd.toFixed(2)}`,
+    `# Operating Pair: ${cond.operatingPair}`,
+    `# Sweep Trim Mode: ${strategy}`,
+    `#`,
+    `# --- BASELINE OPERATING RESULTS ---`,
+  ];
+
+  if (baseRes.solutionValid) {
+    lines.push(
+      `# Base Thrust T [N]: ${baseRes.thrustN.toFixed(2)}`,
+      `# Base Torque Q [N.m]: ${baseRes.torqueNm.toFixed(2)}`,
+      `# Base Total Power P [kW]: ${(baseRes.powerShaftW / 1000).toFixed(3)}`,
+      `# Base CT: ${baseRes.CT.toFixed(6)}`,
+      `# Base CQ: ${baseRes.CQ.toFixed(6)}`,
+      `# Base CP: ${baseRes.CQ.toFixed(6)}`,
+      `# Base FoM: ${baseRes.FoM.toFixed(4)}`,
+      `# Base Tip Mach Adv: ${baseRes.advancingTipMach.toFixed(3)}`,
+      `# Base Tip Mach Ret: ${(((1 - baseRes.operatingMu) * baseRes.tipSpeed) / Math.max(1, baseRes.speedOfSound)).toFixed(3)}`
+    );
+  } else {
+    lines.push(`# Base Solution: Invalid / Out of Envelope`);
+  }
+
+  lines.push(
+    `#`,
+    `# --- SWEEP DATASET (ALL VARIABLES) ---`,
+    `Curve,mu,Vx_ms,muZ,Vz_ms,RPM,Collective_deg,Thrust_N,Torque_Nm,Power_kW,Power_Induced_kW,Power_Profile_kW,Power_Parasite_kW,CT,CQ,CP,CH,FoM,Mach_tip_adv,Mach_tip_ret,Lambda_i,Valid`
+  );
+
+  for (const curve of curves) {
+    for (const p of curve.points) {
+      const row = [
+        `"${curve.label.replace(/"/g, '""')}"`,
+        p.mu.toFixed(3),
+        p.vx.toFixed(2),
+        (p.muZ ?? 0).toFixed(4),
+        (p.vz ?? 0).toFixed(2),
+        p.rpm.toFixed(1),
+        p.collectiveDeg.toFixed(2),
+        p.thrustN.toFixed(2),
+        (p.torqueNm ?? 0).toFixed(2),
+        (p.powerKW ?? 0).toFixed(3),
+        (p.piKW ?? 0).toFixed(3),
+        (p.p0KW ?? 0).toFixed(3),
+        (p.pparKW ?? 0).toFixed(3),
+        p.ct.toFixed(6),
+        (p.cq ?? 0).toFixed(6),
+        (p.cp ?? 0).toFixed(6),
+        (p.ch ?? 0).toFixed(6),
+        (p.fom ?? 0).toFixed(4),
+        (p.machAdv ?? 0).toFixed(3),
+        (p.machRet ?? 0).toFixed(3),
+        (p.lambdaI ?? 0).toFixed(5),
+        p.valid ? "1" : "0",
+      ];
+      lines.push(row.join(","));
+    }
+  }
+
+  return lines.join("\r\n");
 }

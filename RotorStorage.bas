@@ -224,6 +224,117 @@ Public Sub ExportDatabaseText As String
 	Return sb.ToString
 End Sub
 
+Public Sub ExportDatabaseJSON As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("{").Append(CRLF)
+	sb.Append("  ""schema"": ""ROTORCALCULATOR_GEOMETRIES"",").Append(CRLF)
+	sb.Append("  ""version"": 2,").Append(CRLF)
+	sb.Append("  ""exportedAt"": """ & DateTime.Date(DateTime.Now) & "T" & DateTime.Time(DateTime.Now) & """,").Append(CRLF)
+	sb.Append("  ""rotors"": [").Append(CRLF)
+	For i = 0 To Rotors.Size - 1
+		Dim g As RotorGeometry = Rotors.Get(i)
+		Dim pgStr As String = "false"
+		If g.UsePrandtlGlauert Then pgStr = "true"
+		sb.Append("    {").Append(CRLF)
+		sb.Append("      ""id"": ""rotor-" & (i + 1) & """,").Append(CRLF)
+		sb.Append("      ""name"": """ & EscapeJson(g.Name) & """,").Append(CRLF)
+		sb.Append("      ""geom"": {").Append(CRLF)
+		sb.Append("        ""name"": """ & EscapeJson(g.Name) & """,").Append(CRLF)
+		sb.Append("        ""radius"": " & g.Radius & ",").Append(CRLF)
+		sb.Append("        ""rpm"": " & g.NominalRPM & ",").Append(CRLF)
+		sb.Append("        ""nominalRpm"": " & g.NominalRPM & ",").Append(CRLF)
+		sb.Append("        ""nBlades"": " & g.NBlades & ",").Append(CRLF)
+		sb.Append("        ""rootCutout"": " & g.RootCutout & ",").Append(CRLF)
+		sb.Append("        ""solidityMode"": ""chords"",").Append(CRLF)
+		sb.Append("        ""chordRoot"": " & g.ChordRoot & ",").Append(CRLF)
+		sb.Append("        ""chordTip"": " & g.ChordTip & ",").Append(CRLF)
+		sb.Append("        ""pitchMode"": ""linear_twist"",").Append(CRLF)
+		sb.Append("        ""thetaRoot"": " & g.ThetaRoot & ",").Append(CRLF)
+		sb.Append("        ""thetaTip"": " & g.ThetaTip & ",").Append(CRLF)
+		sb.Append("        ""theta0"": " & (0.5 * (g.ThetaRoot + g.ThetaTip)) & ",").Append(CRLF)
+		sb.Append("        ""liftSlope0"": " & g.LiftSlope0 & ",").Append(CRLF)
+		sb.Append("        ""cd0"": " & g.Cd0 & ",").Append(CRLF)
+		sb.Append("        ""tipLossMode"": """ & g.TipLossMode & """,").Append(CRLF)
+		sb.Append("        ""tipLossB"": " & g.TipLossB & ",").Append(CRLF)
+		sb.Append("        ""usePrandtlGlauert"": " & pgStr).Append(CRLF)
+		sb.Append("      }").Append(CRLF)
+		If i < Rotors.Size - 1 Then sb.Append("    },").Append(CRLF) Else sb.Append("    }").Append(CRLF)
+	Next
+	sb.Append("  ]").Append(CRLF)
+	sb.Append("}")
+	Return sb.ToString
+End Sub
+
+Private Sub EscapeJson(s As String) As String
+	Dim res As String = s.Replace("\", "\\").Replace(Chr(34), "\" & Chr(34))
+	res = res.Replace(Chr(10), "\n").Replace(Chr(13), "\r").Replace(Chr(9), "\t")
+	Return res
+End Sub
+
+Public Sub ParseDatabaseJSON(jsonStr As String) As List
+	Dim imported As List
+	imported.Initialize
+	Try
+		Dim rootObj As JavaObject
+		rootObj.InitializeNewInstance("org.json.JSONObject", Array(jsonStr))
+		Dim arr As JavaObject
+		If rootObj.RunMethod("has", Array("rotors")) Then
+			arr = rootObj.RunMethod("getJSONArray", Array("rotors"))
+		Else
+			Return imported
+		End If
+		Dim count As Int = arr.RunMethod("length", Null)
+		For i = 0 To count - 1
+			Dim item As JavaObject = arr.RunMethod("getJSONObject", Array(i))
+			Dim geomObj As JavaObject
+			If item.RunMethod("has", Array("geom")) Then
+				geomObj = item.RunMethod("getJSONObject", Array("geom"))
+			Else
+				geomObj = item
+			End If
+			Dim g As RotorGeometry
+			g.Initialize
+			g.Name = CleanName(geomObj.RunMethod("optString", Array("name", "Imported Rotor")))
+			g.Radius = geomObj.RunMethod("optDouble", Array("radius", 1.0))
+			g.NBlades = geomObj.RunMethod("optInt", Array("nBlades", 2))
+			g.RootCutout = geomObj.RunMethod("optDouble", Array("rootCutout", 0.1))
+			g.SolidityMode = "chords"
+			g.ChordRoot = geomObj.RunMethod("optDouble", Array("chordRoot", 0.1))
+			g.ChordTip = geomObj.RunMethod("optDouble", Array("chordTip", 0.1))
+			g.PitchMode = "linear_twist"
+			g.ThetaRoot = geomObj.RunMethod("optDouble", Array("thetaRoot", 0.0))
+			g.ThetaTip = geomObj.RunMethod("optDouble", Array("thetaTip", 0.0))
+			g.Theta0 = 0.5 * (g.ThetaRoot + g.ThetaTip)
+			g.LiftSlope0 = geomObj.RunMethod("optDouble", Array("liftSlope0", 5.73))
+			g.Cd0 = geomObj.RunMethod("optDouble", Array("cd0", 0.01))
+			g.TipLossMode = geomObj.RunMethod("optString", Array("tipLossMode", "sissingh"))
+			g.TipLossB = geomObj.RunMethod("optDouble", Array("tipLossB", 0.97))
+			g.UsePrandtlGlauert = geomObj.RunMethod("optBoolean", Array("usePrandtlGlauert", False))
+			Dim nomRpm As Double = geomObj.RunMethod("optDouble", Array("nominalRpm", -1.0))
+			If nomRpm <= 0 Then nomRpm = geomObj.RunMethod("optDouble", Array("rpm", -1.0))
+			If nomRpm <= 0 Then nomRpm = DefaultNominalRPM(g.Radius)
+			g.NominalRPM = nomRpm
+			g.RPM = nomRpm
+			If IsImportedGeometryValid(g) Then
+				imported.Add(zBETEngine.ResolveSolidity(g))
+			End If
+		Next
+	Catch
+		Log("ParseDatabaseJSON error: " & LastException.Message)
+	End Try
+	Return imported
+End Sub
+
+Public Sub ParseDatabaseUniversal(Text As String) As List
+	Dim t As String = Text.Trim
+	If t.StartsWith("{") Or t.StartsWith("[") Then
+		Dim res As List = ParseDatabaseJSON(t)
+		If res.IsInitialized And res.Size > 0 Then Return res
+	End If
+	Return ParseDatabaseText(Text)
+End Sub
+
 Public Sub ParseDatabaseText(Text As String) As List
 	Dim imported As List
 	imported.Initialize

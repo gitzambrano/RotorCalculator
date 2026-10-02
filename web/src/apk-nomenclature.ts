@@ -236,9 +236,9 @@ export const APK_NOMENCLATURE = {
     "short": "Compressibility",
     "sym": "",
     "unit": "",
-    "body": "Off keeps the lift-curve slope constant. Prandtl-Glauert raises it with a representative Mach number at about 0.75R (capped at 0.85). Reliable only while the advancing tip Mach number is below 1.",
+    "body": "ON: Prandtl-Glauert compressibility correction enabled. Scales the 2D lift-curve slope with the representative blade Mach number at 0.75R: a = a_0 / √(1 − M²), capped at M = 0.85. Increases thrust and power requirements as tip Mach increases. Valid for subsonic flow (M_adv < 1.0).\n\nOFF: Incompressible aerodynamics (M = 0 baseline). Lift-curve slope remains constant at a_0 along the entire blade radius regardless of tip Mach number.",
     "eq": "a = a_0 / √(1 − M²)",
-    "range": ""
+    "range": "M_adv < 1.0"
   },
   "rpmNom": {
     "key": "rpmNom",
@@ -376,7 +376,7 @@ export const APK_NOMENCLATURE = {
     "short": "Inflow",
     "sym": "",
     "unit": "",
-    "body": "How the induced velocity varies over the disk. Uniform is momentum theory. The Coleman models add a longitudinal gradient K_x tied to the wake skew angle; Coleman-Feingold and Drees also add a lateral gradient K_y. The mean induced velocity always comes from the momentum balance.",
+    "body": "How the induced velocity is distributed across the rotor disk:\n\n• Uniform: Constant induced inflow across the entire disk from momentum theory. No gradients (K_x = K_y = 0); no hub moments or side force.\n\n• Coleman Simple: Adds a longitudinal inflow gradient K_x = tan(χ/2) based on the wake skew angle χ. Lateral gradient is zero.\n\n• Coleman-Feingold (NDARC): Longitudinal gradient with factor 15π/32 on tan(χ/2), plus a lateral inflow gradient K_y = −2μ.\n\n• Drees: Speed-dependent longitudinal gradient K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2) and lateral gradient K_y = −2μ. Classic helicopter reference.",
     "eq": "λ_d(x,ψ) = λ + λ_i·x·(K_x·cosψ + K_y·sinψ)",
     "range": ""
   },
@@ -1003,7 +1003,7 @@ export const APK_NOMENCLATURE = {
   "comp_pg": {
     "key": "comp_pg",
     "full": "Prandtl-Glauert",
-    "short": "Prandtl-Glauert",
+    "short": "On",
     "sym": "",
     "unit": "",
     "body": "Corrects the lift-curve slope for subsonic compressibility using the Mach number near 0.75R, capped at 0.85. A caution appears from M_adv = 0.8; the result is invalid at M_adv = 1.",

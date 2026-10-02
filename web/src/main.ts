@@ -1,3 +1,12 @@
+
+export function triggerHapticFeedback(): void {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate(10);
+    } catch {}
+  }
+}
+
 import { QUICK_CONVERSIONS, quickConvert } from "./quick-converter";
 import "./style.css";
 import iconUrl from "./assets/icon.png";
@@ -186,11 +195,11 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.23</span>
+            <span class="version-badge">v1.24</span>
           </div>
         </div>
         <div class="header-actions">
-          <button class="header-action-btn" id="btn-install-app" style="display: none;" title="Install RotorCalculator App" aria-label="Install App">📲 INSTALL</button>
+          <button class="icon-btn" id="btn-install-app" style="display: none;" title="Install RotorCalculator App" aria-label="Install App">📥</button>
           <button class="icon-btn" id="btn-main-menu" aria-label="More options" title="More options">⋮</button>
         </div>
       </div>
@@ -209,9 +218,9 @@ app.innerHTML = `
       <button type="button" class="popup-menu-item menu-primary" data-action="help"><span class="menu-item-title">Physics &amp; Equations</span><span class="menu-item-subtitle">Theory, equations and notation</span></button>
       <button type="button" class="popup-menu-item menu-primary" data-action="units"><span class="menu-item-title">Unit Converter</span><span class="menu-item-subtitle">Quick engineering conversions</span></button>
       <button type="button" class="popup-menu-item menu-primary" data-action="settings"><span class="menu-item-title">Settings</span><span class="menu-item-subtitle">Display, plots and rotor data</span></button>
+      <button type="button" class="popup-menu-item menu-primary" id="menu-item-install" data-action="install"><span class="menu-item-title">Install App</span><span class="menu-item-subtitle">Add to home screen or desktop</span></button>
       <button type="button" class="popup-menu-item menu-primary" data-action="about"><span class="menu-item-title">About</span><span class="menu-item-subtitle">Version and credits</span></button>
       <button type="button" class="popup-menu-item menu-primary" data-action="privacy"><span class="menu-item-title">Privacy</span><span class="menu-item-subtitle">Privacy policy</span></button>
-      <button type="button" class="popup-menu-item menu-desktop-only" id="menu-item-install" data-action="install" style="display: none;">Install App</button>
       <div class="popup-menu-divider menu-desktop-only"></div>
       <button type="button" class="popup-menu-item menu-desktop-only" data-action="restore">Restore Factory Presets</button>
       <button type="button" class="popup-menu-item menu-desktop-only" data-action="export">Export Rotor Geometries</button>
@@ -361,7 +370,7 @@ app.innerHTML = `
         </div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="comp" data-tip="Prandtl-Glauert subsonic compressibility correction on blade lift slope." data-canonical="Compressibility">Compressibility</button>
-          <button class="action-btn" id="btn-compressibility" style="height: 44px; color: var(--accent-green);">ON (PG)</button>
+          <button class="action-btn" id="btn-compressibility" style="height: 44px;">On</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
 
@@ -521,11 +530,11 @@ app.innerHTML = `
         <div class="result-row" data-key="a"><button class="result-label" data-key="a">Sound Speed a</button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
 
         <div class="section-header">MODEL STATUS</div>
-        <div class="result-status-block" style="padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;">
-          <button class="status-chip-btn" id="badge-solution-summary" type="button" style="width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--accent); background: rgba(0,229,255,0.08); color: var(--accent); font-weight: 700; font-size: 14.5px; text-align: left; padding: 10px 14px; cursor: pointer;">
+        <div class="result-status-block" style="padding: 6px 12px; display: flex; flex-direction: column; gap: 8px;">
+          <button class="status-chip-btn" id="badge-solution-summary" type="button" style="width: 100%; height: 38px; min-height: 38px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-muted); font-weight: 500; font-size: 13px; text-align: left; padding: 0 12px; display: flex; align-items: center; cursor: pointer;">
             <span id="txt-solution-summary">Trim Mode</span>
           </button>
-          <button class="status-chip-btn" id="badge-model-status" type="button" style="width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid var(--accent-green); background: rgba(0,230,118,0.08); color: var(--accent-green); font-weight: 700; font-size: 14px; text-align: left; padding: 10px 14px; cursor: pointer;">
+          <button class="status-chip-btn" id="badge-model-status" type="button" style="width: 100%; height: 38px; min-height: 38px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-muted); font-weight: 500; font-size: 13px; text-align: left; padding: 0 12px; display: flex; align-items: center; cursor: pointer;">
             <span id="txt-model-status">Model valid</span>
           </button>
         </div>
@@ -849,8 +858,8 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.23</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.23.apk" download="RotorCalculator-1.23.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.24</div><div class="settings-row-sub">Download the verified Android APK</div></div>
+              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.24.apk" download="RotorCalculator-1.24.apk">APK</a>
             </div>
           </div>
         </div>
@@ -883,7 +892,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.23</p>
+          <p>RotorCalculator v1.24</p>
           <p>Rotor performance calculator based on analytical blade-element theory.<br>Notation follows Johnson and Leishman.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
@@ -1187,9 +1196,9 @@ function renderResults(): void {
   // Status & Trim Chips (matching APK UpdateStatusChips & PairChipText 1:1)
   const tipMach = r.speedOfSound > 0 ? r.tipSpeed / r.speedOfSound : 0.0;
   let statusTxt = "";
-  let statusColor = "var(--accent-green)";
-  let statusBg = "rgba(0, 230, 118, 0.08)";
-  let statusBorder = "rgba(0, 230, 118, 0.4)";
+  let statusColor = "var(--text-muted)";
+  let statusBg = "var(--input-bg)";
+  let statusBorder = "var(--border)";
 
   if (r.compressibilityInvalid) {
     statusColor = "var(--accent-red)";
@@ -1244,9 +1253,9 @@ function renderResults(): void {
     if (r.solutionValid) {
       txtTrim.innerHTML = formatSubscripts(`Trim: ${pairTxt}`);
       if (badgeTrim) {
-        badgeTrim.style.color = "var(--accent)";
-        badgeTrim.style.background = "rgba(0, 229, 255, 0.08)";
-        badgeTrim.style.borderColor = "rgba(0, 229, 255, 0.4)";
+        badgeTrim.style.color = "var(--text-muted)";
+        badgeTrim.style.background = "var(--input-bg)";
+        badgeTrim.style.borderColor = "var(--border)";
       }
     } else {
       txtTrim.innerHTML = formatSubscripts(`Trim: ${pairTxt} — no solution`);
@@ -1573,7 +1582,7 @@ export function showContextualHelp(key: string): void {
   if (!nom) return;
   const title = formatDescriptionSymbol(key, "L");
   byId("result-tooltip-title").innerHTML = title;
-  byId("result-tooltip-desc").textContent = nom.body || `Engineering quantity for ${nom.full}.`;
+  byId("result-tooltip-desc").innerHTML = (nom.body || `Engineering quantity for ${nom.full}.`).replace(/\n/g, "<br>");
 
   const eqBox = byId("result-tooltip-eq-box");
   if (nom.eq) {
@@ -1847,12 +1856,12 @@ function loadRotorToUI(rotor: StoredRotor, preserveCondition = false): void {
 
   byId<HTMLInputElement>("inp-cd0").value = activeGeom.cd0.toString();
 
-  const tipModes: Record<string, string> = { none: "NONE", fixed: "FIXED B", sissingh: "SISSINGH" };
-  byId<HTMLButtonElement>("btn-tiploss-mode").textContent = tipModes[activeGeom.tipLossMode] || "SISSINGH";
+  const tipModes: Record<string, string> = { none: "None", fixed: "Fixed", sissingh: "Sissingh" };
+  byId<HTMLButtonElement>("btn-tiploss-mode").textContent = tipModes[activeGeom.tipLossMode] || "Sissingh";
   byId<HTMLInputElement>("inp-tiploss-b").value = activeGeom.tipLossB.toString();
 
-  byId<HTMLButtonElement>("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "ON (PG)" : "OFF";
-  byId<HTMLButtonElement>("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent-green)" : "var(--text-muted)";
+  byId<HTMLButtonElement>("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "On" : "Off";
+  byId<HTMLButtonElement>("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent)" : "var(--text-muted)";
 
   refreshAirfoilName();
   refreshOperatingControls();
@@ -2326,7 +2335,7 @@ function bindSelectorButtons(): void {
   // 3. Tip-Loss Model Modal
   const tipModes: { id: RotorGeometry["tipLossMode"]; label: string; desc: string }[] = [
     { id: "none", label: "None", desc: "Full aerodynamic span effective (B = 1.0)" },
-    { id: "fixed", label: "Fixed B", desc: "Prescribed tip-loss factor entered in Tip Factor B" },
+    { id: "fixed", label: "Fixed", desc: "Prescribed tip-loss factor entered in Tip Factor B" },
     { id: "sissingh", label: "Sissingh", desc: "Iterated thrust-dependent tip-loss factor: B = 1 - √(2CT)/Nb" },
   ];
 
@@ -2337,7 +2346,7 @@ function bindSelectorButtons(): void {
       activeGeom.tipLossMode,
       (modeId) => {
         activeGeom.tipLossMode = modeId as RotorGeometry["tipLossMode"];
-        const labels: Record<string, string> = { none: "NONE", fixed: "FIXED B", sissingh: "SISSINGH" };
+        const labels: Record<string, string> = { none: "None", fixed: "Fixed", sissingh: "Sissingh" };
         byId("btn-tiploss-mode").textContent = labels[activeGeom.tipLossMode];
         markGeometryDirty();
         recalculate();
@@ -2347,8 +2356,8 @@ function bindSelectorButtons(): void {
 
   // 4. Compressibility Model Modal
   const compModes: { id: string; label: string; desc: string }[] = [
-    { id: "off", label: "Off", desc: "No subsonic compressibility correction" },
-    { id: "on", label: "On (Prandtl-Glauert)", desc: "Compressibility scaling on lift slope via effective Mach Meff" },
+    { id: "off", label: "Off", desc: "No compressibility correction (M = 0 baseline)" },
+    { id: "on", label: "On", desc: "Prandtl-Glauert subsonic compressibility correction" },
   ];
 
   byId("btn-compressibility").addEventListener("click", () => {
@@ -2358,8 +2367,8 @@ function bindSelectorButtons(): void {
       activeGeom.usePrandtlGlauert ? "on" : "off",
       (selId) => {
         activeGeom.usePrandtlGlauert = selId === "on";
-        byId("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "ON (PG)" : "OFF";
-        byId("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent-green)" : "var(--text-muted)";
+        byId("btn-compressibility").textContent = activeGeom.usePrandtlGlauert ? "On" : "Off";
+        byId("btn-compressibility").style.color = activeGeom.usePrandtlGlauert ? "var(--accent)" : "var(--text-muted)";
         markGeometryDirty();
         recalculate();
       }
@@ -2706,16 +2715,20 @@ function restoreFactoryRotors(): void {
   });
 }
 
-function downloadGeometriesBackup(): void {
+function downloadGeometriesBackup(format: "json" | "txt" = "json"): void {
   const dateStr = new Date().toISOString().slice(0, 10);
-  const txt = exportRotorsDatabaseText(storedRotors);
-  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+  const isJson = format === "json";
+  const content = isJson ? exportRotorsJSON(storedRotors) : exportRotorsDatabaseText(storedRotors);
+  const mime = isJson ? "application/json;charset=utf-8" : "text/plain;charset=utf-8";
+  const ext = isJson ? "json" : "txt";
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `rotors_db_${dateStr}.txt`;
+  a.download = `rotors_db_${dateStr}.${ext}`;
   a.click();
   URL.revokeObjectURL(url);
+  alert(`Successfully exported ${storedRotors.length} rotor geometries (${ext.toUpperCase()}).`);
 }
 
 // Rotor Actions (Save, Copy, Delete, New, Import, Export)
@@ -2767,11 +2780,13 @@ function bindRotorActionButtons(): void {
   });
 
   byId("btn-manager-export").addEventListener("click", () => {
-    downloadGeometriesBackup();
+    const useJson = confirm("Export Geometries Backup:\n\nClick OK for JSON format (.json - Universal for Web & Mobile),\nor Cancel for Text format (.txt - Classic format).");
+    downloadGeometriesBackup(useJson ? "json" : "txt");
   });
 
   byId("btn-settings-export")?.addEventListener("click", () => {
-    downloadGeometriesBackup();
+    const useJson = confirm("Export Geometries Backup:\n\nClick OK for JSON format (.json - Universal for Web & Mobile),\nor Cancel for Text format (.txt - Classic format).");
+    downloadGeometriesBackup(useJson ? "json" : "txt");
   });
 
   byId("btn-manager-import").addEventListener("click", () => {
@@ -3361,34 +3376,51 @@ function populateConverterUnits(): void {
 
 // Touch Swipe Navigation
 function initSwipeNavigation(): void {
-  const area = byId("content-area");
   let startX = 0;
   let startY = 0;
   let startTime = 0;
 
-  area.addEventListener("touchstart", (e) => {
+  window.addEventListener("touchstart", (e) => {
     if (document.querySelector(".modal-overlay.open")) return;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    startTime = Date.now();
+    const target = e.target as HTMLElement | null;
+    if (target && (target.closest("canvas") || target.closest("input[type=range]"))) return;
+    if (e.touches.length > 0) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+    }
   }, { passive: true });
 
-  area.addEventListener("touchend", (e) => {
+  window.addEventListener("touchend", (e) => {
     if (document.querySelector(".modal-overlay.open")) return;
+    const target = e.target as HTMLElement | null;
+    if (target && (target.closest("canvas") || target.closest("input[type=range]"))) return;
+    if (e.changedTouches.length === 0) return;
     const endX = e.changedTouches[0].clientX;
     const endY = e.changedTouches[0].clientY;
     const dx = endX - startX;
     const dy = endY - startY;
     const dt = Date.now() - startTime;
 
-    if (dt < 400 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dt < 650 && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       if (dx < 0) {
+        triggerHapticFeedback();
         if (currentPage === "geometry") activatePage("conditions", "left");
         else if (currentPage === "conditions") activatePage("results", "left");
       } else {
+        triggerHapticFeedback();
         if (currentPage === "results") activatePage("conditions", "right");
         else if (currentPage === "conditions") activatePage("geometry", "right");
       }
+    }
+  }, { passive: true });
+}
+
+function initGlobalHaptic(): void {
+  document.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest("button, .row-label-btn, .row-unit-btn, .action-btn, .tab-btn, .icon-btn, .popup-menu-item, .modal-close-btn, .active-rotor-bar")) {
+      triggerHapticFeedback();
     }
   }, { passive: true });
 }
@@ -3525,12 +3557,10 @@ function bindRowLabelHelp(): void {
     ["pointerup", "pointercancel", "pointerleave"].forEach(name => el.addEventListener(name, cancel));
     el.addEventListener("click", e => { if (held) { e.preventDefault(); e.stopImmediatePropagation(); held = false; } }, true);
   });
-  const selectors: Record<string, string> = { airfoil: "btn-select-airfoil", tipModel: "btn-tiploss-mode", comp: "btn-compressibility", trim: "btn-trim-mode", inflow: "btn-inflow-model" };
-  Object.entries(selectors).forEach(([key, id]) => document.querySelector(`.row-label-btn[data-key="${key}"]`)?.addEventListener("click", () => byId(id).click()));
   document.querySelectorAll<HTMLButtonElement>(".row-label-btn[data-key]").forEach((btn) => {
     const key = btn.dataset.key;
     if (!key) return;
-    if (["mu", "Vx", "alpha", "Vz", "muz", "airfoil", "tipModel", "comp", "trim", "inflow"].includes(key)) return;
+    if (["mu", "Vx", "alpha", "Vz", "muz"].includes(key)) return;
     btn.addEventListener("click", () => {
       showContextualHelp(key);
     });
@@ -3630,6 +3660,7 @@ function initApp(): void {
   bindRowLabelHelp();
   bindSettingsListeners();
   initSwipeNavigation();
+  initGlobalHaptic();
   initTooltips();
   initPwaInstall();
   updateResponsiveLabels();

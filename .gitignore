@@ -15,6 +15,7 @@ __pycache__/
 qa-results/
 output/playwright/
 .playwright-cli/
+tests/screenshots/
 
 # Web dependencies and build
 node_modules/

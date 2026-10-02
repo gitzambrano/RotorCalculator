@@ -70,8 +70,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calc
 	#MultiDex: False
-	#VersionCode: 6
-	#VersionName: 1.23
+	#VersionCode: 7
+	#VersionName: 1.24
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -1083,27 +1083,52 @@ Sub btnSettingRestore_Click
 End Sub
 
 Sub btnSettingExportGeometries_Click
-	Dim tempName As String = "rotorcalculator_geometries.txt"
-	File.WriteString(File.DirInternal, tempName, RotorStorage.ExportDatabaseText)
-	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
-	Wait For (SaveAs(input, "text/plain", tempName)) Complete (Success As Boolean)
-	If Success Then
-		ToastMessageShow("Geometry backup exported.", False)
+	Tick
+	Dim formats As List
+	formats.Initialize
+	formats.Add("JSON (.json)|Universal JSON format for web & backup")
+	formats.Add("Text (.txt)|Classic RotorCalculator backup")
+	Wait For (sheet.ShowChoice("Export Geometries", formats, 0)) Complete (choice As Int)
+	If choice < 0 Then Return
+	
+	Dim isJson As Boolean = (choice = 0)
+	Dim ext As String = "txt"
+	Dim mime As String = "text/plain"
+	Dim content As String
+	If isJson Then
+		ext = "json"
+		mime = "application/json"
+		content = RotorStorage.ExportDatabaseJSON
 	Else
-		ToastMessageShow("Geometry export canceled or failed.", False)
+		content = RotorStorage.ExportDatabaseText
+	End If
+	
+	Dim count As Int = RotorStorage.Rotors.Size
+	Dim tempName As String = "rotorcalculator_geometries." & ext
+	File.WriteString(File.DirInternal, tempName, content)
+	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
+	Wait For (SaveAs(input, mime, tempName)) Complete (Success As Boolean)
+	If Success Then
+		ToastMessageShow(count & " geometries exported successfully (" & ext.ToUpperCase & ").", False)
+	Else
+		ToastMessageShow("Geometry export canceled or failed. 0 geometries exported.", False)
 	End If
 End Sub
 
 Sub btnSettingImportGeometries_Click
+	Tick
 	Wait For (ResolveUnsavedGeometry("importing geometries")) Complete (ok As Boolean)
 	If ok = False Then Return
 	Wait For (ReadTextDocument("*/*")) Complete (Text As String)
-	If Text = "" Then Return
+	If Text = "" Then
+		ToastMessageShow("Import canceled. No geometries imported.", False)
+		Return
+	End If
 	Dim imported As List
 	imported.Initialize
-	If Text.Length < 2000000 Then imported = RotorStorage.ParseDatabaseText(Text)
+	If Text.Length < 2000000 Then imported = RotorStorage.ParseDatabaseUniversal(Text)
 	If imported.Size = 0 Then
-		sheet.ShowMessage("Import Geometries", "No valid RotorCalculator geometries were found in this file.")
+		sheet.ShowMessage("Import Geometries", "No valid RotorCalculator geometries were found in this file (JSON or TXT).")
 		Return
 	End If
 	Dim conflicts As Int = 0
@@ -1114,7 +1139,10 @@ Sub btnSettingImportGeometries_Click
 	Dim msg As String = "Found " & imported.Size & " valid geometries. Import them into the local rotor library?"
 	If conflicts > 0 Then msg = msg & CRLF & CRLF & conflicts & " use names that already exist."
 	Wait For (sheet.ShowConfirm("Import Geometries", msg, "Import", "Cancel", "", False)) Complete (r As Int)
-	If r <> DialogResponse.POSITIVE Then Return
+	If r <> DialogResponse.POSITIVE Then
+		ToastMessageShow("Import canceled. 0 geometries imported.", False)
+		Return
+	End If
 	Dim mode As String = "rename"
 	If conflicts > 0 Then
 		Dim modes As List
@@ -1123,7 +1151,10 @@ Sub btnSettingImportGeometries_Click
 		modes.Add("Replace same-name local geometries|Overwrite the local rotors")
 		modes.Add("Skip same-name imported geometries|Keep the local rotors")
 		Wait For (sheet.ShowChoice("Name Conflicts", modes, 0)) Complete (choice As Int)
-		If choice < 0 Then Return
+		If choice < 0 Then
+			ToastMessageShow("Import canceled. 0 geometries imported.", False)
+			Return
+		End If
 		If choice = 1 Then mode = "replace"
 		If choice = 2 Then mode = "skip"
 	End If
@@ -1134,7 +1165,7 @@ Sub btnSettingImportGeometries_Click
 	RefreshGeomFields("")
 	RefreshActiveRotorBar
 	RecalculateRotor
-	ToastMessageShow(added & " geometries imported.", False)
+	ToastMessageShow(added & " of " & imported.Size & " geometries imported successfully.", False)
 End Sub
 
 Private Sub ReadTextDocument(MimeType As String) As ResumableSub
@@ -1960,19 +1991,10 @@ Private Sub SetRowKey(rowId As String, key As String, level As Int)
 End Sub
 
 Sub rowLbl_Click
+	Tick
 	Dim b As Button = Sender
 	Dim rid As String = "" & b.Tag
 	Select rid
-		Case "airfoil"
-			btnSelectAirfoil_Click
-		Case "tipModel"
-			btnTipLoss_Click
-		Case "comp"
-			btnCompressibility_Click
-		Case "inflow"
-			btnInflowModel_Click
-		Case "trim"
-			btnOperatingPair_Click
 		Case "hflow"
 			btnHorizontalInput_Click
 		Case "aflow"
@@ -2213,9 +2235,9 @@ End Sub
 
 Private Sub RefreshCompressibilityButton(geom As RotorGeometry)
 	If geom.UsePrandtlGlauert Then
-		btnCompressibility.Text = RotorNames.ShortName("comp_pg")
+		btnCompressibility.Text = "On"
 	Else
-		btnCompressibility.Text = RotorNames.ShortName("comp_off")
+		btnCompressibility.Text = "Off"
 	End If
 End Sub
 
@@ -2384,8 +2406,8 @@ Sub btnCompressibility_Click
 	Tick
 	Dim items As List
 	items.Initialize
-	items.Add(RotorNames.ShortName("comp_off") & "|No compressibility correction")
-	items.Add(RotorNames.ShortName("comp_pg") & "|Linear compressibility correction")
+	items.Add("Off|No compressibility correction")
+	items.Add("On|Prandtl-Glauert linear compressibility correction")
 	Dim selected As Int = 0
 	If ActiveGeom.UsePrandtlGlauert Then selected = 1
 	Wait For (sheet.ShowChoice(RotorNames.PlainLabel("comp", 0), items, selected)) Complete (idx As Int)
@@ -2410,6 +2432,7 @@ Private Sub RotorOrder As List
 End Sub
 
 Sub btnActiveRotor_Click
+	Tick
 	Dim order As List = RotorOrder
 	Dim items As List
 	items.Initialize
@@ -2507,10 +2530,12 @@ Private Sub ResolveUnsavedGeometry(ActionText As String) As ResumableSub
 End Sub
 
 Sub btnGeometrySave_Click
+	Tick
 	SaveCurrentRotor
 End Sub
 
 Sub btnGeometryCopy_Click
+	Tick
 	Dim suggested As String = TruncateName(RotorStorage.MakeCopyName(ActiveGeom.Name))
 	Wait For (sheet.ShowInput("Copy Rotor", "Name for the new rotor (max 32 characters)", suggested, "Copy", 32)) Complete (nm As String)
 	If nm.Length = 0 Then Return
@@ -2522,6 +2547,7 @@ Sub btnGeometryCopy_Click
 End Sub
 
 Sub btnGeometryDelete_Click
+	Tick
 	If RotorStorage.Rotors.Size <= 1 Then
 		ToastMessageShow("At least one rotor must remain.", False)
 		Return
@@ -2691,12 +2717,13 @@ Private Sub BuildPageRes
 	Next
 	' Status block at the very end: operating solution (trim) then model validity.
 	y = AddSectionHeader(scvRes, y, "MODEL STATUS")
+	Dim chipH As Int = 36dip
 	lblTrimSummary = NewChip("lblTrimSummary", "trim")
-	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + 8dip, y + 4dip, UiContentW - 16dip, 48dip)
-	y = y + 60dip
+	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + 8dip, y + 4dip, UiContentW - 16dip, chipH)
+	y = y + chipH + 10dip
 	lblResultStatus = NewChip("lblResultStatus", "status")
-	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + 8dip, y, UiContentW - 16dip, 60dip)
-	y = y + 66dip
+	scvRes.Panel.AddView(lblResultStatus, UiContentLeft + 8dip, y, UiContentW - 16dip, chipH)
+	y = y + chipH + 16dip
 	scvRes.Panel.Height = y + 24dip
 End Sub
 
@@ -2704,26 +2731,33 @@ Private Sub NewChip(ev As String, tg As String) As Label
 	Dim l As Label
 	l.Initialize(ev)
 	l.Tag = tg
-	l.TextSize = 14.5 * sc
-	l.Typeface = Typeface.DEFAULT_BOLD
+	l.TextSize = 12.5 * sc
+	l.Typeface = Typeface.DEFAULT
 	l.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	l.Padding = Array As Int(14dip, 4dip, 14dip, 4dip)
+	l.Padding = Array As Int(12dip, 1dip, 12dip, 1dip)
 	l.SingleLine = False
 	l.Text = Dash
-	SetTextLines(l, 3)
+	SetTextLines(l, 2)
 	AttachHelp(l)
 	Return l
 End Sub
 
 Private Sub StyleChip(l As Label, col As Int)
-	Dim fill As Int = Bit.Or(0x26000000, Bit.And(col, 0x00FFFFFF))
 	Dim cd As ColorDrawable
-	cd.Initialize2(fill, 12dip, 1dip, col)
-	l.Background = cd
-	l.TextColor = col
+	If col = 0 Then
+		cd.Initialize2(ColorFieldFill, 6dip, 1dip, ColorFieldBorder)
+		l.Background = cd
+		l.TextColor = ColorButText2
+	Else
+		Dim fill As Int = Bit.Or(0x22000000, Bit.And(col, 0x00FFFFFF))
+		cd.Initialize2(fill, 6dip, 1dip, col)
+		l.Background = cd
+		l.TextColor = col
+	End If
 End Sub
 
 Sub resRow_Click
+	Tick
 	Dim p As Panel = Sender
 	ShowHelpFor("" & p.Tag)
 End Sub
@@ -2750,7 +2784,7 @@ Private Sub UpdateStatusChips
 		col = ColorAccentAmber
 		txt = "Tip Mach M_tip = " & FormatSig(tipMach, 3) & " " & Chr(8212) & " compressibility caution"
 	Else
-		col = ColorAccentGreen
+		col = 0
 		txt = "Model valid " & Chr(8212) & " M_tip = " & FormatSig(tipMach, 3) & ", M_adv = " & FormatSig(r.AdvancingTipMach, 3)
 	End If
 	lblResultStatus.Text = RotorNames.RichText(txt)
@@ -2759,7 +2793,7 @@ Private Sub UpdateStatusChips
 	Dim pairTxt As String = PairChipText(ActiveCond.OperatingPair)
 	If r.SolutionValid Then
 		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt)
-		StyleChip(lblTrimSummary, ColorAccentCyan)
+		StyleChip(lblTrimSummary, 0)
 	Else
 		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt & " " & Chr(8212) & " no solution")
 		StyleChip(lblTrimSummary, ColorAccentRed)
@@ -2917,6 +2951,17 @@ End Sub
 ' ====================================================================
 ' NATIVE PAGE NAVIGATION
 ' ====================================================================
+
+Sub tab_swipe(direction As Int)
+	If sheet.IsOpen Or UnitPopupOpen Or SettingsPopupOpen Or SweepPopupOpen Or SweepTablePopupOpen Or HelpPopupOpen Or SweepValuesPopupOpen Then Return
+	Tick
+	If direction > 0 Then
+		If CurrentPage < 2 Then ShowPage(CurrentPage + 1, True)
+	Else
+		If CurrentPage > 0 Then ShowPage(CurrentPage - 1, True)
+	End If
+End Sub
+
 Private Sub ShowPage(Position As Int, Animated As Boolean)
 	If Position < 0 Or Position > 2 Then Position = 0
 	CurrentPage = Position
@@ -3604,6 +3649,7 @@ Private Sub NewSweepButton(ev As String) As Button
 End Sub
 
 Sub btnViewPolarPlot_Click
+	Tick
 	If SweepPopupOpen Then CloseSweepPopup
 	If SweepMaxMuVal > 0.6 Then SweepMaxMuVal = 0.6
 	pnlSweepPopup.Initialize("pnlSweepPopup")
@@ -3877,6 +3923,7 @@ Private Sub CurrentSweepFamilyValues As List
 End Sub
 
 Sub btnSweepValues_Click
+	Tick
 	If SweepMultiMode < 1 Or SweepMultiMode > 3 Then Return
 	If SweepValuesPopupOpen Then CloseSweepValuesPopup
 	pnlSweepValuesPopup.Initialize("")
@@ -4075,6 +4122,7 @@ Private Sub MeasuredTextHeight(txt As String, sizeSp As Float, widthPx As Int) A
 End Sub
 
 Sub btnSweepTable_Click
+	Tick
 	If SweepSamplesCache.IsInitialized = False Or SweepSamplesCache.Size = 0 Then UpdateSweepPlotView
 	OpenSweepTablePopup
 End Sub
@@ -4196,19 +4244,41 @@ End Sub
 ' SWEEP EXPORT — Android Storage Access Framework, no storage permission
 ' ====================================================================
 Sub btnSweepExportCsv_Click
-	Dim csv As String = BuildSweepCsv
+	Tick
+	Dim options As List
+	options.Initialize
+	options.Add("Current Chart CSV|Table of plotted curve values vs advance ratio")
+	options.Add("Full Dataset CSV|Complete inputs, baseline operating point, and all aerodynamic variables")
+	Wait For (sheet.ShowChoice("Export CSV", options, 0)) Complete (choice As Int)
+	If choice < 0 Then Return
+	
+	Dim csv As String
+	Dim baseName As String = SweepExportBaseName
+	If choice = 1 Then
+		If SweepSamplesCache.IsInitialized = False Or SweepSamplesCache.Size = 0 Then UpdateSweepPlotView
+		csv = RotorPopups.BuildFullSweepCsv(ActiveGeom, ActiveCond, SweepSamplesCache, ExtraPrecision)
+		baseName = baseName & "_full"
+	Else
+		csv = BuildSweepCsv
+	End If
+	
 	Dim tempName As String = "rotor_sweep_export.csv"
 	File.WriteString(File.DirInternal, tempName, csv)
 	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
-	Wait For (SaveAs(input, "text/csv", SweepExportBaseName & ".csv")) Complete (Success As Boolean)
+	Wait For (SaveAs(input, "text/csv", baseName & ".csv")) Complete (Success As Boolean)
 	If Success Then
-		ToastMessageShow("CSV exported.", False)
+		If choice = 1 Then
+			ToastMessageShow("Full dataset CSV exported successfully.", False)
+		Else
+			ToastMessageShow("Plot CSV exported successfully.", False)
+		End If
 	Else
 		ToastMessageShow("CSV export canceled or failed.", False)
 	End If
 End Sub
 
 Sub btnSweepExportPng_Click
+	Tick
 	If ivSweepPlot.IsInitialized = False Then Return
 	Dim bmp As Bitmap = ivSweepPlot.Bitmap
 	If bmp.IsInitialized = False Then Return
@@ -4340,6 +4410,29 @@ Sub SafeContent_Changed(left As Int, top As Int, width As Int, height As Int)
 End Sub
 
 #If JAVA
+private float touchStartX = 0;
+private float touchStartY = 0;
+private long touchStartTime = 0;
+
+@Override
+public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+    if (ev.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+        touchStartX = ev.getX();
+        touchStartY = ev.getY();
+        touchStartTime = System.currentTimeMillis();
+    } else if (ev.getActionMasked() == android.view.MotionEvent.ACTION_UP) {
+        float dx = ev.getX() - touchStartX;
+        float dy = ev.getY() - touchStartY;
+        long dt = System.currentTimeMillis() - touchStartTime;
+        float density = getResources().getDisplayMetrics().density;
+        if (dt < 800 && Math.abs(dx) > 50 * density && Math.abs(dx) > Math.abs(dy) * 1.5f) {
+            int dir = (dx < 0) ? 1 : -1;
+            activityBA.raiseEventFromUI(this, "tab_swipe", dir);
+        }
+    }
+    return super.dispatchTouchEvent(ev);
+}
+
 public void rcNoZoom(android.webkit.WebView w) {
     android.webkit.WebSettings st = w.getSettings();
     st.setBuiltInZoomControls(false);

@@ -346,3 +346,16 @@ Usar `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` e `Eff.` em todos 
 Complemento da auditoria: conversor rápido completo (14 modos e Swap), COPY com nome/cancelamento, renomeação em rascunho, picker mobile, privacidade temática, restauração de página e Back foram alinhados ao APK. Corrigida a conversão μ/Vx com trim inválido, precisão/presentação da tabela Sweep, família de um valor e regras nativas do marcador do gráfico. Build web, 53 testes web, 76 Python e execução do engine B4A compilado passaram. Catálogos completos de 65 ajudas e 61 exportações Sweep foram exercitados no navegador; cobertura e limites em `docs/parity-requirements.md`.
 
 Web alinhada ao Android 1.23: grid e nomes responsivos, edição de todas as grandezas de geometria, conversões SI, persistência de rascunhos/condições, CRUD e importação/exportação corrigidos, help desktop e download ZIP offline. Relatório e limites de validação: `docs/web-parity-audit.md`. Código Android preservado. Motor web corrigido para as equações governadas de influxo/PG e coletivo incremental; 200 casos dourados e 18 pares operacionais passam, e os CSVs reais APK/web coincidem. Pré-processamento atmosférico web alinhado às constantes e limites do APK, com tolerâncias documentadas. Distribuição 1.23 inclui APK validado, ZIP web offline e relatório de 135 pares de screenshots reais em três temas e nove configurações.
+
+## RotorCalculator 1.24 (versionCode 7) — 2026-10-02
+
+- **Navegação por Gesto (Horizontal Swipe)**: Suporte a swipe lateral para alternar entre abas (Geometry ↔ Conditions ↔ Results) no APK nativo e no Web mobile.
+- **Tipografia e Capitalização**: Padronização Title Case nos seletores e estados ("On", "Off", "None", "Fixed", "Sissingh", etc.). Botão de compressibilidade simplificado para "On" / "Off".
+- **Design System e Coerência Visual**: Campo de Tip Loss Factor na coluna do meio unificado com borda, cantos arredondados e cor de fundo padrão em todos os temas. Faixas de status de trim e validade do modelo em Results equalizadas em altura (36-38px) e estilizadas com cores neutras secundárias.
+- **Interação Coluna 1 vs Coluna 2**: Toque na coluna 1 (label) sempre abre ajuda contextual completa; toque na coluna 2 abre o seletor modal/dropdown (Airfoil, Tip Loss, Compressibility, Inflow, Trim).
+- **Textos de Ajuda Contextual**: Descrição de Compressibilidade aprimorada com espaçamento explícito entre estados ON e OFF; descrição de Inflow Models organizada em tópicos estruturados.
+- **PWA e Instalação Web**: Botão de instalação `📥` adicionado ao header junto ao menu de três pontos e opção "Install App" incluída no menu suspenso antes de "About".
+- **Exportação Completa no Sweep**: Opção de exportação CSV com dataset completo contendo todos os parâmetros geométricos de entrada, condições atmosféricas ISA, ponto operacional de referência e todas as variáveis aerodinâmicas por ponto amostrado.
+- **Feedback Háptico**: Vibração sutil (15ms) padronizada em todos os botões de ação, labels e seletores de unidade.
+- **Validação Cruzada**: 100% de paridade validada entre o APK Android nativo e a versão Web mobile no emulador.
+

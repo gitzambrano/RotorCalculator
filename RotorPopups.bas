@@ -31,7 +31,10 @@ Sub Process_Globals
 	Private dpRem As Float
 	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
 		MuZ As Double, InflowModel As String, Value As Double, Valid As Boolean, RPM As Double, _
-		CollectiveDeg As Double, CT As Double, ThrustN As Double, MuLam As Double)
+		CollectiveDeg As Double, CT As Double, ThrustN As Double, MuLam As Double, _
+		TorqueNm As Double, PowerKW As Double, PiKW As Double, P0KW As Double, PparKW As Double, _
+		CQ As Double, CP As Double, CH As Double, FoM As Double, MachAdv As Double, MachRet As Double, _
+		LambdaI As Double, Vz As Double)
 End Sub
 
 ' Initializes the rotorcraft airfoil library and the complete parameter catalog
@@ -798,6 +801,21 @@ Public Sub BuildSweepSamples( _
 				point.CollectiveDeg = result.TrimmedCollectiveDeg
 				point.CT = result.CT
 				point.ThrustN = result.ThrustN
+				point.TorqueNm = result.TorqueNm
+				point.PowerKW = result.PowerShaftW / 1000.0
+				Dim vtip3 As Double = result.TipSpeed * result.TipSpeed * result.TipSpeed
+				Dim pDenom As Double = result.DensityRho * area * vtip3 / 1000.0
+				point.PiKW = result.CQi * pDenom
+				point.P0KW = result.CQ0 * pDenom
+				point.PparKW = result.CPair * pDenom
+				point.CQ = result.CQ
+				point.CP = result.CQ ' In rotorcraft conventions CQ = CP
+				point.CH = result.CH
+				point.FoM = result.FoM
+				point.MachAdv = result.AdvancingTipMach
+				point.MachRet = (1.0 - result.OperatingMu) * result.TipSpeed / Max(1.0, result.SpeedOfSound)
+				point.LambdaI = result.InflowLambdaI
+				point.Vz = result.OperatingVz
 			End If
 			samples.Add(point)
 		Next
@@ -1341,4 +1359,93 @@ Public Sub DrawSweepPlot( _
 		cvs.DrawCircle(liveCx, liveCy, 9dip, colCurrent, False, 1.5dip)
 	End If
 	Return bmp
+End Sub
+
+
+Public Sub BuildFullSweepCsv(geom As RotorGeometry, cond As FlightCondition, samples As List, extraPrecision As Int) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("# RotorCalculator Full Engineering Sweep Export").Append(CRLF)
+	sb.Append("# Generated: ").Append(DateTime.Date(DateTime.Now)).Append(" ").Append(DateTime.Time(DateTime.Now)).Append(CRLF)
+	sb.Append("#").Append(CRLF)
+	sb.Append("# --- INPUT ROTOR GEOMETRY ---").Append(CRLF)
+	sb.Append("# Rotor Name: ").Append(geom.Name).Append(CRLF)
+	sb.Append("# Radius R [m]: ").Append(geom.Radius).Append(CRLF)
+	sb.Append("# Blade Count Nb: ").Append(geom.NBlades).Append(CRLF)
+	sb.Append("# Root Cutout (r/R): ").Append(geom.RootCutout).Append(CRLF)
+	sb.Append("# Root Chord c0 [m]: ").Append(geom.ChordRoot).Append(CRLF)
+	sb.Append("# Tip Chord c_tip [m]: ").Append(geom.ChordTip).Append(CRLF)
+	sb.Append("# Solidity sigma: ").Append(geom.SigmaRef).Append(CRLF)
+	sb.Append("# Linear Twist Root [deg]: ").Append(geom.ThetaRoot * 180.0 / cPI).Append(CRLF)
+	sb.Append("# Linear Twist Tip [deg]: ").Append(geom.ThetaTip * 180.0 / cPI).Append(CRLF)
+	sb.Append("# Lift Curve Slope a0 [1/rad]: ").Append(geom.LiftSlope0).Append(CRLF)
+	sb.Append("# Profile Drag Cd0: ").Append(geom.Cd0).Append(CRLF)
+	sb.Append("# Tip Loss Mode: ").Append(geom.TipLossMode).Append(CRLF)
+	sb.Append("# Tip Loss Factor B: ").Append(geom.TipLossB).Append(CRLF)
+	Dim pgText As String = "Off"
+	If geom.UsePrandtlGlauert Then pgText = "On"
+	sb.Append("# Compressibility Correction: ").Append(pgText).Append(CRLF)
+	sb.Append("# Nominal RPM: ").Append(geom.NominalRPM).Append(CRLF)
+	sb.Append("#").Append(CRLF)
+	sb.Append("# --- INPUT FLIGHT CONDITIONS & ISA ATMOSPHERE ---").Append(CRLF)
+	sb.Append("# Altitude [m]: ").Append(cond.AltitudeM).Append(CRLF)
+	sb.Append("# Temperature [degC]: ").Append(cond.TemperatureC).Append(CRLF)
+	sb.Append("# Air Density rho [kg/m3]: ").Append(cond.Rho).Append(CRLF)
+	sb.Append("# Speed of Sound a [m/s]: ").Append(cond.SpeedOfSound).Append(CRLF)
+	sb.Append("# Inflow Model: ").Append(cond.InflowModel).Append(CRLF)
+	sb.Append("# Induced Power Factor kappa: ").Append(cond.KInd).Append(CRLF)
+	sb.Append("# Operating Pair: ").Append(cond.OperatingPair).Append(CRLF)
+	sb.Append("# Prescribed RPM: ").Append(cond.RPM).Append(CRLF)
+	sb.Append("# Prescribed Collective [deg]: ").Append(cond.CollectiveDeg).Append(CRLF)
+	sb.Append("#").Append(CRLF)
+	sb.Append("# --- BASELINE OPERATING RESULTS ---").Append(CRLF)
+	Dim baseRes As RotorResults = zBETEngine.Calculate(geom, cond)
+	If baseRes.SolutionValid Then
+		sb.Append("# Base Thrust T [N]: ").Append(baseRes.ThrustN).Append(CRLF)
+		sb.Append("# Base Torque Q [N.m]: ").Append(baseRes.TorqueNm).Append(CRLF)
+		sb.Append("# Base Total Power P [kW]: ").Append(baseRes.PowerShaftW / 1000.0).Append(CRLF)
+		sb.Append("# Base CT: ").Append(baseRes.CT).Append(CRLF)
+		sb.Append("# Base CQ: ").Append(baseRes.CQ).Append(CRLF)
+		sb.Append("# Base CP: ").Append(baseRes.CQ).Append(CRLF)
+		sb.Append("# Base FoM: ").Append(baseRes.FoM).Append(CRLF)
+		sb.Append("# Base Tip Mach Adv: ").Append(baseRes.AdvancingTipMach).Append(CRLF)
+		sb.Append("# Base Tip Mach Ret: ").Append((1.0 - baseRes.OperatingMu) * baseRes.TipSpeed / Max(1.0, baseRes.SpeedOfSound)).Append(CRLF)
+	Else
+		sb.Append("# Base Solution: Invalid / Out of Envelope").Append(CRLF)
+	End If
+	sb.Append("#").Append(CRLF)
+	sb.Append("# --- SWEEP DATASET (ALL VARIABLES) ---").Append(CRLF)
+	sb.Append("Curve,mu,Vx_ms,muZ,Vz_ms,RPM,Collective_deg,Thrust_N,Torque_Nm,Power_kW,Power_Induced_kW,Power_Profile_kW,Power_Parasite_kW,CT,CQ,CP,CH,FoM,Mach_tip_adv,Mach_tip_ret,Lambda_i,Valid").Append(CRLF)
+	
+	For i = 0 To samples.Size - 1
+		Dim p As SweepPoint = samples.Get(i)
+		sb.Append(CsvQPop(p.CurveLabel)).Append(",")
+		sb.Append(TblNum(p.Mu, 3, True)).Append(",")
+		sb.Append(TblNum(p.Vx, 2, True)).Append(",")
+		sb.Append(TblNum(p.MuZ, 4, True)).Append(",")
+		sb.Append(TblNum(p.Vz, 2, True)).Append(",")
+		sb.Append(TblNum(p.RPM, 1, True)).Append(",")
+		sb.Append(TblNum(p.CollectiveDeg, 2, True)).Append(",")
+		sb.Append(TblNum(p.ThrustN, 2, True)).Append(",")
+		sb.Append(TblNum(p.TorqueNm, 2, True)).Append(",")
+		sb.Append(TblNum(p.PowerKW, 3, True)).Append(",")
+		sb.Append(TblNum(p.PiKW, 3, True)).Append(",")
+		sb.Append(TblNum(p.P0KW, 3, True)).Append(",")
+		sb.Append(TblNum(p.PparKW, 3, True)).Append(",")
+		sb.Append(TblNum(p.CT, 6, True)).Append(",")
+		sb.Append(TblNum(p.CQ, 6, True)).Append(",")
+		sb.Append(TblNum(p.CP, 6, True)).Append(",")
+		sb.Append(TblNum(p.CH, 6, True)).Append(",")
+		sb.Append(TblNum(p.FoM, 4, True)).Append(",")
+		sb.Append(TblNum(p.MachAdv, 3, True)).Append(",")
+		sb.Append(TblNum(p.MachRet, 3, True)).Append(",")
+		sb.Append(TblNum(p.LambdaI, 5, True)).Append(",")
+		If p.Valid Then sb.Append("1") Else sb.Append("0")
+		sb.Append(CRLF)
+	Next
+	Return sb.ToString
+End Sub
+
+Private Sub CsvQPop(value As String) As String
+	Return Chr(34) & value.Replace(Chr(34), Chr(34) & Chr(34)) & Chr(34)
 End Sub
