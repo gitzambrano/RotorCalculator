@@ -346,6 +346,7 @@ def main() -> int:
                     "featureGraphic": [asset_dir / "feature-graphic.png"],
                     "phoneScreenshots": sorted((asset_dir / "phone-screenshots").glob("*.png")),
                     "sevenInchScreenshots": sorted((asset_dir / "tablet-screenshots").glob("*.png")),
+                    "tenInchScreenshots": sorted((asset_dir / "tablet-screenshots").glob("*.png")),
                 }
                 for image_type, paths in image_groups.items():
                     if not paths:
