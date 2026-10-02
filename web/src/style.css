@@ -1900,6 +1900,17 @@ button:active { filter: brightness(1.15); }
 .advanced-converter { margin-top: 16px; }
 .advanced-converter summary { cursor: pointer; padding: 12px 0; }
 @media(max-width:767px) {
+  #modal-settings { padding: 16px 12px; backdrop-filter: none; background: rgba(0,0,0,.63); }
+  #modal-settings .modal-card { width: 100% !important; height: calc(100dvh - 32px); max-height: calc(100dvh - 32px) !important; border: none; border-radius: 0; }
+  #modal-settings .modal-header { height: 52px; min-height: 52px; padding: 0 4px 0 16px; background: var(--header-bg); border: none; }
+  #modal-settings .modal-body { padding: 0 14px 16px !important; }
+  #modal-settings .settings-form-grid { gap: 0; }
+  #modal-settings .settings-section-hdr { height: 44px; flex-shrink: 0; padding: 16px 0 8px; margin: 0; font-size: 17px; }
+  #modal-settings .settings-row { min-height: 84px; gap: 8px; padding: 12px 0; border: none; }
+  #modal-settings .settings-row-info { gap: 0; }
+  #modal-settings .settings-row-title { font-size: 14px; white-space: normal; overflow: visible; }
+  #modal-settings .settings-row-sub { font-size: 13px; font-weight: 400; line-height: 15px; }
+  #modal-settings .settings-btn { flex: 0 0 44%; min-width: 0; max-width: none; height: 48px; border: none; border-radius: 4px; color: var(--accent) !important; }
   #modal-unit-converter { padding: 12px; backdrop-filter: none; background: rgba(0,0,0,.63); }
   #modal-unit-converter .modal-card { width: 100% !important; max-width: none; border: none; border-radius: 0; height: 368px; max-height: calc(100dvh - 24px); transform: translateY(-7px); background: var(--card-bg); }
   #modal-unit-converter .modal-header { height: 52px; min-height: 52px; background: var(--header-bg); padding: 0 4px 0 16px; border: none; }
