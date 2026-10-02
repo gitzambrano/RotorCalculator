@@ -1,30 +1,45 @@
 import "./style.css";
 import iconUrl from "./assets/icon.png";
+import headerIconUrl from "./assets/icon_header.png";
 import {
+  activeBladeArea,
   calculate,
   cloneCondition,
   cloneGeometry,
   createDefaultCondition,
   createDefaultGeometry,
+  derivedClBar,
+  derivedLambdaH,
+  derivedMuOverLambda,
+  derivedOutput,
+  derivedPc,
+  derivedTc,
+  getGeometryQuantity,
   referenceAspectRatio,
   referenceBladeArea,
   resolveSolidity,
   scaleChordsToAspectRatio,
   scaleChordsToSigmaRef,
   scaleRadiusPreserveReference,
+  setGeometryQuantity,
+  taperRatio,
   type FlightCondition,
   type RotorGeometry,
   type RotorResults,
 } from "./engine";
 import {
+  clearDraft,
   exportRotorsDatabaseText,
   exportRotorsJSON,
   getActiveRotorId,
   getFactoryPresets,
+  hasDraft,
   importRotorsJSON,
   importRotorsUniversal,
+  loadDraft,
   loadStoredRotors,
   resetToFactoryPresets,
+  saveDraft,
   saveStoredRotors,
   setActiveRotorId,
   type StoredRotor,
@@ -32,16 +47,39 @@ import {
 import {
   convertValue,
   formatResultValue,
+  formatSig,
   UNIT_CHOICES,
   UNIT_TABLE,
 } from "./units";
 import {
+  buildSweepTableRows,
   drawSweepCanvas,
   generateSweepCSV,
+  getSweepReadoutText,
+  renderSweepTableHtml,
   runParameterSweep,
   SWEEP_PARAMS,
+  SWEEP_TRIM_MODES,
+  type SweepTrimModeKey,
 } from "./sweep";
-import { getResponsiveInputLabel, getResultDisplayLabel } from "./labels";
+import {
+  ABBREVIATIONS,
+  CANONICAL_NOMENCLATURE,
+  COND_KEYS,
+  GEOM_KEYS,
+  RES_KEYS,
+  chooseLevel,
+  fitLabelSize,
+  formatDescriptionSymbol,
+  formatSubscripts,
+  getNomenclature,
+  getPlainLabel,
+  getResponsiveInputLabel,
+  getResultDisplayLabel,
+  getRichLabelHtml,
+  resultLabelHtml,
+  resultPlainLabel,
+} from "./labels";
 
 // Option Selector Interface
 interface OptionItem {
@@ -56,11 +94,31 @@ let activeRotorId: string = getActiveRotorId();
 let currentRotor: StoredRotor =
   storedRotors.find((r) => r.id === activeRotorId) || storedRotors[0] || getFactoryPresets()[0];
 let activeGeom: RotorGeometry = cloneGeometry(currentRotor.geom);
+
+// Restore draft geometry if available
+if (hasDraft()) {
+  const draft = loadDraft();
+  if (draft && draft.geom) {
+    activeGeom = draft.geom;
+  }
+}
+
+// Restore saved condition session if available
 let activeCond: FlightCondition = createDefaultCondition();
+try {
+  const savedCondJson = localStorage.getItem("rotorcalc_active_cond");
+  if (savedCondJson) {
+    activeCond = { ...activeCond, ...JSON.parse(savedCondJson) };
+  }
+} catch {
+  // fallback to default
+}
+
 let activeResults: RotorResults = calculate(activeGeom, activeCond);
 
 let currentPage: "geometry" | "conditions" | "results" = "geometry";
-let currentTheme: "dark" | "light" = (localStorage.getItem("rotor_theme") as "dark" | "light") || "dark";
+let currentTheme: "dark" | "light" | "midnight" =
+  (localStorage.getItem("rotor_theme") as "dark" | "light" | "midnight") || "dark";
 let unitSystem: "si" | "imperial" = (localStorage.getItem("rotor_units") as "si" | "imperial") || "si";
 let extraPrecision: number = parseInt(localStorage.getItem("rotor_extra_precision") || "0", 10);
 let angleFormat: "0/360" | "-180/180" = (localStorage.getItem("rotor_angle_format") as "0/360" | "-180/180") || "0/360";
@@ -75,21 +133,27 @@ let prefPressureUnit = localStorage.getItem("rotor_pref_pressure") || "hPa";
 // Sweep Modal State
 let sweepSelectedParam = "CP";
 let sweepMultiMode = 0;
-let sweepXAxisMode: "mu" | "vx" = "mu";
+let sweepXAxisMode: "mu" | "vx" | "muLam" =
+  (localStorage.getItem("rotor_sweep_xaxis") as "mu" | "vx" | "muLam") || "mu";
 let sweepMaxMu = 0.4;
+let sweepCrossX = -1;
+let sweepLastPlotMeta = { plotLeft: 70, plotWidth: 400, xMax: 0.4 };
 let sweepTableVisible = false;
-let sweepHoverTrim = false;
+let sweepTrimMode: SweepTrimModeKey = (localStorage.getItem("rotor_sweep_trim_mode") as SweepTrimModeKey) || "none";
+let plotPaletteIndex: number = parseInt(localStorage.getItem("rotor_plot_palette") || "0", 10);
 const sweepCustomValues: Record<number, number[]> = {
   1: [-10, -5, 0, 5, 10],
   2: [-10, -5, 0, 5, 10],
   3: [-0.05, -0.025, 0, 0.025, 0.05],
 };
+let sweepUpdateFn: (() => void) | null = null;
 
 // Flags & Dialog State
 let isInternalSync = false;
-let isGeometryDirty = false;
+let isGeometryDirty = hasDraft();
 let pendingUnsavedAction: (() => void) | null = null;
 let pendingImportList: StoredRotor[] = [];
+let deferredInstallPrompt: any = null;
 
 // Initialize Root App DOM
 const app = document.getElementById("app");
@@ -100,13 +164,14 @@ app.innerHTML = `
     <header class="topbar">
       <div class="brand-row">
         <div class="brand-left">
-          <img class="brand-icon" src="${iconUrl}" alt="RotorCalculator Icon" />
+          <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
             <span class="version-badge">v1.22</span>
           </div>
         </div>
         <div class="header-actions">
+          <button class="header-action-btn" id="btn-install-app" style="display: none;" title="Install RotorCalculator App" aria-label="Install App">📲 INSTALL</button>
           <button class="icon-btn" id="btn-main-menu" aria-label="More options" title="More options">⋮</button>
         </div>
       </div>
@@ -120,6 +185,7 @@ app.innerHTML = `
 
     <!-- 3-Dot Popup Menu -->
     <div class="popup-menu" id="main-popup-menu" hidden>
+      <button type="button" class="popup-menu-item" id="menu-item-install" data-action="install" style="display: none;">📲&nbsp;&nbsp;Install App</button>
       <button type="button" class="popup-menu-item" data-action="settings">⚙️&nbsp;&nbsp;Settings</button>
       <button type="button" class="popup-menu-item" data-action="units">⇄&nbsp;&nbsp;Quick Unit Converter</button>
       <button type="button" class="popup-menu-item" data-action="help">📖&nbsp;&nbsp;Physics &amp; Equations</button>
@@ -150,118 +216,132 @@ app.innerHTML = `
           <button class="action-btn delete" id="btn-geom-delete">DELETE</button>
         </div>
 
-        <div class="section-header">Blade Geometry</div>
+        <div class="section-header">ROTOR</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Descriptive name of this rotor geometry." data-canonical="Rotor Name">Rotor Name</button>
+          <button class="row-label-btn" data-key="name" data-tip="Descriptive name of this rotor geometry." data-canonical="Rotor Name">Rotor Name</button>
           <input class="row-input" type="text" id="inp-rotor-name" value="" />
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Rotor radius measured from shaft axis to blade tip." data-canonical="Radius R">Radius R</button>
+          <button class="row-label-btn" data-key="rpmNom" data-tip="Design rotor speed stored with the rotor. It seeds the Conditions page." data-canonical="Nominal Speed Ω_nom">Nominal Speed Ω_nom</button>
+          <input class="row-input" type="number" step="1" id="inp-rpm-nom" value="258" />
+          <button class="row-unit-btn" disabled>rpm</button>
+        </div>
+
+        <div class="section-header">PLANFORM</div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="R" data-tip="Rotor radius measured from shaft axis to blade tip." data-canonical="Radius R">Radius R</button>
           <input class="row-input" type="number" step="0.01" id="inp-radius" value="8.18" />
           <button class="row-unit-btn" id="unit-radius">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Total number of main rotor blades." data-canonical="Blade Count">Blade Count</button>
+          <button class="row-label-btn" data-key="Nb" data-tip="Total number of main rotor blades." data-canonical="Blade Count">Blade Count</button>
           <input class="row-input" type="number" step="1" id="inp-nblades" value="4" />
-          <button class="row-unit-btn" disabled>[-]</button>
+          <button class="row-unit-btn" disabled>–</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Non-dimensional radial station r0/R where the active lifting blade starts." data-canonical="Root Cutout">Root Cutout</button>
+          <button class="row-label-btn" data-key="x0" data-tip="Non-dimensional radial station r0/R where the active lifting blade starts." data-canonical="Root Cutout">Root Cutout</button>
           <input class="row-input" type="number" step="0.01" id="inp-cutout" value="0.15" />
           <button class="row-unit-btn" disabled>r/R</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade chord extrapolated to the rotational shaft center." data-canonical="Root Chord c0">Root Chord c0</button>
+          <button class="row-label-btn" data-key="c0" data-tip="Blade chord extrapolated to the rotational shaft center." data-canonical="Root Chord c0">Root Chord c0</button>
           <input class="row-input" type="number" step="0.001" id="inp-chord-root" value="0.53" />
           <button class="row-unit-btn" id="unit-chord-root">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade chord at physical tip station r/R = 1.0." data-canonical="Tip Chord c1">Tip Chord c1</button>
+          <button class="row-label-btn" data-key="c1" data-tip="Blade chord at physical tip station r/R = 1.0." data-canonical="Tip Chord c1">Tip Chord c1</button>
           <input class="row-input" type="number" step="0.001" id="inp-chord-tip" value="0.53" />
           <button class="row-unit-btn" id="unit-chord-tip">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Reference blade solidity Nb*c_mean / (pi*R). Editing scales chords to match." data-canonical="Reference Solidity">Ref. Solidity</button>
-          <input class="row-input" type="number" step="0.0001" id="inp-sigma-ref" value="0.0825" />
-          <button class="row-unit-btn" disabled>[-]</button>
-        </div>
-        <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Blade aspect ratio R / c_mean. Editing scales chords to match." data-canonical="Aspect Ratio">Aspect Ratio</button>
-          <input class="row-input" type="number" step="0.1" id="inp-aspect-ratio" value="15.4" />
-          <button class="row-unit-btn" disabled>[-]</button>
-        </div>
-        <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Aerodynamic incidence angle at cutout station r0." data-canonical="Root Pitch">Root Pitch</button>
-          <input class="row-input" type="number" step="0.1" id="inp-theta-root" value="14.0" />
-          <button class="row-unit-btn" id="unit-theta-root">deg</button>
-        </div>
-        <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Aerodynamic incidence angle at blade tip station r=R." data-canonical="Tip Pitch">Tip Pitch</button>
-          <input class="row-input" type="number" step="0.1" id="inp-theta-tip" value="-4.0" />
-          <button class="row-unit-btn" id="unit-theta-tip">deg</button>
-        </div>
-
-        <div class="section-header">Derived Geometry</div>
-        <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Geometric physical solidity: active lifting blade area divided by disk area." data-canonical="Geometric Solidity">Geom. Solidity</button>
-          <div class="row-derived-val" id="drv-sigma-geom">0.0701</div>
-          <button class="row-unit-btn" disabled>[-]</button>
-        </div>
-        <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Thrust-weighted solidity according to Wayne Johnson BET formulation." data-canonical="Thrust Solidity">Thrust Solidity</button>
-          <div class="row-derived-val" id="drv-sigma-thrust">0.0754</div>
-          <button class="row-unit-btn" disabled>[-]</button>
-        </div>
-        <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Ratio of tip chord c1 to root chord c0." data-canonical="Taper Ratio">Taper Ratio</button>
+          <button class="row-label-btn" data-key="taper" data-tip="Ratio of tip chord c1 to root chord c0." data-canonical="Taper Ratio">Taper Ratio</button>
           <div class="row-derived-val" id="drv-taper">1.000</div>
           <button class="row-unit-btn" disabled>c1/c0</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Total rotor disk swept area A = pi * R^2." data-canonical="Disk Area">Disk Area</button>
+          <button class="row-label-btn" data-key="AR" data-tip="Blade aspect ratio R / c_mean. Editing scales chords to match." data-canonical="Aspect Ratio">Aspect Ratio</button>
+          <input class="row-input" type="number" step="0.1" id="inp-aspect-ratio" value="15.4" />
+          <button class="row-unit-btn" disabled>–</button>
+        </div>
+
+        <div class="section-header">SOLIDITY &amp; AREAS</div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="sigmaRef" data-tip="Blade area of the fictitious planform extended to rotation axis (x=0) over disk area." data-canonical="Geometric Solidity">Geom. Solidity</button>
+          <input class="row-input" type="number" step="0.0001" id="inp-sigma-ref" value="0.0825" />
+          <button class="row-unit-btn" disabled>–</button>
+        </div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="sigmaAct" data-tip="Actual (real) blade area from root cutout to tip over disk area." data-canonical="Actual Solidity">Actual Solidity</button>
+          <div class="row-derived-val" id="drv-sigma-geom">0.0701</div>
+          <button class="row-unit-btn" disabled>–</button>
+        </div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="sigmaT" data-tip="Thrust-weighted solidity according to Wayne Johnson BET formulation." data-canonical="Thrust Solidity">Thrust Solidity</button>
+          <div class="row-derived-val" id="drv-sigma-thrust">0.0754</div>
+          <button class="row-unit-btn" disabled>–</button>
+        </div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="A" data-tip="Total rotor disk swept area A = pi * R^2." data-canonical="Disk Area">Disk Area</button>
           <div class="row-derived-val" id="drv-disk-area">210.2</div>
           <button class="row-unit-btn" id="unit-disk-area">m²</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Active lifting planform area of all blades combined." data-canonical="Active Blade Area">Active Blade Area</button>
+          <button class="row-label-btn" data-key="Ab" data-tip="Planform area of one blade of the fictitious planform extended to rotation axis." data-canonical="Geometric Blade Area">Geometric Area</button>
+          <div class="row-derived-val" id="drv-blade-area-ref">2.17</div>
+          <button class="row-unit-btn" id="unit-blade-area-ref">m²</button>
+        </div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="Aact" data-tip="Actual (real) planform area of one blade from root cutout to tip." data-canonical="Actual Blade Area">Actual Area</button>
           <div class="row-derived-val" id="drv-blade-area">14.74</div>
           <button class="row-unit-btn" id="unit-blade-area">m²</button>
         </div>
+
+        <div class="section-header">BLADE PITCH</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Total built-in geometric twist (tip pitch minus root pitch)." data-canonical="Total Twist">Total Twist</button>
+          <button class="row-label-btn" data-key="thRoot" data-tip="Aerodynamic incidence angle at cutout station r0." data-canonical="Root Pitch">Root Pitch</button>
+          <input class="row-input" type="number" step="0.1" id="inp-theta-root" value="14.0" />
+          <button class="row-unit-btn" id="unit-theta-root">deg</button>
+        </div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="thTip" data-tip="Aerodynamic incidence angle at blade tip station r=R." data-canonical="Tip Pitch">Tip Pitch</button>
+          <input class="row-input" type="number" step="0.1" id="inp-theta-tip" value="-4.0" />
+          <button class="row-unit-btn" id="unit-theta-tip">deg</button>
+        </div>
+        <div class="engineering-row">
+          <button class="row-label-btn" data-key="thTwist" data-tip="Total built-in geometric twist (tip pitch minus root pitch)." data-canonical="Total Twist">Total Twist</button>
           <div class="row-derived-val" id="drv-twist">-18.0°</div>
           <button class="row-unit-btn" disabled>deg</button>
         </div>
 
-        <div class="section-header">Rotor Aerodynamics</div>
+        <div class="section-header">AERODYNAMICS</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Select aerodynamic airfoil polar section." data-canonical="Airfoil">Airfoil</button>
+          <button class="row-label-btn" data-key="airfoil" data-tip="Select aerodynamic airfoil polar section." data-canonical="Airfoil">Airfoil</button>
           <button class="action-btn" id="btn-select-airfoil" style="height: 44px;">SC1095</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="2D lift curve slope a0 (typically 5.7 to 6.0 rad^-1)." data-canonical="Lift Slope a0">Lift Slope a0</button>
+          <button class="row-label-btn" data-key="a0" data-tip="2D lift curve slope a0 (typically 5.7 to 6.0 rad^-1)." data-canonical="Lift Slope a0">Lift Slope a0</button>
           <input class="row-input" type="number" step="0.01" id="inp-lift-slope" value="5.73" />
           <button class="row-unit-btn" id="unit-lift-slope">rad⁻¹</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="2D zero-lift profile drag coefficient cd0." data-canonical="Profile cd0">Profile cd0</button>
+          <button class="row-label-btn" data-key="Cd0" data-tip="2D zero-lift profile drag coefficient cd0." data-canonical="Profile cd0">Profile cd0</button>
           <input class="row-input" type="number" step="0.0001" id="inp-cd0" value="0.0088" />
-          <button class="row-unit-btn" disabled>[-]</button>
+          <button class="row-unit-btn" disabled>–</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Tip-loss model (none, fixed factor B, or Sissingh momentum coupling)." data-canonical="Tip Loss">Tip Loss</button>
+          <button class="row-label-btn" data-key="tipModel" data-tip="Tip-loss model (none, fixed factor B, or Sissingh momentum coupling)." data-canonical="Tip Loss">Tip Loss</button>
           <button class="action-btn" id="btn-tiploss-mode" style="height: 44px;">Sissingh</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Fixed tip loss factor B (active when tip loss is set to Fixed)." data-canonical="Tip Factor B">Tip Factor B</button>
+          <button class="row-label-btn" data-key="B" data-tip="Fixed tip loss factor B (active when tip loss is set to Fixed)." data-canonical="Tip Factor B">Tip Factor B</button>
           <input class="row-input" type="number" step="0.005" id="inp-tiploss-b" value="0.97" />
-          <button class="row-unit-btn" disabled>[-]</button>
+          <button class="row-unit-btn" disabled>–</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Prandtl-Glauert subsonic compressibility correction on blade lift slope." data-canonical="Compressibility">Compressibility</button>
+          <button class="row-label-btn" data-key="comp" data-tip="Prandtl-Glauert subsonic compressibility correction on blade lift slope." data-canonical="Compressibility">Compressibility</button>
           <button class="action-btn" id="btn-compressibility" style="height: 44px; color: var(--accent-green);">ON (PG)</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
@@ -269,58 +349,58 @@ app.innerHTML = `
 
       <!-- PAGE 1: CONDITIONS -->
       <section class="page" id="page-conditions">
-        <div class="section-header">Atmosphere & Flow</div>
+        <div class="section-header">ATMOSPHERE &amp; FLOW</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Flight geometric/pressure altitude in ISA atmosphere." data-canonical="Altitude">Altitude</button>
+          <button class="row-label-btn" data-key="h" data-tip="Flight geometric/pressure altitude in ISA atmosphere." data-canonical="Altitude">Altitude</button>
           <input class="row-input" type="number" step="50" id="inp-altitude" value="0" />
           <button class="row-unit-btn" id="unit-altitude">m</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Outside ambient air temperature." data-canonical="Temperature">Temperature</button>
+          <button class="row-label-btn" data-key="T0" data-tip="Outside ambient air temperature." data-canonical="Temperature">Temperature</button>
           <input class="row-input" type="number" step="1" id="inp-temperature" value="15" />
           <button class="row-unit-btn" id="unit-temperature">°C</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" id="btn-toggle-horiz-mode" title="Click to choose between advance ratio mu and forward airspeed Vx">μx ▾</button>
+          <button class="row-label-btn" id="btn-toggle-horiz-mode" data-key="mu" title="Click to choose between advance ratio mu and forward airspeed Vx">μ_x ⇄</button>
           <input class="row-input" type="number" step="0.01" id="inp-horiz-val" value="0.00" />
-          <button class="row-unit-btn" id="unit-horiz-val">[-]</button>
+          <button class="row-unit-btn" id="unit-horiz-val">–</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" id="btn-toggle-axial-mode" title="Click to choose between inflow angle alpha, climb speed Vz, and axial ratio muz">α ▾</button>
+          <button class="row-label-btn" id="btn-toggle-axial-mode" data-key="alpha" title="Click to choose between inflow angle alpha, climb speed Vz, and axial ratio muz">α ⇄</button>
           <input class="row-input" type="number" step="0.5" id="inp-axial-val" value="0.0" />
           <button class="row-unit-btn" id="unit-axial-val">deg</button>
         </div>
 
-        <div class="section-header">Operating Constraints</div>
+        <div class="section-header">OPERATING CONSTRAINTS</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim Mode">Trim Mode</button>
+          <button class="row-label-btn" data-key="trim" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim Mode">Trim Mode</button>
           <button class="action-btn" id="btn-trim-mode" style="height: 44px;">RPM + Target CT</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row" id="row-operating-1">
-          <button class="row-label-btn" id="lbl-operating-1" data-canonical="RPM">RPM</button>
+          <button class="row-label-btn" id="lbl-operating-1" data-key="rpm" data-canonical="RPM">RPM</button>
           <input class="row-input" type="number" step="1" id="inp-operating-1" value="258" />
           <button class="row-unit-btn" id="unit-operating-1">rpm</button>
         </div>
         <div class="engineering-row" id="row-operating-2">
-          <button class="row-label-btn" id="lbl-operating-2" data-canonical="Target CT">Target CT</button>
+          <button class="row-label-btn" id="lbl-operating-2" data-key="CTtgt" data-canonical="Target CT">Target CT</button>
           <input class="row-input" type="number" step="0.0005" id="inp-operating-2" value="0.0065" />
-          <button class="row-unit-btn" id="unit-operating-2">[-]</button>
+          <button class="row-unit-btn" id="unit-operating-2">–</button>
         </div>
 
-        <div class="section-header">Aerodynamic Model</div>
+        <div class="section-header">AERODYNAMIC MODEL</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Inflow model formulation (Uniform, Coleman Simple, Coleman-Feingold, or Drees)." data-canonical="Inflow Model">Inflow Model</button>
+          <button class="row-label-btn" data-key="inflow" data-tip="Inflow model formulation (Uniform, Coleman Simple, Coleman-Feingold, or Drees)." data-canonical="Inflow Model">Inflow Model</button>
           <button class="action-btn" id="btn-inflow-model" style="height: 44px;">Coleman-Feingold</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Empirical induced power factor k_ind used in energy balance (default 1.15).">Induced Factor kind</button>
+          <button class="row-label-btn" data-key="kind" data-tip="Empirical induced power factor k_ind used in energy balance (default 1.15).">Induced Factor kind</button>
           <input class="row-input" type="number" step="0.01" id="inp-kind" value="1.15" />
-          <button class="row-unit-btn" disabled>[-]</button>
+          <button class="row-unit-btn" disabled>–</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-tip="Vectorial 2D Gauss-Legendre quadrature along radial blade stations and azimuth." data-canonical="Profile Drag">Profile Drag</button>
+          <button class="row-label-btn" data-key="drag" data-tip="Vectorial 2D Gauss-Legendre quadrature along radial blade stations and azimuth." data-canonical="Profile Drag">Profile Drag</button>
           <div class="row-derived-val" style="color: var(--accent); font-size: 14px;">Numerical Vectorial</div>
           <button class="row-unit-btn" disabled>—</button>
         </div>
@@ -328,72 +408,102 @@ app.innerHTML = `
 
       <!-- PAGE 2: RESULTS -->
       <section class="page" id="page-results">
-        <div class="results-header-actions">
-          <button class="btn-open-sweep" id="btn-open-sweep">
+        <div class="results-header-actions" style="margin-bottom: 8px;">
+          <button class="btn-open-sweep" id="btn-open-sweep" style="width: 100%; height: 48px; font-weight: 700; font-size: 15px; border-radius: 4px;">
             <span>📈</span> OPEN PARAMETER SWEEP
           </button>
-          <div class="status-badges">
-            <div class="status-pill" id="badge-model-status">
-              <span>MODEL STATUS</span>
-              <strong id="txt-model-status">CONVERGED</strong>
-            </div>
-            <div class="status-pill" id="badge-solution-summary">
-              <span>OPERATING SOLUTION</span>
-              <strong id="txt-solution-summary">θ0 = 12.3° | RPM = 258</strong>
-            </div>
-          </div>
         </div>
 
-        <div class="section-header">Dimensional Performance</div>
-        <div class="result-row" data-param="ThrustN" data-canonical="T — Thrust"><div class="result-label" data-canonical="T — Thrust">T — Thrust</div><div class="result-val" id="res-thrust">---</div><div class="result-unit" id="unit-res-thrust">N</div></div>
-        <div class="result-row" data-param="PowerKW" data-canonical="Pshaft — Shaft Power"><div class="result-label" data-canonical="Pshaft — Shaft Power">Pshaft — Shaft Power</div><div class="result-val" id="res-power">---</div><div class="result-unit" id="unit-res-power">kW</div></div>
-        <div class="result-row" data-param="TorqueNm" data-canonical="Q — Shaft Torque"><div class="result-label" data-canonical="Q — Shaft Torque">Q — Shaft Torque</div><div class="result-val" id="res-torque">---</div><div class="result-unit" id="unit-res-torque">N·m</div></div>
-        <div class="result-row" data-param="DragHN" data-canonical="H — In-Plane Force"><div class="result-label" data-canonical="H — In-Plane Force">H — In-Plane Force</div><div class="result-val" id="res-drag-h">---</div><div class="result-unit" id="unit-res-drag-h">N</div></div>
-        <div class="result-row" data-param="CY" data-canonical="Y — Side Force"><div class="result-label" data-canonical="Y — Side Force">Y — Side Force</div><div class="result-val" id="res-side-y">---</div><div class="result-unit" id="unit-res-side-y">N</div></div>
-        <div class="result-row" data-param="CMx" data-canonical="Mx — Roll Moment"><div class="result-label" data-canonical="Mx — Roll Moment">Mx — Roll Moment</div><div class="result-val" id="res-roll-mx">---</div><div class="result-unit" id="unit-res-roll-mx">N·m</div></div>
-        <div class="result-row" data-param="CMy" data-canonical="My — Pitch Moment"><div class="result-label" data-canonical="My — Pitch Moment">My — Pitch Moment</div><div class="result-val" id="res-pitch-my">---</div><div class="result-unit" id="unit-res-pitch-my">N·m</div></div>
+        <div class="section-header">FORCES</div>
+        <div class="result-row" data-key="T"><button class="result-label" data-key="T">Thrust T</button><div class="result-val">---</div><div class="result-unit">N</div></div>
+        <div class="result-row" data-key="H"><button class="result-label" data-key="H">In-Plane Force H</button><div class="result-val">---</div><div class="result-unit">N</div></div>
+        <div class="result-row" data-key="Hi"><button class="result-label" data-key="Hi">Induced In-Plane H<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">N</div></div>
+        <div class="result-row" data-key="H0"><button class="result-label" data-key="H0">Profile In-Plane H<sub>0</sub></button><div class="result-val">---</div><div class="result-unit">N</div></div>
+        <div class="result-row" data-key="Y"><button class="result-label" data-key="Y">Side Force Y</button><div class="result-val">---</div><div class="result-unit">N</div></div>
 
-        <div class="section-header">Aerodynamic Coefficients</div>
-        <div class="result-row" data-param="CT" data-canonical="CT — Thrust Coeff"><div class="result-label" data-canonical="CT — Thrust Coeff">CT — Thrust Coeff</div><div class="result-val" id="res-ct">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CP" data-canonical="CQ — Torque Coeff"><div class="result-label" data-canonical="CQ — Torque Coeff">CQ — Torque Coeff</div><div class="result-val" id="res-cq">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CQi" data-canonical="CQ,i — Induced Coeff"><div class="result-label" data-canonical="CQ,i — Induced Coeff">CQ,i — Induced Coeff</div><div class="result-val" id="res-cqi">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CQ0" data-canonical="CQ,0 — Profile Coeff"><div class="result-label" data-canonical="CQ,0 — Profile Coeff">CQ,0 — Profile Coeff</div><div class="result-val" id="res-cq0">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CH" data-canonical="CH — In-Plane Coeff"><div class="result-label" data-canonical="CH — In-Plane Coeff">CH — In-Plane Coeff</div><div class="result-val" id="res-ch">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CHi" data-canonical="CH,i — Induced H"><div class="result-label" data-canonical="CH,i — Induced H">CH,i — Induced H</div><div class="result-val" id="res-chi">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CH0" data-canonical="CH,0 — Profile H"><div class="result-label" data-canonical="CH,0 — Profile H">CH,0 — Profile H</div><div class="result-val" id="res-ch0">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CY" data-canonical="CY — Side Force Coeff"><div class="result-label" data-canonical="CY — Side Force Coeff">CY — Side Force Coeff</div><div class="result-val" id="res-cy">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CMx" data-canonical="CMx — Roll Moment Coeff"><div class="result-label" data-canonical="CMx — Roll Moment Coeff">CMx — Roll Moment Coeff</div><div class="result-val" id="res-cmx">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CMy" data-canonical="CMy — Pitch Moment Coeff"><div class="result-label" data-canonical="CMy — Pitch Moment Coeff">CMy — Pitch Moment Coeff</div><div class="result-val" id="res-cmy">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="CPair" data-canonical="CP,air — Air Power Coeff"><div class="result-label" data-canonical="CP,air — Air Power Coeff">CP,air — Air Power Coeff</div><div class="result-val" id="res-cpair">---</div><div class="result-unit">[-]</div></div>
+        <div class="section-header">TORQUES &amp; MOMENTS</div>
+        <div class="result-row" data-key="Q"><button class="result-label" data-key="Q">Shaft Torque Q</button><div class="result-val">---</div><div class="result-unit">N·m</div></div>
+        <div class="result-row" data-key="Qi"><button class="result-label" data-key="Qi">Induced Torque Q<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">N·m</div></div>
+        <div class="result-row" data-key="Q0"><button class="result-label" data-key="Q0">Profile Torque Q<sub>0</sub></button><div class="result-val">---</div><div class="result-unit">N·m</div></div>
+        <div class="result-row" data-key="Mx"><button class="result-label" data-key="Mx">Roll Moment M<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">N·m</div></div>
+        <div class="result-row" data-key="My"><button class="result-label" data-key="My">Pitch Moment M<sub>y</sub></button><div class="result-val">---</div><div class="result-unit">N·m</div></div>
 
-        <div class="section-header">Efficiency</div>
-        <div class="result-row" data-param="FoM" data-canonical="FM — Figure of Merit"><div class="result-label" data-canonical="FM — Figure of Merit">FM — Figure of Merit</div><div class="result-val" id="res-fom">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="L_D_eff" data-canonical="(L/D)eff — Effective L/D"><div class="result-label" data-canonical="(L/D)eff — Effective L/D">(L/D)eff — Effective L/D</div><div class="result-val" id="res-ld-eff">---</div><div class="result-unit">[-]</div></div>
+        <div class="section-header">POWER</div>
+        <div class="result-row" data-key="P"><button class="result-label" data-key="P">Shaft Power P</button><div class="result-val">---</div><div class="result-unit">kW</div></div>
+        <div class="result-row" data-key="Pi"><button class="result-label" data-key="Pi">Induced Power P<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">kW</div></div>
+        <div class="result-row" data-key="P0"><button class="result-label" data-key="P0">Profile Power P<sub>0</sub></button><div class="result-val">---</div><div class="result-unit">kW</div></div>
+        <div class="result-row" data-key="Pair"><button class="result-label" data-key="Pair">Air Power P<sub>air</sub></button><div class="result-val">---</div><div class="result-unit">kW</div></div>
 
-        <div class="section-header">Inflow & Wake</div>
-        <div class="result-row" data-param="lambda" data-canonical="λ — Total Inflow"><div class="result-label" data-canonical="λ — Total Inflow">λ — Total Inflow</div><div class="result-val" id="res-lambda">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="lambda_i" data-canonical="λi — Induced Inflow"><div class="result-label" data-canonical="λi — Induced Inflow">λi — Induced Inflow</div><div class="result-val" id="res-lambdai">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="Kx" data-canonical="Kx — Longitudinal Inflow"><div class="result-label" data-canonical="Kx — Longitudinal Inflow">Kx — Longitudinal Inflow</div><div class="result-val" id="res-kx">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="Ky" data-canonical="Ky — Lateral Inflow"><div class="result-label" data-canonical="Ky — Lateral Inflow">Ky — Lateral Inflow</div><div class="result-val" id="res-ky">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-param="chi" data-canonical="χ — Wake Skew Angle"><div class="result-label" data-canonical="χ — Wake Skew Angle">χ — Wake Skew Angle</div><div class="result-val" id="res-chi">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row" data-param="B" data-canonical="B — Tip-Loss Factor"><div class="result-label" data-canonical="B — Tip-Loss Factor">B — Tip-Loss Factor</div><div class="result-val" id="res-bfactor">---</div><div class="result-unit">[-]</div></div>
+        <div class="section-header">LOADING &amp; EFFICIENCY</div>
+        <div class="result-row" data-key="DL"><button class="result-label" data-key="DL">Disk Loading DL</button><div class="result-val">---</div><div class="result-unit">N/m²</div></div>
+        <div class="result-row" data-key="PL"><button class="result-label" data-key="PL">Power Loading PL</button><div class="result-val">---</div><div class="result-unit">N/kW</div></div>
+        <div class="result-row" data-key="vi"><button class="result-label" data-key="vi">Induced Velocity v<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="CTs"><button class="result-label" data-key="CTs">Blade Loading C<sub>T</sub>/σ<sub>TR</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="FM"><button class="result-label" data-key="FM">Figure of Merit FM</button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="LDe"><button class="result-label" data-key="LDe">Effective L/D (L/D)<sub>e</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
 
-        <div class="section-header">Operating State & Atmosphere</div>
-        <div class="result-row" data-canonical="RPM — Solved Speed"><div class="result-label" data-canonical="RPM — Solved Speed">RPM — Solved Speed</div><div class="result-val" id="res-rpm">---</div><div class="result-unit">rpm</div></div>
-        <div class="result-row" data-canonical="θ0 — Solved Collective"><div class="result-label" data-canonical="θ0 — Solved Collective">θ0 — Solved Collective</div><div class="result-val" id="res-coll">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row" data-canonical="μx — Advance Ratio"><div class="result-label" data-canonical="μx — Advance Ratio">μx — Advance Ratio</div><div class="result-val" id="res-op-mu">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-canonical="Vx — Airspeed"><div class="result-label" data-canonical="Vx — Airspeed">Vx — Airspeed</div><div class="result-val" id="res-op-vx">---</div><div class="result-unit" id="unit-res-vx">m/s</div></div>
-        <div class="result-row" data-canonical="μz — Axial Ratio"><div class="result-label" data-canonical="μz — Axial Ratio">μz — Axial Ratio</div><div class="result-val" id="res-op-muz">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-canonical="Vz — Climb Speed"><div class="result-label" data-canonical="Vz — Climb Speed">Vz — Climb Speed</div><div class="result-val" id="res-op-vz">---</div><div class="result-unit" id="unit-res-vz">m/s</div></div>
-        <div class="result-row" data-canonical="α — Angle of Attack"><div class="result-label" data-canonical="α — Angle of Attack">α — Angle of Attack</div><div class="result-val" id="res-op-alpha">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row" data-canonical="ΩR — Tip Speed"><div class="result-label" data-canonical="ΩR — Tip Speed">ΩR — Tip Speed</div><div class="result-val" id="res-op-vtip">---</div><div class="result-unit" id="unit-res-vtip">m/s</div></div>
-        <div class="result-row" data-canonical="Mtip — Tip Mach"><div class="result-label" data-canonical="Mtip — Tip Mach">Mtip — Tip Mach</div><div class="result-val" id="res-op-mtip">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-canonical="Madv — Advancing Mach"><div class="result-label" data-canonical="Madv — Advancing Mach">Madv — Advancing Mach</div><div class="result-val" id="res-op-madv">---</div><div class="result-unit">[-]</div></div>
-        <div class="result-row" data-canonical="h — Altitude"><div class="result-label" data-canonical="h — Altitude">h — Altitude</div><div class="result-val" id="res-op-alt">---</div><div class="result-unit" id="unit-res-alt">m</div></div>
-        <div class="result-row" data-canonical="Tamb — Temperature"><div class="result-label" data-canonical="Tamb — Temperature">Tamb — Temperature</div><div class="result-val" id="res-op-temp">---</div><div class="result-unit">°C</div></div>
-        <div class="result-row" data-canonical="ρ — Air Density"><div class="result-label" data-canonical="ρ — Air Density">ρ — Air Density</div><div class="result-val" id="res-op-rho">---</div><div class="result-unit">kg/m³</div></div>
-        <div class="result-row" data-canonical="p — Ambient Pressure"><div class="result-label" data-canonical="p — Ambient Pressure">p — Ambient Pressure</div><div class="result-val" id="res-op-pres">---</div><div class="result-unit" id="unit-res-pres">hPa</div></div>
-        <div class="result-row" data-canonical="a — Speed of Sound"><div class="result-label" data-canonical="a — Speed of Sound">a — Speed of Sound</div><div class="result-val" id="res-op-sound">---</div><div class="result-unit" id="unit-res-sound">m/s</div></div>
+        <div class="section-header">AERODYNAMIC COEFFICIENTS</div>
+        <div class="result-row" data-key="CT"><button class="result-label" data-key="CT">Thrust Coeff C<sub>T</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CQ"><button class="result-label" data-key="CQ">Torque Coeff C<sub>Q</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CQi"><button class="result-label" data-key="CQi">Induced Torque C<sub>Qi</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CQ0"><button class="result-label" data-key="CQ0">Profile Torque C<sub>Q0</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CH"><button class="result-label" data-key="CH">In-Plane Coeff C<sub>H</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CHi"><button class="result-label" data-key="CHi">Induced In-Plane C<sub>Hi</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CH0"><button class="result-label" data-key="CH0">Profile In-Plane C<sub>H0</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CY"><button class="result-label" data-key="CY">Side Force Coeff C<sub>Y</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CMx"><button class="result-label" data-key="CMx">Roll Moment Coeff C<sub>Mx</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CMy"><button class="result-label" data-key="CMy">Pitch Moment Coeff C<sub>My</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CPair"><button class="result-label" data-key="CPair">Air Power Coeff C<sub>Pair</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="CLbar"><button class="result-label" data-key="CLbar">Mean Lift C̄<sub>L</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Tc"><button class="result-label" data-key="Tc">Dyn Thrust T<sub>c</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Pc"><button class="result-label" data-key="Pc">Dyn Power P<sub>c</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+
+        <div class="section-header">INFLOW &amp; WAKE</div>
+        <div class="result-row" data-key="lam"><button class="result-label" data-key="lam">Inflow Ratio λ</button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="lami"><button class="result-label" data-key="lami">Induced Inflow λ<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="lamh"><button class="result-label" data-key="lamh">Hover Inflow λ<sub>h</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="muLam"><button class="result-label" data-key="muLam">Advance-Inflow μ/λ</button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Kx"><button class="result-label" data-key="Kx">Long. Gradient K<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Ky"><button class="result-label" data-key="Ky">Lateral Gradient K<sub>y</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="chi"><button class="result-label" data-key="chi">Wake Skew χ</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="Bres"><button class="result-label" data-key="Bres">Tip Factor B</button><div class="result-val">---</div><div class="result-unit">–</div></div>
+
+        <div class="section-header">FLOW &amp; BLADE DIAGNOSTICS</div>
+        <div class="result-row" data-key="Vztot"><button class="result-label" data-key="Vztot">Total Axial Speed V<sub>z,tot</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Vadv"><button class="result-label" data-key="Vadv">Advancing Speed V<sub>adv</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Vret"><button class="result-label" data-key="Vret">Retreating Speed V<sub>ret</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Mret"><button class="result-label" data-key="Mret">Retreating Mach M<sub>ret</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="aoaAdv75"><button class="result-label" data-key="aoaAdv75">Adv. AoA 75% α<sub>adv,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="aoaRet75"><button class="result-label" data-key="aoaRet75">Ret. AoA 75% α<sub>ret,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiAdv75"><button class="result-label" data-key="phiAdv75">Adv. Inflow 75% φ<sub>adv,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiRet75"><button class="result-label" data-key="phiRet75">Ret. Inflow 75% φ<sub>ret,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+
+        <div class="section-header">STATE &amp; ATMOSPHERE</div>
+        <div class="result-row" data-key="rpm"><button class="result-label" data-key="rpm">Rotor Speed Ω</button><div class="result-val">---</div><div class="result-unit">rpm</div></div>
+        <div class="result-row" data-key="coll"><button class="result-label" data-key="coll">Collective Δθ</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="mu"><button class="result-label" data-key="mu">Advance Ratio μ<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Vx"><button class="result-label" data-key="Vx">Airspeed V<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="muz"><button class="result-label" data-key="muz">Axial Ratio μ<sub>z</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Vz"><button class="result-label" data-key="Vz">Climb Speed V<sub>z</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="alpha"><button class="result-label" data-key="alpha">Disk AoA α</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="OmR"><button class="result-label" data-key="OmR">Tip Speed ΩR</button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Mtip"><button class="result-label" data-key="Mtip">Tip Mach M<sub>tip</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Madv"><button class="result-label" data-key="Madv">Advancing Mach M<sub>adv</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="h"><button class="result-label" data-key="h">Altitude h</button><div class="result-val">---</div><div class="result-unit">m</div></div>
+        <div class="result-row" data-key="T0"><button class="result-label" data-key="T0">Temperature T<sub>amb</sub></button><div class="result-val">---</div><div class="result-unit">°C</div></div>
+        <div class="result-row" data-key="rho"><button class="result-label" data-key="rho">Density ρ</button><div class="result-val">---</div><div class="result-unit">kg/m³</div></div>
+        <div class="result-row" data-key="p"><button class="result-label" data-key="p">Pressure p</button><div class="result-val">---</div><div class="result-unit">hPa</div></div>
+        <div class="result-row" data-key="a"><button class="result-label" data-key="a">Sound Speed a</button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+
+        <div class="section-header">MODEL STATUS</div>
+        <div class="result-status-block" style="padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;">
+          <button class="status-chip-btn" id="badge-solution-summary" type="button" style="width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--accent); background: rgba(0,229,255,0.08); color: var(--accent); font-weight: 700; font-size: 14.5px; text-align: left; padding: 10px 14px; cursor: pointer;">
+            <span id="txt-solution-summary">Trim Mode</span>
+          </button>
+          <button class="status-chip-btn" id="badge-model-status" type="button" style="width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid var(--accent-green); background: rgba(0,230,118,0.08); color: var(--accent-green); font-weight: 700; font-size: 14px; text-align: left; padding: 10px 14px; cursor: pointer;">
+            <span id="txt-model-status">Model valid</span>
+          </button>
+        </div>
       </section>
     </div>
 
@@ -461,25 +571,37 @@ app.innerHTML = `
               <select class="sweep-select" id="sweep-select-xaxis">
                 <option value="mu">Advance Ratio μx [-]</option>
                 <option value="vx">Airspeed Vx [m/s]</option>
+                <option value="muLam">Advance-to-Inflow Ratio μ/λ [–]</option>
               </select>
             </div>
             <div class="sweep-control-group">
-              <label>Max μx Limit</label>
+              <label>Sweep Range</label>
               <select class="sweep-select" id="sweep-select-maxmu">
-                <option value="0.2">0.20 (Low Speed)</option>
-                <option value="0.3">0.30 (Cruise)</option>
-                <option value="0.4" selected>0.40 (High Speed)</option>
-                <option value="0.5">0.50 (Extreme)</option>
+                <option value="0.3">μ_x max = 0.30</option>
+                <option value="0.4" selected>μ_x max = 0.40</option>
+                <option value="0.5">μ_x max = 0.50</option>
+                <option value="0.6">μ_x max = 0.60</option>
               </select>
             </div>
-            <div class="sweep-control-group" id="sweep-group-trim-hover" style="display: none;">
-              <label>Hover Trim Strategy</label>
-              <button class="action-btn" id="btn-sweep-trim-hover" style="height: 38px; font-size: 12px; font-weight: 700;">HOVER TRIM: OFF</button>
+            <div class="sweep-control-group" id="sweep-group-trim-mode">
+              <label>Sweep Trim</label>
+              <select class="sweep-select" id="sweep-select-trim-mode">
+                <option value="none">No Trim (Fixed Controls)</option>
+                <option value="coll_all">Trim Collective Δθ · Every Point</option>
+                <option value="rpm_all">Trim Rotor Speed Ω · Every Point</option>
+                <option value="coll_hover">Trim Collective Δθ · Hover Only</option>
+                <option value="rpm_hover">Trim Rotor Speed Ω · Hover Only</option>
+              </select>
             </div>
           </div>
 
           <div class="sweep-canvas-wrapper">
             <canvas class="sweep-canvas" id="sweep-canvas"></canvas>
+          </div>
+
+          <div class="sweep-info-cards" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; margin-bottom: 8px;">
+            <div id="sweep-current-val" style="padding: 8px 12px; background: var(--bg-input-card, var(--card-bg)); border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--accent); border: 1px solid var(--border);">Active point: invalid operating point</div>
+            <div id="sweep-readout" style="padding: 8px 12px; background: var(--bg-input-card, var(--card-bg)); border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text-main); border: 1px solid var(--border); white-space: pre-line;">Tap or drag on the plot to read the curve values.</div>
           </div>
 
           <div id="sweep-table-container" style="display: none; max-height: 200px; overflow: auto; margin-bottom: 12px; font-size: 12px; border: 1px solid var(--border); border-radius: 6px;"></div>
@@ -548,16 +670,25 @@ app.innerHTML = `
       </div>
     </div>
 
-    <!-- MODAL: RESULT TOOLTIP -->
+    <!-- MODAL: CONTEXTUAL HELP & TOOLTIP -->
     <div class="modal-overlay" id="modal-result-tooltip">
-      <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-card" style="max-width: 520px;">
         <div class="modal-header">
-          <div class="modal-title" id="result-tooltip-title">About • Result</div>
+          <div class="modal-title" id="result-tooltip-title">About • Parameter</div>
           <button class="modal-close-btn" data-close="modal-result-tooltip">×</button>
         </div>
         <div class="modal-body" style="padding: 16px 20px;">
-          <div id="result-tooltip-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 20px;"></div>
-          <button class="action-btn" id="btn-result-tooltip-open-help" style="width: 100%; height: 42px; font-weight: 700; color: var(--accent);">OPEN FULL PHYSICS & EQUATIONS GUIDE</button>
+          <div id="result-tooltip-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 14px;"></div>
+          <div id="result-tooltip-eq-box" style="display: none; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.25); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 13.5px; color: var(--accent); margin-bottom: 12px; word-break: break-all;"></div>
+          <div id="result-tooltip-range-box" style="display: none; font-size: 13.5px; margin-bottom: 10px;">
+            <span style="font-weight: 700; color: var(--accent-green);">Typical range: </span>
+            <span id="result-tooltip-range-text" style="color: var(--text-main);"></span>
+          </div>
+          <div id="result-tooltip-unit-box" style="display: none; font-size: 13.5px; margin-bottom: 16px;">
+            <span style="font-weight: 700; color: var(--accent-amber);">Unit: </span>
+            <span id="result-tooltip-unit-text" style="color: var(--text-main);"></span>
+          </div>
+          <button class="action-btn" id="btn-result-tooltip-open-help" style="width: 100%; height: 42px; font-weight: 700; color: var(--accent);">OPEN FULL PHYSICS &amp; EQUATIONS GUIDE</button>
         </div>
       </div>
     </div>
@@ -608,259 +739,93 @@ app.innerHTML = `
 
     <!-- MODAL: SETTINGS -->
     <div class="modal-overlay" id="modal-settings">
-      <div class="modal-card">
+      <div class="modal-card" style="width: min(94vw, 540px); max-height: 90vh;">
         <div class="modal-header">
-          <div class="modal-title">SETTINGS</div>
+          <div class="modal-title" style="letter-spacing: 0.08em; font-size: 16px;">SETTINGS</div>
           <button class="modal-close-btn" data-close="modal-settings">×</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 12px 18px 24px; overflow-y: auto;">
           <div class="settings-form-grid">
-            <div class="settings-section-title">Interface Options</div>
+            <div class="settings-section-hdr">DISPLAY</div>
             <div class="settings-row">
               <div class="settings-row-info">
-                <div class="settings-row-label">Theme</div>
-                <div class="settings-row-sub">Dark Stealth Cockpit or Light Technical</div>
+                <div class="settings-row-title">Theme</div>
+                <div class="settings-row-sub">Dark, Light or Midnight Blue</div>
               </div>
-              <select class="settings-select" id="setting-theme">
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-              </select>
+              <button type="button" class="settings-btn" id="btn-setting-theme">DARK</button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-title">Result Units (Outputs Only)</div>
+                <div class="settings-row-sub">SI or Imperial for results; input rows keep their own units</div>
+              </div>
+              <button type="button" class="settings-btn" id="btn-setting-units">SI</button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-title">Number Format</div>
+                <div class="settings-row-sub">Example: 0.0699 → 0.06993 with +1 decimal</div>
+              </div>
+              <button type="button" class="settings-btn" id="btn-setting-precision">STANDARD</button>
+            </div>
+            <div class="settings-row" id="row-install-pwa" style="display: none;">
+              <div class="settings-row-info">
+                <div class="settings-row-title">Install Web App</div>
+                <div class="settings-row-sub">Add RotorCalculator to home screen / desktop</div>
+              </div>
+              <button type="button" class="settings-btn" id="btn-install-pwa" style="color: var(--accent-green);">INSTALL</button>
             </div>
 
-            <div class="settings-section-title">Output Units and Format</div>
+            <div class="settings-section-hdr">PLOTS</div>
             <div class="settings-row">
               <div class="settings-row-info">
-                <div class="settings-row-label">Result Units System</div>
-                <div class="settings-row-sub">Dimensional outputs display</div>
+                <div class="settings-row-title">Palette</div>
+                <div class="settings-row-sub">Sweep curve colors</div>
               </div>
-              <select class="settings-select" id="setting-units-system">
-                <option value="si">SI (Metric)</option>
-                <option value="imperial">Imperial</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Output Format</div>
-                <div class="settings-row-sub">Decimal precision for results</div>
-              </div>
-              <select class="settings-select" id="setting-precision">
-                <option value="0">Standard</option>
-                <option value="1">+1 Extra Decimal</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Angle Interval</div>
-                <div class="settings-row-sub">Range representation for angles</div>
-              </div>
-              <select class="settings-select" id="setting-angle-format">
-                <option value="0/360">0° to 360°</option>
-                <option value="-180/180">-180° to +180°</option>
-              </select>
+              <button type="button" class="settings-btn" id="btn-setting-palette">AERO</button>
             </div>
 
-            <div class="settings-section-title">Preferred Dimensional Units</div>
+            <div class="settings-section-hdr">ROTOR DATA</div>
             <div class="settings-row">
               <div class="settings-row-info">
-                <div class="settings-row-label">Thrust Unit</div>
-              </div>
-              <select class="settings-select" id="setting-thrust-unit">
-                <option value="N">N</option>
-                <option value="lbf">lbf</option>
-                <option value="kgf">kgf</option>
-                <option value="kN">kN</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Power Unit</div>
-              </div>
-              <select class="settings-select" id="setting-power-unit">
-                <option value="kW">kW</option>
-                <option value="hp">hp</option>
-                <option value="W">W</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Torque Unit</div>
-              </div>
-              <select class="settings-select" id="setting-torque-unit">
-                <option value="N·m">N·m</option>
-                <option value="lb·ft">lb·ft</option>
-                <option value="kgf·m">kgf·m</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Speed Unit</div>
-              </div>
-              <select class="settings-select" id="setting-speed-unit">
-                <option value="m/s">m/s</option>
-                <option value="kt">kt</option>
-                <option value="km/h">km/h</option>
-                <option value="mph">mph</option>
-                <option value="ft/s">ft/s</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Pressure Unit</div>
-              </div>
-              <select class="settings-select" id="setting-pressure-unit">
-                <option value="hPa">hPa</option>
-                <option value="Pa">Pa</option>
-                <option value="mbar">mbar</option>
-                <option value="psi">psi</option>
-                <option value="atm">atm</option>
-                <option value="mmHg">mmHg</option>
-              </select>
-            </div>
-
-            <div class="settings-section-title">Geometry Backup &amp; Transfer</div>
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <div class="settings-row-label">Import Geometries</div>
+                <div class="settings-row-title">Import Geometries</div>
                 <div class="settings-row-sub">Restore or merge a shared backup</div>
               </div>
-              <button type="button" class="action-btn" id="btn-settings-import" style="min-width: 90px; height: 38px; font-size: 13.5px; font-weight: 700;">IMPORT</button>
+              <button type="button" class="settings-btn" id="btn-setting-import">IMPORT</button>
             </div>
             <div class="settings-row">
               <div class="settings-row-info">
-                <div class="settings-row-label">Export Geometries</div>
+                <div class="settings-row-title">Export Geometries</div>
                 <div class="settings-row-sub">Backup all saved rotor geometries</div>
               </div>
-              <button type="button" class="action-btn" id="btn-settings-export" style="min-width: 90px; height: 38px; font-size: 13.5px; font-weight: 700;">EXPORT</button>
+              <button type="button" class="settings-btn" id="btn-setting-export">EXPORT</button>
             </div>
-
-            <div style="display: flex; gap: 8px; margin-top: 18px;">
-              <button class="action-btn" id="btn-settings-reset" style="flex: 1; height: 44px; color: var(--accent-amber);">RESTORE DEFAULTS</button>
-              <button class="action-btn" id="btn-settings-save" style="flex: 1; height: 44px; color: var(--accent-green);">SAVE SETTINGS</button>
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <div class="settings-row-title">Restore Factory Presets</div>
+                <div class="settings-row-sub">Custom rotors are preserved</div>
+              </div>
+              <button type="button" class="settings-btn" id="btn-setting-restore" style="color: var(--accent-amber);">RESTORE</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- MODAL: HELP -->
+    <!-- MODAL: HELP (Full Offline Engineering Manual Viewer) -->
     <div class="modal-overlay" id="modal-help">
-      <div class="modal-card" style="width: min(100%, 780px);">
-        <div class="modal-header">
-          <div class="modal-title">PHYSICS &amp; EQUATIONS REFERENCE</div>
-          <button class="modal-close-btn" data-close="modal-help">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="help-content">
-            <p class="lead" style="color: var(--text-muted); margin-bottom: 16px;">
-              Offline aerodynamic and numerical reference for the Blade Element Theory (zBET) solver implemented in RotorCalculator.
-            </p>
-
-            <h2>1. Coordinate &amp; Sign Conventions</h2>
-            <table class="help-table">
-              <thead><tr><th>Quantity</th><th>Positive Meaning</th></tr></thead>
-              <tbody>
-                <tr><td><b>+x, Vx</b></td><td>Forward, in the rotor hub reference plane.</td></tr>
-                <tr><td><b>+y</b></td><td>Starboard / right side of rotorcraft.</td></tr>
-                <tr><td><b>+z</b></td><td>Downward through the rotor disk.</td></tr>
-                <tr><td><b>Vz &gt; 0</b></td><td>Climb rate: relative wind arrives from above and flows downward.</td></tr>
-                <tr><td><b>μz &gt; 0</b></td><td>Downward relative-flow ratio along +z.</td></tr>
-                <tr><td><b>α &gt; 0</b></td><td>Angle of attack: relative wind arrives from below the disk.</td></tr>
-                <tr><td><b>T &gt; 0</b></td><td>Upward rotor thrust, opposing +z.</td></tr>
-                <tr><td><b>λi ≥ 0</b></td><td>Induced downwash velocity ratio in +z direction.</td></tr>
-              </tbody>
-            </table>
-            <div class="eq">μ = Vx / (ΩR)</div>
-            <div class="eq">μz = Vz / (ΩR) = −μ tan(α)</div>
-            <div class="eq">λ = μz + λi</div>
-            <div class="note"><b>Equivalent Inputs:</b> α, Vz, and μz describe the same axial flow state. They are alternative representations, not additive terms.</div>
-
-            <h2>2. Reference Blade Geometry</h2>
-            <p>Geometry uses a reference linear planform from the rotor axis to the tip. Root cutout defines where the active lifting blade begins without altering the reference chord law.</p>
-            <div class="eq">c(x) = c0 + (c1 − c0)x, &nbsp; 0 ≤ x ≤ 1</div>
-            <div class="eq">Sref,b = R (c0 + c1) / 2</div>
-            <div class="eq">AR = R² / Sref,b = 2R / (c0 + c1)</div>
-            <div class="eq">σref = Nb Sref,b / (πR²) = Nb / (π AR)</div>
-            <div class="eq">σgeom = (Nb / πR) ∫[x0..1] c(x) dx</div>
-            <div class="eq">σthrust = 3 ∫[x0..1] x² σ(x) dx</div>
-            <p>Editing Radius scales c0 and c1 proportionally, preserving σref, AR, and taper. Editing σref or AR scales both chords accordingly.</p>
-
-            <h2>3. Collective &amp; Operating Constraints (6 Trim Modes)</h2>
-            <p>Operating collective is a uniform pitch increment applied along the blade:</p>
-            <div class="eq">θroot,op = θroot + Δθ &nbsp;&nbsp;&nbsp; θtip,op = θtip + Δθ</div>
-            <table class="help-table">
-              <thead><tr><th>Prescribed Operating Pair</th><th>Solved Quantities</th></tr></thead>
-              <tbody>
-                <tr><td><b>RPM + Target CT</b></td><td>Collective Δθ and Thrust</td></tr>
-                <tr><td><b>RPM + Target Thrust</b></td><td>Collective Δθ and CT</td></tr>
-                <tr><td><b>RPM + Collective Δθ</b></td><td>Direct evaluation of CT and Thrust</td></tr>
-                <tr><td><b>Collective Δθ + Target CT</b></td><td>RPM and Thrust (when uniquely determined)</td></tr>
-                <tr><td><b>Collective Δθ + Target Thrust</b></td><td>RPM and CT</td></tr>
-                <tr><td><b>Target CT + Target Thrust</b></td><td>RPM and Collective Δθ</td></tr>
-              </tbody>
-            </table>
-
-            <h2>4. Mean Inflow &amp; Momentum Closure</h2>
-            <div class="eq">CT,momentum = 2 B² λi √(μ² + λ²)</div>
-            <div class="eq">CT,BET = CT,BET(μ, λ, pitch, geometry, inflow gradients)</div>
-            <p>zBET solves λi ≥ 0 iteratively such that blade-element thrust and momentum theory are mutually consistent.</p>
-
-            <h2>5. Inflow Gradient Models</h2>
-            <table class="help-table">
-              <thead><tr><th>Model</th><th>Formulation &amp; Harmonic Gradients</th></tr></thead>
-              <tbody>
-                <tr><td><b>Uniform</b></td><td>Benchmark without first-harmonic gradients (Kx = 0, Ky = 0).</td></tr>
-                <tr><td><b>Coleman Simple</b></td><td>Longitudinal gradient based on wake skew χ: Kx = tan(χ/2).</td></tr>
-                <tr><td><b>Coleman-Feingold</b></td><td>Longitudinal and lateral gradients with empirical factors.</td></tr>
-                <tr><td><b>Drees</b></td><td>Classical formulation: Kx = (4/3) [1 - cos(χ) - 1.8 μ²] / sin(χ), Ky = -2 μ.</td></tr>
-              </tbody>
-            </table>
-            <div class="eq">λd(x,ψ) = λ + x [λ1c cos(ψ) + λ1s sin(ψ)]</div>
-
-            <h2>6. Profile Drag, Tip Loss &amp; Compressibility</h2>
-            <h3>Profile Drag</h3>
-            <p>RotorCalculator evaluates profile drag using high-precision <b>Numerical Vectorial</b> 24-point Gauss-Legendre quadrature in both radial and azimuthal directions.</p>
-            <h3>Tip Loss</h3>
-            <p>Available models: <b>None</b> (B=1.0), <b>Fixed B</b>, and <b>Sissingh</b> thrust-coupled:</p>
-            <div class="eq">B(Sissingh) = 1 − √(2 CT) / Nb</div>
-            <h3>Prandtl-Glauert Compressibility</h3>
-            <div class="eq">Meff = (ΩR / asound) √(0.75² + 0.5 μ²)</div>
-            <div class="eq">a(Meff) = a0 / √max(0.01, 1 − Meff²), &nbsp; Meff ≤ 0.85</div>
-
-            <h2>7. Torque, Power &amp; Induced Factor (kind)</h2>
-            <div class="eq">CQ = CQ,i + CQ,0</div>
-            <div class="eq">Pshaft = Q Ω</div>
-            <div class="eq">CQ,i = kind λi CT + μz CT − μ CH,i</div>
-            <div class="eq">CP,air = kind λi CT + μz CT + CQ,0 + μ CH,0 = CQ + μ CH</div>
-            <p><b>kind</b> is the empirical induced power factor entered in Conditions (default 1.15).</p>
-
-            <h2>8. Efficiency Metrics</h2>
-            <div class="eq">FoM = [CT^(3/2) / √2] / [kind CT^(3/2) / √2 + CQ,0]</div>
-            <div class="eq">(L/D)eff = μ CT / CP,air</div>
-
-            <h2>9. Parameter Sweeps</h2>
-            <p>Any aerodynamic result can be plotted across advance ratio μx (or airspeed Vx). Supported multi-curve families include α, Vz, μz, and Inflow Models. Hover trim locking is available.</p>
-
-            <h2>10. Summary of Aerodynamic Coefficients</h2>
-            <table class="help-table">
-              <thead><tr><th>Coefficient</th><th>Definition &amp; Normalization</th></tr></thead>
-              <tbody>
-                <tr><td><b>CT</b></td><td>T / [ρ A (ΩR)²]</td></tr>
-                <tr><td><b>CQ, CPshaft</b></td><td>Q / [ρ A (ΩR)² R] = Pshaft / [ρ A (ΩR)³]</td></tr>
-                <tr><td><b>CQ,i, CQ,0</b></td><td>Induced and profile torque coefficients</td></tr>
-                <tr><td><b>CH, CH,i, CH,0</b></td><td>Total, induced, and profile longitudinal in-plane force coefficients</td></tr>
-                <tr><td><b>CY</b></td><td>Lateral side force coefficient</td></tr>
-                <tr><td><b>CMx, CMy</b></td><td>Hub roll and pitch moment coefficients</td></tr>
-                <tr><td><b>CP,air</b></td><td>Air power coefficient CQ + μ CH</td></tr>
-              </tbody>
-            </table>
-
-            <h2>11. Scope &amp; Applicable Regimes</h2>
-            <ul>
-              <li>Linear lift slope and baseline zero-lift drag coefficient cd0.</li>
-              <li>Numerical integration over 0 ≤ r/R ≤ B and 0 ≤ ψ ≤ 2π.</li>
-              <li>Ideal for conceptual design, eVTOL sizing, helicopter performance analysis, and educational simulation.</li>
-            </ul>
+      <div class="modal-card modal-help-card">
+        <div class="help-modal-header">
+          <div class="modal-title" style="letter-spacing: 0.08em; font-size: 16px;">PHYSICS &amp; EQUATIONS</div>
+          <div class="help-modal-actions">
+            <a class="help-btn-open-tab" id="btn-help-open-tab" href="./physics_help.html" target="_blank" rel="noopener noreferrer" title="Open manual in new browser tab">
+              <span>↗</span> OPEN IN TAB
+            </a>
+            <button class="modal-close-btn" data-close="modal-help">×</button>
           </div>
+        </div>
+        <div class="help-iframe-container">
+          <iframe id="help-iframe" class="help-iframe" src="./physics_help.html" title="RotorCalculator Physics Manual"></iframe>
         </div>
       </div>
     </div>
@@ -907,8 +872,46 @@ app.innerHTML = `
 // Helper Element Selectors
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
+export function openPhysicsHelp(anchor?: string): void {
+  const iframe = byId<HTMLIFrameElement>("help-iframe");
+  const openTabBtn = byId<HTMLAnchorElement>("btn-help-open-tab");
+  let asset = "./physics_help.html";
+  if (currentTheme === "light") {
+    asset = "./physics_help_light.html";
+  } else if (currentTheme === "midnight") {
+    asset = "./physics_help_midnight.html";
+  }
+
+  const urlWithAnchor = anchor ? `${asset}#${anchor}` : asset;
+  if (iframe) {
+    iframe.src = urlWithAnchor;
+  }
+  if (openTabBtn) {
+    openTabBtn.href = urlWithAnchor;
+  }
+  openModal("modal-help");
+}
+
 function applyTheme(): void {
   document.documentElement.dataset.theme = currentTheme;
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute(
+      "content",
+      currentTheme === "light" ? "#006978" : currentTheme === "midnight" ? "#0B1730" : "#0D121B"
+    );
+  }
+  const iframe = byId<HTMLIFrameElement>("help-iframe");
+  const openTabBtn = byId<HTMLAnchorElement>("btn-help-open-tab");
+  if (iframe && iframe.src) {
+    const curHash = iframe.src.includes("#") ? iframe.src.split("#")[1] : "";
+    let asset = "./physics_help.html";
+    if (currentTheme === "light") asset = "./physics_help_light.html";
+    else if (currentTheme === "midnight") asset = "./physics_help_midnight.html";
+    const urlWithAnchor = curHash ? `${asset}#${curHash}` : asset;
+    iframe.src = urlWithAnchor;
+    if (openTabBtn) openTabBtn.href = urlWithAnchor;
+  }
 }
 
 function updateTabIndicator(): void {
@@ -920,26 +923,82 @@ function updateTabIndicator(): void {
 
 export function updateResponsiveLabels(): void {
   const w = window.innerWidth;
-  document.querySelectorAll<HTMLButtonElement>(".row-label-btn[data-canonical]").forEach((btn) => {
-    const canonical = btn.dataset.canonical || "";
-    btn.textContent = getResponsiveInputLabel(canonical, w);
+  const isDesktop = w >= 768;
+  const startLevel = isDesktop ? 0 : 1;
+
+  const shell = document.querySelector<HTMLElement>(".app-shell");
+  const shellW = shell ? (shell.clientWidth || w) : w;
+  const innerW = shellW - 32;
+
+  // Geometry label column available width
+  const sampleGeomBtn = document.querySelector<HTMLElement>("#page-geometry .row-label-btn");
+  const geomColW = (sampleGeomBtn && sampleGeomBtn.clientWidth > 20)
+    ? sampleGeomBtn.clientWidth - 8
+    : (isDesktop ? innerW * 0.48 - 16 : Math.max(80, innerW * 0.48 - 12));
+
+  // Conditions label column available width
+  const sampleCondBtn = document.querySelector<HTMLElement>("#page-conditions .row-label-btn");
+  const condColW = (sampleCondBtn && sampleCondBtn.clientWidth > 20)
+    ? sampleCondBtn.clientWidth - 16
+    : (isDesktop ? innerW * 0.48 - 20 : Math.max(80, innerW * 0.48 - 20));
+
+  // Results name column available width
+  const sampleResLabel = document.querySelector<HTMLElement>("#page-results .result-label");
+  const resColW = (sampleResLabel && sampleResLabel.clientWidth > 20)
+    ? sampleResLabel.clientWidth - 8
+    : (isDesktop ? innerW * 0.48 - 16 : Math.max(80, innerW * 0.46 - 10));
+
+  // 1. Geometry Page: uniform level and uniform font size
+  const geomLevel = isDesktop ? 0 : chooseLevel(GEOM_KEYS, geomColW, startLevel);
+  const geomLblSp = isDesktop ? 15.5 : fitLabelSize(GEOM_KEYS, geomLevel, geomColW, 15.5, 13);
+
+  document.querySelectorAll<HTMLButtonElement>("#page-geometry .row-label-btn[data-key]").forEach((btn) => {
+    const key = btn.dataset.key;
+    if (!key) return;
+    btn.innerHTML = getRichLabelHtml(key, geomLevel);
+    btn.style.fontSize = `${geomLblSp}px`;
   });
 
+  // 2. Conditions Page: uniform level and uniform font size
+  const condLevel = isDesktop ? 0 : chooseLevel(COND_KEYS, condColW, startLevel);
+  const condLblSp = isDesktop ? 15.5 : fitLabelSize(COND_KEYS, condLevel, condColW, 15.5, 13);
+
+  document.querySelectorAll<HTMLButtonElement>("#page-conditions .row-label-btn[data-key]").forEach((btn) => {
+    const key = btn.dataset.key;
+    if (!key) return;
+    if (key === "mu" || key === "Vx" || key === "alpha" || key === "Vz" || key === "muz") {
+      btn.innerHTML = getRichLabelHtml(key, condLevel, " ⇄");
+    } else {
+      btn.innerHTML = getRichLabelHtml(key, condLevel);
+    }
+    btn.style.fontSize = `${condLblSp}px`;
+  });
+
+  // Operating labels 1 & 2
   const l1 = byId("lbl-operating-1");
-  if (l1 && l1.dataset.canonical) {
-    l1.textContent = getResponsiveInputLabel(l1.dataset.canonical, w);
+  if (l1 && l1.dataset.key) {
+    l1.innerHTML = getRichLabelHtml(l1.dataset.key, condLevel);
+    l1.style.fontSize = `${condLblSp}px`;
   }
   const l2 = byId("lbl-operating-2");
-  if (l2 && l2.dataset.canonical) {
-    l2.textContent = getResponsiveInputLabel(l2.dataset.canonical, w);
+  if (l2 && l2.dataset.key) {
+    l2.innerHTML = getRichLabelHtml(l2.dataset.key, condLevel);
+    l2.style.fontSize = `${condLblSp}px`;
   }
 
-  document.querySelectorAll<HTMLElement>(".result-row").forEach((row) => {
-    const canonical = row.dataset.canonical;
-    if (!canonical) return;
+  // 3. Results Page: per-row evaluation at 15.5px, evaluating levels [0, 1, 3, 4]
+  document.querySelectorAll<HTMLElement>(".result-row[data-key]").forEach((row) => {
+    const key = row.dataset.key;
+    if (!key) return;
     const labelEl = row.querySelector<HTMLElement>(".result-label");
     if (labelEl) {
-      labelEl.textContent = getResultDisplayLabel(canonical, w);
+      if (isDesktop) {
+        labelEl.innerHTML = formatSubscripts(resultPlainLabel(key, 0));
+        labelEl.style.fontSize = "15.5px";
+      } else {
+        labelEl.innerHTML = resultLabelHtml(key, resColW, 15.5);
+        labelEl.style.fontSize = "15.5px";
+      }
     }
   });
 }
@@ -1017,7 +1076,15 @@ function renderDerivedGeometry(): void {
   const diskAreaVal = convertValue(diskArea, "m²", diskAreaUnit);
   byId("drv-disk-area").textContent = formatResultValue(diskAreaVal, 1, extraPrecision);
 
-  const bladeArea = referenceBladeArea(activeGeom) * activeGeom.nBlades * (1.0 - activeGeom.rootCutout);
+  const bladeAreaRef = referenceBladeArea(activeGeom);
+  const bladeAreaRefUnit = byId("unit-blade-area-ref")?.textContent?.trim() || "m²";
+  const bladeAreaRefVal = convertValue(bladeAreaRef, "m²", bladeAreaRefUnit);
+  const elBladeAreaRef = byId("drv-blade-area-ref");
+  if (elBladeAreaRef) {
+    elBladeAreaRef.textContent = formatResultValue(bladeAreaRefVal, 2, extraPrecision);
+  }
+
+  const bladeArea = activeBladeArea(activeGeom);
   const bladeAreaUnit = byId("unit-blade-area")?.textContent?.trim() || "m²";
   const bladeAreaVal = convertValue(bladeArea, "m²", bladeAreaUnit);
   byId("drv-blade-area").textContent = formatResultValue(bladeAreaVal, 2, extraPrecision);
@@ -1029,185 +1096,486 @@ function renderDerivedGeometry(): void {
 function renderResults(): void {
   const r = activeResults;
 
-  // Status Badges
+  // Status & Trim Chips (matching APK UpdateStatusChips & PairChipText 1:1)
+  const tipMach = r.speedOfSound > 0 ? r.tipSpeed / r.speedOfSound : 0.0;
+  let statusTxt = "";
+  let statusColor = "var(--accent-green)";
+  let statusBg = "rgba(0, 230, 118, 0.08)";
+  let statusBorder = "rgba(0, 230, 118, 0.4)";
+
+  if (r.compressibilityInvalid) {
+    statusColor = "var(--accent-red)";
+    statusBg = "rgba(255, 23, 68, 0.08)";
+    statusBorder = "rgba(255, 23, 68, 0.4)";
+    statusTxt = `Advancing tip Mach M_adv = ${formatSig(r.advancingTipMach, 3)} — Prandtl-Glauert invalid`;
+  } else if (!r.solutionValid) {
+    statusColor = "var(--accent-red)";
+    statusBg = "rgba(255, 23, 68, 0.08)";
+    statusBorder = "rgba(255, 23, 68, 0.4)";
+    statusTxt = "Invalid operating point";
+    const sm = (r.statusMessage || "").replace("INVALID: ", "").replace("INVALID:", "").trim();
+    if (sm && !sm.includes("could not be trimmed")) {
+      statusTxt += ` — ${sm}`;
+    }
+  } else if (r.advancingTipMach >= 0.9) {
+    statusColor = "var(--accent-amber)";
+    statusBg = "rgba(255, 179, 0, 0.08)";
+    statusBorder = "rgba(255, 179, 0, 0.4)";
+    statusTxt = `Advancing tip Mach M_adv = ${formatSig(r.advancingTipMach, 3)} — compressibility caution`;
+  } else if (tipMach >= 0.8 || r.compressibilityWarning) {
+    statusColor = "var(--accent-amber)";
+    statusBg = "rgba(255, 179, 0, 0.08)";
+    statusBorder = "rgba(255, 179, 0, 0.4)";
+    statusTxt = `Tip Mach M_tip = ${formatSig(tipMach, 3)} — compressibility caution`;
+  } else {
+    statusTxt = `Model valid — M_tip = ${formatSig(tipMach, 3)}, M_adv = ${formatSig(r.advancingTipMach, 3)}`;
+  }
+
   const badgeModel = byId("badge-model-status");
   const txtModel = byId("txt-model-status");
-  txtModel.textContent = r.solutionValid ? (r.compressibilityWarning ? "CAUTION" : "CONVERGED") : "INVALID";
-  badgeModel.className = `status-pill ${r.solutionValid ? (r.compressibilityWarning ? "warning" : "") : "error"}`;
+  if (txtModel) txtModel.innerHTML = formatSubscripts(statusTxt);
+  if (badgeModel) {
+    badgeModel.style.color = statusColor;
+    badgeModel.style.background = statusBg;
+    badgeModel.style.borderColor = statusBorder;
+  }
 
-  const summary = byId("txt-solution-summary");
-  summary.textContent = `θ0 = ${r.trimmedCollectiveDeg.toFixed(1)}° | RPM = ${r.trimmedRPM.toFixed(0)}`;
+  const pairKey = activeCond.operatingPair;
+  const pairChipLabels: Record<string, string> = {
+    rpm_collective: "RPM + Δθ",
+    rpm_ct: "RPM + C_T",
+    rpm_thrust: "RPM + T",
+    collective_ct: "Δθ + C_T",
+    collective_thrust: "Δθ + T",
+    ct_thrust: "C_T + T",
+  };
+  const pairTxt = pairChipLabels[pairKey] || pairKey;
+  const badgeTrim = byId("badge-solution-summary");
+  const txtTrim = byId("txt-solution-summary");
+  if (txtTrim) {
+    if (r.solutionValid) {
+      txtTrim.innerHTML = formatSubscripts(`Trim: ${pairTxt}`);
+      if (badgeTrim) {
+        badgeTrim.style.color = "var(--accent)";
+        badgeTrim.style.background = "rgba(0, 229, 255, 0.08)";
+        badgeTrim.style.borderColor = "rgba(0, 229, 255, 0.4)";
+      }
+    } else {
+      txtTrim.innerHTML = formatSubscripts(`Trim: ${pairTxt} — no solution`);
+      if (badgeTrim) {
+        badgeTrim.style.color = "var(--accent-red)";
+        badgeTrim.style.background = "rgba(255, 23, 68, 0.08)";
+        badgeTrim.style.borderColor = "rgba(255, 23, 68, 0.4)";
+      }
+    }
+  }
 
-  // Dimensional Performance
-  const thrust = convertValue(r.thrustN, "N", prefThrustUnit);
-  byId("res-thrust").textContent = formatResultValue(thrust, 0, extraPrecision);
-  byId("unit-res-thrust").textContent = prefThrustUnit;
-
-  const power = convertValue(r.powerShaftKW * 1000.0, "W", prefPowerUnit);
-  byId("res-power").textContent = formatResultValue(power, 1, extraPrecision);
-  byId("unit-res-power").textContent = prefPowerUnit;
-
-  const torque = convertValue(r.torqueNm, "N·m", prefTorqueUnit);
-  byId("res-torque").textContent = formatResultValue(torque, 1, extraPrecision);
-  byId("unit-res-torque").textContent = prefTorqueUnit;
-
-  const dragH = convertValue(r.dragHN, "N", prefThrustUnit);
-  byId("res-drag-h").textContent = formatResultValue(dragH, 1, extraPrecision);
-  byId("unit-res-drag-h").textContent = prefThrustUnit;
-
-  const sideY = convertValue(r.sideForceYN, "N", prefThrustUnit);
-  byId("res-side-y").textContent = formatResultValue(sideY, 1, extraPrecision);
-  byId("unit-res-side-y").textContent = prefThrustUnit;
-
-  const rollMx = convertValue(r.rollMomentNm, "N·m", prefTorqueUnit);
-  byId("res-roll-mx").textContent = formatResultValue(rollMx, 1, extraPrecision);
-  byId("unit-res-roll-mx").textContent = prefTorqueUnit;
-
-  const pitchMy = convertValue(r.pitchMomentNm, "N·m", prefTorqueUnit);
-  byId("res-pitch-my").textContent = formatResultValue(pitchMy, 1, extraPrecision);
-  byId("unit-res-pitch-my").textContent = prefTorqueUnit;
-
-  // Aerodynamic Coefficients
-  byId("res-ct").textContent = formatResultValue(r.CT, 5, extraPrecision);
-  byId("res-cq").textContent = formatResultValue(r.CQ, 6, extraPrecision);
-  byId("res-cqi").textContent = formatResultValue(r.CQi, 6, extraPrecision);
-  byId("res-cq0").textContent = formatResultValue(r.CQ0, 6, extraPrecision);
-  byId("res-ch").textContent = formatResultValue(r.CH, 6, extraPrecision);
-  byId("res-chi").textContent = formatResultValue(r.CHi, 6, extraPrecision);
-  byId("res-ch0").textContent = formatResultValue(r.CH0, 6, extraPrecision);
-  byId("res-cy").textContent = formatResultValue(r.CY, 6, extraPrecision);
-  byId("res-cmx").textContent = formatResultValue(r.CMx, 6, extraPrecision);
-  byId("res-cmy").textContent = formatResultValue(r.CMy, 6, extraPrecision);
-  byId("res-cpair").textContent = formatResultValue(r.CPair, 6, extraPrecision);
-
-  // Efficiency & Inflow
-  byId("res-fom").textContent = formatResultValue(r.FoM, 3, extraPrecision);
-  byId("res-ld-eff").textContent = formatResultValue(r.L_D_eff, 2, extraPrecision);
-  byId("res-lambda").textContent = formatResultValue(r.inflowLambda, 5, extraPrecision);
-  byId("res-lambdai").textContent = formatResultValue(r.inflowLambdaI, 5, extraPrecision);
-  byId("res-kx").textContent = formatResultValue(r.inflowKx, 4, extraPrecision);
-  byId("res-ky").textContent = formatResultValue(r.inflowKy, 4, extraPrecision);
-  byId("res-chi").textContent = formatResultValue(r.wakeSkewChiDeg, 2, extraPrecision);
-  byId("res-bfactor").textContent = formatResultValue(r.bFactor, 4, extraPrecision);
-
-  // Operating State
-  byId("res-rpm").textContent = formatResultValue(r.trimmedRPM, 1, extraPrecision);
-  byId("res-coll").textContent = formatResultValue(r.trimmedCollectiveDeg, 2, extraPrecision);
-  byId("res-op-mu").textContent = formatResultValue(r.operatingMu, 4, extraPrecision);
-
-  const vx = convertValue(r.operatingVx, "m/s", prefSpeedUnit);
-  byId("res-op-vx").textContent = formatResultValue(vx, 1, extraPrecision);
-  byId("unit-res-vx").textContent = prefSpeedUnit;
-
-  byId("res-op-muz").textContent = formatResultValue(r.operatingMuZ, 4, extraPrecision);
-
-  const vzUnit = unitSystem === "imperial" ? "ft/min" : "m/s";
-  const vz = convertValue(r.operatingVz, "m/s", vzUnit);
-  byId("res-op-vz").textContent = formatResultValue(vz, 2, extraPrecision);
-  byId("unit-res-vz").textContent = vzUnit;
-
-  byId("res-op-alpha").textContent = formatResultValue(r.operatingAlphaDeg, 2, extraPrecision);
-
-  const vtipUnit = unitSystem === "imperial" ? "ft/s" : "m/s";
-  const vtip = convertValue(r.tipSpeed, "m/s", vtipUnit);
-  byId("res-op-vtip").textContent = formatResultValue(vtip, 1, extraPrecision);
-  byId("unit-res-vtip").textContent = vtipUnit;
-
-  byId("res-op-mtip").textContent = formatResultValue(r.tipSpeed / r.speedOfSound, 3, extraPrecision);
-  byId("res-op-madv").textContent = formatResultValue(r.advancingTipMach, 3, extraPrecision);
-
-  const altUnit = unitSystem === "imperial" ? "ft" : "m";
-  const alt = convertValue(r.altitudeM, "m", altUnit);
-  byId("res-op-alt").textContent = formatResultValue(alt, 0, extraPrecision);
-  byId("unit-res-alt").textContent = altUnit;
-
-  const tempUnit = unitSystem === "imperial" ? "°F" : "°C";
-  const temp = convertValue(r.temperatureC, "°C", tempUnit);
-  byId("res-op-temp").textContent = formatResultValue(temp, 1, extraPrecision);
-
-  byId("res-op-rho").textContent = formatResultValue(r.densityRho, 4, extraPrecision);
-
-  const pres = convertValue(r.pressurePa, "Pa", prefPressureUnit);
-  byId("res-op-pres").textContent = formatResultValue(pres, 1, extraPrecision);
-  byId("unit-res-pres").textContent = prefPressureUnit;
-
-  const aSound = convertValue(r.speedOfSound, "m/s", vtipUnit);
-  byId("res-op-sound").textContent = formatResultValue(aSound, 1, extraPrecision);
-  byId("unit-res-sound").textContent = vtipUnit;
+  const imp = unitSystem === "imperial";
+  document.querySelectorAll<HTMLElement>("#page-results .result-row[data-key]").forEach((row) => {
+    const key = row.dataset.key;
+    if (!key) return;
+    const valEl = row.querySelector<HTMLElement>(".result-val");
+    const unitEl = row.querySelector<HTMLElement>(".result-unit");
+    if (valEl) {
+      valEl.textContent = resTextFor(key, r, activeGeom, imp, extraPrecision);
+    }
+    if (unitEl) {
+      unitEl.textContent = resUnitFor(key, imp);
+    }
+  });
 
   updateResponsiveLabels();
 }
 
-// Result Contextual Physics & Equation Tooltips
-const RESULT_TOOLTIPS: Record<string, string> = {
-  "T — Thrust": "Solved dimensional rotor thrust T = ρ A (ΩR)² CT at the current flight condition.",
-  "Pshaft — Shaft Power": "Mechanical shaft power P = ΩQ = ρ A (ΩR)³ CP, required to rotate the rotor against aerodynamic torque.",
-  "Q — Shaft Torque": "Aerodynamic torque about the rotor shaft: Q = ρ A (ΩR)² R CQ.",
-  "H — In-Plane Force": "Dimensional longitudinal in-plane force H resisting forward motion in forward flight.",
-  "Y — Side Force": "Dimensional lateral rotor side force Y arising from aerodynamic asymmetry.",
-  "Mx — Roll Moment": "Dimensional rotor rolling moment Mx about the longitudinal axis.",
-  "My — Pitch Moment": "Dimensional rotor pitching moment My about the lateral axis.",
-  "CT — Thrust Coeff": "CT = T / [ρ A (ΩR)²]. Non-dimensional rotor thrust coefficient normalized by rotor disk area and tip speed.",
-  "CQ — Torque Coeff": "CQ = Q / [ρ A (ΩR)² R]. Non-dimensional rotor shaft torque coefficient, mathematically equal to shaft-power coefficient CPshaft.",
-  "CQ,i — Induced Coeff": "Induced torque/power contribution CQ,i from induced downwash velocity across the rotor disk.",
-  "CQ,0 — Profile Coeff": "Profile-drag torque contribution CQ,0 integrated using the Numerical Vectorial method over radial and azimuthal elements.",
-  "CH — In-Plane": "Total longitudinal in-plane force coefficient: CH = CH,i + CH,0.",
-  "CH — In-Plane Coeff": "Total longitudinal in-plane force coefficient: CH = CH,i + CH,0.",
-  "CH,i — Induced H": "Induced contribution to longitudinal in-plane force coefficient.",
-  "CH,0 — Profile H": "Numerical Vectorial profile-drag contribution to longitudinal in-plane force coefficient.",
-  "CY — Side Force": "Non-dimensional rotor lateral side-force coefficient.",
-  "CY — Side Force Coeff": "Non-dimensional rotor lateral side-force coefficient.",
-  "CMx — Roll Moment": "Non-dimensional rotor rolling-moment coefficient about the x-axis.",
-  "CMx — Roll Moment Coeff": "Non-dimensional rotor rolling-moment coefficient about the x-axis.",
-  "CMy — Pitch Moment": "Non-dimensional rotor pitching-moment coefficient about the y-axis.",
-  "CMy — Pitch Moment Coeff": "Non-dimensional rotor pitching-moment coefficient about the y-axis.",
-  "CP,air — Air Power": "Air-power coefficient from induced, axial-flow, profile, and translational aerodynamic energy terms.",
-  "CP,air — Air Power Coeff": "Air-power coefficient from induced, axial-flow, profile, and translational aerodynamic energy terms.",
-  "FM — Figure of Merit": "Hover aerodynamic efficiency: FoM = CT^(3/2) / [√2 CPshaft]. Ratio of ideal induced power to actual required shaft power.",
-  "(L/D)eff — Effective L/D": "Effective rotor lift-to-drag ratio in forward flight: (L/D)eff = μx CT / CP,air = T Vx / Pair.",
-  "λ — Total Inflow": "Total inflow ratio normal to the rotor disk: λ = μz + λi.",
-  "λi — Induced Inflow": "Induced downwash inflow ratio through the disk: λi = vi / (ΩR).",
-  "Kx — Longitudinal Inflow": "Longitudinal first-harmonic inflow-gradient coefficient (Drees / Coleman / Pitt-Peters).",
-  "Ky — Lateral Inflow": "Lateral first-harmonic inflow-gradient coefficient.",
-  "χ — Wake Skew Angle": "Wake-skew angle χ = tan⁻¹(μx / λ) measuring the angle between rotor shaft and wake trajectory.",
-  "B — Tip-Loss Factor": "Effective aerodynamic blade tip radius factor B used to account for 3D tip-vortex lift reduction.",
-  "RPM — Solved Speed": "Operating rotational speed in revolutions per minute, solved from the prescribed operating pair.",
-  "Δθ — Solved Collective": "Solved uniform collective pitch increment Δθ added equally to baseline root and tip pitch.",
-  "θ0 — Solved Collective": "Solved uniform collective pitch increment Δθ added equally to baseline root and tip pitch.",
-  "μx — Advance Ratio": "Non-dimensional in-plane advance ratio: μx = Vx / (ΩR).",
-  "Vx — Airspeed": "Dimensional forward in-plane flight speed: Vx = μx (ΩR).",
-  "μz — Axial Ratio": "Non-dimensional axial flow ratio: μz = Vz / (ΩR). Positive indicates downward relative flow.",
-  "Vz — Climb Speed": "Dimensional vertical flight speed: positive Vz indicates climb (relative wind from above).",
-  "α — Angle of Attack": "Rotor disk angle of attack relative to oncoming velocity vector. Positive α indicates wind from below (μz = -μx tan α).",
-  "ΩR — Tip Speed": "Rotational blade tip speed: ΩR = (2π RPM / 60) R.",
-  "Mtip — Tip Mach": "Rotational hover tip Mach number: Mtip = ΩR / a.",
-  "Madv — Advancing Mach": "Advancing blade tip Mach number at 90° azimuth: Madv = ΩR (1 + μx) / a.",
-  "h — Altitude": "Pressure altitude used by the International Standard Atmosphere (ISA) model.",
-  "Tamb — Temperature": "Ambient air temperature used to compute local air density and speed of sound.",
-  "ρ — Air Density": "Ambient atmospheric mass density ρ [kg/m³ or slug/ft³] from the ISA model.",
-  "p — Ambient Pressure": "Ambient static atmospheric pressure p from the ISA barometric formula.",
-  "a — Speed of Sound": "Local speed of sound a = √(γ R_gas T) used for Mach and compressibility corrections.",
-};
+function resUnitFor(key: string, imp: boolean): string {
+  if (key === "p") return imp ? "inHg" : "hPa";
+  if (key === "h") return imp ? "ft" : "m";
+  switch (key) {
+    case "T":
+    case "H":
+    case "Hi":
+    case "H0":
+    case "Y":
+      return imp ? "lbf" : "N";
+    case "P":
+    case "Pi":
+    case "P0":
+    case "Pair":
+      return imp ? "hp" : "kW";
+    case "Q":
+    case "Qi":
+    case "Q0":
+    case "Mx":
+    case "My":
+      return imp ? "lbf·ft" : "N·m";
+    case "DL":
+      return imp ? "lbf/ft²" : "N/m²";
+    case "PL":
+      return imp ? "lbf/hp" : "N/kW";
+    case "vi":
+    case "OmR":
+    case "Vx":
+    case "Vz":
+    case "Vztot":
+    case "Vadv":
+    case "Vret":
+    case "a":
+      return imp ? "ft/s" : "m/s";
+    case "chi":
+    case "alpha":
+    case "coll":
+    case "aoaAdv75":
+    case "aoaRet75":
+    case "phiAdv75":
+    case "phiRet75":
+      return "deg";
+    case "rpm":
+      return "rpm";
+    case "T0":
+      return imp ? "°F" : "°C";
+    case "rho":
+      return imp ? "slug/ft³" : "kg/m³";
+    default:
+      return "–";
+  }
+}
+
+function resTextFor(
+  key: string,
+  r: RotorResults,
+  geom: RotorGeometry,
+  imp: boolean,
+  extraPrec: number
+): string {
+  if (!r.solutionValid) return "---";
+  const sg = 4 + extraPrec;
+  const ft = 3.280839895;
+  const omR = r.tipSpeed;
+  const area = Math.PI * geom.radius * geom.radius;
+  let v = 0;
+
+  if (key === "p") {
+    v = imp ? r.pressurePa / 3386.389 : r.pressurePa / 100.0;
+    return formatSig(v, sg);
+  }
+  if (key === "h") {
+    v = r.altitudeM;
+    if (imp) v = v * ft;
+    return formatSig(v, sg);
+  }
+
+  switch (key) {
+    case "T":
+      v = imp ? r.thrustLbf : r.thrustN;
+      break;
+    case "P":
+      v = imp ? r.powerShaftHP : r.powerShaftKW;
+      break;
+    case "Pi":
+      v = (r.CQi * r.densityRho * area * omR * omR * omR) / 1000.0;
+      if (imp) v = v * 1.34102209;
+      break;
+    case "P0":
+      v = (r.CQ0 * r.densityRho * area * omR * omR * omR) / 1000.0;
+      if (imp) v = v * 1.34102209;
+      break;
+    case "Pair":
+      v = (r.CPair * r.densityRho * area * omR * omR * omR) / 1000.0;
+      if (imp) v = v * 1.34102209;
+      break;
+    case "Qi":
+      v = r.CQi * r.densityRho * area * omR * omR * geom.radius;
+      if (imp) v = v * 0.737562149;
+      break;
+    case "Q0":
+      v = r.CQ0 * r.densityRho * area * omR * omR * geom.radius;
+      if (imp) v = v * 0.737562149;
+      break;
+    case "Hi":
+      v = r.CHi * r.densityRho * area * omR * omR;
+      if (imp) v = v * 0.224808943;
+      break;
+    case "H0":
+      v = r.CH0 * r.densityRho * area * omR * omR;
+      if (imp) v = v * 0.224808943;
+      break;
+    case "Q":
+      v = imp ? r.torqueLbft : r.torqueNm;
+      break;
+    case "H":
+      v = imp ? r.dragHN * 0.224808943 : r.dragHN;
+      break;
+    case "Y":
+      v = imp ? r.sideForceYLbf : r.sideForceYN;
+      break;
+    case "Mx":
+      v = imp ? r.rollMomentLbft : r.rollMomentNm;
+      break;
+    case "My":
+      v = imp ? r.pitchMomentLbft : r.pitchMomentNm;
+      break;
+    case "DL":
+      if (area <= 0) return "---";
+      v = r.thrustN / area;
+      if (imp) v = v * 0.0208854342;
+      break;
+    case "PL":
+      if (r.powerShaftKW <= 0.000001) return "---";
+      v = r.thrustN / r.powerShaftKW;
+      if (imp) v = (v * 0.224808943) / 1.34102209;
+      break;
+    case "vi":
+      v = r.inflowLambdaI * omR;
+      if (imp) v = v * ft;
+      break;
+    case "CTs": {
+      const sg2 = resolveSolidity(cloneGeometry(geom));
+      let sigma = sg2.sigmaThrust;
+      if (sigma <= 0) sigma = sg2.sigmaRef;
+      if (sigma <= 0) return "---";
+      v = r.CT / sigma;
+      break;
+    }
+    case "FM":
+      if (Math.abs(r.operatingMu) > 0.0005 || Math.abs(r.operatingMuZ) > 0.0005) return "---";
+      v = r.FoM;
+      break;
+    case "LDe":
+      v = r.L_D_eff;
+      break;
+    case "CT":
+      v = r.CT;
+      break;
+    case "CQ":
+      v = r.CQ;
+      break;
+    case "CQi":
+      v = r.CQi;
+      break;
+    case "CQ0":
+      v = r.CQ0;
+      break;
+    case "CH":
+      v = r.CH;
+      break;
+    case "CHi":
+      v = r.CHi;
+      break;
+    case "CH0":
+      v = r.CH0;
+      break;
+    case "CY":
+      v = r.CY;
+      break;
+    case "CMx":
+      v = r.CMx;
+      break;
+    case "CMy":
+      v = r.CMy;
+      break;
+    case "CPair":
+      v = r.CPair;
+      break;
+    case "CLbar": {
+      const sg3 = resolveSolidity(cloneGeometry(geom));
+      let sigma3 = sg3.sigmaThrust;
+      if (sigma3 <= 0) sigma3 = sg3.sigmaRef;
+      v = derivedClBar(r, sigma3);
+      break;
+    }
+    case "Vztot":
+    case "Vadv":
+    case "Vret":
+      v = derivedOutput(r, key);
+      if (imp) v = v * ft;
+      break;
+    case "Mret":
+    case "aoaAdv75":
+    case "aoaRet75":
+    case "phiAdv75":
+    case "phiRet75":
+      v = derivedOutput(r, key);
+      break;
+    case "Tc":
+      v = derivedTc(r, area);
+      break;
+    case "Pc":
+      v = derivedPc(r, area);
+      break;
+    case "lamh":
+      v = derivedLambdaH(r);
+      break;
+    case "muLam":
+      v = derivedMuOverLambda(r);
+      break;
+    case "lam":
+      v = r.inflowLambda;
+      break;
+    case "lami":
+      v = r.inflowLambdaI;
+      break;
+    case "Kx":
+      v = r.inflowKx;
+      break;
+    case "Ky":
+      v = r.inflowKy;
+      break;
+    case "chi":
+      v = r.wakeSkewChiDeg;
+      break;
+    case "Bres":
+      v = r.bFactor;
+      break;
+    case "rpm":
+      v = r.trimmedRPM;
+      break;
+    case "coll":
+      v = r.trimmedCollectiveDeg;
+      break;
+    case "mu":
+      v = r.operatingMu;
+      break;
+    case "muz":
+      v = r.operatingMuZ;
+      break;
+    case "alpha":
+      v = r.operatingAlphaDeg;
+      break;
+    case "Vx":
+      v = r.operatingVx;
+      if (imp) v = v * ft;
+      break;
+    case "Vz":
+      v = r.operatingVz;
+      if (imp) v = v * ft;
+      break;
+    case "OmR":
+      v = omR;
+      if (imp) v = v * ft;
+      break;
+    case "a":
+      v = r.speedOfSound;
+      if (imp) v = v * ft;
+      break;
+    case "Mtip":
+      if (r.speedOfSound <= 0) return "---";
+      v = omR / r.speedOfSound;
+      break;
+    case "Madv":
+      v = r.advancingTipMach;
+      break;
+    case "T0":
+      v = r.temperatureC;
+      if (imp) v = (v * 9.0) / 5.0 + 32.0;
+      break;
+    case "rho":
+      v = r.densityRho;
+      if (imp) v = v * 0.0019403203;
+      break;
+    default:
+      return "---";
+  }
+
+  if (isNaN(v)) return "---";
+  return formatSig(v, sg);
+}
+
+export function showContextualHelp(key: string): void {
+  const nom = getNomenclature(key);
+  if (!nom) return;
+  const title = formatDescriptionSymbol(key, "L");
+  byId("result-tooltip-title").innerHTML = title;
+  byId("result-tooltip-desc").textContent = nom.body || `Engineering quantity for ${nom.full}.`;
+
+  const eqBox = byId("result-tooltip-eq-box");
+  if (nom.eq) {
+    eqBox.textContent = nom.eq;
+    eqBox.style.display = "block";
+  } else {
+    eqBox.style.display = "none";
+  }
+
+  const rangeBox = byId("result-tooltip-range-box");
+  const rangeText = byId("result-tooltip-range-text");
+  if (nom.range) {
+    rangeText.textContent = nom.range;
+    rangeBox.style.display = "block";
+  } else {
+    rangeBox.style.display = "none";
+  }
+
+  const unitBox = byId("result-tooltip-unit-box");
+  const unitText = byId("result-tooltip-unit-text");
+  if (nom.unit) {
+    unitText.textContent = nom.unit === "–" ? "Dimensionless (–)" : nom.unit;
+    unitBox.style.display = "block";
+  } else {
+    unitBox.style.display = "none";
+  }
+
+  openModal("modal-result-tooltip");
+}
+
+export function showContextualHelpCustom(title: string, message: string): void {
+  byId("result-tooltip-title").innerHTML = title;
+  byId("result-tooltip-desc").innerHTML = message.replace(/\n/g, "<br>");
+  byId("result-tooltip-eq-box").style.display = "none";
+  byId("result-tooltip-range-box").style.display = "none";
+  byId("result-tooltip-unit-box").style.display = "none";
+  openModal("modal-result-tooltip");
+}
 
 function bindResultRowTooltips(): void {
   document.querySelectorAll<HTMLElement>(".result-row").forEach((row) => {
     row.addEventListener("click", () => {
-      const canonical = row.dataset.canonical || row.querySelector(".result-label")?.getAttribute("data-canonical") || row.querySelector(".result-label")?.textContent?.trim() || "";
-      const matched = Object.entries(RESULT_TOOLTIPS).find(([key]) => {
-        return canonical === key || canonical.startsWith(key) || key.startsWith(canonical) || canonical.includes(key);
-      });
-      const title = matched ? matched[0] : canonical;
-      const desc = matched ? matched[1] : `Computed aerodynamic or atmospheric metric for ${canonical}.`;
-
-      byId("result-tooltip-title").textContent = `About • ${title}`;
-      byId("result-tooltip-desc").textContent = desc;
-      openModal("modal-result-tooltip");
+      const key = row.dataset.key;
+      if (key) showContextualHelp(key);
     });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>("button.result-label").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      if (key) showContextualHelp(key);
+    });
+  });
+
+  byId("badge-model-status")?.addEventListener("click", () => {
+    const r = activeResults;
+    if (r.compressibilityInvalid) {
+      showContextualHelpCustom(
+        "Prandtl-Glauert Invalid",
+        "The advancing-tip Mach number has reached or passed the Prandtl-Glauert singularity (M = 1).\n\nLower the rotor speed or the forward speed, or switch Compressibility to Off in Geometry."
+      );
+    } else if (!r.solutionValid) {
+      showContextualHelpCustom(
+        "Model Status",
+        `${r.statusMessage || "Operating point failed to converge."}\n\nAdjust the prescribed operating pair, flight condition, or rotor definition.`
+      );
+    } else if (r.compressibilityWarning || r.advancingTipMach >= 0.9) {
+      showContextualHelpCustom(
+        "Compressibility Caution",
+        "Tip Mach is at or above 0.80, or advancing-tip Mach is at or above 0.90.\n\nThe calculation remains finite, but the linear Prandtl-Glauert approximation is outside its preferred range."
+      );
+    } else {
+      showContextualHelpCustom(
+        "Model Status",
+        "Valid operating point. Tip Mach and advancing-tip Mach are inside the preferred range."
+      );
+    }
+  });
+
+  byId("badge-solution-summary")?.addEventListener("click", () => {
+    showContextualHelpCustom(
+      "Operating Solution",
+      "The operating solution always reports all four linked quantities: Ω, collective Δθ, C_T and thrust T.\n\nYou prescribe any two in Conditions. RotorCalculator solves the remaining two at the current forward/axial flight condition."
+    );
   });
 
   byId("btn-result-tooltip-open-help")?.addEventListener("click", () => {
     closeModal("modal-result-tooltip");
-    openModal("modal-physics-help");
+    openPhysicsHelp();
   });
 }
 
@@ -1234,68 +1602,68 @@ function refreshOperatingControls(): void {
 
   const thrustUnit = prefThrustUnit;
 
-  const w = window.innerWidth;
   if (pair === "rpm_collective") {
+    l1.dataset.key = "rpm";
     l1.dataset.canonical = "RPM";
-    l1.textContent = getResponsiveInputLabel("RPM", w);
     u1.textContent = "rpm";
     p1.value = activeCond.rpm.toFixed(0);
 
+    l2.dataset.key = "coll";
     l2.dataset.canonical = "Collective Δθ";
-    l2.textContent = getResponsiveInputLabel("Collective Δθ", w);
     u2.textContent = "deg";
     p2.value = activeCond.collectiveDeg.toFixed(2);
   } else if (pair === "rpm_ct") {
+    l1.dataset.key = "rpm";
     l1.dataset.canonical = "RPM";
-    l1.textContent = getResponsiveInputLabel("RPM", w);
     u1.textContent = "rpm";
     p1.value = activeCond.rpm.toFixed(0);
 
+    l2.dataset.key = "CTtgt";
     l2.dataset.canonical = "Target CT";
-    l2.textContent = getResponsiveInputLabel("Target CT", w);
     u2.textContent = "[-]";
     p2.value = activeCond.targetCT.toFixed(5);
   } else if (pair === "rpm_thrust") {
+    l1.dataset.key = "rpm";
     l1.dataset.canonical = "RPM";
-    l1.textContent = getResponsiveInputLabel("RPM", w);
     u1.textContent = "rpm";
     p1.value = activeCond.rpm.toFixed(0);
 
+    l2.dataset.key = "Ttgt";
     l2.dataset.canonical = "Target Thrust";
-    l2.textContent = getResponsiveInputLabel("Target Thrust", w);
     u2.textContent = thrustUnit;
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   } else if (pair === "collective_ct") {
+    l1.dataset.key = "coll";
     l1.dataset.canonical = "Collective Δθ";
-    l1.textContent = getResponsiveInputLabel("Collective Δθ", w);
     u1.textContent = "deg";
     p1.value = activeCond.collectiveDeg.toFixed(2);
 
+    l2.dataset.key = "CTtgt";
     l2.dataset.canonical = "Target CT";
-    l2.textContent = getResponsiveInputLabel("Target CT", w);
     u2.textContent = "[-]";
     p2.value = activeCond.targetCT.toFixed(5);
   } else if (pair === "collective_thrust") {
+    l1.dataset.key = "coll";
     l1.dataset.canonical = "Collective Δθ";
-    l1.textContent = getResponsiveInputLabel("Collective Δθ", w);
     u1.textContent = "deg";
     p1.value = activeCond.collectiveDeg.toFixed(2);
 
+    l2.dataset.key = "Ttgt";
     l2.dataset.canonical = "Target Thrust";
-    l2.textContent = getResponsiveInputLabel("Target Thrust", w);
     u2.textContent = thrustUnit;
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   } else if (pair === "ct_thrust") {
+    l1.dataset.key = "CTtgt";
     l1.dataset.canonical = "Target CT";
-    l1.textContent = getResponsiveInputLabel("Target CT", w);
     u1.textContent = "[-]";
     p1.value = activeCond.targetCT.toFixed(5);
 
+    l2.dataset.key = "Ttgt";
     l2.dataset.canonical = "Target Thrust";
-    l2.textContent = getResponsiveInputLabel("Target Thrust", w);
     u2.textContent = thrustUnit;
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   }
+  updateResponsiveLabels();
 }
 
 function escapeHTML(str: string): string {
@@ -1332,6 +1700,7 @@ function resolveUnsavedGeometry(actionText: string, onProceed: () => void): void
 }
 
 // Load Rotor Data into Inputs
+// Load Rotor Data into Inputs
 function loadRotorToUI(rotor: StoredRotor): void {
   currentRotor = rotor;
   activeGeom = cloneGeometry(rotor.geom);
@@ -1340,6 +1709,7 @@ function loadRotorToUI(rotor: StoredRotor): void {
   updateActiveRotorBar();
 
   byId<HTMLInputElement>("inp-rotor-name").value = rotor.name;
+  byId<HTMLInputElement>("inp-rpm-nom").value = (activeGeom.nominalRpm || activeGeom.rpm || 258).toFixed(0);
 
   const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
   byId<HTMLInputElement>("inp-radius").value = convertValue(activeGeom.radius, "m", rUnit).toFixed(2);
@@ -1380,148 +1750,154 @@ function loadRotorToUI(rotor: StoredRotor): void {
   isInternalSync = false;
 }
 
+function refreshGeomFields(skipKey?: string): void {
+  const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
+  const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
+  const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+  const thRootUnit = byId("unit-theta-root")?.textContent?.trim() || "deg";
+  const thTipUnit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
+
+  if (skipKey !== "R") byId<HTMLInputElement>("inp-radius").value = convertValue(activeGeom.radius, "m", rUnit).toFixed(2);
+  if (skipKey !== "Nb") byId<HTMLInputElement>("inp-nblades").value = activeGeom.nBlades.toString();
+  if (skipKey !== "x0") byId<HTMLInputElement>("inp-cutout").value = activeGeom.rootCutout.toString();
+  if (skipKey !== "c0") byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
+  if (skipKey !== "c1") byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
+  if (skipKey !== "sigmaRef") byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
+  if (skipKey !== "AR") byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
+  if (skipKey !== "thRoot") {
+    const degRoot = (activeGeom.thetaRoot * 180) / Math.PI;
+    byId<HTMLInputElement>("inp-theta-root").value = convertValue(degRoot, "deg", thRootUnit).toFixed(1);
+  }
+  if (skipKey !== "thTip") {
+    const degTip = (activeGeom.thetaTip * 180) / Math.PI;
+    byId<HTMLInputElement>("inp-theta-tip").value = convertValue(degTip, "deg", thTipUnit).toFixed(1);
+  }
+
+  renderDerivedGeometry();
+}
+
+function onGeomParamInput(key: string, valSI: number): void {
+  if (isInternalSync) return;
+  isInternalSync = true;
+  activeGeom = setGeometryQuantity(activeGeom, key, valSI);
+  saveDraft(activeGeom);
+  markGeometryDirty();
+  refreshGeomFields(key);
+  recalculate();
+  isInternalSync = false;
+}
+
 // Bidirectional Input Listeners & Cross-Updating
 function bindInputListeners(): void {
-  // 1. Radius R Change (scales chords to preserve Aspect Ratio & Solidity)
+  // Planform inputs with mutual cross-updating
   byId("inp-radius").addEventListener("input", () => {
-    if (isInternalSync) return;
     const rUnit = byId("unit-radius")?.textContent?.trim() || "m";
     const rVal = parseFloat(byId<HTMLInputElement>("inp-radius").value);
     if (rVal > 0) {
-      isInternalSync = true;
       const rSI = convertValue(rVal, rUnit, "m");
-      activeGeom = scaleRadiusPreserveReference(activeGeom, rSI);
-
-      const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
-      const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
-      byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
-      byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
-      byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
-      byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
-
-      markGeometryDirty();
-      recalculate();
-      isInternalSync = false;
+      onGeomParamInput("R", rSI);
     }
   });
 
-  // 2. Chords, Blades, or Cutout Change (recalculates Solidity & Aspect Ratio)
-  const onDirectPlanformChange = () => {
-    if (isInternalSync) return;
-    isInternalSync = true;
-    const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
-    const cRootVal = parseFloat(byId<HTMLInputElement>("inp-chord-root").value) || 0.3;
-    activeGeom.chordRoot = convertValue(cRootVal, cRootUnit, "m");
-
-    const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
-    const cTipVal = parseFloat(byId<HTMLInputElement>("inp-chord-tip").value) || 0.3;
-    activeGeom.chordTip = convertValue(cTipVal, cTipUnit, "m");
-
-    activeGeom.nBlades = parseInt(byId<HTMLInputElement>("inp-nblades").value, 10) || 4;
-    activeGeom.rootCutout = parseFloat(byId<HTMLInputElement>("inp-cutout").value) || 0.15;
-
-    activeGeom.solidityMode = "chords";
-    activeGeom = resolveSolidity(activeGeom);
-
-    byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
-    byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
-
-    markGeometryDirty();
-    recalculate();
-    isInternalSync = false;
-  };
-
-  ["inp-chord-root", "inp-chord-tip", "inp-nblades", "inp-cutout"].forEach((id) => {
-    byId(id).addEventListener("input", onDirectPlanformChange);
+  byId("inp-nblades").addEventListener("input", () => {
+    const nb = parseInt(byId<HTMLInputElement>("inp-nblades").value, 10);
+    if (nb > 0) onGeomParamInput("Nb", nb);
   });
 
-  // 3. Solidity Change (scales chords to match target sigma_ref)
+  byId("inp-cutout").addEventListener("input", () => {
+    const x0 = parseFloat(byId<HTMLInputElement>("inp-cutout").value);
+    if (x0 >= 0) onGeomParamInput("x0", x0);
+  });
+
+  byId("inp-chord-root").addEventListener("input", () => {
+    const unit = byId("unit-chord-root")?.textContent?.trim() || "m";
+    const val = parseFloat(byId<HTMLInputElement>("inp-chord-root").value);
+    if (val > 0) onGeomParamInput("c0", convertValue(val, unit, "m"));
+  });
+
+  byId("inp-chord-tip").addEventListener("input", () => {
+    const unit = byId("unit-chord-tip")?.textContent?.trim() || "m";
+    const val = parseFloat(byId<HTMLInputElement>("inp-chord-tip").value);
+    if (val > 0) onGeomParamInput("c1", convertValue(val, unit, "m"));
+  });
+
   byId("inp-sigma-ref").addEventListener("input", () => {
-    if (isInternalSync) return;
-    const sVal = parseFloat(byId<HTMLInputElement>("inp-sigma-ref").value);
-    if (sVal > 0) {
-      isInternalSync = true;
-      activeGeom = scaleChordsToSigmaRef(activeGeom, sVal);
-
-      const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
-      const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
-      byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
-      byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
-      byId<HTMLInputElement>("inp-aspect-ratio").value = referenceAspectRatio(activeGeom).toFixed(2);
-
-      markGeometryDirty();
-      recalculate();
-      isInternalSync = false;
-    }
+    const s = parseFloat(byId<HTMLInputElement>("inp-sigma-ref").value);
+    if (s > 0) onGeomParamInput("sigmaRef", s);
   });
 
-  // 4. Aspect Ratio Change (scales chords to match target aspect ratio)
   byId("inp-aspect-ratio").addEventListener("input", () => {
-    if (isInternalSync) return;
-    const arVal = parseFloat(byId<HTMLInputElement>("inp-aspect-ratio").value);
-    if (arVal > 0) {
-      isInternalSync = true;
-      activeGeom = scaleChordsToAspectRatio(activeGeom, arVal);
-
-      const cRootUnit = byId("unit-chord-root")?.textContent?.trim() || "m";
-      const cTipUnit = byId("unit-chord-tip")?.textContent?.trim() || "m";
-      byId<HTMLInputElement>("inp-chord-root").value = convertValue(activeGeom.chordRoot, "m", cRootUnit).toFixed(3);
-      byId<HTMLInputElement>("inp-chord-tip").value = convertValue(activeGeom.chordTip, "m", cTipUnit).toFixed(3);
-      byId<HTMLInputElement>("inp-sigma-ref").value = activeGeom.sigmaRef.toFixed(4);
-
-      markGeometryDirty();
-      recalculate();
-      isInternalSync = false;
-    }
-  });
-
-  // Other Geometry inputs
-  byId("inp-rotor-name").addEventListener("input", () => {
-    activeGeom.name = byId<HTMLInputElement>("inp-rotor-name").value.trim() || "Custom Rotor";
-    markGeometryDirty();
+    const ar = parseFloat(byId<HTMLInputElement>("inp-aspect-ratio").value);
+    if (ar > 0) onGeomParamInput("AR", ar);
   });
 
   byId("inp-theta-root").addEventListener("input", () => {
     const unit = byId("unit-theta-root")?.textContent?.trim() || "deg";
     const val = parseFloat(byId<HTMLInputElement>("inp-theta-root").value) || 0;
-    activeGeom.thetaRoot = (convertValue(val, unit, "deg") * Math.PI) / 180;
-    markGeometryDirty();
-    recalculate();
+    const deg = convertValue(val, unit, "deg");
+    onGeomParamInput("thRoot", (deg * Math.PI) / 180);
   });
 
   byId("inp-theta-tip").addEventListener("input", () => {
     const unit = byId("unit-theta-tip")?.textContent?.trim() || "deg";
     const val = parseFloat(byId<HTMLInputElement>("inp-theta-tip").value) || 0;
-    activeGeom.thetaTip = (convertValue(val, unit, "deg") * Math.PI) / 180;
+    const deg = convertValue(val, unit, "deg");
+    onGeomParamInput("thTip", (deg * Math.PI) / 180);
+  });
+
+  byId("inp-rpm-nom").addEventListener("input", () => {
+    const val = parseFloat(byId<HTMLInputElement>("inp-rpm-nom").value);
+    if (val > 0) {
+      activeGeom.nominalRpm = val;
+      activeGeom.rpm = val;
+      saveDraft(activeGeom);
+      markGeometryDirty();
+    }
+  });
+
+  byId("inp-rotor-name").addEventListener("input", () => {
+    activeGeom.name = byId<HTMLInputElement>("inp-rotor-name").value.trim() || "Custom Rotor";
+    saveDraft(activeGeom);
     markGeometryDirty();
-    recalculate();
   });
 
   byId("inp-lift-slope").addEventListener("input", () => {
     const unit = byId("unit-lift-slope")?.textContent?.trim() || "rad⁻¹";
     const val = parseFloat(byId<HTMLInputElement>("inp-lift-slope").value) || 5.73;
     activeGeom.liftSlope0 = convertValue(val, unit, "rad⁻¹");
+    saveDraft(activeGeom);
     markGeometryDirty();
     recalculate();
   });
 
   byId("inp-cd0").addEventListener("input", () => {
     activeGeom.cd0 = parseFloat(byId<HTMLInputElement>("inp-cd0").value) || 0.009;
+    saveDraft(activeGeom);
     markGeometryDirty();
     recalculate();
   });
 
   byId("inp-tiploss-b").addEventListener("input", () => {
     activeGeom.tipLossB = parseFloat(byId<HTMLInputElement>("inp-tiploss-b").value) || 0.97;
+    saveDraft(activeGeom);
     markGeometryDirty();
     recalculate();
   });
 
   // Condition Inputs
+  const saveActiveCondSession = () => {
+    try {
+      localStorage.setItem("rotorcalc_active_cond", JSON.stringify(activeCond));
+    } catch {
+      // ignore
+    }
+  };
+
   byId("inp-altitude").addEventListener("input", () => {
     const unit = byId("unit-altitude")?.textContent?.trim() || "m";
     const val = parseFloat(byId<HTMLInputElement>("inp-altitude").value) || 0;
     activeCond.altitudeM = convertValue(val, unit, "m");
+    saveActiveCondSession();
     recalculate();
   });
 
@@ -1529,6 +1905,7 @@ function bindInputListeners(): void {
     const unit = byId("unit-temperature")?.textContent?.trim() || "°C";
     const val = parseFloat(byId<HTMLInputElement>("inp-temperature").value) || 15;
     activeCond.temperatureC = convertValue(val, unit, "°C");
+    saveActiveCondSession();
     recalculate();
   });
 
@@ -1540,6 +1917,7 @@ function bindInputListeners(): void {
     } else {
       activeCond.horizontalValue = val;
     }
+    saveActiveCondSession();
     recalculate();
   });
 
@@ -1551,11 +1929,13 @@ function bindInputListeners(): void {
     } else {
       activeCond.axialValue = val;
     }
+    saveActiveCondSession();
     recalculate();
   });
 
   byId("inp-kind").addEventListener("input", () => {
     activeCond.kInd = parseFloat(byId<HTMLInputElement>("inp-kind").value) || 1.15;
+    saveActiveCondSession();
     recalculate();
   });
 
@@ -1570,6 +1950,7 @@ function bindInputListeners(): void {
     } else if (pair === "ct_thrust") {
       activeCond.targetCT = val;
     }
+    saveActiveCondSession();
     recalculate();
   };
 
@@ -1584,6 +1965,7 @@ function bindInputListeners(): void {
       const unit = byId("unit-operating-2")?.textContent?.trim() || "N";
       activeCond.targetThrustN = convertValue(val, unit, "N");
     }
+    saveActiveCondSession();
     recalculate();
   };
 
@@ -1634,12 +2016,13 @@ function bindModalListeners(): void {
       menu.hidden = true;
       const action = btn.dataset.action;
       if (action === "settings") {
+        refreshSettingsButtons();
         openModal("modal-settings");
       } else if (action === "units") {
         populateConverterUnits();
         openModal("modal-unit-converter");
       } else if (action === "help") {
-        openModal("modal-help");
+        openPhysicsHelp();
       } else if (action === "restore") {
         if (confirm("Restore factory rotor presets? Any unsaved edits will be reset.")) {
           storedRotors = resetToFactoryPresets();
@@ -1825,14 +2208,14 @@ function bindSelectorButtons(): void {
         if (selId === "vx") {
           activeCond.horizontalMode = "vx";
           activeCond.horizontalValue = activeResults.operatingVx;
-          byId("btn-toggle-horiz-mode").textContent = "Vx ▾";
+          byId("btn-toggle-horiz-mode").dataset.key = "Vx";
           byId("unit-horiz-val").textContent = prefSpeedUnit;
           byId<HTMLInputElement>("inp-horiz-val").value = convertValue(activeCond.horizontalValue, "m/s", prefSpeedUnit).toFixed(1);
         } else {
           activeCond.horizontalMode = "mu";
           activeCond.horizontalValue = activeResults.operatingMu;
-          byId("btn-toggle-horiz-mode").textContent = "μx ▾";
-          byId("unit-horiz-val").textContent = "[-]";
+          byId("btn-toggle-horiz-mode").dataset.key = "mu";
+          byId("unit-horiz-val").textContent = "–";
           byId<HTMLInputElement>("inp-horiz-val").value = activeCond.horizontalValue.toFixed(3);
         }
         recalculate();
@@ -1844,7 +2227,7 @@ function bindSelectorButtons(): void {
   const axialModes: { id: "alpha" | "vz" | "muz"; label: string; desc: string }[] = [
     { id: "alpha", label: "Angle of Attack α [deg]", desc: "Rotor disk angle of attack (α > 0 for climb/wind from below)" },
     { id: "vz", label: "Climb Speed Vz", desc: "Dimensional vertical velocity (Vz > 0 downward through disk)" },
-    { id: "muz", label: "Axial Ratio μz [-]", desc: "Non-dimensional axial velocity Vz / (ΩR)" },
+    { id: "muz", label: "Axial Ratio μz [–]", desc: "Non-dimensional axial velocity Vz / (ΩR)" },
   ];
 
   byId("btn-toggle-axial-mode").addEventListener("click", () => {
@@ -1856,19 +2239,19 @@ function bindSelectorButtons(): void {
         activeCond.axialMode = selId as "alpha" | "vz" | "muz";
         if (selId === "alpha") {
           activeCond.axialValue = activeResults.operatingAlphaDeg;
-          byId("btn-toggle-axial-mode").textContent = "α ▾";
+          byId("btn-toggle-axial-mode").dataset.key = "alpha";
           byId("unit-axial-val").textContent = "deg";
           byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(1);
         } else if (selId === "vz") {
           activeCond.axialValue = activeResults.operatingVz;
+          byId("btn-toggle-axial-mode").dataset.key = "Vz";
           const vzUnit = unitSystem === "imperial" ? "ft/min" : "m/s";
-          byId("btn-toggle-axial-mode").textContent = "Vz ▾";
           byId("unit-axial-val").textContent = vzUnit;
           byId<HTMLInputElement>("inp-axial-val").value = convertValue(activeCond.axialValue, "m/s", vzUnit).toFixed(2);
         } else {
           activeCond.axialValue = activeResults.operatingMuZ;
-          byId("btn-toggle-axial-mode").textContent = "μz ▾";
-          byId("unit-axial-val").textContent = "[-]";
+          byId("btn-toggle-axial-mode").dataset.key = "muz";
+          byId("unit-axial-val").textContent = "–";
           byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toFixed(4);
         }
         recalculate();
@@ -2007,6 +2390,14 @@ function bindUnitButtons(): void {
       updateUI: () => renderDerivedGeometry(),
     },
     {
+      btnId: "unit-blade-area-ref",
+      fieldName: "Reference Blade Area Ab",
+      units: ["m²", "ft²"],
+      getSI: () => referenceBladeArea(activeGeom),
+      setSI: () => {},
+      updateUI: () => renderDerivedGeometry(),
+    },
+    {
       btnId: "unit-blade-area",
       fieldName: "Blade Area",
       units: ["m²", "ft²"],
@@ -2040,12 +2431,25 @@ function bindUnitButtons(): void {
   });
 }
 
+function downloadGeometriesBackup(): void {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const txt = exportRotorsDatabaseText(storedRotors);
+  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `rotors_db_${dateStr}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // Rotor Actions (Save, Copy, Delete, New, Import, Export)
 function bindRotorActionButtons(): void {
   byId("btn-geom-save").addEventListener("click", () => {
     currentRotor.name = activeGeom.name;
     currentRotor.geom = cloneGeometry(activeGeom);
     saveStoredRotors(storedRotors);
+    clearDraft();
     isGeometryDirty = false;
     updateActiveRotorBar();
     const saveBtn = byId("btn-geom-save");
@@ -2054,6 +2458,7 @@ function bindRotorActionButtons(): void {
   });
 
   byId("btn-geom-copy").addEventListener("click", () => {
+    clearDraft();
     const copyRotor: StoredRotor = {
       id: `custom-${Date.now()}`,
       name: `${activeGeom.name} (Copy)`,
@@ -2071,6 +2476,7 @@ function bindRotorActionButtons(): void {
       return;
     }
     if (confirm(`Delete current rotor "${activeGeom.name}"?`)) {
+      clearDraft();
       storedRotors = storedRotors.filter((r) => r.id !== currentRotor.id);
       saveStoredRotors(storedRotors);
       loadRotorToUI(storedRotors[0]);
@@ -2080,6 +2486,7 @@ function bindRotorActionButtons(): void {
 
   byId("btn-manager-new").addEventListener("click", () => {
     resolveUnsavedGeometry("creating a new rotor", () => {
+      clearDraft();
       const newRotor: StoredRotor = {
         id: `custom-${Date.now()}`,
         name: `Custom Rotor ${storedRotors.length + 1}`,
@@ -2092,18 +2499,6 @@ function bindRotorActionButtons(): void {
       closeModal("modal-rotor-manager");
     });
   });
-
-  function downloadGeometriesBackup(): void {
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const txt = exportRotorsDatabaseText(storedRotors);
-    const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rotors_db_${dateStr}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
   byId("btn-manager-export").addEventListener("click", () => {
     downloadGeometriesBackup();
@@ -2157,6 +2552,7 @@ function bindRotorActionButtons(): void {
     currentRotor.name = activeGeom.name;
     currentRotor.geom = cloneGeometry(activeGeom);
     saveStoredRotors(storedRotors);
+    clearDraft();
     isGeometryDirty = false;
     updateActiveRotorBar();
     closeModal("modal-unsaved-confirm");
@@ -2168,6 +2564,7 @@ function bindRotorActionButtons(): void {
   });
 
   byId("btn-unsaved-discard").addEventListener("click", () => {
+    clearDraft();
     isGeometryDirty = false;
     loadRotorToUI(currentRotor);
     closeModal("modal-unsaved-confirm");
@@ -2398,7 +2795,7 @@ function initSweepModal(): void {
   SWEEP_PARAMS.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.key;
-    opt.textContent = `${p.label} [${p.unit}]`;
+    opt.textContent = `${p.short} ${p.symbol} [${p.unit}]`;
     if (p.key === sweepSelectedParam) opt.selected = true;
     selectParam.appendChild(opt);
   });
@@ -2406,15 +2803,33 @@ function initSweepModal(): void {
   const canvas = byId<HTMLCanvasElement>("sweep-canvas");
   const selectFamily = byId<HTMLSelectElement>("sweep-select-family");
   const btnValues = byId<HTMLButtonElement>("btn-sweep-values");
-  const groupHover = byId("sweep-group-trim-hover");
-  const btnTrimHover = byId<HTMLButtonElement>("btn-sweep-trim-hover");
+  const selectTrim = byId<HTMLSelectElement>("sweep-select-trim-mode");
+
+  if (selectTrim) {
+    selectTrim.innerHTML = "";
+    SWEEP_TRIM_MODES.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.key;
+      opt.textContent = m.label;
+      if (m.key === sweepTrimMode) opt.selected = true;
+      selectTrim.appendChild(opt);
+    });
+    const participatesInTrim = activeCond.operatingPair !== "rpm_collective";
+    selectTrim.disabled = !participatesInTrim;
+    selectTrim.onchange = () => {
+      sweepTrimMode = selectTrim.value as SweepTrimModeKey;
+      localStorage.setItem("rotor_sweep_trim_mode", sweepTrimMode);
+      sweepCrossX = -1;
+      updateSweepPlot();
+    };
+  }
 
   const syncSweepControlVisibilities = () => {
     const multi = parseInt(selectFamily.value, 10);
     btnValues.style.display = (multi === 1 || multi === 2 || multi === 3) ? "block" : "none";
-
-    const participatesInTrim = activeCond.operatingPair !== "rpm_collective";
-    groupHover.style.display = participatesInTrim ? "flex" : "none";
+    if (selectTrim) {
+      selectTrim.disabled = activeCond.operatingPair === "rpm_collective";
+    }
   };
 
   btnValues.onclick = () => {
@@ -2448,18 +2863,18 @@ function initSweepModal(): void {
     closeModal("modal-sweep-values");
   };
 
-  btnTrimHover.onclick = () => {
-    sweepHoverTrim = !sweepHoverTrim;
-    btnTrimHover.textContent = sweepHoverTrim ? "HOVER TRIM: ON" : "HOVER TRIM: OFF";
-    btnTrimHover.style.color = sweepHoverTrim ? "var(--accent-green)" : "var(--text-main)";
-    updateSweepPlot();
-  };
+  const selectXAxis = byId<HTMLSelectElement>("sweep-select-xaxis");
+  if (selectXAxis) {
+    selectXAxis.value = sweepXAxisMode;
+  }
 
   const updateSweepPlot = () => {
+    sweepUpdateFn = updateSweepPlot;
     syncSweepControlVisibilities();
     sweepSelectedParam = selectParam.value;
     sweepMultiMode = parseInt(selectFamily.value, 10);
-    sweepXAxisMode = byId<HTMLSelectElement>("sweep-select-xaxis").value as "mu" | "vx";
+    sweepXAxisMode = (byId<HTMLSelectElement>("sweep-select-xaxis").value as "mu" | "vx" | "muLam") || "mu";
+    localStorage.setItem("rotor_sweep_xaxis", sweepXAxisMode);
     sweepMaxMu = parseFloat(byId<HTMLSelectElement>("sweep-select-maxmu").value) || 0.4;
 
     const { curves, currentOpPoint } = runParameterSweep(
@@ -2470,21 +2885,78 @@ function initSweepModal(): void {
       sweepMaxMu,
       25,
       sweepCustomValues[sweepMultiMode],
-      sweepHoverTrim
+      sweepTrimMode,
+      plotPaletteIndex,
+      currentTheme
     );
 
     const meta = SWEEP_PARAMS.find((p) => p.key === sweepSelectedParam) || SWEEP_PARAMS[0];
-    drawSweepCanvas(canvas, curves, currentOpPoint, sweepXAxisMode, meta, currentTheme);
+    sweepLastPlotMeta = drawSweepCanvas(
+      canvas,
+      curves,
+      currentOpPoint,
+      sweepXAxisMode,
+      meta,
+      currentTheme,
+      null,
+      sweepCrossX,
+      extraPrecision
+    );
+
+    // Active operating point card
+    const curValEl = byId("sweep-current-val");
+    if (curValEl) {
+      if (activeResults.solutionValid) {
+        curValEl.textContent = `Active point: μ_x = ${formatSig(activeResults.operatingMu, 3)} · V_x = ${formatSig(activeResults.operatingVx, 3)} m/s · μ_z = ${formatSig(activeResults.operatingMuZ, 3)}`;
+      } else {
+        curValEl.textContent = "Active point: invalid operating point";
+      }
+    }
+
+    // Readout card
+    const readoutEl = byId("sweep-readout");
+    if (readoutEl) {
+      readoutEl.textContent = getSweepReadoutText(curves, meta, sweepXAxisMode, sweepCrossX, extraPrecision);
+    }
 
     if (sweepTableVisible) {
       renderSweepTable(curves, meta);
     }
   };
 
-  selectParam.onchange = updateSweepPlot;
-  byId("sweep-select-family").onchange = updateSweepPlot;
-  byId("sweep-select-xaxis").onchange = updateSweepPlot;
-  byId("sweep-select-maxmu").onchange = updateSweepPlot;
+  const onParamChange = () => {
+    sweepCrossX = -1;
+    updateSweepPlot();
+  };
+
+  selectParam.onchange = onParamChange;
+  byId("sweep-select-family").onchange = onParamChange;
+  byId("sweep-select-xaxis").onchange = onParamChange;
+  byId("sweep-select-maxmu").onchange = onParamChange;
+
+  const handlePointer = (clientX: number) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const { plotLeft, plotWidth, xMax } = sweepLastPlotMeta;
+    if (plotWidth > 1 && xMax > 0) {
+      const xv = ((x - plotLeft) / plotWidth) * xMax;
+      sweepCrossX = Math.max(0, Math.min(xMax, xv));
+      updateSweepPlot();
+    }
+  };
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (e.buttons === 1) handlePointer(e.clientX);
+  });
+  canvas.addEventListener("click", (e) => {
+    handlePointer(e.clientX);
+  });
+  canvas.addEventListener("touchstart", (e) => {
+    if (e.touches.length > 0) handlePointer(e.touches[0].clientX);
+  }, { passive: true });
+  canvas.addEventListener("touchmove", (e) => {
+    if (e.touches.length > 0) handlePointer(e.touches[0].clientX);
+  }, { passive: true });
 
   byId("btn-sweep-toggle-table").onclick = () => {
     sweepTableVisible = !sweepTableVisible;
@@ -2502,11 +2974,12 @@ function initSweepModal(): void {
       sweepMaxMu,
       25,
       sweepCustomValues[sweepMultiMode],
-      sweepHoverTrim
+      sweepTrimMode,
+      plotPaletteIndex,
+      currentTheme
     );
     const meta = SWEEP_PARAMS.find((p) => p.key === sweepSelectedParam) || SWEEP_PARAMS[0];
-    const trimText = sweepHoverTrim ? "Hover Trim (Fixed RPM & Collective)" : "Point-by-Point Trim";
-    const csv = generateSweepCSV(curves, sweepXAxisMode, meta, trimText);
+    const csv = generateSweepCSV(curves, meta, sweepXAxisMode, sweepTrimMode, extraPrecision);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -2529,31 +3002,8 @@ function initSweepModal(): void {
 
 function renderSweepTable(curves: any[], meta: any): void {
   const container = byId("sweep-table-container");
-  const xCol = sweepXAxisMode === "mu" ? "μ [-]" : "Vx [m/s]";
-  const trimText = sweepHoverTrim ? "Hover Trim (Fixed RPM & Collective)" : "Point-by-Point Trim";
-  let html = `
-    <div style="padding: 6px 10px; font-size: 11.5px; color: var(--text-muted); background: var(--header-bg); border-bottom: 1px solid var(--border);">
-      Trim Strategy: <strong style="color: var(--accent);">${trimText}</strong>
-    </div>
-    <table style="width: 100%; border-collapse: collapse; text-align: right;"><thead style="position: sticky; top: 0; background: var(--header-bg); border-bottom: 1px solid var(--border);"><tr><th style="padding: 6px 10px; text-align: left;">${xCol}</th>`;
-  curves.forEach((c) => {
-    html += `<th style="padding: 6px 10px; color: ${c.color};">${c.label}</th>`;
-  });
-  html += `</tr></thead><tbody>`;
-
-  const numPts = curves[0]?.points.length || 0;
-  for (let i = 0; i < numPts; i++) {
-    const pt0 = curves[0].points[i];
-    const xVal = sweepXAxisMode === "mu" ? pt0.mu.toFixed(3) : pt0.vx.toFixed(1);
-    html += `<tr style="border-bottom: 1px solid var(--row-border);"><td style="padding: 4px 10px; text-align: left; font-weight: 700;">${xVal}</td>`;
-    curves.forEach((c) => {
-      const pt = c.points[i];
-      html += `<td style="padding: 4px 10px;">${pt.valid ? pt.val.toPrecision(5) : "—"}</td>`;
-    });
-    html += `</tr>`;
-  }
-  html += `</tbody></table>`;
-  container.innerHTML = html;
+  if (!container) return;
+  container.innerHTML = renderSweepTableHtml(curves, meta, sweepXAxisMode, sweepTrimMode, extraPrecision, currentTheme);
 }
 
 // Unit Converter Modal Logic
@@ -2626,86 +3076,128 @@ function initSwipeNavigation(): void {
   }, { passive: true });
 }
 
-// Settings Modal Binding & Persistence
+// Settings Modal Binding & Persistence (B4A APK Architecture)
+function refreshSettingsButtons(): void {
+  const btnTheme = byId<HTMLButtonElement>("btn-setting-theme");
+  if (btnTheme) {
+    btnTheme.textContent = currentTheme === "midnight" ? "MIDNIGHT BLUE" : currentTheme.toUpperCase();
+  }
+  const btnUnits = byId<HTMLButtonElement>("btn-setting-units");
+  if (btnUnits) {
+    btnUnits.textContent = unitSystem === "imperial" ? "IMPERIAL" : "SI";
+  }
+  const btnPrec = byId<HTMLButtonElement>("btn-setting-precision");
+  if (btnPrec) {
+    btnPrec.textContent = extraPrecision === 1 ? "+1 DECIMAL" : "STANDARD";
+  }
+  const btnPalette = byId<HTMLButtonElement>("btn-setting-palette");
+  if (btnPalette) {
+    const palNames = ["AERO", "COLORBLIND SAFE", "PRINT"];
+    btnPalette.textContent = palNames[plotPaletteIndex % palNames.length];
+  }
+}
+
 function bindSettingsListeners(): void {
-  const selTheme = byId<HTMLSelectElement>("setting-theme");
-  const selUnits = byId<HTMLSelectElement>("setting-units-system");
-  const selPrec = byId<HTMLSelectElement>("setting-precision");
-  const selAngle = byId<HTMLSelectElement>("setting-angle-format");
-  const selThrust = byId<HTMLSelectElement>("setting-thrust-unit");
-  const selPower = byId<HTMLSelectElement>("setting-power-unit");
-  const selTorque = byId<HTMLSelectElement>("setting-torque-unit");
-  const selSpeed = byId<HTMLSelectElement>("setting-speed-unit");
-  const selPres = byId<HTMLSelectElement>("setting-pressure-unit");
+  refreshSettingsButtons();
 
-  // Load current values
-  const syncSettingsToUI = () => {
-    selTheme.value = currentTheme;
-    selUnits.value = unitSystem;
-    selPrec.value = extraPrecision.toString();
-    selAngle.value = angleFormat;
-    selThrust.value = prefThrustUnit;
-    selPower.value = prefPowerUnit;
-    selTorque.value = prefTorqueUnit;
-    selSpeed.value = prefSpeedUnit;
-    selPres.value = prefPressureUnit;
-  };
-  syncSettingsToUI();
-
-  byId("btn-settings-save").addEventListener("click", () => {
-    currentTheme = selTheme.value as "dark" | "light";
-    unitSystem = selUnits.value as "si" | "imperial";
-    extraPrecision = parseInt(selPrec.value, 10);
-    angleFormat = selAngle.value as "0/360" | "-180/180";
-    prefThrustUnit = selThrust.value;
-    prefPowerUnit = selPower.value;
-    prefTorqueUnit = selTorque.value;
-    prefSpeedUnit = selSpeed.value;
-    prefPressureUnit = selPres.value;
-
-    localStorage.setItem("rotor_theme", currentTheme);
-    localStorage.setItem("rotor_units", unitSystem);
-    localStorage.setItem("rotor_extra_precision", extraPrecision.toString());
-    localStorage.setItem("rotor_angle_format", angleFormat);
-    localStorage.setItem("rotor_pref_thrust", prefThrustUnit);
-    localStorage.setItem("rotor_pref_power", prefPowerUnit);
-    localStorage.setItem("rotor_pref_torque", prefTorqueUnit);
-    localStorage.setItem("rotor_pref_speed", prefSpeedUnit);
-    localStorage.setItem("rotor_pref_pressure", prefPressureUnit);
-
-    applyTheme();
-    refreshOperatingControls();
-    recalculate();
-    closeModal("modal-settings");
+  // 1. Theme Button
+  byId("btn-setting-theme")?.addEventListener("click", () => {
+    const items = [
+      { id: "dark", label: "Dark", desc: "Cockpit stealth, high contrast" },
+      { id: "light", label: "Light", desc: "Daylight, contrast tuned to 4.5:1 or better" },
+      { id: "midnight", label: "Midnight Blue", desc: "Navy surfaces, cyan and amber accents" },
+    ];
+    showOptionPicker("Theme", items, currentTheme, (selectedId) => {
+      currentTheme = selectedId as "dark" | "light" | "midnight";
+      localStorage.setItem("rotor_theme", currentTheme);
+      applyTheme();
+      refreshSettingsButtons();
+      if (sweepUpdateFn) sweepUpdateFn();
+    });
   });
 
-  byId("btn-settings-reset").addEventListener("click", () => {
-    if (confirm("Reset all settings to factory defaults?")) {
-      currentTheme = "dark";
-      unitSystem = "si";
-      extraPrecision = 0;
-      angleFormat = "0/360";
-      prefThrustUnit = "N";
-      prefPowerUnit = "kW";
-      prefTorqueUnit = "N·m";
-      prefSpeedUnit = "m/s";
-      prefPressureUnit = "hPa";
+  // 2. Units Button
+  byId("btn-setting-units")?.addEventListener("click", () => {
+    unitSystem = unitSystem === "si" ? "imperial" : "si";
+    localStorage.setItem("rotor_units", unitSystem);
+    refreshSettingsButtons();
+    recalculate();
+  });
 
-      localStorage.removeItem("rotor_theme");
-      localStorage.removeItem("rotor_units");
-      localStorage.removeItem("rotor_extra_precision");
-      localStorage.removeItem("rotor_angle_format");
-      localStorage.removeItem("rotor_pref_thrust");
-      localStorage.removeItem("rotor_pref_power");
-      localStorage.removeItem("rotor_pref_torque");
-      localStorage.removeItem("rotor_pref_speed");
-      localStorage.removeItem("rotor_pref_pressure");
+  // 3. Precision Button
+  byId("btn-setting-precision")?.addEventListener("click", () => {
+    extraPrecision = extraPrecision === 1 ? 0 : 1;
+    localStorage.setItem("rotor_extra_precision", extraPrecision.toString());
+    refreshSettingsButtons();
+    recalculate();
+  });
 
-      syncSettingsToUI();
-      applyTheme();
-      refreshOperatingControls();
-      recalculate();
-      closeModal("modal-settings");
+  // 4. Palette Button
+  byId("btn-setting-palette")?.addEventListener("click", () => {
+    const items = [
+      { id: "0", label: "Aero", desc: "Vibrant technical contrast" },
+      { id: "1", label: "Colorblind Safe", desc: "Okabe-Ito accessible palette" },
+      { id: "2", label: "Print", desc: "High-contrast print palette" },
+    ];
+    showOptionPicker("Palette", items, plotPaletteIndex.toString(), (selectedId) => {
+      plotPaletteIndex = parseInt(selectedId, 10);
+      localStorage.setItem("rotor_plot_palette", plotPaletteIndex.toString());
+      refreshSettingsButtons();
+      if (sweepUpdateFn) sweepUpdateFn();
+    });
+  });
+
+  // 5. Restore Factory Presets Button
+  byId("btn-setting-restore")?.addEventListener("click", () => {
+    const msg =
+      "Restore the shipped factory rotor definitions?\n\nCustom user rotors are preserved. Same-name factory presets are replaced by their original values.";
+    if (confirm(msg)) {
+      storedRotors = resetToFactoryPresets();
+      loadRotorToUI(storedRotors[0]);
+      alert("Factory presets restored; custom rotors preserved.");
+    }
+  });
+
+  // 6. Import Geometries Button
+  byId("btn-setting-import")?.addEventListener("click", () => {
+    byId<HTMLInputElement>("file-import-input")?.click();
+  });
+
+  // 7. Export Geometries Button
+  byId("btn-setting-export")?.addEventListener("click", () => {
+    downloadGeometriesBackup();
+  });
+
+  // PWA Installation handling
+  let deferredInstallPrompt: any = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const row = byId("row-install-pwa");
+    if (row) row.style.display = "flex";
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    const row = byId("row-install-pwa");
+    if (row) row.style.display = "none";
+  });
+
+  byId("btn-install-pwa")?.addEventListener("click", async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      try {
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === "accepted") {
+          deferredInstallPrompt = null;
+          const row = byId("row-install-pwa");
+          if (row) row.style.display = "none";
+        }
+      } catch {
+        // ignore
+      }
+    } else {
+      alert("To install, use your browser's 'Add to Home Screen' or 'Install' menu option.");
     }
   });
 }
@@ -2743,6 +3235,67 @@ function initTooltips(): void {
   });
 }
 
+function bindRowLabelHelp(): void {
+  document.querySelectorAll<HTMLButtonElement>(".row-label-btn[data-key]").forEach((btn) => {
+    const key = btn.dataset.key;
+    if (!key) return;
+    if (["mu", "alpha", "airfoil", "tipModel", "comp", "trim", "inflow"].includes(key)) return;
+    btn.addEventListener("click", () => {
+      showContextualHelp(key);
+    });
+  });
+
+  byId("lbl-operating-1")?.addEventListener("click", () => {
+    const k = byId("lbl-operating-1").dataset.key;
+    if (k) showContextualHelp(k);
+  });
+
+  byId("lbl-operating-2")?.addEventListener("click", () => {
+    const k = byId("lbl-operating-2").dataset.key;
+    if (k) showContextualHelp(k);
+  });
+}
+
+function initPwaInstall(): void {
+  const btnInstall = byId("btn-install-app");
+  const menuItemInstall = byId("menu-item-install");
+
+  const triggerInstall = async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const choiceResult = await deferredInstallPrompt.userChoice;
+      if (choiceResult.outcome === "accepted") {
+        deferredInstallPrompt = null;
+        if (btnInstall) btnInstall.style.display = "none";
+        if (menuItemInstall) menuItemInstall.style.display = "none";
+      }
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        alert("To install RotorCalculator on iOS:\n1. Tap the Share button in Safari (box with arrow)\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add' to install.");
+      } else {
+        alert("To install RotorCalculator as a standalone App:\nOpen your browser menu (⋮) and select 'Install app' or 'Add to Home screen'.");
+      }
+    }
+  };
+
+  btnInstall?.addEventListener("click", triggerInstall);
+  menuItemInstall?.addEventListener("click", triggerInstall);
+
+  window.addEventListener("beforeinstallprompt", (e: any) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (btnInstall) btnInstall.style.display = "inline-flex";
+    if (menuItemInstall) menuItemInstall.style.display = "block";
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    if (btnInstall) btnInstall.style.display = "none";
+    if (menuItemInstall) menuItemInstall.style.display = "none";
+  });
+}
+
 // Bootstrap Application
 function initApp(): void {
   applyTheme();
@@ -2753,10 +3306,20 @@ function initApp(): void {
   bindSelectorButtons();
   bindUnitButtons();
   bindResultRowTooltips();
+  bindRowLabelHelp();
   bindSettingsListeners();
   initSwipeNavigation();
   initTooltips();
+  initPwaInstall();
   updateResponsiveLabels();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {
+        // Service worker registration fallback
+      });
+    });
+  }
 
   window.addEventListener("beforeunload", (e) => {
     if (isGeometryDirty) {

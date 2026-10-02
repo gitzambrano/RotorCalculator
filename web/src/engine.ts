@@ -25,6 +25,7 @@ export interface RotorGeometry {
   tipLossMode: "none" | "fixed" | "sissingh";
   tipLossB: number; // tip-loss factor B [-]
   usePrandtlGlauert: boolean;
+  nominalRpm?: number;
 }
 
 export interface FlightCondition {
@@ -111,7 +112,18 @@ export interface RotorResults {
   speedOfSound: number;
   solutionValid: boolean;
   compressibilityWarning: boolean;
+  compressibilityInvalid?: boolean;
   statusMessage: string;
+  powerInducedKW: number;
+  powerProfileKW: number;
+  diskLoadingN_m2: number;
+  powerLoadingN_kW: number;
+  inducedVelocityM_s: number;
+  CTs: number;
+  aoaAdv75: number;
+  aoaRet75: number;
+  phiAdv75: number;
+  phiRet75: number;
 }
 
 // 16-point and 24-point Gauss-Legendre quadrature nodes and weights
@@ -144,7 +156,7 @@ const GL_W24 = [
 ];
 
 export function cloneGeometry(g: RotorGeometry): RotorGeometry {
-  return { ...g };
+  return { ...g, nominalRpm: g.nominalRpm ?? g.rpm };
 }
 
 export function cloneCondition(c: FlightCondition): FlightCondition {
@@ -155,6 +167,7 @@ export function createDefaultGeometry(): RotorGeometry {
   return resolveSolidity({
     name: "Sikorsky UH-60 Black Hawk",
     rpm: 258.0,
+    nominalRpm: 258.0,
     radius: 8.18,
     liftSlope0: 5.73,
     rootCutout: 0.15,
@@ -230,6 +243,8 @@ export function resolveSolidity(geom: RotorGeometry): RotorGeometry {
   const g = { ...geom };
   g.radius = Math.max(0.02, Math.min(50.0, g.radius));
   g.rpm = Math.max(1.0, Math.min(30000.0, g.rpm));
+  if (!g.nominalRpm || g.nominalRpm <= 0) g.nominalRpm = g.rpm;
+  g.nominalRpm = Math.max(1.0, Math.min(30000.0, g.nominalRpm));
   g.nBlades = Math.max(1, Math.min(16, Math.floor(g.nBlades)));
   g.rootCutout = Math.max(0.0, Math.min(0.95, g.rootCutout));
   g.chordRoot = Math.max(0.0001, Math.min(2.0 * g.radius, g.chordRoot));
@@ -268,10 +283,23 @@ export function referenceBladeArea(geom: RotorGeometry): number {
   return (geom.radius * (geom.chordRoot + geom.chordTip)) / 2.0;
 }
 
+export function activeBladeArea(geom: RotorGeometry): number {
+  const x0 = geom.rootCutout;
+  const c0 = geom.chordRoot;
+  const c1 = geom.chordTip;
+  const integral = c0 * (1.0 - x0) + 0.5 * (c1 - c0) * (1.0 - x0 * x0);
+  return geom.radius * integral;
+}
+
 export function referenceAspectRatio(geom: RotorGeometry): number {
   const area = referenceBladeArea(geom);
   if (area <= 1.0e-12) return 0.0;
   return (geom.radius * geom.radius) / area;
+}
+
+export function taperRatio(geom: RotorGeometry): number {
+  if (Math.abs(geom.chordRoot) < 1.0e-12) return 0.0;
+  return geom.chordTip / geom.chordRoot;
 }
 
 export function scaleRadiusPreserveReference(geom: RotorGeometry, newRadius: number): RotorGeometry {
@@ -306,6 +334,128 @@ export function scaleChordsToAspectRatio(geom: RotorGeometry, targetAR: number):
   g.chordRoot = g.chordRoot * scale;
   g.chordTip = g.chordTip * scale;
   g.solidityMode = "chords";
+  return resolveSolidity(g);
+}
+
+/**
+ * Fully coupled planform editing (reference planform c(x)=c0+(c1-c0)x)
+ * Keys (SI, rad): R, Nb, x0, c0, c1, taper, sigmaRef, sigmaAct, sigmaT, AR, A, Ab, Aact,
+ * thRoot, thTip, thTwist, th75
+ */
+export function getGeometryQuantity(geom: RotorGeometry, key: string): number {
+  const g = resolveSolidity(cloneGeometry(geom));
+  switch (key) {
+    case "R":
+      return g.radius;
+    case "Nb":
+      return g.nBlades;
+    case "x0":
+      return g.rootCutout;
+    case "c0":
+      return g.chordRoot;
+    case "c1":
+      return g.chordTip;
+    case "taper":
+      return taperRatio(g);
+    case "sigmaRef":
+      return g.sigmaRef;
+    case "sigmaAct":
+      return g.sigmaGeom;
+    case "sigmaT":
+      return g.sigmaThrust;
+    case "AR":
+      return referenceAspectRatio(g);
+    case "A":
+      return Math.PI * g.radius * g.radius;
+    case "Ab":
+      return referenceBladeArea(g);
+    case "Aact":
+      return activeBladeArea(g);
+    case "thRoot":
+      return g.thetaRoot;
+    case "thTip":
+      return g.thetaTip;
+    case "thTwist":
+      return g.thetaTip - g.thetaRoot;
+    case "th75":
+      return g.thetaRoot + (g.thetaTip - g.thetaRoot) * 0.75;
+    default:
+      return 0.0;
+  }
+}
+
+/**
+ * Returns a clamped, solidity-resolved CLONE; the caller's geometry is never mutated.
+ */
+export function setGeometryQuantity(geom: RotorGeometry, key: string, value: number): RotorGeometry {
+  const g = resolveSolidity(cloneGeometry(geom));
+  g.solidityMode = "chords";
+  let cur = 0.0;
+  let scale = 1.0;
+  let mean = 0.0;
+  switch (key) {
+    case "R":
+    case "A": {
+      const newR = key === "A" ? Math.sqrt(Math.max(0.0, value) / Math.PI) : value;
+      return scaleRadiusPreserveReference(g, newR);
+    }
+    case "Nb":
+      g.nBlades = Math.max(1, Math.min(16, Math.round(value)));
+      break;
+    case "x0":
+      g.rootCutout = Math.max(0.0, Math.min(0.95, value));
+      break;
+    case "c0":
+      g.chordRoot = value;
+      break;
+    case "c1":
+      g.chordTip = value;
+      break;
+    case "taper": {
+      const t = Math.max(0.01, Math.min(10.0, value));
+      const cm = 0.5 * (g.chordRoot + g.chordTip);
+      g.chordRoot = (2.0 * cm) / (1.0 + t);
+      g.chordTip = t * g.chordRoot;
+      break;
+    }
+    case "sigmaRef":
+    case "sigmaAct":
+    case "sigmaT":
+    case "AR":
+    case "Ab":
+    case "Aact": {
+      cur = getGeometryQuantity(g, key);
+      if (cur <= 1.0e-12 || value <= 0.0) return g;
+      scale = key === "AR" ? cur / value : value / cur;
+      g.chordRoot = g.chordRoot * scale;
+      g.chordTip = g.chordTip * scale;
+      break;
+    }
+    case "thRoot":
+      g.thetaRoot = value;
+      break;
+    case "thTip":
+      g.thetaTip = value;
+      break;
+    case "thTwist": {
+      mean = 0.5 * (g.thetaRoot + g.thetaTip);
+      g.thetaRoot = mean - 0.5 * value;
+      g.thetaTip = mean + 0.5 * value;
+      break;
+    }
+    case "th75": {
+      const sh = value - (g.thetaRoot + (g.thetaTip - g.thetaRoot) * 0.75);
+      g.thetaRoot += sh;
+      g.thetaTip += sh;
+      break;
+    }
+  }
+  g.thetaRoot = Math.max(-Math.PI / 2.0, Math.min(Math.PI / 2.0, g.thetaRoot));
+  g.thetaTip = Math.max(-Math.PI / 2.0, Math.min(Math.PI / 2.0, g.thetaTip));
+  if (key === "thRoot" || key === "thTip" || key === "thTwist" || key === "th75") {
+    g.pitchMode = "linear_twist";
+    g.theta0 = 0.5 * (g.thetaRoot + g.thetaTip);
+  }
   return resolveSolidity(g);
 }
 
@@ -900,6 +1050,9 @@ function createEmptyResults(): RotorResults {
     operatingMu: 0, operatingMuZ: 0, operatingVx: 0, operatingVz: 0, operatingAlphaDeg: 0,
     altitudeM: 0, temperatureC: 0, densityRho: 0, pressurePa: 0, speedOfSound: 0,
     solutionValid: false, compressibilityWarning: false, statusMessage: "INIT",
+    powerInducedKW: 0, powerProfileKW: 0, diskLoadingN_m2: 0, powerLoadingN_kW: 0,
+    inducedVelocityM_s: 0, CTs: 0,
+    aoaAdv75: 0, aoaRet75: 0, phiAdv75: 0, phiRet75: 0,
   };
 }
 
@@ -940,7 +1093,8 @@ export function calculateCoreResolvedMode(
   res.effectiveLiftSlope = getLiftSlope(g, c.mu, c.speedOfSound);
   if (g.usePrandtlGlauert && res.advancingTipMach >= 0.8) {
     res.compressibilityWarning = true;
-    res.statusMessage = "CAUTION: Advancing Mach >= 0.80";
+    if (res.advancingTipMach >= 1.0) res.compressibilityInvalid = true;
+    res.statusMessage = "CAUTION: Prandtl-Glauert outside recommended Mat < 0.80 range";
   }
 
   let bVal = g.tipLossMode === "fixed" ? g.tipLossB : 1.0;
@@ -1056,5 +1210,98 @@ export function calculateCoreResolvedMode(
   res.powerShaftKW = res.powerShaftW / 1000.0;
   res.powerShaftHP = res.powerShaftW / 745.699872;
 
+  res.phiAdv75 = sectionPhi75(g, res, 1);
+  res.phiRet75 = sectionPhi75(g, res, -1);
+  const pitch75 = localPitch(g, 0.75) * (180.0 / Math.PI);
+  res.aoaAdv75 = Number.isNaN(res.phiAdv75) ? NaN : pitch75 - res.phiAdv75;
+  res.aoaRet75 = Number.isNaN(res.phiRet75) ? NaN : pitch75 - res.phiRet75;
+
+  const cqRatio = Math.max(1e-12, Math.abs(res.CQ));
+  res.powerInducedKW = (res.CQi / cqRatio) * res.powerShaftKW;
+  res.powerProfileKW = (res.CQ0 / cqRatio) * res.powerShaftKW;
+  res.diskLoadingN_m2 = res.thrustN / (Math.PI * g.radius * g.radius);
+  res.powerLoadingN_kW = res.thrustN / Math.max(1e-6, res.powerShaftKW);
+  res.inducedVelocityM_s = res.inflowLambdaI * vtip;
+  res.CTs = res.CT / Math.max(1e-6, g.sigmaRef);
+
   return res;
+}
+
+// ---------------------------------------------------------------------------
+// Section diagnostics at x = 0.75 (advancing/retreating; matching zBETEngine.bas)
+// ---------------------------------------------------------------------------
+
+export function localPitch(geom: RotorGeometry, x: number): number {
+  const [t0, t1] = getPitchCoeffs(geom);
+  return t0 + t1 * x;
+}
+
+export function sectionPhi75(g: RotorGeometry, res: RotorResults, side: number): number {
+  if (g.rootCutout >= 0.75 || res.bFactor < 0.75) return NaN;
+  const ut = 0.75 + side * res.operatingMu;
+  if (ut <= 1e-9) return NaN;
+  const up = res.inflowLambda + 0.75 * side * res.inflowKy * res.inflowLambdaI;
+  return Math.atan(up / ut) * (180.0 / Math.PI);
+}
+
+export function derivedOutput(res: RotorResults, key: string): number {
+  switch (key) {
+    case "vi":
+      return res.inflowLambdaI * res.tipSpeed;
+    case "Vztot":
+      return res.inflowLambda * res.tipSpeed;
+    case "Vadv":
+      return res.tipSpeed + res.operatingVx;
+    case "Vret":
+      return res.tipSpeed - res.operatingVx;
+    case "Mret":
+      if (res.speedOfSound <= 0) return NaN;
+      return Math.abs(res.tipSpeed - res.operatingVx) / res.speedOfSound;
+    case "aoaAdv75":
+      return res.aoaAdv75;
+    case "aoaRet75":
+      return res.aoaRet75;
+    case "phiAdv75":
+      return res.phiAdv75;
+    case "phiRet75":
+      return res.phiRet75;
+    default:
+      return NaN;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Derived output helpers (pure post-processing of RotorResults; matching zBETEngine.bas)
+// Undefined values return NaN.
+// ---------------------------------------------------------------------------
+
+export function freestreamSpeed(res: RotorResults): number {
+  return Math.sqrt(res.operatingVx * res.operatingVx + res.operatingVz * res.operatingVz);
+}
+
+export function derivedMuOverLambda(res: RotorResults): number {
+  if (Math.abs(res.inflowLambda) < 0.0001) return NaN;
+  return res.operatingMu / res.inflowLambda;
+}
+
+export function derivedTc(res: RotorResults, area: number): number {
+  const v = freestreamSpeed(res);
+  if (v < 0.01 || area <= 0 || res.densityRho <= 0) return NaN;
+  return res.thrustN / (0.5 * res.densityRho * v * v * area);
+}
+
+export function derivedPc(res: RotorResults, area: number): number {
+  const v = freestreamSpeed(res);
+  if (v < 0.01 || area <= 0 || res.densityRho <= 0) return NaN;
+  return res.powerShaftW / (0.5 * res.densityRho * v * v * v * area);
+}
+
+export function derivedLambdaH(res: RotorResults): number {
+  if (res.CT < 0) return NaN;
+  return Math.sqrt(res.CT / 2);
+}
+
+export function derivedClBar(res: RotorResults, sigma: number): number {
+  if (sigma <= 0) return NaN;
+  return (6 * res.CT) / sigma;
 }

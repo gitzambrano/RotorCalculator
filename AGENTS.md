@@ -80,7 +80,7 @@ Antes de concluir qualquer entrega de desenvolvimento:
 ## 6. Frontend Android e QA de Release
 
 - A navegação principal usa três painéis B4A nativos (`Geometry`, `Conditions`, `Results`) controlados pelas tabs do header; `AHViewPager` não faz parte do runtime atual.
-- As bibliotecas B4A declaradas são `core`, `phone`, `RSPopupMenu` e `JavaObject`; JavaObject é restrito à integração Android necessária para exportação SAF.
+- As bibliotecas B4A declaradas são `core`, `phone` e `JavaObject`; JavaObject é restrito à integração Android necessária para exportação SAF.
 - O manifesto suporta Android 5.0+ (`minSdkVersion=21`) e usa `targetSdkVersion=36`.
 - Em Geometry e Conditions, o padrão visual segue o AeroCalculator: a coluna esquerda é uma superfície acionável de label/ajuda, a coluna central é o valor, e a coluna direita é uma superfície acionável de unidade. Trocar unidade altera apenas apresentação/conversão; o engine permanece em SI.
 - `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.

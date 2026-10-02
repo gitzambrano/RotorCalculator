@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { getResponsiveInputLabel, getResultDisplayLabel } from "./labels";
+import {
+  chooseLevel,
+  fitLabelSize,
+  formatSubscripts,
+  getPlainLabel,
+  getResponsiveInputLabel,
+  getResultDisplayLabel,
+  getRichLabelHtml,
+  nextLevel,
+  resultLabelHtml,
+  resultPlainLabel,
+} from "./labels";
 
 describe("Mobile Responsive Labels (B4A Parity)", () => {
   describe("ResultDisplayLabel", () => {
@@ -85,4 +96,128 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getResponsiveInputLabel("Temperature", 800)).toBe("Temperature");
     });
   });
+
+  describe("Authoritative Multi-Level Fitting (RotorNames.bas Parity)", () => {
+    it("formats PlainLabel according to level", () => {
+      // Level 0: Full + Symbol
+      expect(getPlainLabel("R", 0)).toBe("Rotor Radius R");
+      expect(getPlainLabel("Nb", 0)).toBe("Blade Count N_b");
+      expect(getPlainLabel("c0", 0)).toBe("Root Chord c_R");
+      expect(getPlainLabel("sigmaRef", 0)).toBe("Geometric Solidity σ_geom");
+      expect(getPlainLabel("T", 0)).toBe("Thrust T");
+
+      // Level 1: Short + Symbol
+      expect(getPlainLabel("R", 1)).toBe("Radius R");
+      expect(getPlainLabel("Nb", 1)).toBe("Blades N_b");
+      expect(getPlainLabel("c0", 1)).toBe("Root Chord c_R");
+      expect(getPlainLabel("sigmaRef", 1)).toBe("Geometric Solidity σ_geom");
+      expect(getPlainLabel("T", 1)).toBe("Thrust T");
+
+      // Level 2: Short only
+      expect(getPlainLabel("R", 2)).toBe("Radius");
+      expect(getPlainLabel("Nb", 2)).toBe("Blades");
+      expect(getPlainLabel("c0", 2)).toBe("Root Chord");
+      expect(getPlainLabel("sigmaRef", 2)).toBe("Geometric Solidity");
+
+      // Level 3: Abbreviation + Symbol
+      expect(getPlainLabel("R", 3)).toBe("Radius R");
+      expect(getPlainLabel("Nb", 3)).toBe("Blades N_b");
+      expect(getPlainLabel("c0", 3)).toBe("Chord c_R");
+      expect(getPlainLabel("sigmaRef", 3)).toBe("Solidity σ_geom");
+      expect(getPlainLabel("AR", 3)).toBe("AR"); // abbr == sym
+
+      // Level 4: Symbol only
+      expect(getPlainLabel("R", 4)).toBe("R");
+      expect(getPlainLabel("Nb", 4)).toBe("N_b");
+      expect(getPlainLabel("c0", 4)).toBe("c_R");
+      expect(getPlainLabel("c1", 4)).toBe("c_T");
+      expect(getPlainLabel("sigmaRef", 4)).toBe("σ_geom");
+      expect(getPlainLabel("T", 4)).toBe("T");
+      expect(getPlainLabel("CT", 4)).toBe("C_T");
+    });
+
+    it("formats RichLabelHtml with HTML <sub> tags", () => {
+      expect(getRichLabelHtml("c0", 4)).toBe("c<sub>R</sub>");
+      expect(getRichLabelHtml("Nb", 4)).toBe("N<sub>b</sub>");
+      expect(getRichLabelHtml("CT", 4)).toBe("C<sub>T</sub>");
+      expect(getRichLabelHtml("c0", 3)).toBe("Chord c<sub>R</sub>");
+      expect(getRichLabelHtml("mu", 4, " ⇄")).toBe("μ<sub>x</sub><span class=\"label-suffix\"> ⇄</span>");
+    });
+
+    it("follows the exact level progression order: 0 -> 1 -> 3 -> 2 -> 4 -> -1", () => {
+      expect(nextLevel(0)).toBe(1);
+      expect(nextLevel(1)).toBe(3);
+      expect(nextLevel(3)).toBe(2);
+      expect(nextLevel(2)).toBe(4);
+      expect(nextLevel(4)).toBe(-1);
+    });
+
+    it("chooses appropriate level based on width and fits without wrapping", () => {
+      const keys = ["R", "Nb", "c0", "c1", "sigmaRef", "thTwist"];
+      // Generous tablet width (e.g. 350px column) fits level 0 (Full + Symbol)
+      const tabletLevel = chooseLevel(keys, 350, 0);
+      expect(tabletLevel).toBe(0);
+
+      // Ordinary phone width (e.g. 160px column) fits level 1 or 3
+      const phoneLevel = chooseLevel(keys, 160, 1);
+      expect([1, 3]).toContain(phoneLevel);
+
+      // Extremely tight width (e.g. 40px column) falls back to level 4 (Symbol only)
+      const tightLevel = chooseLevel(keys, 40, 1);
+      expect(tightLevel).toBe(4);
+    });
+
+    it("computes fitted font size between minPx (13) and maxPx (15.5)", () => {
+      const keys = ["R", "Nb", "c0"];
+      const szWide = fitLabelSize(keys, 4, 300, 15.5, 13);
+      expect(szWide).toBe(15.5);
+
+      const szTight = fitLabelSize(keys, 1, 60, 15.5, 13);
+      expect(szTight).toBeGreaterThanOrEqual(13);
+      expect(szTight).toBeLessThanOrEqual(15.5);
+    });
+
+    it("formats braced and unbraced subscripts correctly", () => {
+      expect(formatSubscripts("V_{z,tot}")).toBe("V<sub>z,tot</sub>");
+      expect(formatSubscripts("α_{adv,75}")).toBe("α<sub>adv,75</sub>");
+      expect(formatSubscripts("φ_{ret,75}")).toBe("φ<sub>ret,75</sub>");
+      expect(formatSubscripts("C_T")).toBe("C<sub>T</sub>");
+      expect(formatSubscripts("P_air")).toBe("P<sub>air</sub>");
+      expect(formatSubscripts("H_0")).toBe("H<sub>0</sub>");
+    });
+
+    it("formats ResultPlainLabel according to levels 0, 1, 3, 4", () => {
+      // Level 0: Full + Symbol
+      expect(resultPlainLabel("Vztot", 0)).toBe("Total Axial Speed V_{z,tot}");
+      expect(resultPlainLabel("T", 0)).toBe("Thrust T");
+      expect(resultPlainLabel("Hi", 0)).toBe("Induced In-Plane Force H_i");
+      expect(resultPlainLabel("Pair", 0)).toBe("Air Power P_air");
+
+      // Level 1: Short + Symbol
+      expect(resultPlainLabel("Vztot", 1)).toBe("Total Axial Speed V_{z,tot}");
+      expect(resultPlainLabel("Hi", 1)).toBe("Induced In-Plane H_i");
+      expect(resultPlainLabel("Pair", 1)).toBe("Air Power P_air");
+
+      // Level 3: Abbreviation + Symbol
+      expect(resultPlainLabel("Vztot", 3)).toBe("Axial Speed V_{z,tot}");
+      expect(resultPlainLabel("Hi", 3)).toBe("Ind In-Plane H_i");
+      expect(resultPlainLabel("Pair", 3)).toBe("Air Power P_air");
+
+      // Level 4: Symbol only
+      expect(resultPlainLabel("Vztot", 4)).toBe("V_{z,tot}");
+      expect(resultPlainLabel("Hi", 4)).toBe("H_i");
+      expect(resultPlainLabel("Pair", 4)).toBe("P_air");
+    });
+
+    it("evaluates ResultLabelHtml through level sequence [0, 1, 3, 4]", () => {
+      // Wide width allows full level 0
+      const wide = resultLabelHtml("Vztot", 350, 15.5);
+      expect(wide).toBe("Total Axial Speed V<sub>z,tot</sub>");
+
+      // Extremely narrow width falls back to symbol (level 4)
+      const narrow = resultLabelHtml("Vztot", 30, 15.5);
+      expect(narrow).toBe("V<sub>z,tot</sub>");
+    });
+  });
 });
+

@@ -26,6 +26,7 @@ Sub Process_Globals
 	Public LastPlotW As Float
 	Public LastXMax As Double
 	Public SweepParamLabels As List
+	Private plotThemeIdx As Int = -1
 	Private dpIdx As Int
 	Private dpRem As Float
 	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
@@ -115,6 +116,9 @@ Public Sub Initialize
 		AddSweepParam("muLam", SweepParamDisplayName("muLam"))
 		AddSweepParam("lamh", SweepParamDisplayName("lamh"))
 		AddSweepParam("CLbar", SweepParamDisplayName("CLbar"))
+		For Each outputKey As String In Array As String("vi", "Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75")
+			AddSweepParam(outputKey, SweepParamDisplayName(outputKey))
+		Next
 		AddSweepParam("Tc", SweepParamDisplayName("Tc"))
 		AddSweepParam("Pc", SweepParamDisplayName("Pc"))
 		AddSweepParam("L_D_eff", SweepParamDisplayName("L_D_eff"))
@@ -129,6 +133,13 @@ Public Sub Initialize
 		AddSweepParam("ThrustKgf", SweepParamDisplayName("ThrustKgf"))
 		AddSweepParam("TorqueNm", SweepParamDisplayName("TorqueNm"))
 		AddSweepParam("DragHN", SweepParamDisplayName("DragHN"))
+		AddSweepParam("PowerIndKW", SweepParamDisplayName("PowerIndKW"))
+		AddSweepParam("PowerProfKW", SweepParamDisplayName("PowerProfKW"))
+		AddSweepParam("PowerAirKW", SweepParamDisplayName("PowerAirKW"))
+		AddSweepParam("TorqueIndNm", SweepParamDisplayName("TorqueIndNm"))
+		AddSweepParam("TorqueProfNm", SweepParamDisplayName("TorqueProfNm"))
+		AddSweepParam("DragIndN", SweepParamDisplayName("DragIndN"))
+		AddSweepParam("DragProfN", SweepParamDisplayName("DragProfN"))
 		AddSweepParam("B", SweepParamDisplayName("B"))
 		AddSweepParam("TipSpeed", SweepParamDisplayName("TipSpeed"))
 		AddSweepParam("RPM", SweepParamDisplayName("RPM"))
@@ -162,6 +173,13 @@ Private Sub SweepNameKey(k As String) As String
 		Case "ThrustN", "ThrustKgf": Return "T"
 		Case "TorqueNm": Return "Q"
 		Case "DragHN": Return "H"
+		Case "PowerIndKW": Return "Pi"
+		Case "PowerProfKW": Return "P0"
+		Case "PowerAirKW": Return "Pair"
+		Case "TorqueIndNm": Return "Qi"
+		Case "TorqueProfNm": Return "Q0"
+		Case "DragIndN": Return "Hi"
+		Case "DragProfN": Return "H0"
 		Case "B": Return "Bres"
 		Case "TipSpeed": Return "OmR"
 		Case "RPM": Return "rpm"
@@ -180,13 +198,13 @@ End Sub
 
 Private Sub SweepUnit(k As String) As String
 	Select k
-		Case "chi", "Collective", "Alpha": Return "deg"
-		Case "PowerKW": Return "kW"
+		Case "chi", "Collective", "Alpha", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75": Return "deg"
+		Case "PowerKW", "PowerIndKW", "PowerProfKW", "PowerAirKW": Return "kW"
 		Case "PowerHP": Return "hp"
-		Case "ThrustN", "DragHN": Return "N"
+		Case "ThrustN", "DragHN", "DragIndN", "DragProfN": Return "N"
 		Case "ThrustKgf": Return "kgf"
-		Case "TorqueNm": Return Chr(183) & "N"
-		Case "TipSpeed", "Vx", "Vz", "SoundSpeed": Return "m/s"
+		Case "TorqueNm", "TorqueIndNm", "TorqueProfNm": Return "N" & Chr(183) & "m"
+		Case "TipSpeed", "Vx", "Vz", "vi", "Vztot", "Vadv", "Vret", "SoundSpeed": Return "m/s"
 		Case "RPM": Return "rpm"
 		Case "Altitude": Return "m"
 		Case "Temperature": Return Chr(176) & "C"
@@ -200,7 +218,7 @@ End Sub
 Private Sub SweepInfo(k As String) As String()
 	Dim nk As String = SweepNameKey(k)
 	Dim u As String = SweepUnit(k)
-	If k = "TorqueNm" Then u = "N" & Chr(183) & "m"
+	If k = "TorqueNm" Or k = "TorqueIndNm" Or k = "TorqueProfNm" Then u = "N" & Chr(183) & "m"
 	If RotorNames.HasKey(nk) Then Return Array As String(RotorNames.FullName(nk), RotorNames.ShortName(nk), RotorNames.Symbol(nk), u)
 	Return Array As String(k, k, k, u)
 End Sub
@@ -230,13 +248,15 @@ End Sub
 ' Symbol with real subscripts where the glyphs exist (digits, x, i, e, o, a); otherwise unchanged.
 ' Draws text where "_xyz" segments become a smaller lowered subscript (canvas has no spans).
 Private Sub DrawRichText(cvs As Canvas, text As String, x As Float, y As Float, face As Typeface, fs As Float, col As Int, align As String)
-	Dim m As Matcher = Regex.Matcher("_([A-Za-z0-9]+)", text)
+	Dim m As Matcher = Regex.Matcher("_\{([^}]+)\}|_([A-Za-z0-9]+)", text)
 	Dim segs As List
 	segs.Initialize
 	Dim prev As Int = 0
 	Do While m.Find
 		If m.GetStart(0) > prev Then segs.Add(Array As Object(text.SubString2(prev, m.GetStart(0)), False))
-		segs.Add(Array As Object(m.Group(1), True))
+		Dim subText As String = m.Group(1)
+		If subText = Null Then subText = m.Group(2)
+		segs.Add(Array As Object(subText, True))
 		prev = m.GetEnd(0)
 	Loop
 	If prev < text.Length Then segs.Add(Array As Object(text.SubString(prev), False))
@@ -305,7 +325,7 @@ Public Sub SweepParamDigits(paramKey As String) As Int
 		Case "Kx", "Ky": Return 3
 		Case "chi": Return 1
 		Case "Mat": Return 3
-		Case "PowerKW", "PowerHP", "TorqueNm", "DragHN": Return 1
+		Case "PowerKW", "PowerHP", "TorqueNm", "DragHN", "PowerIndKW", "PowerProfKW", "PowerAirKW", "TorqueIndNm", "TorqueProfNm", "DragIndN", "DragProfN": Return 1
 		Case "ThrustN", "ThrustKgf", "RPM", "Altitude": Return 0
 		Case "B", "Mu", "MuZ", "Density": Return 4
 		Case "Collective", "Alpha": Return 2
@@ -338,6 +358,7 @@ Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As 
 		Case "muLam": Return zBETEngine.DerivedMuOverLambda(res)
 		Case "lamh": Return zBETEngine.DerivedLambdaH(res)
 		Case "CLbar": Return zBETEngine.DerivedClBar(res, sigma)
+		Case "vi", "Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75": Return zBETEngine.DerivedOutput(res, paramKey)
 		Case "Tc": Return zBETEngine.DerivedTc(res, area)
 		Case "Pc": Return zBETEngine.DerivedPc(res, area)
 		Case "L_D_eff": Return res.L_D_eff
@@ -352,6 +373,13 @@ Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As 
 		Case "ThrustKgf": Return res.ThrustKgf
 		Case "TorqueNm": Return res.TorqueNm
 		Case "DragHN": Return res.DragHN
+		Case "DragIndN": Return res.CHi * res.DensityRho * area * res.TipSpeed * res.TipSpeed
+		Case "DragProfN": Return res.CH0 * res.DensityRho * area * res.TipSpeed * res.TipSpeed
+		Case "TorqueIndNm": Return res.CQi * res.DensityRho * area * res.TipSpeed * res.TipSpeed * Sqrt(area / 3.141592653589793)
+		Case "TorqueProfNm": Return res.CQ0 * res.DensityRho * area * res.TipSpeed * res.TipSpeed * Sqrt(area / 3.141592653589793)
+		Case "PowerIndKW": Return res.CQi * res.DensityRho * area * Power(res.TipSpeed, 3) / 1000
+		Case "PowerProfKW": Return res.CQ0 * res.DensityRho * area * Power(res.TipSpeed, 3) / 1000
+		Case "PowerAirKW": Return res.CPair * res.DensityRho * area * Power(res.TipSpeed, 3) / 1000
 		Case "B": Return res.BFactor
 		Case "TipSpeed": Return res.TipSpeed
 		Case "RPM": Return res.TrimmedRPM
@@ -464,12 +492,18 @@ Public Sub PlotPaletteName(i As Int) As String
 	End Select
 End Sub
 
+' 0 = Dark, 1 = Light, 2 = Midnight Blue. Midnight behaves like dark with a navy background.
+' When never called, the lightTheme boolean passed to DrawSweepPlot decides (Dark/Light).
+Public Sub SetPlotThemeIndex(i As Int)
+	plotThemeIdx = i
+End Sub
+
 Public Sub PlotColor(paletteIndex As Int, curveIndex As Int, lightTheme As Boolean) As Int
 	Dim idx As Int = curveIndex Mod 8
 	Select paletteIndex
 		Case 1
 			If lightTheme Then
-				Dim a() As Int = Array As Int(0xFF0072B2, 0xFFE69F00, 0xFF009E73, 0xFFD55E00, 0xFF3A9AD0, 0xFFCC79A7, 0xFF9A8700, 0xFF000000)
+				Dim a() As Int = Array As Int(0xFF0072B2, 0xFFB06E00, 0xFF009E73, 0xFFD55E00, 0xFF3A9AD0, 0xFFCC79A7, 0xFF7A6A00, 0xFF000000)
 				Return a(idx)
 			Else
 				Dim b() As Int = Array As Int(0xFF56B4E9, 0xFFE69F00, 0xFF009E73, 0xFFF0E442, 0xFFD55E00, 0xFFCC79A7, 0xFF3A8BD0, 0xFFFFFFFF)
@@ -1009,6 +1043,9 @@ Public Sub DrawSweepPlot( _
 	Dim colText As Int
 	Dim colCurrent As Int
 	Dim colAccent As Int
+	Dim isMid As Boolean = (plotThemeIdx = 2)
+	If plotThemeIdx = 1 Then lightTheme = True
+	If plotThemeIdx = 0 Or isMid Then lightTheme = False
 	If lightTheme Then
 		colBg = 0xFFFFFFFF
 		colGrid = 0xFFD9E1EA
@@ -1021,6 +1058,11 @@ Public Sub DrawSweepPlot( _
 		colText = 0xFFB4BFCE
 		colCurrent = 0xFFFFB300
 		colAccent = 0xFF00E5FF
+		If isMid Then
+			colBg = 0xFF0D1B2A
+			colGrid = 0xFF2A4361
+			colText = 0xFFB9CBE0
+		End If
 	End If
 	cvs.DrawColor(colBg)
 
@@ -1093,6 +1135,11 @@ Public Sub DrawSweepPlot( _
 	End If
 	If xAxisMode = 0 Then xMax = maxMu
 	If xMax <= 1.0e-12 Then xMax = 1.0
+	' Vx and mu/lambda axes end at the largest valid finite point, rounded up to a nice step (no saturation).
+	If xAxisMode <> 0 Then
+		Dim xnStep As Double = NiceStep(xMax / 4)
+		xMax = Ceil(xMax / xnStep - 0.0001) * xnStep
+	End If
 
 	' --- Y scaling and nice ticks ---
 	Dim m As Double = Max(Abs(yMin), Abs(yMax))
@@ -1190,6 +1237,14 @@ Public Sub DrawSweepPlot( _
 	If wDip < 400 Then xTarget = 4
 	Dim xStep As Double = NiceStep(xMax / xTarget)
 	Dim xDec As Int = StepDecimals(xStep)
+	' Adaptive ticks: widen the step until the widest label fits in 0.8 x the tick spacing.
+	Do While xTarget > 2
+		Dim lblW As Float = cvs.MeasureStringWidth(FmtNum(xMax, xDec), Typeface.MONOSPACE, fs)
+		If lblW <= 0.8 * (xStep / xMax * plotW) Then Exit
+		xTarget = xTarget - 1
+		xStep = NiceStep(xMax / xTarget)
+		xDec = StepDecimals(xStep)
+	Loop
 	Dim xTickMax As Int = Floor(xMax / xStep + 0.0001)
 	For k = 0 To xTickMax
 		Dim gx As Float = mLeft + (k * xStep) / xMax * plotW
@@ -1249,7 +1304,10 @@ Public Sub DrawSweepPlot( _
 	' --- Crosshair ---
 	If IsNum(crossX) And crossX >= 0 And crossX <= xMax Then
 		Dim cx As Float = mLeft + crossX / xMax * plotW
-		cvs.DrawLine(cx, mTop, cx, mTop + plotH, colText, 1.2dip)
+		Dim cdash() As Float = Array As Float(6dip, 4dip)
+		dpIdx = 0
+		dpRem = cdash(0)
+		DrawPatterned(cvs, cx, mTop, cx, mTop + plotH, colText, 1.2dip, cdash)
 		For curveIndex = 0 To nCurves - 1
 			Dim ni As Int = SweepNearestIndex(samples, curveIndex, xAxisMode, crossX)
 			If ni >= 0 Then
@@ -1260,6 +1318,17 @@ Public Sub DrawSweepPlot( _
 				cvs.DrawCircle(nx, ny, 6dip, colBg, True, 1dip)
 				cvs.DrawCircle(nx, ny, 6dip, cc, False, 2dip)
 				cvs.DrawCircle(nx, ny, 2.5dip, cc, True, 1dip)
+				Dim vTxt As String = FmtNum(pn.Value / yScale, yDec)
+				Dim vw As Float = cvs.MeasureStringWidth(vTxt, Typeface.MONOSPACE, fs - 1)
+				Dim vx As Float = nx + 9dip
+				Dim vAlign As String = "LEFT"
+				If vx + vw > mLeft + plotW Then
+					vx = nx - 9dip
+					vAlign = "RIGHT"
+				End If
+				Dim vy As Float = Max(mTop + fs * 1dip, Min(mTop + plotH - 2dip, ny - 7dip))
+				cvs.DrawText(vTxt, vx + 1dip, vy + 1dip, Typeface.MONOSPACE, fs - 1, colBg, vAlign)
+				cvs.DrawText(vTxt, vx, vy, Typeface.MONOSPACE, fs - 1, cc, vAlign)
 			End If
 		Next
 	End If

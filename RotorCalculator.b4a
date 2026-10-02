@@ -18,6 +18,8 @@ File23=physics_help.html
 File24=physics_help_light.html
 File25=privacy_policy.html
 File26=privacy_policy_light.html
+File27=physics_help_midnight.html
+File28=icon_header.png
 File3=ic_action_cancel.png
 File4=icon_bezel_transp_green.png
 File5=icon_bezel_transp_white.png
@@ -42,6 +44,7 @@ FileGroup21=Default Group
 FileGroup22=Default Group
 FileGroup23=Default Group
 FileGroup24=Default Group
+FileGroup28=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
 FileGroup5=Default Group
@@ -52,24 +55,23 @@ FileGroup9=Default Group
 Group=Default Group
 Library1=core
 Library2=phone
-Library3=rspopupmenu
-Library4=javaobject
+Library3=javaobject
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
 Module4=RotorNames
 Module5=clsSheet
-NumberOfFiles=24
-NumberOfLibraries=4
+NumberOfFiles=25
+NumberOfLibraries=3
 NumberOfModules=5
 Version=13
 @EndOfDesignText@
 #Region  Project Attributes 
-	#ApplicationLabel: RotorCalculator
+	#ApplicationLabel: Rotor Calc
 	#MultiDex: False
-	#VersionCode: 5
-	#VersionName: 1.22
+	#VersionCode: 6
+	#VersionName: 1.23
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -110,6 +112,11 @@ Sub Process_Globals
 	Public ColorAccentGreen As Int = 0xFF00E676  ' Emerald Accent
 	Public ColorAccentAmber As Int = 0xFFFFB300  ' Amber Accent
 	Public ColorAccentRed As Int = 0xFFFF6B6B    ' Error / destructive action
+	Public ColorFieldFill As Int = 0xFF0F1B28    ' Editable value surface
+	Public ColorFieldBorder As Int = 0x7300E5FF  ' Editable value border (accent tinted)
+	Public ColorResultText As Int = 0xFFF1F5F9   ' Read-only / result value text (neutral)
+	Public ColorCtaFill As Int = 0xFF00E5FF      ' Primary call-to-action fill
+	Public ColorCtaText As Int = 0xFF04202A      ' Text on the CTA fill
 	
 	' Aerodynamic Global State
 	Public ActiveGeom As RotorGeometry
@@ -119,10 +126,11 @@ Sub Process_Globals
 	
 	' Navigation & Scaling
 	Public sc As Double = 1.0
+	Public typeK As Double = 1.0   ' page type scale by width: 0.90 at <=340dp, 0.95 at <=380dp
 	Public ld As Int = 0
 	Public CurrentPage As Int = 0
 	Public UnitSystem As Int = 0 ' 0=Metric (SI), 1=Imperial
-	Public ThemeMode As Int = 0 ' 0=Dark, 1=Light
+	Public ThemeMode As Int = 0 ' 0=Dark, 1=Light, 2=Midnight Blue
 	Public ExtraPrecision As Int = 0 ' AeroCalculator-compatible +1 decimal
 	Public ConditionAltitudeM As Double = 0.0
 	Public ConditionTemperatureC As Double = 15.0
@@ -158,8 +166,7 @@ Sub Globals
 	Private btnTabRes As Button
 	Private line As Panel
 	Private lblAppTitle As Label
-	Private PopupMenu As RSPopupMenu
-	Private pnlMenuAnchor As Panel
+	Private pnlMenuAnchor As Button
 	Private pnlUnitPopup As Panel
 	Private UnitPopupOpen As Boolean = False
 	Private pnlSettingsPopup As Panel
@@ -171,6 +178,7 @@ Sub Globals
 	Private btnSettingUnits As Button
 	Private btnSettingPrecision As Button
 	Private btnSettingPalette As Button
+	Private btnSettingRestore As Button
 	Private btnUnitMode As Button
 	Private btnUnitSwap As Button
 	Private lblUnitFrom As Label
@@ -204,7 +212,8 @@ Sub Globals
 	Private RowVal As Map
 	Private RowUnit As Map
 	Private RowIdx As Int
-	Private lblNameShow As Label
+	Private RowBar As Map
+	Private lblActiveChev As Label
 	Private LblSp As Float = 16
 	Private FocusRow As String = ""
 	Private ColLblX, ColLblW, ColValX, ColValW, ColUnitX, ColUnitW As Int
@@ -238,8 +247,8 @@ Sub Globals
 	Private lblTrimSummary As Label
 	Private ResKeys As List
 	Private ResLevel As Int
-	Private lblResults(64) As Label
-	Private lblResultUnits(64) As Label
+	Private lblResults(80) As Label
+	Private lblResultUnits(80) As Label
 	
 	' Multi-Parameter μₓ-Sweep Popup
 	Private pnlSweepPopup As Panel
@@ -309,6 +318,14 @@ Private Sub InitSheet
 	pal.Put("green", ColorAccentGreen)
 	pal.Put("amber", ColorAccentAmber)
 	pal.Put("red", ColorAccentRed)
+	If ThemeMode = 2 Then
+		pal.Put("card", 0xFF13203F)
+		pal.Put("title", 0xFFFFFFFF)
+		pal.Put("text", 0xFFE6EEFF)
+		pal.Put("muted", 0xFF9DB2D6)
+		pal.Put("divider", 0xFF263B63)
+		pal.Put("code", 0xFF0B1630)
+	End If
 	sheet.SetTheme(ThemeMode = 1, pal)
 End Sub
 
@@ -317,6 +334,7 @@ Private Sub BuildAllPages
 	RowLbl.Initialize
 	RowVal.Initialize
 	RowUnit.Initialize
+	RowBar.Initialize
 	FocusRow = ""
 	BuildPageGeom
 	BuildPageCond
@@ -352,14 +370,22 @@ Private Sub BuildMainUi
 	sc = Min(widthScale, heightScale)
 	If sc < 1 Then sc = 1
 	If sc > 1.12 Then sc = 1.12
+	Dim wdp As Double = root.Width / 1dip
+	If wdp <= 340 Then
+		typeK = 0.90
+	Else If wdp <= 380 Then
+		typeK = 0.95
+	Else
+		typeK = 1.0
+	End If
 	
 	' Compact landscape header; portrait preserves the AeroCalculator proportions.
 	If ld = 1 Then
 		sc = 1
-		HeaderTopH = 48dip
-		HeaderTabsY = 48dip
-		HeaderTabsH = 48dip
-		HeaderHeight = 97dip
+		HeaderTopH = 38dip
+		HeaderTabsY = 38dip
+		HeaderTabsH = 36dip
+		HeaderHeight = 74dip
 	Else
 		HeaderTopH = 56dip * sc
 		HeaderTabsY = 56dip * sc
@@ -537,42 +563,30 @@ Private Sub BuildUnifiedHeader
 	
 	Dim edge As Int = Max(8dip, root.Width * 2 / 100)
 	Dim iconSize As Int = 38dip * sc
-	If ld = 1 Then iconSize = 34dip
+	If ld = 1 Then iconSize = 28dip
 	Dim iconTop As Int = (HeaderTopH - iconSize) / 2
 	
 	' 1. Left BEMT rotor icon
 	Dim img1 As ImageView
 	Dim bmpImage1 As Bitmap
-	bmpImage1.Initialize(File.DirAssets, "icon.png")
+	bmpImage1.Initialize(File.DirAssets, "icon_header.png")
 	img1.Initialize("")
 	img1.Bitmap = bmpImage1
 	img1.Gravity = Gravity.FILL
 	pnltitle.AddView(img1, edge, iconTop, iconSize, iconSize)
 	
-	' 2. 3-dot menu: keep a full 48dip touch target on every screen.
+	' 2. 3-dot menu: a real Button (ripple + haptic), full 48dip touch target on every screen.
 	Dim menuW As Int = 48dip
 	pnlMenuAnchor.Initialize("pnlMenuAnchor")
-	pnlMenuAnchor.Color = Colors.Transparent
+	pnlMenuAnchor.Text = "⋮"
+	pnlMenuAnchor.TextColor = ColorButText1
+	pnlMenuAnchor.TextSize = 28
+	pnlMenuAnchor.Gravity = Gravity.CENTER
+	pnlMenuAnchor.Typeface = Typeface.DEFAULT_BOLD
+	pnlMenuAnchor.Padding = Array As Int(0, 0, 0, 0)
+	SetBtnBg(pnlMenuAnchor, ButtonGradient2(Array As Int(ColorBut3, ColorBut4)))
 	pnltitle.AddView(pnlMenuAnchor, root.Width - menuW - edge, 0, menuW, HeaderTopH)
-	
-	' Theme-aware overflow glyph. The old white PNG vanished on the Light header.
-	Dim lblMenuDots As Label
-	lblMenuDots.Initialize("pnlMenuAnchor")
-	lblMenuDots.Text = "⋮"
-	lblMenuDots.TextColor = ColorButText1
-	lblMenuDots.TextSize = 28
-	lblMenuDots.Gravity = Gravity.CENTER
-	lblMenuDots.Typeface = Typeface.DEFAULT_BOLD
-	pnlMenuAnchor.AddView(lblMenuDots, 0, 0, menuW, HeaderTopH)
-	
-	PopupMenu.Initialize("PopupMenu", pnlMenuAnchor)
-	PopupMenu.AddMenuItem(0, 0, "Settings")
-	PopupMenu.AddMenuItem(1, 1, "Quick Unit Converter")
-	PopupMenu.AddMenuItem(2, 2, "Physics & Equations")
-	PopupMenu.AddMenuItem(3, 3, "Restore Factory Rotor Presets")
-	PopupMenu.AddMenuItem(4, 4, "About RotorCalculator")
-	PopupMenu.AddMenuItem(5, 5, "Privacy Policy")
-	
+
 	' 3. App title uses the whole header between app icon and menu.
 	Dim titleLeft As Int = edge + iconSize + 8dip
 	Dim titleW As Int = root.Width - menuW - edge - titleLeft - 8dip
@@ -605,7 +619,7 @@ Private Sub BuildUnifiedHeader
 	btnTabGeom.Text = "GEOMETRY"
 	btnTabGeom.TextSize = tabTextSize
 	btnTabGeom.Typeface = Typeface.DEFAULT_BOLD
-	btnTabGeom.Background = ButtonGradient2(Array As Int(ColorBut3, ColorBut4))
+	SetBtnBg(btnTabGeom, ButtonGradient2(Array As Int(ColorBut3, ColorBut4)))
 	btnTabGeom.TextColor = ColorButText3
 	btnTabGeom.Gravity = Gravity.CENTER
 	btnTabGeom.Padding = Array As Int (0, 0, 0, 4dip)
@@ -617,7 +631,7 @@ Private Sub BuildUnifiedHeader
 	btnTabCond.Text = "CONDITIONS"
 	btnTabCond.TextSize = tabTextSize
 	btnTabCond.Typeface = Typeface.DEFAULT_BOLD
-	btnTabCond.Background = ButtonGradient2(Array As Int(ColorBut3, ColorBut4))
+	SetBtnBg(btnTabCond, ButtonGradient2(Array As Int(ColorBut3, ColorBut4)))
 	btnTabCond.TextColor = ColorButText2
 	btnTabCond.Gravity = Gravity.CENTER
 	btnTabCond.Padding = Array As Int (0, 0, 0, 4dip)
@@ -629,7 +643,7 @@ Private Sub BuildUnifiedHeader
 	btnTabRes.Text = "RESULTS"
 	btnTabRes.TextSize = tabTextSize
 	btnTabRes.Typeface = Typeface.DEFAULT_BOLD
-	btnTabRes.Background = ButtonGradient2(Array As Int(ColorBut3, ColorBut4))
+	SetBtnBg(btnTabRes, ButtonGradient2(Array As Int(ColorBut3, ColorBut4)))
 	btnTabRes.TextColor = ColorButText2
 	btnTabRes.Gravity = Gravity.CENTER
 	btnTabRes.Padding = Array As Int (0, 0, 0, 4dip)
@@ -650,35 +664,27 @@ Private Sub BuildUnifiedHeader
 End Sub
 
 Sub pnlMenuAnchor_Click
-	If sheet.IsInitialized Then sheet.CloseAll
-	PopupMenu.Show
-End Sub
-
-Sub PopupMenu_MenuItemClick(ItemId As Int) As Boolean
-	' Dismiss the native popup before any themed sheet opens.
-	PopupMenu.Dismiss
-	CallSubDelayed2(Me, "HandleMenuItem", ItemId)
-	Return True
+	Tick
+	Dim items As List
+	items.Initialize
+	items.Add("Physics & Equations|Theory, equations and notation")
+	items.Add("Unit Converter|Quick engineering conversions")
+	items.Add("Settings|Display, plots and rotor data")
+	items.Add("About|Version and credits")
+	items.Add("Privacy|Privacy policy")
+	Wait For (sheet.ShowMenu("Menu", items)) Complete (idx As Int)
+	If idx >= 0 Then HandleMenuItem(idx)
 End Sub
 
 Sub HandleMenuItem(ItemId As Int)
 	Select ItemId
 		Case 0
-			OpenSettingsPopup
+			OpenPhysicsHelp
 		Case 1
 			OpenUnitConverter
 		Case 2
-			OpenPhysicsHelp
+			OpenSettingsPopup
 		Case 3
-			Wait For (ResolveUnsavedGeometry("restoring factory presets")) Complete (ok As Boolean)
-			If ok = False Then Return
-			Wait For (sheet.ShowConfirm("Restore Factory Presets", "Restore the shipped factory rotor definitions?" & CRLF & CRLF & "Custom user rotors are preserved. Same-name factory presets are replaced by their original values.", "Restore", "Cancel", "", False)) Complete (r As Int)
-			If r = DialogResponse.POSITIVE Then
-				RotorStorage.RestoreFactoryPresets
-				AfterRotorChange
-				ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
-			End If
-		Case 4
 			Dim pm As PackageManager
 			Dim ver As String = "1.0.0"
 			Try
@@ -686,10 +692,10 @@ Sub HandleMenuItem(ItemId As Int)
 			Catch
 			End Try
 			sheet.ShowMessage("About RotorCalculator", "RotorCalculator v" & ver & CRLF & CRLF & _
-				"Rotor performance calculator using the zBET analytical model." & CRLF & _
+				"Rotor performance calculator based on analytical blade-element theory." & CRLF & _
 				"Notation follows Johnson and Leishman." & CRLF & CRLF & _
 				"Developed by Gustavo Zambrano")
-		Case 5
+		Case 4
 			Dim privacyAsset As String = "privacy_policy.html"
 			If ThemeMode = 1 Then privacyAsset = "privacy_policy_light.html"
 			OpenHelpAsset(privacyAsset, "PRIVACY POLICY")
@@ -704,7 +710,7 @@ Private Sub LoadUiSettings
 	If File.Exists(File.DirInternal, "ui_settings.txt") = False Then Return
 	Try
 		Dim m As Map = File.ReadMap(File.DirInternal, "ui_settings.txt")
-		ThemeMode = Max(0, Min(1, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
+		ThemeMode = Max(0, Min(2, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
 		UnitSystem = Max(0, Min(1, ParseIntDef("" & m.GetDefault("units", 0), 0)))
 		ExtraPrecision = Max(0, Min(1, ParseIntDef("" & m.GetDefault("precision", 0), 0)))
 		PlotPalette = Max(0, Min(RotorPopups.PlotPaletteCount - 1, ParseIntDef("" & m.GetDefault("palette", 0), 0)))
@@ -757,59 +763,100 @@ Private Sub ApplySystemBars
 End Sub
 
 Private Sub ApplyThemePalette
-	If ThemeMode = 1 Then
-		ColorPnlTitle = 0xFFFFFFFF
-		ColorTitleText = 0xFF0B1220
-		ColorPnlLine = 0xFF007F95
-		ColorPnlLine2 = 0xFFD5DCE6
-		ColorPnlLine3 = 0xFFE3E8EF
-		ColorBut3 = Colors.Transparent
-		ColorBut4 = Colors.Transparent
-		ColorButText2 = 0xFF667085
-		ColorButText3 = 0xFF007F95
-		ColorBut1 = 0xFFF8FAFC
-		ColorBut2 = 0xFFE9EEF4
-		ColorButText1 = 0xFF172033
-		ColorEdt = 0xFFFFFFFF
-		ColorEdtText = 0xFF006B7D
-		ColorEdtHint = 0xFF667085
-		ColorPnlInput1 = 0xFFF7F9FC
-		ColorPnlInput2 = 0xFFFFFFFF
-		ColorPnlInput3 = 0xFFF7F9FC
-		ColorPnlInput4 = 0xFFFFFFFF
-		ColorPnlInput5 = 0xFFF1F4F8
-		ColorSelectedRow = 0xFFFFFFFF
-		ColorAccentCyan = 0xFF007F95
-		ColorAccentGreen = 0xFF007A52
-		ColorAccentAmber = 0xFFAA5A00
-		ColorAccentRed = 0xFFB42318
-	Else
-		ColorPnlTitle = 0xFF0D121B
-		ColorTitleText = 0xFFFFFFFF
-		ColorPnlLine = 0xFF00E5FF
-		ColorPnlLine2 = 0xFF1E2738
-		ColorPnlLine3 = 0xFF171E2B
-		ColorBut3 = Colors.Transparent
-		ColorBut4 = Colors.Transparent
-		ColorButText2 = 0xFF94A3B8
-		ColorButText3 = 0xFF00E5FF
-		ColorBut1 = 0xFF1A2332
-		ColorBut2 = 0xFF121925
-		ColorButText1 = 0xFFF1F5F9
-		ColorEdt = 0xFF0F141E
-		ColorEdtText = 0xFF00E5FF
-		ColorEdtHint = 0xFF94A3B8
-		ColorPnlInput1 = 0xFF0A0E15
-		ColorPnlInput2 = 0xFF0E131C
-		ColorPnlInput3 = 0xFF0A0E15
-		ColorPnlInput4 = 0xFF0E131C
-		ColorPnlInput5 = 0xFF07090E
-		ColorSelectedRow = 0xFF121925
-		ColorAccentCyan = 0xFF00E5FF
-		ColorAccentGreen = 0xFF00E676
-		ColorAccentAmber = 0xFFFFB300
-		ColorAccentRed = 0xFFFF6B6B
-	End If
+	RotorPopups.SetPlotThemeIndex(ThemeMode)
+	Select ThemeMode
+		Case 1
+			' Light: values and accent darkened to >= 4.5:1 on white / near-white surfaces.
+			ColorPnlTitle = 0xFFFFFFFF
+			ColorTitleText = 0xFF0B1220
+			ColorPnlLine = 0xFF006978
+			ColorPnlLine2 = 0xFFD5DCE6
+			ColorPnlLine3 = 0xFFE3E8EF
+			ColorButText2 = 0xFF5A6678
+			ColorButText3 = 0xFF006978
+			ColorBut1 = 0xFFF8FAFC
+			ColorBut2 = 0xFFE9EEF4
+			ColorButText1 = 0xFF172033
+			ColorEdt = 0xFFEAF5F7
+			ColorEdtText = 0xFF006978
+			ColorEdtHint = 0xFF5A6678
+			ColorPnlInput1 = 0xFFF7F9FC
+			ColorPnlInput2 = 0xFFFFFFFF
+			ColorPnlInput3 = 0xFFF7F9FC
+			ColorPnlInput4 = 0xFFFFFFFF
+			ColorPnlInput5 = 0xFFF1F4F8
+			ColorSelectedRow = 0xFFFFFFFF
+			ColorAccentCyan = 0xFF006978
+			ColorAccentGreen = 0xFF00704A
+			ColorAccentAmber = 0xFF9A5200
+			ColorAccentRed = 0xFFB42318
+			ColorFieldFill = 0xFFEAF5F7
+			ColorFieldBorder = 0x59006978
+			ColorResultText = 0xFF172033
+			ColorCtaFill = 0xFF006978
+			ColorCtaText = 0xFFFFFFFF
+		Case 2
+			' Midnight Blue: AeroCalculator-like navy surfaces, cyan and amber accents.
+			ColorPnlTitle = 0xFF0B1730
+			ColorTitleText = 0xFFFFFFFF
+			ColorPnlLine = 0xFF22D3EE
+			ColorPnlLine2 = 0xFF22386A
+			ColorPnlLine3 = 0xFF182B52
+			ColorButText2 = 0xFFA2B5D8
+			ColorButText3 = 0xFF22D3EE
+			ColorBut1 = 0xFF1B2D52
+			ColorBut2 = 0xFF14234A
+			ColorButText1 = 0xFFEAF1FF
+			ColorEdt = 0xFF0E1B38
+			ColorEdtText = 0xFF5CE1FF
+			ColorEdtHint = 0xFF8AA0C6
+			ColorPnlInput1 = 0xFF0F1D3A
+			ColorPnlInput2 = 0xFF132547
+			ColorPnlInput3 = 0xFF0F1D3A
+			ColorPnlInput4 = 0xFF132547
+			ColorPnlInput5 = 0xFF0A1428
+			ColorSelectedRow = 0xFF1B2D52
+			ColorAccentCyan = 0xFF22D3EE
+			ColorAccentGreen = 0xFF3DDC97
+			ColorAccentAmber = 0xFFFFC145
+			ColorAccentRed = 0xFFFF7A7A
+			ColorFieldFill = 0xFF0E2040
+			ColorFieldBorder = 0x4D22D3EE
+			ColorResultText = 0xFFF1F6FF
+			ColorCtaFill = 0xFF22D3EE
+			ColorCtaText = 0xFF04202A
+		Case Else
+			ColorPnlTitle = 0xFF0D121B
+			ColorTitleText = 0xFFFFFFFF
+			ColorPnlLine = 0xFF00E5FF
+			ColorPnlLine2 = 0xFF1E2738
+			ColorPnlLine3 = 0xFF171E2B
+			ColorButText2 = 0xFFA3B1C6
+			ColorButText3 = 0xFF00E5FF
+			ColorBut1 = 0xFF1A2332
+			ColorBut2 = 0xFF121925
+			ColorButText1 = 0xFFF1F5F9
+			ColorEdt = 0xFF0F1B28
+			ColorEdtText = 0xFF00E5FF
+			ColorEdtHint = 0xFF94A3B8
+			ColorPnlInput1 = 0xFF0A0E15
+			ColorPnlInput2 = 0xFF0E131C
+			ColorPnlInput3 = 0xFF0A0E15
+			ColorPnlInput4 = 0xFF0E131C
+			ColorPnlInput5 = 0xFF07090E
+			ColorSelectedRow = 0xFF121925
+			ColorAccentCyan = 0xFF00E5FF
+			ColorAccentGreen = 0xFF00E676
+			ColorAccentAmber = 0xFFFFB300
+			ColorAccentRed = 0xFFFF6B6B
+			ColorFieldFill = 0xFF0F1B28
+			ColorFieldBorder = 0x4D00E5FF
+			ColorResultText = 0xFFF1F5F9
+			ColorCtaFill = 0xFF00E5FF
+			ColorCtaText = 0xFF04202A
+	End Select
+	ColorBut3 = Colors.Transparent
+	ColorBut4 = Colors.Transparent
 End Sub
 
 Private Sub OpenSettingsPopup
@@ -822,7 +869,9 @@ Private Sub OpenSettingsPopup
 
 	Dim cardW As Int = root.Width - 24dip
 	If cardW > 540dip Then cardW = 540dip
-	Dim contentH As Int = 8dip + 6 * 74dip + 8dip
+	Dim rowH As Int = 84dip
+	Dim hdrH As Int = 44dip
+	Dim contentH As Int = 8dip + 3 * hdrH + 7 * rowH + 12dip
 	Dim cardH As Int = Min(52dip + contentH, root.Height - 24dip)
 	Dim cardLeft As Int = (root.Width - cardW) / 2
 	Dim cardTop As Int = (root.Height - cardH) / 2
@@ -840,7 +889,8 @@ Private Sub OpenSettingsPopup
 	lblTitle.Text = "SETTINGS"
 	lblTitle.TextColor = ColorAccentCyan
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
-	lblTitle.TextSize = 15
+	lblTitle.TextSize = 17
+	SetLetterSpacing(lblTitle, 0.08)
 	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	titleBar.AddView(lblTitle, 16dip, 0, cardW - 72dip, 52dip)
 	Dim btnClose As Button
@@ -855,28 +905,66 @@ Private Sub OpenSettingsPopup
 	scv.Initialize(contentH)
 	card.AddView(scv, 0, 52dip, cardW, cardH - 52dip)
 	' scv.Panel has no width yet: lay rows out against the card width.
-	AddSettingsRow(scv.Panel, cardW, 8dip, "Theme", "Dark or light technical palette", "btnSettingTheme")
-	AddSettingsRow(scv.Panel, cardW, 82dip, "Result Units", "Dimensional outputs only", "btnSettingUnits")
-	AddSettingsRow(scv.Panel, cardW, 156dip, "Output Format", "Standard or +1 decimal", "btnSettingPrecision")
-	AddSettingsRow(scv.Panel, cardW, 230dip, "Plot Palette", "Sweep curve colors", "btnSettingPalette")
-	AddSettingsRow(scv.Panel, cardW, 304dip, "Import Geometries", "Restore or merge a shared backup", "btnSettingImportGeometries")
-	AddSettingsRow(scv.Panel, cardW, 378dip, "Export Geometries", "Backup all saved rotor geometries", "btnSettingExportGeometries")
-	scv.Panel.Height = contentH
+	Dim y As Int = 8dip
+	y = AddSettingsHeader(scv.Panel, cardW, y, "DISPLAY")
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Theme", "Dark, Light or Midnight Blue", "btnSettingTheme")
+	y = y + rowH
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Result Units (Outputs Only)", "SI or Imperial for results; input rows keep their own units", "btnSettingUnits")
+	y = y + rowH
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Number Format", "Example: 0.0699 " & Chr(8594) & " 0.06993 with +1 decimal", "btnSettingPrecision")
+	y = y + rowH
+	y = AddSettingsHeader(scv.Panel, cardW, y, "PLOTS")
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Palette", "Sweep curve colors", "btnSettingPalette")
+	y = y + rowH
+	y = AddSettingsHeader(scv.Panel, cardW, y, "ROTOR DATA")
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Import Geometries", "Restore or merge a shared backup", "btnSettingImportGeometries")
+	y = y + rowH
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Export Geometries", "Backup all saved rotor geometries", "btnSettingExportGeometries")
+	y = y + rowH
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Restore Factory Presets", "Custom rotors are preserved", "btnSettingRestore")
+	y = y + rowH
+	scv.Panel.Height = y + 12dip
 	RefreshSettingsButtons
 End Sub
 
-Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, title As String, subtitle As String, eventName As String)
+Private Sub SetLetterSpacing(v As View, em As Float)
+	Try
+		Dim jo As JavaObject = v
+		jo.RunMethod("setLetterSpacing", Array As Object(em))
+	Catch
+		Log("Letter spacing skipped: " & LastException.Message)
+	End Try
+End Sub
+
+Private Sub AddSettingsHeader(parent As Panel, cardW As Int, y As Int, title As String) As Int
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = title
+	lbl.TextColor = ColorAccentGreen
+	lbl.Typeface = Typeface.DEFAULT_BOLD
+	lbl.TextSize = 17
+	SetLetterSpacing(lbl, 0.08)
+	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	parent.AddView(lbl, 14dip, y, cardW - 28dip, 34dip)
+	Dim ln As Panel
+	ln.Initialize("")
+	ln.Color = ColorPnlLine2
+	parent.AddView(ln, 14dip, y + 36dip, cardW - 28dip, 1dip)
+	Return y + 44dip
+End Sub
+
+Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, rowH As Int, title As String, subtitle As String, eventName As String)
 	Dim lbl As Label
 	lbl.Initialize("")
 	Dim cs As CSBuilder
 	cs.Initialize
-	cs.Bold.Append(title).Pop.Append(CRLF).RelativeSize(0.85).Append(subtitle).Pop
+	cs.Bold.Append(title).Pop.Append(CRLF).RelativeSize(0.85).Color(ColorButText2).Append(subtitle).Pop.Pop
 	lbl.Text = cs
 	lbl.TextColor = ColorButText1
 	lbl.TextSize = 15
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	SetTextLines(lbl, 4)
-	parent.AddView(lbl, 14dip, y, cardW * 0.58 - 20dip, 68dip)
+	SetTextLines(lbl, 5)
+	parent.AddView(lbl, 14dip, y, cardW * 0.55 - 20dip, rowH)
 	Dim b As Button
 	b.Initialize(eventName)
 	b.TextColor = ColorAccentCyan
@@ -884,31 +972,60 @@ Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, title As Str
 	b.TextSize = 14
 	b.SingleLine = True
 	b.Padding = Array As Int(2dip, 0, 2dip, 0)
-	b.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	parent.AddView(b, cardW * 0.58, y + 10dip, cardW * 0.38, 48dip)
+	SetBtnBg(b, ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle)))
+	parent.AddView(b, cardW * 0.55, y + (rowH - 48dip) / 2, cardW * 0.41, 48dip)
 	If eventName = "btnSettingTheme" Then btnSettingTheme = b
 	If eventName = "btnSettingUnits" Then btnSettingUnits = b
 	If eventName = "btnSettingPrecision" Then btnSettingPrecision = b
 	If eventName = "btnSettingPalette" Then btnSettingPalette = b
+	If eventName = "btnSettingRestore" Then
+		btnSettingRestore = b
+		b.Text = "RESTORE"
+	End If
 	If eventName = "btnSettingImportGeometries" Then b.Text = "IMPORT"
 	If eventName = "btnSettingExportGeometries" Then b.Text = "EXPORT"
 End Sub
 
+Private Sub ThemeName(i As Int) As String
+	Select i
+		Case 1: Return "LIGHT"
+		Case 2: Return "MIDNIGHT BLUE"
+	End Select
+	Return "DARK"
+End Sub
+
+Private Sub FitSettingBtn(b As Button)
+	b.TextSize = RotorNames.FitTextSize(b.Text, 14, 10, b.Width - 8dip)
+End Sub
+
 Private Sub RefreshSettingsButtons
 	If btnSettingTheme.IsInitialized Then
-		If ThemeMode = 1 Then btnSettingTheme.Text = "LIGHT" Else btnSettingTheme.Text = "DARK"
+		btnSettingTheme.Text = ThemeName(ThemeMode)
+		FitSettingBtn(btnSettingTheme)
 	End If
 	If btnSettingUnits.IsInitialized Then
 		If UnitSystem = 1 Then btnSettingUnits.Text = "IMPERIAL" Else btnSettingUnits.Text = "SI"
 	End If
 	If btnSettingPrecision.IsInitialized Then
 		If ExtraPrecision = 1 Then btnSettingPrecision.Text = "+1 DECIMAL" Else btnSettingPrecision.Text = "STANDARD"
+		FitSettingBtn(btnSettingPrecision)
 	End If
-	If btnSettingPalette.IsInitialized Then btnSettingPalette.Text = RotorPopups.PlotPaletteName(PlotPalette)
+	If btnSettingPalette.IsInitialized Then
+		btnSettingPalette.Text = RotorPopups.PlotPaletteName(PlotPalette)
+		FitSettingBtn(btnSettingPalette)
+	End If
 End Sub
 
 Sub btnSettingTheme_Click
-	ThemeMode = 1 - ThemeMode
+	Tick
+	Dim items As List
+	items.Initialize
+	items.Add("Dark|Cockpit stealth, high contrast")
+	items.Add("Light|Daylight, contrast tuned to 4.5:1 or better")
+	items.Add("Midnight Blue|Navy surfaces, cyan and amber accents")
+	Wait For (sheet.ShowChoice("Theme", items, ThemeMode)) Complete (idx As Int)
+	If idx < 0 Or idx = ThemeMode Then Return
+	ThemeMode = idx
 	SaveUiSettings
 	CloseSettingsPopup
 	ApplyThemePalette
@@ -917,14 +1034,15 @@ Sub btnSettingTheme_Click
 End Sub
 
 Sub btnSettingUnits_Click
+	Tick
 	UnitSystem = 1 - UnitSystem
-	If InputUnits.IsInitialized Then InputUnits.Clear
 	SaveUiSettings
 	RefreshSettingsButtons
-	RefreshAllInputFields
+	RecalculateRotor
 End Sub
 
 Sub btnSettingPrecision_Click
+	Tick
 	ExtraPrecision = 1 - ExtraPrecision
 	SaveUiSettings
 	RefreshSettingsButtons
@@ -932,16 +1050,36 @@ Sub btnSettingPrecision_Click
 End Sub
 
 Sub btnSettingPalette_Click
+	Tick
 	Dim items As List
 	items.Initialize
+	Dim cols As List
+	cols.Initialize
 	For i = 0 To RotorPopups.PlotPaletteCount - 1
 		items.Add(RotorPopups.PlotPaletteName(i))
+		Dim sw(4) As Int
+		For k = 0 To 3
+			sw(k) = RotorPopups.PlotColor(i, k, ThemeMode = 1)
+		Next
+		cols.Add(sw)
 	Next
-	Wait For (sheet.ShowChoice(RotorNames.PlainLabel("palette", 0), items, PlotPalette)) Complete (idx As Int)
+	Wait For (sheet.ShowChoiceSwatches(RotorNames.PlainLabel("palette", 0), items, PlotPalette, cols)) Complete (idx As Int)
 	If idx < 0 Then Return
 	PlotPalette = idx
 	SaveUiSettings
 	RefreshSettingsButtons
+End Sub
+
+Sub btnSettingRestore_Click
+	Tick
+	Wait For (ResolveUnsavedGeometry("restoring factory presets")) Complete (ok As Boolean)
+	If ok = False Then Return
+	Wait For (sheet.ShowConfirm("Restore Factory Presets", "Restore the shipped factory rotor definitions?" & CRLF & CRLF & "Custom user rotors are preserved. Same-name factory presets are replaced by their original values.", "Restore", "Cancel", "", False)) Complete (r As Int)
+	If r = DialogResponse.POSITIVE Then
+		RotorStorage.RestoreFactoryPresets
+		AfterRotorChange
+		ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
+	End If
 End Sub
 
 Sub btnSettingExportGeometries_Click
@@ -1055,9 +1193,20 @@ Private Sub RebuildApplicationUI
 	ShowPage(CurrentPage, False)
 End Sub
 
+Private Sub NoZoomControls(wv As WebView)
+	Try
+		Dim host As JavaObject
+		host.InitializeContext
+		host.RunMethod("rcNoZoom", Array(wv))
+	Catch
+		Log("Zoom controls: " & LastException.Message)
+	End Try
+End Sub
+
 Private Sub OpenPhysicsHelp
 	Dim helpAsset As String = "physics_help.html"
 	If ThemeMode = 1 Then helpAsset = "physics_help_light.html"
+	If ThemeMode = 2 Then helpAsset = "physics_help_midnight.html"
 	OpenHelpAsset(helpAsset, "PHYSICS & EQUATIONS")
 End Sub
 
@@ -1079,7 +1228,7 @@ Private Sub OpenHelpAsset(helpAsset As String, titleText As String)
 	lblTitle.Text = titleText
 	lblTitle.TextColor = ColorAccentCyan
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
-	lblTitle.TextSize = 14
+	lblTitle.TextSize = 16
 	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	titleBar.AddView(lblTitle, 16dip, 0, root.Width - 72dip, titleH)
 	Dim btnClose As Button
@@ -1090,9 +1239,25 @@ Private Sub OpenHelpAsset(helpAsset As String, titleText As String)
 	btnClose.Color = Colors.Transparent
 	titleBar.AddView(btnClose, root.Width - 52dip, 2dip, 48dip, 48dip)
 	
-	wvHelp.Initialize("")
+	wvHelp.Initialize("wvHelp")
+	NoZoomControls(wvHelp)
 	pnlHelpPopup.AddView(wvHelp, 0, titleH, root.Width, root.Height - titleH)
 	wvHelp.LoadUrl("file:///android_asset/" & helpAsset)
+End Sub
+
+' External links (http/https) open in the system browser; in-page anchors stay inside the manual.
+Sub wvHelp_OverrideUrl (Url As String) As Boolean
+	If Url.StartsWith("http://") Or Url.StartsWith("https://") Then
+		Try
+			Dim i As Intent
+			i.Initialize(i.ACTION_VIEW, Url)
+			StartActivity(i)
+		Catch
+			Log("External link: " & LastException.Message)
+		End Try
+		Return True
+	End If
+	Return False
 End Sub
 
 Sub btnClosePhysicsHelp_Click
@@ -1316,7 +1481,8 @@ Private Sub UnitKind(key As String) As String
 End Sub
 
 Private Sub DefaultUnit(key As String) As String
-	Dim imp As Boolean = (UnitSystem = 1)
+	' Input rows default to SI; Settings > Result Units only affects outputs.
+	Dim imp As Boolean = False
 	Select UnitKind(key)
 		Case "len"
 			If imp Then Return "ft"
@@ -1517,7 +1683,7 @@ Private Sub GridRowH As Int
 End Sub
 
 Private Sub TextSp As Float
-	Return 16 * sc
+	Return 16 * sc * typeK
 End Sub
 
 Private Sub AddSectionHeader(scv As ScrollView, y As Int, title As String) As Int
@@ -1526,10 +1692,13 @@ Private Sub AddSectionHeader(scv As ScrollView, y As Int, title As String) As In
 	lbl.Text = title
 	lbl.TextColor = ColorAccentGreen
 	lbl.Typeface = Typeface.DEFAULT_BOLD
-	lbl.TextSize = 15 * sc
+	' Headings 17sp (rows are 15-16sp); fitted so long titles never clip at 320dp / 130% font.
+	lbl.TextSize = RotorNames.FitTextSize(title, 17 * sc, 14, (UiContentW - 28dip) * 0.9)
+	SetLetterSpacing(lbl, 0.08)
+	lbl.SingleLine = True
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	scv.Panel.AddView(lbl, UiContentLeft + 12dip, y, UiContentW - 24dip, 30dip)
-	Return y + 32dip
+	scv.Panel.AddView(lbl, UiContentLeft + 12dip, y, UiContentW - 24dip, 34dip)
+	Return y + 36dip
 End Sub
 
 Private Sub AddFormRowPanelSized(scv As ScrollView, y As Int, rowIndex As Int, rowHeight As Int) As Panel
@@ -1547,6 +1716,10 @@ End Sub
 Private Sub SetTextLines(v As View, maxLines As Int)
 	Dim jo As JavaObject = v
 	jo.RunMethod("setMaxLines", Array(maxLines))
+	If maxLines = 1 Then
+		jo.RunMethod("setEllipsize", Array(Null))
+		Return
+	End If
 	Dim ta As JavaObject
 	ta.InitializeStatic("android.text.TextUtils$TruncateAt")
 	jo.RunMethod("setEllipsize", Array(ta.GetField("END")))
@@ -1586,19 +1759,27 @@ Private Sub ShowHelpFor(tagText As String)
 	If RotorNames.HasKey(key) Then sheet.ShowHelp(key)
 End Sub
 
+' Rows that switch their variable on tap (μ_x/V_x and α/V_z/μ_z) carry a subtle "⇄" glyph.
+Private Sub RowLabelText(rowId As String, key As String, level As Int) As CSBuilder
+	If rowId = "hflow" Or rowId = "aflow" Then
+		Return RotorNames.RichTextSuffix(RotorNames.PlainLabel(key, level), " " & Chr(0x21C4), ColorButText2)
+	End If
+	Return RotorNames.RichLabel(key, level)
+End Sub
+
 Private Sub CreateRowLabel(rowId As String, key As String, level As Int) As Button
 	Dim btn As Button
 	btn.Initialize("rowLbl")
 	btn.Tag = rowId
 	btn.Padding = Array As Int (8dip, 1dip, 4dip, 1dip)
-	btn.Text = RotorNames.RichLabel(key, level)
+	btn.Text = RowLabelText(rowId, key, level)
 	btn.TextSize = LblSp
 	btn.Typeface = Typeface.DEFAULT_BOLD
 	btn.TextColor = ColorTitleText
-	btn.Background = ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle))
+	SetBtnBg(btn, ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle)))
 	btn.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	btn.SingleLine = False
-	SetTextLines(btn, 2)
+	btn.SingleLine = True
+	SetTextLines(btn, 1)
 	Return btn
 End Sub
 
@@ -1615,18 +1796,13 @@ Private Sub CreateUnitButton(rowId As String, key As String) As Button
 	Return btn
 End Sub
 
-' Converting units look like buttons; the dimensionless dash is neutral and flat.
+' Every unit button has the same look, converting or not (a dimensionless unit shows the dash in the same style).
 Private Sub StyleUnitButton(btn As Button, key As String)
 	Dim u As String = CurUnit(key)
 	btn.Text = u
 	btn.TextSize = RotorNames.FitTextSize(u, TextSp, 11, ColUnitW - 6dip)
-	If u = Dash Then
-		btn.TextColor = ColorEdtHint
-		btn.Background = ButtonGradient(Array As Int(ColorPnlInput5, ColorPnlInput5), Array As Int(ColorPnlInput5, ColorPnlInput5))
-	Else
-		btn.TextColor = ColorButText2
-		btn.Background = ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle))
-	End If
+	btn.TextColor = ColorButText2
+	SetBtnBg(btn, ButtonGradient(Array As Int(ColorPnlInput2, ColorBut1), Array As Int(ColorBut1, ColorPnlTitle)))
 End Sub
 
 Private Sub CreateRowButton(rowId As String, evt As String) As Button
@@ -1637,9 +1813,43 @@ Private Sub CreateRowButton(rowId As String, evt As String) As Button
 	btn.TextSize = TextSp * 0.94
 	btn.Typeface = Typeface.DEFAULT_BOLD
 	btn.TextColor = ColorAccentCyan
-	btn.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	SetBtnBg(btn, ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle)))
 	btn.Gravity = Gravity.CENTER
 	btn.SingleLine = False
+	SetTextLines(btn, 2)
+	Return btn
+End Sub
+
+' Selector value: identical surface to the editable value (fill, 1dip accent border, radius, height, text), plus a small chevron.
+' Long selector captions wrap after a hyphen instead of in the middle of a word.
+Private Sub BreakAtHyphen(t As String) As String
+	If t.Length > 9 And t.Contains("-") Then Return t.Replace("-", "-" & Chr(10))
+	Return t
+End Sub
+
+Private Sub CreateSelectorValue(rowId As String, evt As String) As Button
+	Dim btn As Button
+	btn.Initialize(evt)
+	btn.Tag = rowId
+	btn.Padding = Array As Int(4dip, 0, 16dip, 0)
+	btn.TextSize = TextSp
+	btn.TextColor = ColorEdtText
+	btn.Typeface = Typeface.DEFAULT
+	btn.Gravity = Gravity.CENTER
+	btn.SingleLine = False
+	Dim cd As ColorDrawable
+	cd.Initialize2(ColorFieldFill, 4dip, 1dip, ColorFieldBorder)
+	btn.Background = cd
+	RotorNames.AddRipple(btn, Bit.Or(0x40000000, Bit.And(ColorAccentCyan, 0xFFFFFF)))
+	Try
+		Dim jo As JavaObject = btn
+		jo.RunMethod("setAllCaps", Array(False))
+		jo.RunMethod("setStateListAnimator", Array(Null))
+		jo.RunMethod("setMinHeight", Array(0))
+		jo.RunMethod("setMinimumHeight", Array(0))
+	Catch
+		Log("Selector style skipped: " & LastException.Message)
+	End Try
 	SetTextLines(btn, 2)
 	Return btn
 End Sub
@@ -1648,9 +1858,9 @@ Private Sub CreateValueEdit(rowId As String, isText As Boolean, evt As String) A
 	Dim edt As EditText
 	edt.Initialize(evt)
 	edt.Tag = rowId
-	edt.TextSize = 16 * sc
+	edt.TextSize = TextSp
 	edt.TextColor = ColorEdtText
-	edt.Color = ColorEdt
+	FieldBg(edt, False)
 	edt.HintColor = ColorEdtHint
 	edt.SingleLine = True
 	edt.ForceDoneButton = True
@@ -1668,16 +1878,25 @@ Private Sub CreateValueEdit(rowId As String, isText As Boolean, evt As String) A
 	Return edt
 End Sub
 
+' Computed value: same surface as every value field; only the text is muted. Tap opens its help.
 Private Sub CreateReadOnlyValue(rowId As String) As Label
 	Dim l As Label
-	l.Initialize("")
+	l.Initialize("roValue")
 	l.Tag = rowId
-	l.TextSize = 16 * sc
-	l.TextColor = ColorButText2
-	l.Typeface = Typeface.DEFAULT_BOLD
+	l.TextSize = TextSp
+	l.TextColor = MixC(ColorEdtText, ColorEdtHint, 0.5)
+	l.Typeface = Typeface.DEFAULT
 	l.Gravity = Gravity.CENTER
 	l.SingleLine = True
+	Dim cd As ColorDrawable
+	cd.Initialize2(ColorFieldFill, 4dip, 1dip, ColorFieldBorder)
+	l.Background = cd
 	Return l
+End Sub
+
+Sub roValue_Click
+	Dim v As View = Sender
+	ShowHelpFor("" & v.Tag)
 End Sub
 
 ' kind: num | text | sel | ro. evt = event name of the value view.
@@ -1699,13 +1918,22 @@ Private Sub BuildRow(scv As ScrollView, y As Int, rowId As String, key As String
 			Dim e2 As EditText = CreateValueEdit(rowId, True, evt)
 			v = e2
 		Case "sel"
-			Dim b1 As Button = CreateRowButton(rowId, evt)
+			Dim b1 As Button = CreateSelectorValue(rowId, evt)
 			v = b1
 		Case Else
 			Dim l1 As Label = CreateReadOnlyValue(rowId)
 			v = l1
 	End Select
 	pnl.AddView(v, ColValX, cy, ColValW, ch)
+	If kind = "sel" Then
+		Dim chev As Label
+		chev.Initialize("")
+		chev.Text = Chr(9662)
+		chev.TextSize = 14 * sc
+		chev.TextColor = ColorAccentCyan
+		chev.Gravity = Gravity.CENTER
+		pnl.AddView(chev, ColValX + ColValW - 16dip, cy, 14dip, ch)
+	End If
 	RowVal.Put(rowId, v)
 	Dim u As Button = CreateUnitButton(rowId, key)
 	pnl.AddView(u, ColUnitX, cy, ColUnitW, ch)
@@ -1713,6 +1941,12 @@ Private Sub BuildRow(scv As ScrollView, y As Int, rowId As String, key As String
 	AttachHelp(lbl)
 	AttachHelp(v)
 	AttachHelp(u)
+	Dim bar As Panel
+	bar.Initialize("")
+	bar.Color = ColorAccentCyan
+	pnl.AddView(bar, 0, 3dip, 4dip, ch)
+	bar.Visible = False
+	RowBar.Put(rowId, bar)
 	Return y + GridRowH
 End Sub
 
@@ -1720,7 +1954,7 @@ End Sub
 Private Sub SetRowKey(rowId As String, key As String, level As Int)
 	RowKey.Put(rowId, key)
 	Dim lbl As Button = RowLbl.Get(rowId)
-	lbl.Text = RotorNames.RichLabel(key, level)
+	lbl.Text = RowLabelText(rowId, key, level)
 	Dim u As Button = RowUnit.Get(rowId)
 	StyleUnitButton(u, key)
 End Sub
@@ -1749,13 +1983,14 @@ Sub rowLbl_Click
 End Sub
 
 Sub unitRow_Click
+	Tick
 	Dim u As Button = Sender
 	Dim rid As String = "" & u.Tag
 	Dim key As String = rid
 	If RowKey.ContainsKey(rid) Then key = RowKey.Get(rid)
 	Dim options As List = UnitChoices(key)
 	If options.Size <= 1 Then
-		ToastMessageShow("No display unit: this quantity is dimensionless or a selection.", False)
+		ShowHelpFor(rid)
 		Return
 	End If
 	Dim current As String = CurUnit(key)
@@ -1792,7 +2027,7 @@ End Sub
 
 Private Sub BuildGeometryEditorContent
 	GeomKeys.Initialize
-	GeomKeys.AddAll(Array As String("name", "rpmNom", "R", "Nb", "x0", "c0", "c1", "taper", "AR", "sigmaRef", "sigmaAct", "sigmaT", "A", "Ab", "Aact", "thRoot", "thTip", "thTwist", "airfoil", "a0", "Cd0", "tipModel", "B", "comp"))
+	GeomKeys.AddAll(Array As String("rpmNom", "R", "Nb", "x0", "c0", "c1", "taper", "AR", "sigmaRef", "sigmaAct", "sigmaT", "A", "Ab", "Aact", "thRoot", "thTip", "thTwist", "airfoil", "a0", "Cd0", "tipModel", "B", "comp"))
 	ComputeColumns
 	GeomLevel = RotorNames.ChooseLevel(GeomKeys, ColLblW - 12dip, TextSp, MinNameLevel)
 	LblSp = RotorNames.FitLabelSize(GeomKeys, GeomLevel, ColLblW - 12dip, TextSp, 13)
@@ -1801,8 +2036,6 @@ Private Sub BuildGeometryEditorContent
 	Dim y As Int = 8dip
 	y = AddActiveBar(y)
 	y = AddSectionHeader(scvGeom, y, "ROTOR")
-	y = BuildRow(scvGeom, y, "name", "name", "text", lv, "edtGeom")
-	AddNameOverlay
 	y = BuildRow(scvGeom, y, "rpmNom", "rpmNom", "num", lv, "edtGeom")
 	y = AddSectionHeader(scvGeom, y + 6dip, "PLANFORM")
 	For Each k1 As String In Array As String("R", "Nb", "x0", "c0", "c1", "taper", "AR")
@@ -1838,27 +2071,32 @@ End Sub
 Private Sub AddActiveBar(y As Int) As Int
 	pnlActiveBar.Initialize("")
 	pnlActiveBar.Color = Colors.Transparent
-	scvGeom.Panel.AddView(pnlActiveBar, UiContentLeft, y, UiContentW, 56dip)
+	scvGeom.Panel.AddView(pnlActiveBar, UiContentLeft, y, UiContentW, 62dip)
 	btnActiveRotor.Initialize("btnActiveRotor")
 	btnActiveRotor.Tag = "activeRotor"
 	btnActiveRotor.Typeface = Typeface.DEFAULT_BOLD
-	btnActiveRotor.TextColor = ColorAccentCyan
-	btnActiveRotor.TextSize = 16 * sc
+	btnActiveRotor.TextSize = 17 * sc * typeK
 	btnActiveRotor.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	btnActiveRotor.SingleLine = True
 	SetTextLines(btnActiveRotor, 1)
-	btnActiveRotor.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	pnlActiveBar.AddView(btnActiveRotor, 8dip, 4dip, UiContentW - 16dip, 48dip)
+	StyleCta(btnActiveRotor, ColorAccentCyan)
+	pnlActiveBar.AddView(btnActiveRotor, 8dip, 4dip, UiContentW - 16dip, 52dip)
+	' Chevron and UNSAVED tag sit over the button; the name ellipsizes before them.
+	lblActiveChev.Initialize("")
+	lblActiveChev.Text = Chr(9662)
+	lblActiveChev.TextSize = 18
+	lblActiveChev.Typeface = Typeface.DEFAULT_BOLD
+	lblActiveChev.Gravity = Gravity.CENTER
+	pnlActiveBar.AddView(lblActiveChev, UiContentW - 8dip - 44dip, 4dip, 40dip, 52dip)
 	lblUnsaved.Initialize("")
 	lblUnsaved.Text = "UNSAVED"
-	lblUnsaved.TextSize = 13
+	lblUnsaved.TextSize = 14
 	lblUnsaved.Typeface = Typeface.DEFAULT_BOLD
-	lblUnsaved.TextColor = ColorAccentAmber
 	lblUnsaved.Gravity = Gravity.CENTER
-	pnlActiveBar.AddView(lblUnsaved, UiContentW - 8dip - 88dip, 4dip, 84dip, 48dip)
+	pnlActiveBar.AddView(lblUnsaved, UiContentW - 8dip - 44dip - 84dip, 4dip, 84dip, 52dip)
 	lblUnsaved.Visible = False
 	AttachHelp(btnActiveRotor)
-	Return y + 62dip
+	Return y + 68dip
 End Sub
 
 Private Sub MakeActionButton(txt As String, evt As String, helpKey As String, fg As Int) As Button
@@ -1866,12 +2104,12 @@ Private Sub MakeActionButton(txt As String, evt As String, helpKey As String, fg
 	b.Initialize(evt)
 	b.Tag = helpKey
 	b.Text = txt
-	b.TextSize = 16 * sc
+	b.TextSize = TextSp
 	b.Typeface = Typeface.DEFAULT_BOLD
 	b.TextColor = fg
 	b.Gravity = Gravity.CENTER
 	b.SingleLine = True
-	b.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	SetBtnBg(b, ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle)))
 	AttachHelp(b)
 	Return b
 End Sub
@@ -1890,14 +2128,17 @@ End Sub
 
 Sub RefreshActiveRotorBar
 	If btnActiveRotor.IsInitialized = False Then Return
-	btnActiveRotor.Text = ActiveGeom.Name & "  " & Chr(9662)
+	btnActiveRotor.Text = ActiveGeom.Name
+	Dim fill As Int = ColorAccentCyan
 	If GeometryDirty Then
-		btnActiveRotor.TextColor = ColorAccentAmber
-		btnActiveRotor.Padding = Array As Int(14dip, 0, 92dip, 0)
+		fill = ColorAccentAmber
+		btnActiveRotor.Padding = Array As Int(16dip, 0, 132dip, 0)
 	Else
-		btnActiveRotor.TextColor = ColorAccentCyan
-		btnActiveRotor.Padding = Array As Int(14dip, 0, 14dip, 0)
+		btnActiveRotor.Padding = Array As Int(16dip, 0, 52dip, 0)
 	End If
+	StyleCta(btnActiveRotor, fill)
+	lblActiveChev.TextColor = fill
+	lblUnsaved.TextColor = ColorAccentAmber
 	lblUnsaved.Visible = GeometryDirty
 	If btnDelete.IsInitialized Then
 		Dim jo As JavaObject = btnDelete
@@ -1931,52 +2172,12 @@ End Sub
 Private Sub SetEdit(rowId As String, txt As String)
 	Dim e As EditText = RowVal.Get(rowId)
 	If e.Text <> txt Then e.Text = txt
-	If rowId = "name" Then SyncNameOverlay
-End Sub
-
-' An EditText cannot ellipsize while it holds editable text, so when it is not focused a Label
-' with the same text and ellipsize END covers it; tapping the label starts editing.
-Private Sub AddNameOverlay
-	Dim e As EditText = RowVal.Get("name")
-	Dim pnl As Panel = e.Parent
-	lblNameShow.Initialize("lblNameShow")
-	lblNameShow.TextSize = 16 * sc
-	lblNameShow.TextColor = ColorEdtText
-	lblNameShow.Color = ColorEdt
-	lblNameShow.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	lblNameShow.SingleLine = True
-	lblNameShow.Padding = Array As Int(10dip, 0, 10dip, 0)
-	Dim jo As JavaObject = lblNameShow
-	Dim ta As JavaObject
-	ta.InitializeStatic("android.text.TextUtils$TruncateAt")
-	jo.RunMethod("setEllipsize", Array(ta.GetField("END")))
-	pnl.AddView(lblNameShow, e.Left, e.Top, e.Width, e.Height)
-	SyncNameOverlay
-End Sub
-
-Private Sub SyncNameOverlay
-	If lblNameShow.IsInitialized = False Then Return
-	If RowVal.ContainsKey("name") = False Then Return
-	Dim e As EditText = RowVal.Get("name")
-	lblNameShow.Text = e.Text
-	lblNameShow.Visible = (FocusRow <> "name")
-End Sub
-
-Sub lblNameShow_Click
-	Dim e As EditText = RowVal.Get("name")
-	lblNameShow.Visible = False
-	e.RequestFocus
-	e.SelectionStart = e.Text.Length
-	Dim ctxt As JavaObject
-	ctxt.InitializeContext
-	Dim imm As JavaObject = ctxt.RunMethod("getSystemService", Array("input_method"))
-	imm.RunMethod("showSoftInput", Array(e, 1))
 End Sub
 
 ' Rewrites every row from ActiveGeom except skipId (the field being typed in).
 Private Sub RefreshGeomFields(skipId As String)
 	If GeomKeys.IsInitialized = False Or RowVal.IsInitialized = False Then Return
-	If RowVal.ContainsKey("name") = False Then Return
+	If RowVal.ContainsKey("rpmNom") = False Then Return
 	Dim wasUpdating As Boolean = UpdatingUI
 	UpdatingUI = True
 	Dim g As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(ActiveGeom))
@@ -1984,10 +2185,8 @@ Private Sub RefreshGeomFields(skipId As String)
 		Dim ub As Button = RowUnit.Get(key)
 		StyleUnitButton(ub, key)
 		Select key
-			Case "name"
-				If skipId <> "name" Then SetEdit("name", g.Name)
 			Case "airfoil"
-				btnSelectAirfoil.Text = AirfoilDisplayName(g)
+				btnSelectAirfoil.Text = BreakAtHyphen(AirfoilDisplayName(g))
 			Case "tipModel"
 				RefreshTipLossButton(g)
 			Case "comp"
@@ -2005,25 +2204,19 @@ Private Sub RefreshTipLossButton(geom As RotorGeometry)
 	Select geom.TipLossMode
 		Case "sissingh"
 			btnTipLoss.Text = RotorNames.ShortName("tip_sissingh")
-			btnTipLoss.TextColor = ColorAccentGreen
 		Case "fixed"
 			btnTipLoss.Text = RotorNames.ShortName("tip_fixed")
-			btnTipLoss.TextColor = ColorAccentCyan
 		Case Else
 			btnTipLoss.Text = RotorNames.ShortName("tip_none")
-			btnTipLoss.TextColor = ColorButText2
 	End Select
 End Sub
 
 Private Sub RefreshCompressibilityButton(geom As RotorGeometry)
 	If geom.UsePrandtlGlauert Then
 		btnCompressibility.Text = RotorNames.ShortName("comp_pg")
-		btnCompressibility.TextColor = ColorAccentGreen
 	Else
 		btnCompressibility.Text = RotorNames.ShortName("comp_off")
-		btnCompressibility.TextColor = ColorButText2
 	End If
-	btnCompressibility.TextSize = RotorNames.FitWordSize(btnCompressibility.Text, TextSp * 0.94, 12, ColValW - 6dip)
 End Sub
 
 ' Tip factor B: editable only for the fixed model; otherwise the computed B is shown read-only.
@@ -2092,20 +2285,6 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	If RowVal.IsInitialized = False Then Return
 	Dim edt As EditText = Sender
 	Dim key As String = "" & edt.Tag
-	If key = "name" Then
-		Dim n As String = New.Replace("|", "/").Replace(Chr(13), " ").Replace(Chr(10), " ")
-		If n.Length > 32 Then
-			n = n.SubString2(0, 32)
-			UpdatingUI = True
-			edt.Text = n
-			edt.SelectionStart = n.Length
-			UpdatingUI = False
-		End If
-		If n.Trim.Length > 0 Then ActiveGeom.Name = n.Trim
-		CheckDirty
-		RefreshActiveRotorBar
-		Return
-	End If
 	Dim dv As Double = ParseInput(New)
 	If dv = NoVal Then Return
 	Dim si As Double = InputToCanonical(key, dv)
@@ -2132,6 +2311,7 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 End Sub
 
 Sub edtGeom_FocusChanged (HasFocus As Boolean)
+	SetFieldFocus(Sender, HasFocus)
 	Dim e As EditText = Sender
 	Dim rid As String = "" & e.Tag
 	If HasFocus Then
@@ -2140,7 +2320,6 @@ Sub edtGeom_FocusChanged (HasFocus As Boolean)
 		If FocusRow = rid Then FocusRow = ""
 		If UpdatingUI = False Then RefreshGeomFields("")
 	End If
-	If rid = "name" Then SyncNameOverlay
 End Sub
 
 Sub edtGeom_EnterPressed
@@ -2152,6 +2331,7 @@ End Sub
 
 ' ---- selectors ----
 Sub btnSelectAirfoil_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	Dim selected As Int = -1
@@ -2178,6 +2358,7 @@ Private Sub AfterGeometryEdit
 End Sub
 
 Sub btnTipLoss_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	items.Add(RotorNames.ShortName("tip_none") & "|Full aerodynamic span, B = 1")
@@ -2200,6 +2381,7 @@ Sub btnTipLoss_Click
 End Sub
 
 Sub btnCompressibility_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	items.Add(RotorNames.ShortName("comp_off") & "|No compressibility correction")
@@ -2232,6 +2414,7 @@ Sub btnActiveRotor_Click
 	Dim items As List
 	items.Initialize
 	items.Add(Chr(65291) & " New Rotor|Create a custom rotor")
+	items.Add(Chr(9998) & " Rename Current Rotor" & Chr(8230) & "|" & ActiveGeom.Name)
 	Dim selected As Int = -1
 	For j = 0 To order.Size - 1
 		Dim ri As Int = order.Get(j)
@@ -2247,12 +2430,29 @@ Sub btnActiveRotor_Click
 		btnNewRotor_Click
 		Return
 	End If
-	Dim target As Int = order.Get(idx - 1)
+	If idx = 1 Then
+		RenameCurrentRotor
+		Return
+	End If
+	Dim target As Int = order.Get(idx - 2)
 	If target = RotorStorage.ActiveIndex Then Return
 	Wait For (ResolveUnsavedGeometry("switching rotors")) Complete (ok As Boolean)
 	If ok = False Then Return
 	RotorStorage.SetActiveRotor(target)
 	AfterRotorChange
+End Sub
+
+Private Sub RenameCurrentRotor
+	Wait For (sheet.ShowInput("Rename Rotor", "Name (max 32 characters)", ActiveGeom.Name, "Rename", 32)) Complete (nm As String)
+	Dim n As String = TruncateName(nm.Replace("|", "/").Replace(Chr(13), " ").Replace(Chr(10), " ").Trim)
+	If n.Length = 0 Or n = ActiveGeom.Name Then Return
+	Dim other As Int = RotorStorage.FindRotorByName(n)
+	If other >= 0 And other <> RotorStorage.ActiveIndex Then
+		ToastMessageShow("A rotor named " & n & " already exists.", False)
+		Return
+	End If
+	ActiveGeom.Name = n
+	AfterGeometryEdit
 End Sub
 
 Sub btnNewRotor_Click
@@ -2356,8 +2556,8 @@ Private Sub BuildPageCond
 	CondKeys.Initialize
 	CondKeys.AddAll(Array As String("h", "T0", "mu", "Vx", "alpha", "Vz", "muz", "trim", "rpm", "coll", "CTtgt", "Ttgt", "inflow", "kind", "drag"))
 	ComputeColumns
-	CondLevel = RotorNames.ChooseLevel(CondKeys, ColLblW - 12dip, TextSp, MinNameLevel)
-	LblSp = RotorNames.FitLabelSize(CondKeys, CondLevel, ColLblW - 12dip, TextSp, 13)
+	CondLevel = RotorNames.ChooseLevel(CondKeys, ColLblW - 30dip, TextSp, MinNameLevel)
+	LblSp = RotorNames.FitLabelSize(CondKeys, CondLevel, ColLblW - 30dip, TextSp, 13)
 	Dim lv As Int = CondLevel
 	RowIdx = 0
 	Dim y As Int = 8dip
@@ -2392,7 +2592,7 @@ Private Sub BuildPageCond
 	edtKInd = RowVal.Get("kind")
 	y = BuildRow(scvCond, y, "drag", "drag", "sel", lv, "btnDragInfo")
 	Dim btnDrag As Button = RowVal.Get("drag")
-	btnDrag.Text = RotorNames.FullName("drag_numerical")
+	btnDrag.Text = RotorNames.ShortName("drag_numerical")
 	scvCond.Panel.Height = y + 24dip
 End Sub
 
@@ -2414,35 +2614,40 @@ Private Sub BuildPageRes
 	AttachHelp(btnViewPolarPlot)
 	btnViewPolarPlot.Text = "OPEN PARAMETER SWEEP"
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
-	btnViewPolarPlot.TextColor = ColorAccentCyan
-	btnViewPolarPlot.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
-	btnViewPolarPlot.TextSize = 15 * sc
-	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW*3/100, 8dip, UiContentW*94/100, 48dip)
+	btnViewPolarPlot.TextSize = TextSp
+	btnViewPolarPlot.Gravity = Gravity.CENTER
+	btnViewPolarPlot.SingleLine = True
+	StyleCta(btnViewPolarPlot, ColorAccentCyan)
+	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW*3/100, 10dip, UiContentW*94/100, 52dip)
 
-	Dim y As Int = 64dip
+	Dim y As Int = 76dip
 
 	' One canonical key per row (docs/nomenclature.md). Operating state shows rotor speed and collective pitch.
 	ResKeys.Initialize
 	ResKeys.AddAll(Array As String( _
-		"T", "P", "Pi", "P0", "Q", "H", "Y", "Mx", "My", _
+		"T", "H", "Hi", "H0", "Y", "Q", "Qi", "Q0", "Mx", "My", "P", "Pi", "P0", "Pair", _
 		"DL", "PL", "vi", "CTs", "FM", "LDe", _
 		"CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", "CLbar", "Tc", "Pc", _
 		"lam", "lami", "lamh", "muLam", "Kx", "Ky", "chi", "Bres", _
+		"Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75", _
 		"rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv", "h", "T0", "rho", "p", "a"))
 	Dim rowW As Int = UiContentW
-	Dim nameW As Int = rowW * 42 / 100
-	Dim valW As Int = rowW * 33 / 100
+	Dim nameW As Int = rowW * 46 / 100
+	Dim valW As Int = rowW * 30 / 100
 	Dim rowH As Int = 54dip
 	ResLevel = RotorNames.ChooseLevel(ResKeys, nameW - 10dip, TextSp, MinNameLevel)
-	Dim resLblSp As Float = RotorNames.FitLabelSize(ResKeys, ResLevel, nameW - 10dip, TextSp, 14)
+	Dim resLblSp As Float = TextSp
 	For i = 0 To ResKeys.Size - 1
 		Dim k As String = ResKeys.Get(i)
 		Dim sectionTitle As String = ""
 		Select k
-			Case "T": sectionTitle = "DIMENSIONAL PERFORMANCE"
+			Case "T": sectionTitle = "FORCES"
+			Case "Q": sectionTitle = "TORQUES & MOMENTS"
+			Case "P": sectionTitle = "POWER"
 			Case "DL": sectionTitle = "LOADING & EFFICIENCY"
 			Case "CT": sectionTitle = "AERODYNAMIC COEFFICIENTS"
 			Case "lam": sectionTitle = "INFLOW & WAKE"
+			Case "Vztot": sectionTitle = "FLOW & BLADE DIAGNOSTICS"
 			Case "rpm": sectionTitle = "STATE & ATMOSPHERE"
 		End Select
 		If sectionTitle <> "" Then y = AddSectionHeader(scvRes, y, sectionTitle)
@@ -2454,19 +2659,19 @@ Private Sub BuildPageRes
 		AttachHelp(row)
 		Dim lbl As Label
 		lbl.Initialize("")
-		lbl.Text = RotorNames.RichLabel(k, ResLevel)
+		lbl.Text = RotorNames.ResultLabel(k, nameW - 10dip, resLblSp)
 		lbl.TextColor = ColorTitleText
 		lbl.Typeface = Typeface.DEFAULT_BOLD
 		lbl.TextSize = resLblSp
 		lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-		lbl.SingleLine = False
-		SetTextLines(lbl, 2)
+		lbl.SingleLine = True
+		SetTextLines(lbl, 1)
 		row.AddView(lbl, 10dip, 0, nameW - 10dip, rowH)
 		lblResults(i).Initialize("")
 		lblResults(i).Text = Dash
-		lblResults(i).TextColor = ColorAccentCyan
+		lblResults(i).TextColor = ColorResultText
 		lblResults(i).Typeface = Typeface.DEFAULT_BOLD
-		lblResults(i).TextSize = 16 * sc
+		lblResults(i).TextSize = TextSp
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 		lblResults(i).SingleLine = True
 		row.AddView(lblResults(i), nameW, 0, valW, rowH)
@@ -2595,6 +2800,84 @@ End Sub
 ' ====================================================================
 ' AEROCALCULATOR GRADIENTS & DRAWABLES
 ' ====================================================================
+' Applies a state-list background and layers a RippleDrawable (API 21+) over it.
+Private Sub SetBtnBg(v As View, d As StateListDrawable)
+	v.Background = d
+	RotorNames.AddRipple(v, Bit.Or(0x40000000, Bit.And(ColorAccentCyan, 0xFFFFFF)))
+End Sub
+
+' Light haptic tick for toggles, unit/selector taps and tabs (no VIBRATE permission needed).
+Private Sub Tick
+	RotorNames.Haptic(root)
+End Sub
+
+Private Sub MixC(c1 As Int, c2 As Int, t As Float) As Int
+	Dim r As Int = Bit.And(Bit.ShiftRight(c1, 16), 255) * (1 - t) + Bit.And(Bit.ShiftRight(c2, 16), 255) * t
+	Dim g As Int = Bit.And(Bit.ShiftRight(c1, 8), 255) * (1 - t) + Bit.And(Bit.ShiftRight(c2, 8), 255) * t
+	Dim b As Int = Bit.And(c1, 255) * (1 - t) + Bit.And(c2, 255) * t
+	Return Colors.RGB(r, g, b)
+End Sub
+
+Private Sub CtaTextFor(fill As Int) As Int
+	Dim lum As Double = 0.299 * Bit.And(Bit.ShiftRight(fill, 16), 255) + 0.587 * Bit.And(Bit.ShiftRight(fill, 8), 255) + 0.114 * Bit.And(fill, 255)
+	If lum > 140 Then Return 0xFF04202A
+	Return Colors.White
+End Sub
+
+' Primary action: same button family as every other button (gradient surface), distinguished only by accent text and a thin low-alpha accent border.
+Private Sub StyleCta(b As Button, accent As Int)
+	Dim bd As Int = Bit.Or(0x66000000, Bit.And(accent, 0xFFFFFF))
+	Dim n As GradientDrawable
+	n.Initialize("TOP_BOTTOM", Array As Int(ColorBut1, ColorBut2))
+	n.CornerRadius = 4dip
+	Dim jn As JavaObject = n
+	jn.RunMethod("setStroke", Array(1dip, bd))
+	Dim pr As GradientDrawable
+	pr.Initialize("BOTTOM_TOP", Array As Int(ColorBut1, ColorPnlTitle))
+	pr.CornerRadius = 4dip
+	Dim jp As JavaObject = pr
+	jp.RunMethod("setStroke", Array(1dip, bd))
+	Dim sl As StateListDrawable
+	sl.Initialize
+	sl.AddState(sl.State_Pressed, pr)
+	sl.AddCatchAllState(n)
+	b.Background = sl
+	RotorNames.AddRipple(b, Bit.Or(0x40000000, Bit.And(accent, 0xFFFFFF)))
+	b.TextColor = accent
+	Try
+		Dim jo As JavaObject = b
+		Dim el As Float = 0
+		jo.RunMethod("setElevation", Array As Object(el))
+		jo.RunMethod("setStateListAnimator", Array(Null))
+	Catch
+		Log("Elevation skipped: " & LastException.Message)
+	End Try
+End Sub
+
+' Editable value surface: subtle fill with an accent-tinted border; accent border + tint while focused.
+Private Sub FieldBg(e As EditText, focused As Boolean)
+	Dim cd As ColorDrawable
+	If focused Then
+		cd.Initialize2(MixC(ColorFieldFill, ColorAccentCyan, 0.14), 4dip, 2dip, ColorAccentCyan)
+	Else
+		cd.Initialize2(ColorFieldFill, 4dip, 1dip, ColorFieldBorder)
+	End If
+	e.Background = cd
+End Sub
+
+' Highlights the row being edited (field border + left accent bar) and clears it on blur.
+Private Sub SetFieldFocus(v As Object, has As Boolean)
+	Dim e As EditText = v
+	FieldBg(e, has)
+	Dim rid As String = "" & e.Tag
+	If RowBar.IsInitialized Then
+		If RowBar.ContainsKey(rid) Then
+			Dim bar As Panel = RowBar.Get(rid)
+			bar.Visible = has
+		End If
+	End If
+End Sub
+
 Sub ButtonGradient(ColorList() As Int, ColorList2() As Int) As StateListDrawable
 	Dim gdwEnabled As GradientDrawable
 	gdwEnabled.Initialize("TOP_BOTTOM", ColorList)
@@ -2664,14 +2947,17 @@ Private Sub ShowPage(Position As Int, Animated As Boolean)
 End Sub
 
 Sub btnTabGeom_Click
+	Tick
 	ShowPage(0, True)
 End Sub
 
 Sub btnTabCond_Click
+	Tick
 	ShowPage(1, True)
 End Sub
 
 Sub btnTabRes_Click
+	Tick
 	ShowPage(2, True)
 End Sub
 
@@ -2687,19 +2973,19 @@ Private Sub ResUnitFor(key As String) As String
 		If imp Then Return "ft" Else Return "m"
 	End If
 	Select key
-		Case "T", "H", "Y"
+		Case "T", "H", "Hi", "H0", "Y"
 			If imp Then Return "lbf" Else Return "N"
-		Case "P", "Pi", "P0"
+		Case "P", "Pi", "P0", "Pair"
 			If imp Then Return "hp" Else Return "kW"
-		Case "Q", "Mx", "My"
-			If imp Then Return "lb·ft" Else Return "N·m"
+		Case "Q", "Qi", "Q0", "Mx", "My"
+			If imp Then Return "lbf·ft" Else Return "N·m"
 		Case "DL"
 			If imp Then Return "lbf/ft²" Else Return "N/m²"
 		Case "PL"
 			If imp Then Return "lbf/hp" Else Return "N/kW"
-		Case "vi", "OmR", "Vx", "Vz", "a"
+		Case "vi", "OmR", "Vx", "Vz", "Vztot", "Vadv", "Vret", "a"
 			If imp Then Return "ft/s" Else Return "m/s"
-		Case "chi", "alpha", "coll"
+		Case "chi", "alpha", "coll", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75"
 			Return "deg"
 		Case "rpm"
 			Return "rpm"
@@ -2741,6 +3027,21 @@ Private Sub ResTextFor(key As String) As String
 		Case "P0"
 			v = r.CQ0 * r.DensityRho * area * omR * omR * omR / 1000.0
 			If imp Then v = v * 1.34102209
+		Case "Pair"
+			v = r.CPair * r.DensityRho * area * omR * omR * omR / 1000.0
+			If imp Then v = v * 1.34102209
+		Case "Qi"
+			v = r.CQi * r.DensityRho * area * omR * omR * ActiveGeom.Radius
+			If imp Then v = v * 0.737562149
+		Case "Q0"
+			v = r.CQ0 * r.DensityRho * area * omR * omR * ActiveGeom.Radius
+			If imp Then v = v * 0.737562149
+		Case "Hi"
+			v = r.CHi * r.DensityRho * area * omR * omR
+			If imp Then v = v * 0.224808943
+		Case "H0"
+			v = r.CH0 * r.DensityRho * area * omR * omR
+			If imp Then v = v * 0.224808943
 		Case "Q"
 			If imp Then v = r.TorqueLbft Else v = r.TorqueNm
 		Case "H"
@@ -2788,6 +3089,11 @@ Private Sub ResTextFor(key As String) As String
 			Dim sigma3 As Double = sg3.SigmaThrust
 			If sigma3 <= 0 Then sigma3 = sg3.SigmaRef
 			v = zBETEngine.DerivedClBar(r, sigma3)
+		Case "Vztot", "Vadv", "Vret"
+			v = zBETEngine.DerivedOutput(r, key)
+			If imp Then v = v * ft
+		Case "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75"
+			v = zBETEngine.DerivedOutput(r, key)
 		Case "Tc": v = zBETEngine.DerivedTc(r, area)
 		Case "Pc": v = zBETEngine.DerivedPc(r, area)
 		Case "lamh": v = zBETEngine.DerivedLambdaH(r)
@@ -2961,7 +3267,7 @@ Sub LoadConditionDataToFields
 	SetEdit("T0", FormatKey("T0", ConditionTemperatureC))
 	RefreshHorizontalInputDisplay
 	RefreshAxialInputDisplay
-	btnInflowModel.Text = RotorNames.ShortName("inflow_" & ActiveCond.InflowModel).Replace("Coleman-", "Coleman-" & Chr(10))
+	btnInflowModel.Text = RotorNames.ShortName("inflow_" & ActiveCond.InflowModel)
 	SetEdit("kind", FormatKey("kind", ActiveCond.KInd))
 	RefreshOperatingControls
 	UpdatingUI = wasUpdating
@@ -3119,22 +3425,27 @@ Private Sub CommitCondFields
 End Sub
 
 Sub edtCond_FocusChanged (HasFocus As Boolean)
+	SetFieldFocus(Sender, HasFocus)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
 Sub edtHorizontalValue_FocusChanged (HasFocus As Boolean)
+	SetFieldFocus(Sender, HasFocus)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
 Sub edtAxialValue_FocusChanged (HasFocus As Boolean)
+	SetFieldFocus(Sender, HasFocus)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
 Sub edtOperatingInput_FocusChanged (HasFocus As Boolean)
+	SetFieldFocus(Sender, HasFocus)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
 Sub edtKInd_FocusChanged (HasFocus As Boolean)
+	SetFieldFocus(Sender, HasFocus)
 	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
 End Sub
 
@@ -3160,6 +3471,7 @@ End Sub
 
 ' ---- selectors (themed sheets) ----
 Sub btnInflowModel_Click
+	Tick
 	Dim keys() As String = Array As String("uniform", "coleman_simple", "coleman_feingold", "drees")
 	Dim secs() As String = Array As String("Benchmark, no gradient", "Longitudinal gradient", "Longitudinal and lateral gradients", "Classical longitudinal and lateral")
 	Dim items As List
@@ -3177,6 +3489,7 @@ Sub btnInflowModel_Click
 End Sub
 
 Sub btnOperatingPair_Click
+	Tick
 	Dim keys() As String = Array As String("rpm_collective", "rpm_ct", "rpm_thrust", "collective_ct", "collective_thrust", "ct_thrust")
 	Dim items As List
 	items.Initialize
@@ -3208,6 +3521,7 @@ Sub btnOperatingPair_Click
 End Sub
 
 Sub btnHorizontalInput_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	items.Add(RotorNames.PlainLabel("mu", 0) & "|V_x / (ΩR), dimensionless")
@@ -3236,6 +3550,7 @@ Sub btnHorizontalInput_Click
 End Sub
 
 Sub btnAxialInput_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	items.Add(RotorNames.PlainLabel("alpha", 0) & "|Positive when the stream arrives from below")
@@ -3278,7 +3593,7 @@ End Sub
 Private Sub NewSweepButton(ev As String) As Button
 	Dim b As Button
 	b.Initialize(ev)
-	b.Background = ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle))
+	SetBtnBg(b, ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle)))
 	b.TextColor = ColorAccentCyan
 	b.Typeface = Typeface.DEFAULT_BOLD
 	b.TextSize = 13 * sc
@@ -3290,6 +3605,7 @@ End Sub
 
 Sub btnViewPolarPlot_Click
 	If SweepPopupOpen Then CloseSweepPopup
+	If SweepMaxMuVal > 0.6 Then SweepMaxMuVal = 0.6
 	pnlSweepPopup.Initialize("pnlSweepPopup")
 	pnlSweepPopup.Color = ColorPnlInput5
 	root.AddView(pnlSweepPopup, 0, 0, root.Width, root.Height)
@@ -3300,8 +3616,22 @@ Sub btnViewPolarPlot_Click
 	Dim topBarH As Int = 52dip
 	Dim gap As Int = 6dip
 	Dim btnH As Int = 52dip
-	Dim controlsH As Int = 2 * btnH + 3 * gap
 	Dim footerH As Int = 58dip
+	Dim btnFooterH As Int = 48dip
+	Dim btnFooterTop As Int = 5dip
+	Dim curLines As Int = 2
+	Dim rdLines As Int = 4
+	If ld = 1 Then
+		topBarH = 40dip
+		gap = 4dip
+		btnH = 36dip
+		footerH = 42dip
+		btnFooterH = 34dip
+		btnFooterTop = 4dip
+		curLines = 1
+		rdLines = 2
+	End If
+	Dim controlsH As Int = 2 * btnH + 3 * gap
 
 	Dim pnlHeader As Panel
 	pnlHeader.Initialize("")
@@ -3314,14 +3644,15 @@ Sub btnViewPolarPlot_Click
 	lblTitle.Typeface = Typeface.DEFAULT_BOLD
 	lblTitle.TextSize = 15 * sc
 	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	pnlHeader.AddView(lblTitle, 12dip, 2dip, root.Width - 64dip, 48dip)
+	Dim headerBtnH As Int = topBarH - 4dip
+	pnlHeader.AddView(lblTitle, 12dip, 2dip, root.Width - 64dip, headerBtnH)
 	Dim btnClose As Button
 	btnClose.Initialize("btnCloseSweepPlot")
 	btnClose.Text = "×"
 	btnClose.TextColor = ColorAccentRed
 	btnClose.TextSize = 20
 	btnClose.Color = Colors.Transparent
-	pnlHeader.AddView(btnClose, root.Width - 52dip, 2dip, 48dip, 48dip)
+	pnlHeader.AddView(btnClose, root.Width - headerBtnH - 4dip, 2dip, headerBtnH, headerBtnH)
 
 	' Control grid: row 1 = Y-axis result selector, row 2 = four equal-width selectors.
 	Dim pnlControls As Panel
@@ -3343,20 +3674,21 @@ Sub btnViewPolarPlot_Click
 	pnlControls.AddView(btnSweepMaxMu, 12dip + 2 * (bw + gap), ry, bw, btnH)
 	pnlControls.AddView(btnSweepTrim, 12dip + 3 * (bw + gap), ry, bw, btnH)
 
-	' Scrollable body: plot, status line, readout text area.
+	' Scrollable body: plot (takes all free height), then a fixed-height info area (ellipsized, never hidden).
 	Dim bodyTop As Int = topBarH + controlsH
 	Dim bodyH As Int = root.Height - bodyTop - footerH
 	svSweep.Initialize(bodyH)
 	pnlSweepPopup.AddView(svSweep, 0, bodyTop, root.Width, bodyH)
 	Dim plotW As Int = root.Width - 16dip
-	Dim plotH As Int
-	If ld = 1 Then
-		plotH = Max(220dip, bodyH - 8dip)
-	Else If root.Width < 600dip Then
-		plotH = plotW * 95 / 100
-	Else
-		plotH = plotW * 70 / 100
-	End If
+	Dim infoW As Int = root.Width - 24dip
+	' curLines and rdLines set above
+	Dim curH As Int = curLines * MeasuredTextHeight("Ag", 14 * sc, infoW) + 6dip
+	Dim rdH As Int = rdLines * MeasuredTextHeight("Ag", 15 * sc, infoW) + 10dip
+	Dim plotH As Int = bodyH - curH - rdH - 16dip
+	Dim minPlotH As Int = 170dip
+	If ld = 1 Then minPlotH = 140dip
+	plotH = Max(plotH, minPlotH)
+	If root.Width >= 600dip And ld = 0 Then plotH = Min(plotH, plotW)
 	ivSweepPlot.Initialize("")
 	svSweep.Panel.AddView(ivSweepPlot, 8dip, 4dip, plotW, plotH)
 	pnlSweepTouch.Initialize("pnlSweepTouch")
@@ -3369,15 +3701,16 @@ Sub btnViewPolarPlot_Click
 	lblSweepCurrentVal.Typeface = Typeface.DEFAULT_BOLD
 	lblSweepCurrentVal.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
 	lblSweepCurrentVal.SingleLine = False
-	SetTextLines(lblSweepCurrentVal, 6)
-	svSweep.Panel.AddView(lblSweepCurrentVal, 12dip, yy, root.Width - 24dip, 46dip)
+	SetTextLines(lblSweepCurrentVal, curLines)
+	svSweep.Panel.AddView(lblSweepCurrentVal, 12dip, yy, infoW, curH)
 	lblSweepReadout.Initialize("")
 	lblSweepReadout.TextColor = ColorTitleText
 	lblSweepReadout.TextSize = 15 * sc
 	lblSweepReadout.Gravity = Bit.Or(Gravity.TOP, Gravity.LEFT)
 	lblSweepReadout.SingleLine = False
-	svSweep.Panel.AddView(lblSweepReadout, 12dip, yy + 50dip, root.Width - 24dip, 40dip)
-	svSweep.Panel.Height = yy + 100dip
+	SetTextLines(lblSweepReadout, rdLines)
+	svSweep.Panel.AddView(lblSweepReadout, 12dip, yy + curH + 4dip, infoW, rdH)
+	svSweep.Panel.Height = Max(yy + curH + 4dip + rdH + 12dip, bodyH)
 
 	Dim pnlFooter As Panel
 	pnlFooter.Initialize("")
@@ -3393,9 +3726,9 @@ Sub btnViewPolarPlot_Click
 	btnPng.TextColor = ColorAccentGreen
 	btnTable.TextSize = 14 * sc: btnCsv.TextSize = 14 * sc: btnPng.TextSize = 14 * sc
 	Dim fw As Int = (root.Width - 24dip - 2 * gap) / 3
-	pnlFooter.AddView(btnTable, 12dip, 5dip, fw, 48dip)
-	pnlFooter.AddView(btnCsv, 12dip + fw + gap, 5dip, fw, 48dip)
-	pnlFooter.AddView(btnPng, 12dip + 2 * (fw + gap), 5dip, fw, 48dip)
+	pnlFooter.AddView(btnTable, 12dip, btnFooterTop, fw, btnFooterH)
+	pnlFooter.AddView(btnCsv, 12dip + fw + gap, btnFooterTop, fw, btnFooterH)
+	pnlFooter.AddView(btnPng, 12dip + 2 * (fw + gap), btnFooterTop, fw, btnFooterH)
 	UpdateSweepPlotView
 End Sub
 
@@ -3415,6 +3748,7 @@ Sub pnlSweepTouch_Touch(Action As Int, X As Float, Y As Float) As Boolean
 End Sub
 
 Sub btnSweepParam_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	For i = 0 To RotorPopups.SweepParamKeys.Size - 1
@@ -3430,8 +3764,8 @@ End Sub
 
 Private Sub SweepBtnText(caption As String, value As String) As CSBuilder
 	Dim chev As String = " " & Chr(9662)
-	If root.Width <= 340dip Then chev = ""
-	Return RotorNames.RichText(caption & CRLF & value & chev)
+	' Keep chevron on all screen sizes
+	If ld = 1 Or root.Width >= 600dip Then Return RotorNames.RichText(caption & ": " & value & chev) Else Return RotorNames.RichText(caption & CRLF & value & chev)
 End Sub
 
 Private Sub RefreshSweepControls
@@ -3473,6 +3807,7 @@ Private Sub RefreshSweepControls
 End Sub
 
 Sub btnSweepMultiModel_Click
+	Tick
 	Dim options As List
 	options.Initialize
 	options.Add("Inflow Models|All four inflow models, active settings")
@@ -3560,7 +3895,7 @@ Sub btnSweepValues_Click
 	Select SweepMultiMode
 		Case 1: title.Text = "α FAMILY VALUES [deg]"
 		Case 2: title.Text = "Vz FAMILY VALUES [m/s]"
-		Case Else: title.Text = "μz FAMILY VALUES [-]"
+		Case Else: title.Text = "μz FAMILY VALUES [–]"
 	End Select
 	title.TextColor = ColorAccentCyan
 	title.Typeface = Typeface.DEFAULT_BOLD
@@ -3628,6 +3963,7 @@ Private Sub CloseSweepValuesPopup
 End Sub
 
 Sub btnSweepTrim_Click
+	Tick
 	If ActiveCond.OperatingPair = "rpm_collective" Then Return
 	Dim keys As List = RotorPopups.SweepTrimModeKeys
 	Dim items As List
@@ -3643,6 +3979,7 @@ Sub btnSweepTrim_Click
 End Sub
 
 Sub btnSweepXAxis_Click
+	Tick
 	Dim options As List
 	options.Initialize
 	options.Add(RotorNames.PlainLabel("mu", 0))
@@ -3656,7 +3993,9 @@ Sub btnSweepXAxis_Click
 End Sub
 
 Sub btnSweepMaxMu_Click
-	Dim vals() As Double = Array As Double(0.3, 0.4, 0.5, 0.6, 0.8, 1.0)
+	Tick
+	' The zBET engine clamps mu_x to +-0.60, so larger ranges would plot constant values.
+	Dim vals() As Double = Array As Double(0.3, 0.4, 0.5, 0.6)
 	Dim options As List
 	options.Initialize
 	Dim selected As Int = 1
@@ -3664,6 +4003,7 @@ Sub btnSweepMaxMu_Click
 		options.Add("μ_x max = " & NumberFormat2(vals(i), 1, 2, 2, False))
 		If Abs(SweepMaxMuVal - vals(i)) < 0.001 Then selected = i
 	Next
+	sheet.SetNote("μ_x ≤ 0.60 (model limit)")
 	Wait For (sheet.ShowChoice("Sweep Range", options, selected)) Complete (idx As Int)
 	If idx < 0 Or idx >= vals.Length Then Return
 	SweepMaxMuVal = vals(idx)
@@ -3705,7 +4045,7 @@ Private Sub RedrawSweepPlot
 		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, ThemeMode = 1, ExtraPrecision, SweepSamplesCache, PlotPalette, SweepCrossX)
 	ivSweepPlot.Bitmap = bmp
 	If ActiveRes.SolutionValid Then
-		lblSweepCurrentVal.Text = RotorNames.RichText("Active point:" & CRLF & "μ_x = " & FormatSig(ActiveRes.OperatingMu, 3) & _
+		lblSweepCurrentVal.Text = RotorNames.RichText("Active point: μ_x = " & FormatSig(ActiveRes.OperatingMu, 3) & _
 			" · V_x = " & FormatSig(ActiveRes.OperatingVx, 3) & " m/s · μ_z = " & FormatSig(ActiveRes.OperatingMuZ, 3))
 	Else
 		lblSweepCurrentVal.Text = "Active point: invalid operating point"
@@ -3715,11 +4055,6 @@ Private Sub RedrawSweepPlot
 		t = RotorPopups.SweepReadout(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, SweepCrossX, ExtraPrecision)
 	End If
 	lblSweepReadout.Text = RotorNames.RichText(t)
-	' Real measured heights (wrapping + font scale) so nothing hides behind the footer buttons.
-	lblSweepCurrentVal.Height = Max(46dip, MeasuredTextHeight(lblSweepCurrentVal.Text, lblSweepCurrentVal.TextSize, lblSweepCurrentVal.Width) + 8dip)
-	lblSweepReadout.Top = lblSweepCurrentVal.Top + lblSweepCurrentVal.Height + 4dip
-	lblSweepReadout.Height = MeasuredTextHeight(t, lblSweepReadout.TextSize, lblSweepReadout.Width) + 12dip
-	svSweep.Panel.Height = Max(lblSweepReadout.Top + lblSweepReadout.Height + 24dip, svSweep.Height + 1dip)
 End Sub
 
 ' Height of text wrapped at widthPx, measured on a fresh TextView (honours font scale and wrapping).
@@ -3775,6 +4110,7 @@ Private Sub OpenSweepTablePopup
 	header.AddView(close, root.Width - 52dip, 2dip, 48dip, 48dip)
 	Dim wv As WebView
 	wv.Initialize("")
+	NoZoomControls(wv)
 	pnlSweepTablePopup.AddView(wv, 0, headerH, root.Width, root.Height - headerH)
 	wv.LoadHtml(BuildSweepTableHtml)
 End Sub
@@ -3796,7 +4132,7 @@ End Sub
 
 ' Wide table with a sticky header row and a sticky first column; 15 px text, units in the headers.
 Private Sub BuildSweepTableHtml As String
-	Dim dark As Boolean = (ThemeMode = 0)
+	Dim dark As Boolean = (ThemeMode <> 1)
 	Dim bg As String = "#ffffff"
 	Dim fg As String = "#172033"
 	Dim grid As String = "#d5dce6"
@@ -3806,6 +4142,11 @@ Private Sub BuildSweepTableHtml As String
 		fg = "#f1f5f9"
 		grid = "#273244"
 		hint = "#94a3b8"
+		If ThemeMode = 2 Then
+			bg = "#0f1d3a"
+			grid = "#263b63"
+			hint = "#9db2d6"
+		End If
 	End If
 	Dim rows As List = RotorPopups.BuildSweepTableRows(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, ExtraPrecision, False)
 	Dim cols As Int = 0
@@ -3824,10 +4165,16 @@ Private Sub BuildSweepTableHtml As String
 	sb.Append("table{border-collapse:separate;border-spacing:0;white-space:nowrap}")
 	sb.Append("th,td{padding:10px 14px;border-bottom:1px solid ").Append(grid).Append(";border-right:1px solid ").Append(grid).Append(";text-align:right;background:").Append(bg).Append("}")
 	sb.Append("th{position:sticky;top:0;z-index:2;font-weight:bold}")
-	sb.Append("td:first-child,th:first-child{position:sticky;left:0;z-index:1;text-align:left;font-weight:bold}")
-	sb.Append("th:first-child{z-index:3}</style></head><body>")
+	' Frozen x columns (mu_x and mu/lambda/V_x) and frozen header row while scrolling.
+	Dim xc As Int = RotorPopups.SweepTableXCols(SweepXAxisMode)
+	sb.Append("td:nth-child(1),th:nth-child(1){position:sticky;left:0;z-index:1;text-align:left;font-weight:bold;box-sizing:border-box;width:84px;min-width:84px;max-width:84px;white-space:normal}")
+	If xc >= 2 Then
+		sb.Append("td:nth-child(2),th:nth-child(2){position:sticky;left:84px;z-index:1;font-weight:bold;box-sizing:border-box;width:96px;min-width:96px;max-width:96px;white-space:normal}")
+	End If
+	sb.Append("td:nth-child(").Append(xc).Append("),th:nth-child(").Append(xc).Append("){border-right:2px solid ").Append(hint).Append("}")
+	sb.Append("th:nth-child(1),th:nth-child(2){z-index:3}</style></head><body>")
 	sb.Append("<div class='hint'>").Append(HtmlEscape(strategy))
-	If cols > 2 Then sb.Append(" &nbsp;·&nbsp; swipe sideways for more columns &#8596;")
+	If cols > xc + 1 Then sb.Append(" &nbsp;·&nbsp; x columns stay frozen &#8596;")
 	sb.Append("</div><div class='wrap'><table>")
 	For r = 0 To rows.Size - 1
 		Dim cells() As String = rows.Get(r)
@@ -3993,6 +4340,12 @@ Sub SafeContent_Changed(left As Int, top As Int, width As Int, height As Int)
 End Sub
 
 #If JAVA
+public void rcNoZoom(android.webkit.WebView w) {
+    android.webkit.WebSettings st = w.getSettings();
+    st.setBuiltInZoomControls(false);
+    st.setDisplayZoomControls(false);
+    st.setSupportZoom(false);
+}
 @Override
 public void onAttachedToWindow() {
     super.onAttachedToWindow();

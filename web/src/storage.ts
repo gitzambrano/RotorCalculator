@@ -17,6 +17,7 @@ export function getFactoryPresets(): StoredRotor[] {
       geom: resolveSolidity({
         name: "Sikorsky UH-60 Black Hawk",
         rpm: 258.0,
+        nominalRpm: 258.0,
         radius: 8.18,
         liftSlope0: 5.73,
         rootCutout: 0.15,
@@ -42,7 +43,8 @@ export function getFactoryPresets(): StoredRotor[] {
       name: "Bell 206 JetRanger",
       geom: resolveSolidity({
         name: "Bell 206 JetRanger",
-        rpm: 395.0,
+        rpm: 394.0,
+        nominalRpm: 394.0,
         radius: 5.08,
         liftSlope0: 5.73,
         rootCutout: 0.12,
@@ -69,6 +71,7 @@ export function getFactoryPresets(): StoredRotor[] {
       geom: resolveSolidity({
         name: "Eurocopter Bo 105",
         rpm: 424.0,
+        nominalRpm: 424.0,
         radius: 4.92,
         liftSlope0: 5.73,
         rootCutout: 0.14,
@@ -94,7 +97,8 @@ export function getFactoryPresets(): StoredRotor[] {
       name: "Robinson R44",
       geom: resolveSolidity({
         name: "Robinson R44",
-        rpm: 400.0,
+        rpm: 408.0,
+        nominalRpm: 408.0,
         radius: 5.03,
         liftSlope0: 5.73,
         rootCutout: 0.1,
@@ -120,7 +124,8 @@ export function getFactoryPresets(): StoredRotor[] {
       name: "DJI Matrice 300 Drone",
       geom: resolveSolidity({
         name: "DJI Matrice 300 Drone",
-        rpm: 2800.0,
+        rpm: 5300.0,
+        nominalRpm: 5300.0,
         radius: 0.27,
         liftSlope0: 5.65,
         rootCutout: 0.1,
@@ -146,7 +151,8 @@ export function getFactoryPresets(): StoredRotor[] {
       name: "eVTOL Conceptual Rotor",
       geom: resolveSolidity({
         name: "eVTOL Conceptual Rotor",
-        rpm: 1200.0,
+        rpm: 1160.0,
+        nominalRpm: 1160.0,
         radius: 1.4,
         liftSlope0: 5.85,
         rootCutout: 0.15,
@@ -222,12 +228,18 @@ export function exportRotorsJSON(rotors: StoredRotor[]): string {
   );
 }
 
+export function defaultNominalRPM(radius: number): number {
+  const vtip = radius > 1.0 ? 210.0 : 120.0;
+  return (60.0 * vtip) / (2.0 * Math.PI * Math.max(0.02, radius));
+}
+
 export function exportRotorsDatabaseText(rotors: StoredRotor[]): string {
-  const lines: string[] = ["ROTORCALCULATOR_GEOMETRIES|2"];
+  const lines: string[] = ["ROTORCALCULATOR_GEOMETRIES|3"];
   for (const r of rotors) {
     const g = r.geom;
     const cleanName = (g.name || r.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
     const pg = g.usePrandtlGlauert ? "1" : "0";
+    const nomRpm = g.nominalRpm && g.nominalRpm > 0 ? g.nominalRpm : g.rpm;
     lines.push(
       [
         "R",
@@ -244,6 +256,7 @@ export function exportRotorsDatabaseText(rotors: StoredRotor[]): string {
         g.tipLossMode || "fixed",
         g.tipLossB ?? 0.97,
         pg,
+        nomRpm,
       ].join("|")
     );
   }
@@ -279,8 +292,8 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
     const line = lines[i];
     const parts = line.split("|");
     if (parts.length >= 2 && parts[0] === "ROTORCALCULATOR_GEOMETRIES") {
-      version = parseInt(parts[1], 10) || 2;
-    } else if (version === 2 && parts.length >= 14 && parts[0] === "R") {
+      version = parseInt(parts[1], 10) || 3;
+    } else if ((version === 2 || version === 3) && parts.length >= 14 && parts[0] === "R") {
       try {
         const name = parts[1].trim() || "Imported Rotor";
         const radius = parseFloat(parts[2]);
@@ -295,11 +308,14 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
         const tipLossMode = (parts[11] as "none" | "fixed" | "sissingh") || "fixed";
         const tipLossB = parseFloat(parts[12]);
         const usePrandtlGlauert = parts[13] === "1";
+        const nomRpm = parts.length >= 15 ? parseFloat(parts[14]) : defaultNominalRPM(radius);
+        const validNomRpm = Number.isFinite(nomRpm) && nomRpm > 0 ? nomRpm : defaultNominalRPM(radius);
 
         const rawGeom: RotorGeometry = {
           name,
           radius,
-          rpm: 390.0,
+          rpm: validNomRpm,
+          nominalRpm: validNomRpm,
           nBlades,
           rootCutout,
           solidityMode: "chords",
@@ -348,11 +364,13 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
         const tipLossMode = (parts[17] as "none" | "fixed" | "sissingh") || "fixed";
         const tipLossB = parts.length >= 19 ? parseFloat(parts[18]) : 0.97;
         const usePrandtlGlauert = parts.length >= 20 ? parts[19] === "1" : false;
+        const nomRpm = defaultNominalRPM(radius);
 
         const rawGeom: RotorGeometry = {
           name,
           radius,
-          rpm: 390.0,
+          rpm: nomRpm,
+          nominalRpm: nomRpm,
           nBlades,
           rootCutout,
           solidityMode: "chords",
@@ -387,6 +405,46 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
   }
 
   return imported.length > 0 ? imported : null;
+}
+
+const DRAFT_KEY = "rotorcalculator_geometry_draft";
+
+export function hasDraft(): boolean {
+  try {
+    return localStorage.getItem(DRAFT_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function saveDraft(geom: RotorGeometry, baseId: string = "active"): void {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ geom, baseId }));
+  } catch (err) {
+    console.error("Failed to save draft to localStorage:", err);
+  }
+}
+
+export function loadDraft(): { geom: RotorGeometry; baseId: string } | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.geom && parsed.baseId) {
+      return { geom: resolveSolidity(parsed.geom), baseId: parsed.baseId };
+    }
+  } catch (err) {
+    console.warn("Failed to load draft:", err);
+  }
+  return null;
+}
+
+export function clearDraft(): void {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch (err) {
+    console.error("Failed to clear draft:", err);
+  }
 }
 
 export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {

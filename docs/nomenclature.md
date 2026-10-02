@@ -4,11 +4,13 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 
 ## Rules
 1. Label format is **Description Symbol** (academic style): `Radius R`, `Thrust Coefficient C_T`. The symbol always comes AFTER the description.
-2. Title Case. **No periods** anywhere in labels. No abbreviations of the word *Coefficient* (there is no `Coeff`); the Short level uses fewer words, not truncated words. `Long` and `Lat` remain the only allowed truncations (Inflow Gradient rows, Short level).
-3. Three levels, chosen **once per page** (never per row): the largest level for which **every** label of that page fits its label column at the current width and font scale.
+2. Title Case. **No periods** anywhere in labels. No abbreviations of the word *Coefficient* (there is no `Coeff`, with one exception: `Tc` and `Pc` use `Coeff` at Short, S and A levels because otherwise they would read like dimensional thrust and power); the Short level uses fewer words, not truncated words. `Long` and `Lat` remain the only allowed truncations (Inflow Gradient rows, Short level).
+3. Five levels, chosen **once per page** (never per row): the first level, in the order L, M, A, S, symbol, for which **every** label of that page fits on **one line** of its label column at the current width and font scale (text may shrink to 13 sp first). A label button never wraps. Symbols are kept as long as possible, so A comes before S.
    - **L (Full):** `Full Description Symbol`
    - **M (Short):** `Short Description Symbol`
-   - **S (Narrow):** `Short Description` (symbol dropped). The symbol is never shown alone.
+   - **A (Abbreviated):** `Abbreviation Symbol`, one abbreviation per key (table below, no periods)
+   - **S (Narrow):** `Short Description` (symbol dropped)
+   - **Symbol only:** last resort
 4. **Coefficient rule.** Every coefficient follows the same pattern at every level:
    - Full: `<Name> Coefficient <Symbol>` — `Thrust Coefficient C_T`, `Induced Torque Coefficient C_Qi`, `Profile In-Plane Force Coefficient C_H0`.
    - Short: the same without the word *Coefficient* — `Thrust C_T`, `Induced Torque C_Qi`, `Profile In-Plane C_H0`.
@@ -30,13 +32,13 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | c0 | Root Chord | Root Chord | c_R |
 | c1 | Tip Chord | Tip Chord | c_T |
 | taper | Taper Ratio | Taper | c_T/c_R |
-| sigmaRef | Reference Solidity | Solidity | σ_ref |
-| sigmaAct | Active-Span Solidity | Active Solidity | σ_act |
+| sigmaRef | Geometric Solidity | Geometric Solidity | σ_geom |
+| sigmaAct | Actual Solidity | Actual Solidity | σ_act |
 | sigmaT | Thrust-Weighted Solidity | Thrust Solidity | σ_TR |
 | AR | Aspect Ratio | Aspect Ratio | AR |
 | A | Disk Area | Disk Area | A |
-| Ab | Reference Blade Area | Blade Area | A_b |
-| Aact | Active Blade Area | Active Area | A_act |
+| Ab | Geometric Blade Area | Geometric Area | A_geom |
+| Aact | Actual Blade Area | Actual Area | A_act |
 | thRoot | Root Pitch | Root Pitch | θ_R |
 | thTip | Tip Pitch | Tip Pitch | θ_T |
 | thTwist | Total Blade Twist | Twist | θ_twist |
@@ -47,7 +49,7 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | tipModel | Tip-Loss Model | Tip Loss | – |
 | B | Tip-Loss Factor | Tip Factor | B |
 | comp | Compressibility Correction | Compressibility | – |
-| rpmNom | Nominal Rotor Speed | Nominal Speed | Ω_nom |
+| rpmNom | Rotor Speed | Rotor Speed | Ω_nom |
 
 ## Conditions
 | Key | Full | Short | Symbol |
@@ -82,38 +84,52 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | My | Pitch Moment | Pitch Moment | M_y |
 | DL | Disk Loading | Disk Loading | T/A |
 | PL | Power Loading | Power Loading | T/P |
-| vi | Induced Velocity | Induced Velocity | v_i |
+| vi | Induced Speed | Induced Speed | V_i |
 | CT | Thrust Coefficient | Thrust | C_T |
 | CQ | Torque Coefficient | Torque | C_Q |
 | CQi | Induced Torque Coefficient | Induced Torque | C_Qi |
 | CQ0 | Profile Torque Coefficient | Profile Torque | C_Q0 |
 | CH | In-Plane Force Coefficient | In-Plane Force | C_H |
-| CHi | Induced In-Plane Force Coefficient | Induced In-Plane | C_Hi |
-| CH0 | Profile In-Plane Force Coefficient | Profile In-Plane | C_H0 |
+| CHi | Induced In-Plane Force Coefficient | Induced In-Plane Force | C_Hi |
+| CH0 | Profile In-Plane Force Coefficient | Profile In-Plane Force | C_H0 |
 | CY | Side Force Coefficient | Side Force | C_Y |
 | CMx | Roll Moment Coefficient | Roll Moment | C_Mx |
 | CMy | Pitch Moment Coefficient | Pitch Moment | C_My |
+| Qi | Induced Torque | Induced Torque | Q_i |
+| Q0 | Profile Torque | Profile Torque | Q_0 |
+| Hi | Induced In-Plane Force | Induced In-Plane Force | H_i |
+| H0 | Profile In-Plane Force | Profile In-Plane Force | H_0 |
+| Pair | Air Power | Air Power | P_air |
 | CPair | Air Power Coefficient | Air Power | C_Pair |
 | CTs | Blade Loading | Blade Loading | C_T/σ_TR |
-| CLbar | Mean Lift Coefficient | Mean Lift | C̄_L |
+| CLbar | Mean Lift Coefficient | Mean Lift Coefficient | C̄_L |
 | FM | Figure of Merit (hover only) | Figure of Merit | FM |
 | LDe | Effective Lift-to-Drag Ratio | Effective L/D | (L/D)_e |
 | lam | Total Inflow Ratio | Inflow Ratio | λ |
 | lami | Induced Inflow Ratio | Induced Inflow | λ_i |
 | lamh | Hover Inflow Ratio | Hover Inflow | λ_h |
-| muLam | Advance-to-Inflow Ratio | Advance-Inflow | μ/λ |
-| Tc | Dynamic-Pressure Thrust Coefficient | Dynamic-Pressure Thrust | T_c |
-| Pc | Dynamic-Pressure Power Coefficient | Dynamic-Pressure Power | P_c |
+| muLam | Advance-to-Inflow Ratio | Advance/Inflow | μ/λ |
+| Tc | Dynamic Thrust Coefficient | Dynamic Thrust Coeff | T_c |
+| Pc | Dynamic Power Coefficient | Dynamic Power Coeff | P_c |
 | Kx | Longitudinal Inflow Gradient | Long Gradient | K_x |
 | Ky | Lateral Inflow Gradient | Lat Gradient | K_y |
 | chi | Wake Skew Angle | Wake Skew | χ |
 | Bres | Tip-Loss Factor | Tip Factor | B |
 | OmR | Tip Speed | Tip Speed | ΩR |
-| Mtip | Hover Tip Mach Number | Tip Mach | M_tip |
-| Madv | Advancing Tip Mach Number | Advancing Mach | M_adv |
+| Mtip | Tip Mach | Tip Mach | M_tip |
+| Madv | Advancing Tip Mach | Adv. Mach | M_adv |
 | rho | Air Density | Density | ρ |
 | p | Ambient Pressure | Pressure | p |
 | a | Speed of Sound | Sound Speed | a |
+
+| Vztot | Total Axial Speed | Total Axial Speed | V_{z,tot} |
+| Vadv | Advancing Speed | Advancing Speed | V_adv |
+| Vret | Retreating Speed | Retreating Speed | V_ret |
+| Mret | Retreating Mach | Retreating Mach | M_ret |
+| aoaAdv75 | Advancing AoA 75% | Adv. AoA 75% | α_{adv,75} |
+| aoaRet75 | Retreating AoA 75% | Ret. AoA 75% | α_{ret,75} |
+| phiAdv75 | Advancing Inflow Angle 75% | Adv. Inflow 75% | φ_{adv,75} |
+| phiRet75 | Retreating Inflow Angle 75% | Ret. Inflow 75% | φ_{ret,75} |
 
 Dynamic-pressure coefficients (`Tc`, `Pc`) use the free-stream speed V = √(V_x² + V_z²) and are shown as – in hover. `CLbar` uses the thrust-weighted solidity σ_TR, like `CTs`.
 
@@ -172,3 +188,136 @@ Sweep trim modes (one dropdown in the sweep panel; trim target is the Conditions
 | tabCond | Conditions Page | Conditions | – |
 | tabRes | Results Page | Results | – |
 
+## Abbreviations (level A)
+
+Used with the symbol, e.g. `Root Chord c_R`. Only the words Induced (Ind.), Profile (Prof.), Nominal (Nom), Geometric (Geom.), Actual (Act.), Dynamic (Dyn), Advance (Adv.), Effective (Eff.) are abbreviated; the identifying noun is never dropped. Keys not listed use their Short name.
+
+- `R`: Radius
+- `Nb`: Blades
+- `x0`: Root Cutout
+- `c0`: Root Chord
+- `c1`: Tip Chord
+- `taper`: Taper
+- `sigmaRef`: Geom. Solidity
+- `sigmaAct`: Act. Solidity
+- `sigmaT`: Thrust Solidity
+- `AR`: AR
+- `A`: Disk Area
+- `Ab`: Geom. Area
+- `Aact`: Act. Area
+- `thRoot`: Root Pitch
+- `thTip`: Tip Pitch
+- `thTwist`: Twist
+- `th75`: Pitch 75%
+- `a0`: Lift Slope
+- `Cd0`: Prof. Drag
+- `B`: Tip Factor
+- `rpmNom`: Nom Speed
+- `h`: Altitude
+- `T0`: Temperature
+- `mu`: Adv. Ratio
+- `Vx`: Airspeed
+- `alpha`: Disk AoA
+- `Vz`: Climb Speed
+- `muz`: Axial Ratio
+- `rpm`: Rotor Speed
+- `coll`: Collective
+- `Ttgt`: Target Thrust
+- `CTtgt`: Target Thrust
+- `kind`: Ind. Factor
+- `T`: Thrust
+- `P`: Power
+- `Pi`: Ind. Power
+- `P0`: Prof. Power
+- `Q`: Torque
+- `H`: In-Plane Force
+- `Y`: Side Force
+- `Mx`: Roll Moment
+- `My`: Pitch Moment
+- `DL`: Disk Loading
+- `PL`: Power Loading
+- `vi`: Ind. Speed
+- `CT`: Thrust
+- `CQ`: Torque
+- `CQi`: Ind. Torque
+- `CQ0`: Prof. Torque
+- `CH`: In-Plane Force
+- `CHi`: Ind. In-Plane
+- `CH0`: Prof. In-Plane
+- `CY`: Side Force
+- `CMx`: Roll Moment
+- `CMy`: Pitch Moment
+- `CPair`: Air Power
+- `CTs`: Blade Loading
+- `CLbar`: Mean Lift
+- `FM`: FM
+- `LDe`: Eff. L/D
+- `lam`: Inflow Ratio
+- `lami`: Ind. Inflow
+- `lamh`: Hover Inflow
+- `muLam`: Advance-Inflow
+- `Tc`: Dyn Thrust Coeff
+- `Pc`: Dyn Power Coeff
+- `Mtip`: Tip Mach
+- `Madv`: Adv. Mach
+- `OmR`: Tip Speed
+- `rho`: Density
+- `p`: Pressure
+- `a`: Sound Speed
+- `Bres`: Tip Factor
+- `chi`: Wake Skew
+- `Qi`: Ind. Torque
+- `Q0`: Prof. Torque
+- `Hi`: Ind. In-Plane
+- `H0`: Prof. In-Plane
+- `Pair`: Air Power
+
+
+## APK 1.23 output presentation
+
+APK/B4A scope only; web presentation is not changed by this revision.
+Results use description-first labels with the symbol AFTER the name and native mathematical subscripts. Braced notation
+such as V_{z,tot} and α_{adv,75} is rendered as a single complete subscript.
+Each result chooses full, compact, abbreviated or symbol-only text at normal engineering
+font size within the shared three-column grid; symbols are never dropped. Adv. and Ret.
+are explicitly permitted abbreviations with periods. These APK rules override the older
+page-wide result fitting and punctuation restrictions above. Inputs retain page-wide fitting.
+V_z remains Climb Speed, positive downward relative flow through the disk.
+V_{z,tot} is total mean axial speed, not free-stream magnitude.
+Its compact caption is Axial Speed. The minimum level is only V_{z,tot}, as explicitly requested.
+Advancing/Retreating Speed and Mach refer to tangential tip kinematics, excluding axial speed.
+Section AoA and inflow angles are sampled at 75% radius and 90°/270° azimuth, not averaged.
+They are unavailable outside the active span or in reverse flow and are model diagnostics,
+not a stall or blade-dynamics prediction. Tip Mach and Advancing Mach coincide only at V_x=0.
+
+
+### Latest APK label decision
+
+Full AoA captions are Advancing AoA 75% and Retreating AoA 75%, without Section.
+Abbreviated captions are Adv. AoA, Ret. AoA, Adv. Inflow and Ret. Inflow.
+The minimum level is the symbol alone for quantities with a defined symbol.
+Actions without a physical symbol retain a caption rather than disappearing.
+All names are followed by the mathematical symbol; the symbol is never prefixed.
+Full catalog: [apk-label-catalog.md](apk-label-catalog.md), with rendered HTML and CSV variants.
+Regenerate using python tools/export_apk_label_catalog.py. Do not use the emulator automatically:
+emulator testing requires a fresh explicit user request.
+
+
+### APK — nomes aprovados e nível intermediário de forças (2026-10-01)
+
+- Ordem responsiva: L completo → M curto → A abreviado → S estreito → mínimo. Results agora também tenta S antes do símbolo.
+- Símbolo sempre depois do nome, com subscritos; mínimo somente símbolo para grandezas com símbolo.
+- sigmaT: A/S `Thr. Solidity σ_TR`; comp: A/S `Compres.`, mínimo `Comp.`.
+- T0: S `Temp. T_amb`; drag: A/S `Integration`, mínimo `Integ.`.
+- LDe: A/S `Eff. (L/D)_e`, sem duplicar a razão no nome.
+- rpmNom: L/M `Rotor Speed Ω_nom`, A/S `Rot. Speed Ω_nom`; rpm: A/S `Rot. Speed Ω`.
+- muLam: M/A/S `Advance/Inflow μ/λ`. Mtip: L `Tip Mach M_tip`; Madv: L `Advancing Tip Mach M_adv`. Sem “Number”.
+- Induced Factor permanece como está.
+- Hi/CHi: M `Induced In-Plane Force`, A `Ind. In-Plane Force`, S `Ind. In-Plane`; H0/CH0: M `Profile In-Plane Force`, A `Prof. In-Plane Force`, S `Prof. In-Plane`. Cada nível mantém seu símbolo após o nome.
+- O ajuste mede a largura e remove “Force” no nível S quando necessário, antes de recorrer somente ao símbolo. A tabela completa é gerada em docs/apk-label-catalog.*.
+- Testes no emulador somente mediante pedido explícito do usuário.
+
+
+### Pontuação das abreviações do APK (2026-10-01)
+
+Usar `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` e `Eff.` em todos os níveis abreviados. `Coeff` e `Dyn` permanecem sem ponto. Nomes completos e símbolos não mudam. O nível intermediário sem Force continua antes do símbolo.

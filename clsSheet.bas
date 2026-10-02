@@ -40,6 +40,7 @@ Sub Class_Globals
 	Private mEdt As EditText
 	Private mInputText As String
 	Private mMaxLen As Int
+	Private mNote As String
 End Sub
 
 Public Sub Initialize(Parent As Panel)
@@ -126,7 +127,9 @@ Public Sub ShowHelp(key As String)
 	Dim y As Int = 4dip
 	Dim txt As String = RotorNames.HelpBody(key)
 	If txt.Length > 0 Then
-		y = y + PlaceText(body, MkLabel(txt, 15, cText, False), txt, pad, y, iw) + 14dip
+		Dim lb As Label = MkLabel(txt, 15, cText, False)
+		lb.Text = RotorNames.RichText(txt)
+		y = y + PlaceText(body, lb, txt, pad, y, iw) + 14dip
 	End If
 	Dim eq As String = RotorNames.HelpEquation(key)
 	If eq.Length > 0 Then
@@ -159,18 +162,56 @@ Public Sub ShowHelp(key As String)
 	Present(cw, header, body, nf)
 End Sub
 
+' Optional muted note shown above the rows of the NEXT choice/menu sheet (cleared after use).
+Public Sub SetNote(note As String)
+	mNote = note
+End Sub
+
 ' items: "Primary" or "Primary|secondary line". Returns chosen index or -1 (cancel / scrim / back).
 Public Sub ShowChoice(title As String, items As List, selectedIndex As Int) As ResumableSub
+	Dim noColors As List
+	BuildChoice(title, items, selectedIndex, True, noColors)
+	mPending = True
+	Wait For Sheet_Result(v As Int)
+	Return v
+End Sub
+
+' Overflow-style menu: no Cancel footer, no selection tick, close button in the header. Returns index or -1.
+Public Sub ShowMenu(title As String, items As List) As ResumableSub
+	Dim noColors As List
+	BuildChoice(title, items, -1, False, noColors)
+	mPending = True
+	Wait For Sheet_Result(v As Int)
+	Return v
+End Sub
+
+' Choice with up to four ARGB colour swatches per item. colors: List of Int() (same size as items).
+Public Sub ShowChoiceSwatches(title As String, items As List, selectedIndex As Int, swatchList As List) As ResumableSub
+	BuildChoice(title, items, selectedIndex, True, swatchList)
+	mPending = True
+	Wait For Sheet_Result(v As Int)
+	Return v
+End Sub
+
+Private Sub BuildChoice(title As String, items As List, selectedIndex As Int, withCancel As Boolean, swatchList As List)
 	Begin(True)
 	mCancel = -1
 	Dim pad As Int = 20dip
 	Dim cw As Int = Min(mParent.Width, 560dip)
-	Dim header As Panel = BuildHeader(cw, title, RotorNames.RichText(title), False, True)
+	Dim header As Panel = BuildHeader(cw, title, RotorNames.RichText(title), (withCancel = False), True)
 	Dim body As Panel
 	body.Initialize("")
 	body.Color = Colors.Transparent
 	Dim y As Int = 0
-	Dim textW As Int = cw - pad - 56dip
+	If mNote.Length > 0 Then
+		Dim ln As Label = MkLabel(mNote, 15, cMuted, False)
+		ln.Text = RotorNames.RichText(mNote)
+		y = PlaceText(body, ln, mNote, pad, 0, cw - 2 * pad) + 8dip
+		mNote = ""
+	End If
+	Dim swW As Int = 0
+	If swatchList.IsInitialized Then swW = 4 * 18dip + 8dip
+	Dim textW As Int = cw - pad - 56dip - swW
 	For i = 0 To items.Size - 1
 		Dim parts() As String = Regex.Split("\|", items.Get(i))
 		Dim prim As String = parts(0).Trim
@@ -182,8 +223,8 @@ Public Sub ShowChoice(title As String, items As List, selectedIndex As Int) As R
 		row.Tag = i
 		Dim rowBg As Int = 0
 		If sel Then rowBg = Bit.Or(Bit.And(cAccent, 0xFFFFFF), 0x2A000000)
-		row.Background = RoundBg(rowBg, Mix(cCard, cText, 0.14), 0)
 		body.AddView(row, 0, y, cw, 56dip)
+		ApplyBg(row, rowBg, Mix(cCard, cText, 0.14), 0)
 		Dim c1 As Int = cText
 		If sel Then c1 = cAccent
 		Dim l1 As Label = MkLabel(prim, 16, c1, sel)
@@ -202,6 +243,17 @@ Public Sub ShowChoice(title As String, items As List, selectedIndex As Int) As R
 		Dim off As Int = (rowH - contentH) / 2
 		l1.Top = off
 		If h2 > 0 Then l2.Top = off + h1 + 2dip
+		If swW > 0 Then
+			Dim cl() As Int = swatchList.Get(i)
+			For k = 0 To Min(3, cl.Length - 1)
+				Dim dot As Panel
+				dot.Initialize("")
+				Dim dd As ColorDrawable
+				dd.Initialize2(cl(k), 7dip, 1dip, cDivider)
+				dot.Background = dd
+				row.AddView(dot, pad + textW + 4dip + k * 18dip, (rowH - 14dip) / 2, 14dip, 14dip)
+			Next
+		End If
 		If sel Then
 			Dim lc As Label = MkLabel(Chr(0x2713), 20, cAccent, True)
 			lc.Gravity = Gravity.CENTER
@@ -218,18 +270,19 @@ Public Sub ShowChoice(title As String, items As List, selectedIndex As Int) As R
 	Next
 	body.Height = y
 	Dim footer As Panel
-	footer.Initialize("")
-	footer.Color = Colors.Transparent
-	Dim fl As Panel
-	fl.Initialize("")
-	fl.Color = cDivider
-	footer.AddView(fl, 0, 0, cw, 1dip)
-	footer.AddView(MkBtn("Cancel", -1, Mix(cCard, cText, 0.08), cText, False, "btnCancel"), pad, 10dip, cw - 2 * pad, 48dip)
-	footer.Height = 68dip
+	If withCancel Then
+		footer.Initialize("")
+		footer.Color = Colors.Transparent
+		Dim fl As Panel
+		fl.Initialize("")
+		fl.Color = cDivider
+		footer.AddView(fl, 0, 0, cw, 1dip)
+		footer.AddView(MkBtn("Cancel", -1, Mix(cCard, cText, 0.08), cText, False, "btnCancel"), pad, 10dip, cw - 2 * pad, 48dip)
+		footer.Height = 68dip
+	Else
+		body.Height = y + 12dip
+	End If
 	Present(cw, header, body, footer)
-	mPending = True
-	Wait For Sheet_Result(v As Int)
-	Return v
 End Sub
 
 ' Returns DialogResponse.POSITIVE / NEGATIVE / CANCEL (neutral button, scrim tap and back give CANCEL).
@@ -257,7 +310,7 @@ Public Sub ShowInput(title As String, hint As String, prefill As String, positiv
 	If hint.Length > 0 Then y = PlaceText(body, MkLabel(hint, 15, cMuted, False), hint, pad, 0, iw) + 8dip
 	mEdt.Initialize("edtIn")
 	mEdt.SingleLine = True
-	mEdt.TextSize = 16
+	mEdt.TextSize = 16 * SheetK
 	mEdt.TextColor = cText
 	mEdt.ForceDoneButton = True
 	Dim ebg As ColorDrawable
@@ -500,10 +553,33 @@ Private Sub BuildHeader(cw As Int, title As String, rich As CSBuilder, withClose
 	Return h
 End Sub
 
+' Type scale by screen width (compact at 320dp) and a clamp of the system font scale to 1.15 for sheet text.
+Private Sub SheetK As Double
+	Dim wdp As Double = mParent.Width / 1dip
+	Dim k As Double = 1.0
+	If wdp <= 340 Then
+		k = 0.86
+	Else If wdp <= 380 Then
+		k = 0.93
+	Else If wdp >= 600 Then
+		k = 1.06
+	End If
+	Try
+		Dim ctx As JavaObject
+		ctx.InitializeContext
+		Dim cfg As JavaObject = ctx.RunMethodJO("getResources", Null).RunMethodJO("getConfiguration", Null)
+		Dim fs As Double = cfg.GetField("fontScale")
+		If fs > 1.15 Then k = k * 1.15 / fs
+	Catch
+		Log("fontScale: " & LastException.Message)
+	End Try
+	Return k
+End Sub
+
 Private Sub MkLabel(txt As String, sp As Float, col As Int, bold As Boolean) As Label
 	Dim l As Label
 	l.Initialize("")
-	l.TextSize = sp
+	l.TextSize = sp * SheetK
 	l.TextColor = col
 	If bold Then
 		l.Typeface = Typeface.DEFAULT_BOLD
@@ -531,7 +607,7 @@ Private Sub MkBtn(txt As String, tag As Int, bg As Int, fg As Int, bold As Boole
 	Dim b As Button
 	b.Initialize(evt)
 	b.Text = txt
-	b.TextSize = 16
+	b.TextSize = 16 * SheetK
 	b.TextColor = fg
 	If bold Then
 		b.Typeface = Typeface.DEFAULT_BOLD
@@ -542,9 +618,14 @@ Private Sub MkBtn(txt As String, tag As Int, bg As Int, fg As Int, bold As Boole
 	b.Padding = Array As Int(8dip, 0, 8dip, 0)
 	Dim base As Int = bg
 	If bg = 0 Then base = cCard
-	b.Background = RoundBg(bg, Mix(base, cText, 0.18), 12dip)
+	ApplyBg(b, bg, Mix(base, cText, 0.18), 12dip)
 	b.Tag = tag
 	Return b
+End Sub
+
+Private Sub ApplyBg(v As View, bg As Int, pressed As Int, radius As Int)
+	v.Background = RoundBg(bg, pressed, radius)
+	RotorNames.AddRipple(v, Bit.Or(0x40000000, Bit.And(cAccent, 0xFFFFFF)))
 End Sub
 
 Private Sub RoundBg(bg As Int, pressed As Int, radius As Int) As StateListDrawable

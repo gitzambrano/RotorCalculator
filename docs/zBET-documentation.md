@@ -1013,3 +1013,16 @@ These limitations are compatible with the intended use of zBET as a rapid concep
 3. Wayne Johnson, *NDARC — NASA Design and Analysis of Rotorcraft: Theory*, NASA/TP-2009-215402.
 4. R. P. Coleman, A. M. Feingold, and C. W. Stempin, *Evaluation of the Induced-Velocity Field of an Idealized Helicopter Rotor*, NACA ARR L5E10, 1945.
 5. J. M. Drees, “A Theory of Airflow Through Rotors and Its Application to Some Helicopter Problems,” 1949.
+
+
+## APK section diagnostics (1.23)
+
+Postprocessing only, based on section 6.1 and the existing Johnson/Leishman kinematics.
+At x=0.75 and ψ=90°/270°, u_T=x±μ and u_P=λ±x K_y λ_i (cos ψ=0).
+φ=atan2(u_P,u_T) and α_s=θ(x)−φ using the final trimmed pitch law.
+Since diagnostics reject u_T≤1e-9, atan(u_P/u_T) is equivalent in the supported domain.
+Angles are undefined when x_0≥0.75 or B<0.75. No flapping, cyclic or stall model is added.
+V_i=λ_i ΩR, V_{z,tot}=λ ΩR; V_adv=ΩR+V_x and V_ret=ΩR−V_x are tip tangential speeds.
+M_ret=|V_ret|/a; existing M_tip and M_adv keep their definitions.
+Acceptance: compiled diagnostic identities within 1e-10 absolute in degrees or m/s;
+integrated-load equivalence retains the established compiled reference-matrix tolerances.

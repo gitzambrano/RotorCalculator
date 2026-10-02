@@ -22,7 +22,7 @@ describe("Rotor Storage & Import/Export Parity", () => {
   it("exports APK-compatible database text format correctly", () => {
     const presets = getFactoryPresets();
     const dbText = exportRotorsDatabaseText(presets);
-    expect(dbText.startsWith("ROTORCALCULATOR_GEOMETRIES|2\n")).toBe(true);
+    expect(dbText.startsWith("ROTORCALCULATOR_GEOMETRIES|3\n")).toBe(true);
     expect(dbText).toContain("R|Sikorsky UH-60 Black Hawk|8.18|4|0.15|");
   });
 

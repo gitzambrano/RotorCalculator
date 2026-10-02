@@ -78,6 +78,7 @@ export const UNIT_TABLE: Record<string, UnitConversion> = {
   "lb/ft³": { fromSI: (v) => v * 0.06242796, toSI: (v) => v / 0.06242796 },
 
   // Non-dimensional
+  "–": { fromSI: (v) => v, toSI: (v) => v },
   "[-]": { fromSI: (v) => v, toSI: (v) => v },
   "r/R": { fromSI: (v) => v, toSI: (v) => v },
   rpm: { fromSI: (v) => v, toSI: (v) => v },
@@ -91,11 +92,11 @@ export const UNIT_CHOICES: Record<string, string[]> = {
   "Lift Slope": ["rad⁻¹", "deg⁻¹"],
   Altitude: ["m", "ft", "km"],
   Temperature: ["°C", "°F", "K"],
-  "Horizontal Flow": ["[-]", "m/s", "kt", "km/h", "mph"],
-  "Axial Flow": ["deg", "m/s", "ft/min", "[-]"],
+  "Horizontal Flow": ["–", "m/s", "kt", "km/h", "mph"],
+  "Axial Flow": ["deg", "m/s", "ft/min", "–"],
   RPM: ["rpm", "rad/s"],
   "Target Thrust": ["N", "kN", "lbf", "kgf"],
-  "Target CT": ["[-]"],
+  "Target CT": ["–"],
   Thrust: ["N", "kN", "lbf", "kgf"],
   Power: ["kW", "hp", "W"],
   Torque: ["N·m", "lb·ft", "kgf·m"],
@@ -110,8 +111,39 @@ export function convertValue(val: number, fromUnit: string, toUnit: string): num
   return UNIT_TABLE[toUnit].fromSI(siVal);
 }
 
+export function formatSig(value: number, sig: number): string {
+  if (!Number.isFinite(value) || Math.abs(value) > 1.0e15) return "–";
+  const a = Math.abs(value);
+  if (a < 1.0e-12) return "0";
+  const mag = Math.floor(Math.log10(a));
+  let dec = Math.max(0, Math.min(9, sig - 1 - mag));
+  const scale = Math.pow(10, dec);
+  const rounded = Math.round(a * scale) / scale;
+  if (rounded === 0) return "0";
+  const mag2 = Math.floor(Math.log10(rounded));
+  if (mag2 > mag) dec = Math.max(0, Math.min(9, sig - 1 - mag2));
+  const s = rounded.toFixed(dec);
+  let ip = s;
+  let fp = "";
+  const dot = s.indexOf(".");
+  if (dot >= 0) {
+    ip = s.substring(0, dot);
+    fp = s.substring(dot);
+  }
+  if (ip.length >= 5) {
+    let spaced = "";
+    for (let j = 0; j < ip.length; j++) {
+      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u00A0";
+      spaced += ip[j];
+    }
+    ip = spaced;
+  }
+  if (value < 0) ip = "-" + ip;
+  return ip + fp;
+}
+
 export function formatResultValue(val: number, decimals: number, extraPrecision = 0): string {
-  if (!Number.isFinite(val)) return "---";
+  if (!Number.isFinite(val)) return "–";
   if (Math.abs(val) < 1e-9 || Object.is(val, -0)) val = 0;
   const effectiveDecimals = decimals + extraPrecision;
   return val.toLocaleString("en-US", {

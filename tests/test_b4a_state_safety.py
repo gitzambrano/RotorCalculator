@@ -33,13 +33,15 @@ def test_geometry_exposes_all_authoritative_inputs():
     names = text("RotorNames.bas")
     start = main.index("Private Sub BuildGeometryEditorContent")
     editor = main[start:main.index("End Sub", start)]
-    for key in ("name", "rpmNom", "R", "Nb", "x0", "c0", "c1", "taper", "AR", "sigmaRef",
+    for key in ("rpmNom", "R", "Nb", "x0", "c0", "c1", "taper", "AR", "sigmaRef",
                 "sigmaAct", "sigmaT", "A", "Ab", "Aact", "thRoot", "thTip", "thTwist",
                 "airfoil", "a0", "Cd0", "tipModel", "B", "comp"):
         assert f'"{key}"' in editor
         assert f'Add("{key}"' in names
+    # The Name row is gone: the active-rotor bar shows the name and the rotor sheet renames it.
+    assert 'Add("name"' in names and '"name"' not in editor
     for full in ("Rotor Radius", "Blade Count", "Root Cutout", "Root Chord", "Tip Chord",
-                 "Reference Solidity", "Aspect Ratio", "Root Pitch", "Tip Pitch"):
+                 "Geometric Solidity", "Aspect Ratio", "Root Pitch", "Tip Pitch"):
         assert f'"{full}"' in names
 
 
@@ -80,8 +82,8 @@ def test_sigma_and_aspect_ratio_edits_scale_both_chords():
 def test_geometry_derived_metrics_are_visible():
     names = text("RotorNames.bas")
     engine = text("zBETEngine.bas")
-    for full in ("Reference Solidity", "Active-Span Solidity", "Thrust-Weighted Solidity", "Taper Ratio",
-                 "Disk Area", "Reference Blade Area", "Active Blade Area", "Total Blade Twist"):
+    for full in ("Geometric Solidity", "Actual Solidity", "Thrust-Weighted Solidity", "Taper Ratio",
+                 "Disk Area", "Geometric Blade Area", "Actual Blade Area", "Total Blade Twist"):
         assert f'"{full}"' in names
     for sub in ("ReferenceBladeArea", "ActiveBladeArea", "TaperRatio"):
         assert f"Public Sub {sub}" in engine
@@ -269,10 +271,11 @@ def test_kind_is_condition_input():
 
 
 RESULT_KEYS = (
-    "T", "P", "Pi", "P0", "Q", "H", "Y", "Mx", "My",
+    "T", "H", "Hi", "H0", "Y", "Q", "Qi", "Q0", "Mx", "My", "P", "Pi", "P0", "Pair",
     "DL", "PL", "vi", "CTs", "FM", "LDe",
     "CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", "CLbar", "Tc", "Pc",
     "lam", "lami", "lamh", "muLam", "Kx", "Ky", "chi", "Bres",
+    "Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75",
     "rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv",
     "h", "T0", "rho", "p", "a",
 )
@@ -440,10 +443,13 @@ def test_plot_exports_csv_png_with_saf():
 def test_themes_help_and_precision_remain_persistent():
     main = text("RotorCalculator.b4a")
     assert 'File.WriteMap(File.DirInternal, "ui_settings.txt", m)' in main
-    assert 'btnSettingTheme.Text = "LIGHT"' in main
-    assert 'btnSettingTheme.Text = "DARK"' in main
+    assert 'Case 1: Return "LIGHT"' in main
+    assert 'Case 2: Return "MIDNIGHT BLUE"' in main
+    assert 'Return "DARK"' in main
     assert "File23=physics_help.html" in main
     assert "File24=physics_help_light.html" in main
+    assert "File27=physics_help_midnight.html" in main
+    assert "RotorPopups.SetPlotThemeIndex(ThemeMode)" in main
 
 
 def test_engine_domain_guards_and_named_failure_status_remain():
@@ -478,8 +484,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 5" in main
-    assert "#VersionName: 1.22" in main
+    assert "#VersionCode: 6" in main
+    assert "#VersionName: 1.23" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -525,9 +531,9 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert qa.count('assert_document_picker "$OUT"') >= 4
     popup = text("RotorPopups.bas")
     sweep_keys = re.findall(r'AddSweepParam\("([^"]+)", SweepParamDisplayName\("([^"]+)"\)\)', popup)
-    assert len(sweep_keys) == 45
+    assert len(sweep_keys) == 52
     assert all(key == display_key for key, display_key in sweep_keys)
-    assert len({key for key, _ in sweep_keys}) == 45
+    assert len({key for key, _ in sweep_keys}) == 52
 
 
 def test_requirements_and_plan_are_authoritative_for_new_architecture():
@@ -585,8 +591,8 @@ def test_results_show_four_operating_solution_variables_as_rows():
     assert "rpm" in keys and "coll" in keys and "CT" in keys and "T" in keys
     assert 'Add("rpm", "Rotor Speed"' in names
     assert 'Add("coll", "Collective Pitch"' in names
-    assert "Private lblResults(64) As Label" in main
-    assert "Private lblResultUnits(64) As Label" in main
+    assert "Private lblResults(80) As Label" in main
+    assert "Private lblResultUnits(80) As Label" in main
     assert "ResTextFor(ResKeys.Get(i))" in main
     assert '"RPM — Solved Speed"' not in main
     assert '"CT — Trimmed"' not in main
@@ -597,9 +603,9 @@ def test_premium_visual_contract_is_enforced_in_source():
     req = text("docs/software_requirements.md")
     # results: symbol-first quantity | value | unit, one nomenclature level per page
     assert "ResLevel = RotorNames.ChooseLevel(ResKeys, nameW - 10dip, TextSp, MinNameLevel)" in main
-    assert "RotorNames.RichLabel(k, ResLevel)" in main
-    assert "Dim nameW As Int = rowW * 42 / 100" in main
-    assert "Dim valW As Int = rowW * 33 / 100" in main
+    assert "RotorNames.ResultLabel(k, nameW - 10dip, resLblSp)" in main
+    assert "Dim nameW As Int = rowW * 46 / 100" in main
+    assert "Dim valW As Int = rowW * 30 / 100" in main
     assert "ResUnitFor(k)" in main
     assert "Return Dash" in main
     assert '"[-]"' not in main
@@ -614,7 +620,7 @@ def test_premium_visual_contract_is_enforced_in_source():
 def test_active_ui_avoids_caption_sized_engineering_controls():
     main = text("RotorCalculator.b4a")
     assert "l.TextSize = 14.5 * sc" in main            # status chips
-    assert "lblResults(i).TextSize = 16 * sc" in main  # result values
+    assert "lblResults(i).TextSize = TextSp" in main  # result values
     assert "lbl.TextSize = resLblSp" in main
     assert "b.TextSize = 13 * sc" in main              # sweep selectors
     assert "btnSweepParam.TextSize = 14 * sc" in main
@@ -686,3 +692,189 @@ def test_collective_ct_nonunique_failure_is_explicit():
     assert "Collective + CT is non-unique at this flight/model state" in engine
     assert 'If targetKind = "ct" And roots.Size <> 1 Then' in engine
     assert 'Return Array(sourceCond.RPM, False, "multiple")' in engine
+
+
+def test_overflow_menu_is_themed_sheet_without_rspopupmenu():
+    main = text("RotorCalculator.b4a")
+    agents = text("AGENTS.md")
+    assert "rspopupmenu" not in main.lower() and "RSPopupMenu" not in agents
+    assert "NumberOfLibraries=3" in main
+    start = main.index("Sub pnlMenuAnchor_Click")
+    menu = main[start:main.index("End Sub", start)]
+    order = [menu.index(t) for t in ("Physics & Equations", "Unit Converter", "Settings", "About", "Privacy")]
+    assert order == sorted(order)
+    assert "sheet.ShowMenu" in menu
+    assert "Public Sub ShowMenu" in text("clsSheet.bas")
+
+
+def test_settings_sections_and_rename_flow():
+    main = text("RotorCalculator.b4a")
+    for hdr in ('"DISPLAY"', '"PLOTS"', '"ROTOR DATA"'):
+        assert f"AddSettingsHeader(scv.Panel, cardW, y, {hdr})" in main
+    assert '"Result Units (Outputs Only)"' in main
+    assert "0.0699 " in main and "0.06993" in main
+    assert "btnSettingRestore" in main
+    assert "ShowChoiceSwatches" in main
+    assert "Rename Current Rotor" in main and "sheet.ShowInput(\"Rename Rotor\"" in main
+    assert "SetFieldFocus(Sender, HasFocus)" in main
+    assert "#ApplicationLabel: Rotor Calc" in main
+
+
+def test_sweep_range_is_limited_to_engine_mu_limit():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Sub btnSweepMaxMu_Click")
+    block = main[start:main.index("End Sub", start)]
+    assert "Array As Double(0.3, 0.4, 0.5, 0.6)" in block
+    assert "0.8" not in block and "1.0)" not in block
+    assert "model limit" in block
+    assert "th:nth-child(" in main  # frozen x columns in the sweep table
+
+
+def _nomenclature_keys():
+    keys = set()
+    for line in text("docs/nomenclature.md").splitlines():
+        m = re.match(r"^\|\s*([A-Za-z][A-Za-z0-9_]*)\s*\|", line)
+        if m and m.group(1) != "Key":
+            keys.add(m.group(1))
+    return keys
+
+
+def test_nomenclature_md_matches_rotornames_keys():
+    names_src = text("RotorNames.bas")
+    names = set(re.findall(r'^\s*Add\("([A-Za-z0-9_]+)"', names_src, re.M))
+    doc = _nomenclature_keys()
+    assert names, "no RotorNames keys parsed"
+    missing_in_bas = sorted(doc - names)
+    missing_in_doc = sorted(names - doc)
+    assert not missing_in_bas, f"keys in docs/nomenclature.md absent from RotorNames.bas: {missing_in_bas}"
+    assert not missing_in_doc, f"RotorNames.bas keys absent from docs/nomenclature.md: {missing_in_doc}"
+
+
+def test_sweep_name_keys_resolve_to_rotornames():
+    names = set(re.findall(r'^\s*Add\("([A-Za-z0-9_]+)"', text("RotorNames.bas"), re.M))
+    popups = text("RotorPopups.bas")
+    start = popups.index("Private Sub SweepNameKey")
+    block = popups[start:popups.index("End Sub", start)]
+    targets = set(re.findall(r'Return "([A-Za-z0-9_]+)"', block))
+    assert targets
+    assert sorted(t for t in targets if t not in names) == []
+
+
+def test_selector_values_share_the_editable_value_surface():
+    main = text("RotorCalculator.b4a")
+    sel = main.split("Private Sub CreateSelectorValue", 1)[1].split("End Sub", 1)[0]
+    assert "ColorFieldFill" in sel and "ColorFieldBorder" in sel
+    assert "btn.TextColor = ColorEdtText" in sel and "TextSp" in sel
+    assert "CreateSelectorValue(rowId, evt)" in main
+    for name in ("btnTipLoss", "btnCompressibility"):
+        assert f"{name}.TextColor" not in main
+
+
+def test_abbreviations_documented_and_labels_single_line():
+    names = text("RotorNames.bas")
+    doc = text("docs/nomenclature.md")
+    m = re.search(r'Array As String\(("R", "Radius".*?)\)' + chr(10), names, re.S)
+    vals = re.findall(r'"([^"]*)"', m.group(1))
+    for k, v in zip(vals[::2], vals[1::2]):
+        assert f"- `{k}`: {v}" in doc
+        assert "." not in re.sub(r"\b(?:Adv|Act|Geom|Thr|Prof|Ind|Rot|Eff)\.", "", v)
+    main = text("RotorCalculator.b4a")
+    row = main.split("Private Sub CreateRowLabel", 1)[1].split("End Sub", 1)[0]
+    assert "btn.SingleLine = True" in row and "SetTextLines(btn, 1)" in row
+
+
+def test_unit_column_has_one_style_and_non_converting_units_open_help():
+    main = text("RotorCalculator.b4a")
+    sub = main.split("Private Sub StyleUnitButton", 1)[1].split("End Sub", 1)[0]
+    assert "If u = Dash" not in sub and "ColorPnlInput5" not in sub
+    assert "btn.TextColor = ColorButText2" in sub
+    click = main.split("Sub unitRow_Click", 1)[1].split("End Sub", 1)[0]
+    assert "ShowHelpFor(rid)" in click and "ToastMessageShow" not in click
+
+
+def test_sound_speed_label_keeps_speed_at_every_level():
+    names = text("RotorNames.bas")
+    assert '"a", "Sound Speed"' in names and '"OmR", "Tip Speed"' in names
+    assert '"Speed of Sound", "Sound Speed", "a"' in names
+
+
+def test_dimensional_counterparts_exist_for_every_coefficient():
+    main = text("RotorCalculator.b4a")
+    names = text("RotorNames.bas")
+    pops = text("RotorPopups.bas")
+    for k, sym in (("Qi", "Q_i"), ("Q0", "Q_0"), ("Hi", "H_i"), ("H0", "H_0"), ("Pair", "P_air")):
+        assert f'Add("{k}",' in names and f'"{sym}"' in names
+        assert f'"{k}"' in main
+    for sk in ("TorqueIndNm", "TorqueProfNm", "DragIndN", "DragProfN", "PowerIndKW", "PowerProfKW", "PowerAirKW"):
+        assert f'AddSweepParam("{sk}"' in pops
+    assert "FORCES" in main and "TORQUES & MOMENTS" in main and '"POWER"' in main
+    assert "r.CQi * r.DensityRho * area * omR * omR * omR" in main  # P_i = Q_i * Omega
+
+
+def _names_table():
+    src = text("RotorNames.bas")
+    tbl = {}
+    for m in re.finditer(r'^\s*Add\("([A-Za-z0-9_]+)", "([^"]*)", "([^"]*)", "([^"]*)"', src, re.M):
+        tbl[m.group(1)] = (m.group(2), m.group(3), m.group(4))
+    am = re.search(r'Array As String\(("R", "Radius".*?)\)' + chr(10), src, re.S)
+    vals = re.findall(r'"([^"]*)"', am.group(1))
+    return tbl, dict(zip(vals[::2], vals[1::2]))
+
+
+def _page_keys(main):
+    geom = re.search(r'GeomKeys.AddAll\(Array As String\((.*?)\)\)', main, re.S).group(1)
+    cond = re.search(r'CondKeys.AddAll\(Array As String\((.*?)\)\)', main, re.S).group(1)
+    return {"geometry": re.findall(r'"([^"]+)"', geom), "conditions": re.findall(r'"([^"]+)"', cond),
+            "results": result_keys_in_source(main)}
+
+
+def test_no_ambiguous_labels_on_a_page_and_key_names_present():
+    tbl, abbr = _names_table()
+    main = text("RotorCalculator.b4a")
+    for page, keys in _page_keys(main).items():
+        seen_m, seen_a = {}, {}
+        for k in keys:
+            full, short, sym = tbl[k]
+            m_label = f"{short} {sym}".strip()
+            a = abbr.get(k, short)
+            a_label = a if (not sym or a == sym) else f"{a} {sym}"
+            assert m_label not in seen_m, f"{page}: M label {m_label!r} for {k} and {seen_m.get(m_label)}"
+            assert a_label not in seen_a, f"{page}: A label {a_label!r} for {k} and {seen_a.get(a_label)}"
+            seen_m[m_label] = k
+            seen_a[a_label] = k
+    assert tbl["h"][1] == "Altitude" and abbr["h"] == "Altitude"
+    assert tbl["Mtip"][1] == "Tip Mach" and abbr["Mtip"] == "Tip Mach"
+    assert tbl["Madv"][1] == "Adv. Mach" and abbr["Madv"] == "Adv. Mach"
+    for k in ("a", "OmR"):
+        assert "Speed" in abbr[k]
+
+
+def test_coeff_word_only_for_dynamic_pressure_coefficients():
+    src = text("RotorNames.bas")
+    allowed = {"Tc", "Pc"}
+    for m in re.finditer(r'^\s*Add\("([A-Za-z0-9_]+)", "([^"]*)", "([^"]*)"', src, re.M):
+        has = "Coeff " in (m.group(2) + " ") or (m.group(3) + " ").find("Coeff ") >= 0
+        assert has == (m.group(1) in allowed), m.group(1)
+    assert '"Dynamic Thrust Coeff"' in src and '"Dyn Power Coeff"' in src
+    assert "T_c = T / (½ρV∞²A)" in src
+
+
+def test_apk_results_preserve_name_symbol_order_and_speed_caption():
+    src = text("RotorNames.bas")
+    result = src.split("Public Sub ResultPlainLabel", 1)[1].split("End Sub", 1)[0]
+    assert 'Return caption & " " & sym' in result
+    assert 'If level = 4 Then' in result
+    assert 'If sym.Length > 0 Then Return sym' in result
+    assert 'If level = 2 Then caption = NarrowName(key)' in result
+    assert 'Array As Int(0, 1, 3, 2, 4)' in src
+    assert 'narrowNames.Put("Hi", "Ind. In-Plane")' in src
+    assert 'narrowNames.Put("H0", "Prof. In-Plane")' in src
+    assert '"Speed " & sym' not in result
+    assert 'abbr.Put("Vztot", "Axial Speed")' in src
+    assert '"Adv. Speed"' in src and '"Ret. Speed"' in src
+    assert '"V_{z,tot}"' in src and '"α_{adv,75}"' in src
+    assert 'abbr.Put("aoaAdv75", "Adv. AoA")' in src
+    assert 'abbr.Put("aoaRet75", "Ret. AoA")' in src
+    assert 'abbr.Put("phiAdv75", "Adv. Inflow")' in src
+    assert 'abbr.Put("phiRet75", "Ret. Inflow")' in src
+    assert '"Advancing Section AoA 75%"' not in src

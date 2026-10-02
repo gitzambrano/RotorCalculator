@@ -58,7 +58,7 @@ Sub Process_Globals
 		FxColeman As Double, _
 		FyColeman As Double)
 	
-	Type RotorResults (CT As Double, CQ As Double, CQi As Double, CQ0 As Double, CH As Double, CHi As Double, CH0 As Double, CY As Double, _
+	Type RotorResults (AoAAdv75 As Double, AoARet75 As Double, PhiAdv75 As Double, PhiRet75 As Double, CT As Double, CQ As Double, CQi As Double, CQ0 As Double, CH As Double, CHi As Double, CH0 As Double, CY As Double, _
 		CMx As Double, CMy As Double, CPair As Double, InflowLambda As Double, InflowLambdaI As Double, L_D_eff As Double, FoM As Double, _
 		ThrustN As Double, ThrustKgf As Double, ThrustLbf As Double, PowerShaftW As Double, PowerShaftKW As Double, PowerShaftHP As Double, _
 		TorqueNm As Double, TorqueLbft As Double, DragHN As Double, SideForceYN As Double, SideForceYLbf As Double, _
@@ -1216,6 +1216,11 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.PowerShaftW = res.TorqueNm * omega
 	res.PowerShaftKW = res.PowerShaftW / 1000.0
 	res.PowerShaftHP = res.PowerShaftW / 745.699872
+	res.PhiAdv75 = SectionPhi75(g, res, 1)
+	res.PhiRet75 = SectionPhi75(g, res, -1)
+	Dim pitch75 As Double = LocalPitch(g, 0.75) * 180.0 / cPI
+	res.AoAAdv75 = pitch75 - res.PhiAdv75
+	res.AoARet75 = pitch75 - res.PhiRet75
 	
 	Return res
 End Sub
@@ -1268,4 +1273,31 @@ End Sub
 Public Sub DerivedClBar(res As RotorResults, sigma As Double) As Double
 	If sigma <= 0 Then Return NaNValue
 	Return 6 * res.CT / sigma
+End Sub
+
+' Section diagnostic at x=.75, psi=90/270 degrees. Normal forward flow only.
+' Johnson/Leishman section kinematics; docs/zBET-documentation.md section 6.1.
+Private Sub SectionPhi75(g As RotorGeometry, res As RotorResults, side As Double) As Double
+	If g.RootCutout >= 0.75 Or res.BFactor < 0.75 Then Return NaNValue
+	Dim ut As Double = 0.75 + side * res.OperatingMu
+	If ut <= 1e-9 Then Return NaNValue
+	Dim up As Double = res.InflowLambda + 0.75 * side * res.InflowKy * res.InflowLambdaI
+	Return ATan(up / ut) * 180.0 / cPI
+End Sub
+
+Public Sub DerivedOutput(res As RotorResults, key As String) As Double
+	Select key
+		Case "vi": Return res.InflowLambdaI * res.TipSpeed
+		Case "Vztot": Return res.InflowLambda * res.TipSpeed
+		Case "Vadv": Return res.TipSpeed + res.OperatingVx
+		Case "Vret": Return res.TipSpeed - res.OperatingVx
+		Case "Mret"
+			If res.SpeedOfSound <= 0 Then Return NaNValue
+			Return Abs(res.TipSpeed - res.OperatingVx) / res.SpeedOfSound
+		Case "aoaAdv75": Return res.AoAAdv75
+		Case "aoaRet75": Return res.AoARet75
+		Case "phiAdv75": Return res.PhiAdv75
+		Case "phiRet75": Return res.PhiRet75
+	End Select
+	Return NaNValue
 End Sub

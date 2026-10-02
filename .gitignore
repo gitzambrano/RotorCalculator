@@ -2,6 +2,9 @@
 Objects/
 eval-screenshots/
 screenshots_mobile/
+temp_eval_screens/
+temp_human_eval/
+temp_ui.xml
 AutoBackups/
 
 # Python & Environment cache

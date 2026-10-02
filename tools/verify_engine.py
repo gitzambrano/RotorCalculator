@@ -90,9 +90,9 @@ def verify_ui_source_contract() -> None:
         "sheet.ShowInput(",
         "Private Sub RotorOrder As List",
         "ResLevel = RotorNames.ChooseLevel(ResKeys, nameW - 10dip, TextSp, MinNameLevel)",
-        "Private lblResults(64) As Label",
-        "Private lblResultUnits(64) As Label",
-        '"DIMENSIONAL PERFORMANCE"',
+        "Private lblResults(80) As Label",
+        "Private lblResultUnits(80) As Label",
+        '"FORCES"',
         '"LOADING & EFFICIENCY"',
         '"AERODYNAMIC COEFFICIENTS"',
         '"INFLOW & WAKE"',
@@ -156,7 +156,10 @@ def verify_ui_source_contract() -> None:
     for key in result_keys:
         if f'Add("{key}"' not in names:
             raise AssertionError(f"Results key missing from RotorNames: {key}")
-        if f'Case "{key}"' not in main and key not in ("p", "h"):
+        value_map = main.split('Private Sub ResTextFor', 1)[1].split('End Sub', 1)[0]
+        cases = re.findall(r'(?m)^\s*Case ([^\n]+)', value_map)
+        mapped_keys = {k for line in cases for k in re.findall(r'"([^"]+)"', line)}
+        if key not in mapped_keys and key not in ("p", "h"):
             raise AssertionError(f"Results key has no value mapping: {key}")
 
     # Cheap structural sanity: no duplicate Sub names in the edited Android main.

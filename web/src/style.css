@@ -32,25 +32,49 @@
 :root[data-theme="light"] {
   --bg: #F1F4F8;
   --card-bg: #FFFFFF;
-  --header-bg: #F8FAFC;
+  --header-bg: #FFFFFF;
   --row-1: #F7F9FC;
   --row-2: #FFFFFF;
-  --row-border: #E2E8F0;
-  --accent: #007F95;
-  --accent-rgb: 0, 127, 149;
-  --accent-green: #007A52;
-  --accent-amber: #AA5A00;
+  --row-border: #E3E8EF;
+  --accent: #006978;
+  --accent-rgb: 0, 105, 120;
+  --accent-green: #00704A;
+  --accent-amber: #9A5200;
   --accent-red: #B42318;
   --text-main: #172033;
-  --text-muted: #64748B;
-  --text-dim: #94A3B8;
-  --border: #CBD5E1;
-  --input-bg: #FFFFFF;
+  --text-muted: #5A6678;
+  --text-dim: #8292A6;
+  --border: #D5DCE6;
+  --input-bg: #EAF5F7;
   --btn-top: #F8FAFC;
   --btn-bottom: #E9EEF4;
-  --btn-border: #CBD5E1;
+  --btn-border: #D5DCE6;
   --btn-hover: #E2E8F0;
   --modal-overlay: rgba(15, 23, 42, 0.6);
+}
+
+:root[data-theme="midnight"] {
+  --bg: #0A1428;
+  --card-bg: #0F1D3A;
+  --header-bg: #0B1730;
+  --row-1: #0F1D3A;
+  --row-2: #132547;
+  --row-border: #182B52;
+  --accent: #22D3EE;
+  --accent-rgb: 34, 211, 238;
+  --accent-green: #3DDC97;
+  --accent-amber: #FFC145;
+  --accent-red: #FF7A7A;
+  --text-main: #F1F6FF;
+  --text-muted: #A2B5D8;
+  --text-dim: #8AA0C6;
+  --border: #22386A;
+  --input-bg: #0E1B38;
+  --btn-top: #1B2D52;
+  --btn-bottom: #14234A;
+  --btn-border: #22386A;
+  --btn-hover: #1E335C;
+  --modal-overlay: rgba(10, 20, 40, 0.75);
 }
 
 * {
@@ -148,7 +172,33 @@ html, body {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.header-action-btn:hover {
+  background: rgba(var(--accent-rgb), 0.22);
+}
+
+.header-action-btn:active {
+  transform: scale(0.97);
 }
 
 .icon-btn {
@@ -421,10 +471,10 @@ html, body {
   background: var(--row-border);
 }
 
-/* 3-Column Engineering Rows — Exact B4A APK 31% | 39% | 20% proportions */
+/* 3-Column Engineering Rows — Exact B4A APK 48% | 32% | 18% proportions */
 .engineering-row {
   display: grid;
-  grid-template-columns: 31% 39% 20%;
+  grid-template-columns: 48% 32% 18%;
   gap: 2%;
   min-height: 52px;
   align-items: center;
@@ -439,17 +489,17 @@ html, body {
 
 .row-label-btn {
   height: 44px;
-  padding: 0 4px;
+  padding: 0 10px;
   border-radius: 6px;
   border: 1px solid var(--btn-border);
   background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
   color: var(--text-main);
   font-size: 15px;
   font-weight: 700;
-  text-align: center;
+  text-align: left;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -459,6 +509,14 @@ html, body {
 
 .row-label-btn:hover {
   border-color: var(--accent);
+}
+
+.row-label-btn sub,
+.result-label sub,
+button.result-label sub {
+  font-size: 0.72em;
+  line-height: 1;
+  vertical-align: -0.2em;
 }
 
 .row-input {
@@ -589,12 +647,12 @@ input[type="text"].row-input {
   color: var(--accent-red);
 }
 
-/* Results Page Layout — Exact B4A APK 47% | 24% | 20% proportions (36% | 32% | 25% on mobile) */
+/* Results Page Layout — Exact B4A APK 46% | 30% | 24% proportions */
 .result-row {
   display: grid;
-  grid-template-columns: 47% 24% 20%;
+  grid-template-columns: 46% 30% 24%;
   gap: 2%;
-  min-height: 44px;
+  min-height: 48px;
   align-items: center;
   padding: 2px 3%;
   background: var(--row-1);
@@ -611,13 +669,28 @@ input[type="text"].row-input {
   background: rgba(var(--accent-rgb), 0.05);
 }
 
-.result-label {
+.result-label,
+button.result-label {
+  background: transparent;
+  border: none;
+  font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  outline: none;
+  display: block;
+}
+
+button.result-label:hover {
+  color: var(--accent);
 }
 
 .result-val {
@@ -960,134 +1033,150 @@ input[type="text"].row-input {
   background: var(--accent);
 }
 
-/* Settings Form Styles */
+/* Settings Form Styles — Canonical B4A Engineering Grid */
 .settings-form-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
 }
 
-.settings-section-title {
-  font-size: 12px;
+.settings-section-hdr {
+  font-size: 15px;
   font-weight: 700;
-  text-transform: uppercase;
-  color: var(--accent);
-  letter-spacing: 0.5px;
-  margin-top: 10px;
+  color: var(--accent-green);
+  letter-spacing: 0.08em;
+  padding: 14px 0 6px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 4px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.settings-section-hdr:first-child {
+  padding-top: 4px;
 }
 
 .settings-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 46px;
-  padding: 4px 0;
+  min-height: 64px;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(var(--accent-rgb), 0.08);
+  gap: 12px;
 }
 
 .settings-row-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
-.settings-row-label {
-  font-size: 14.5px;
-  font-weight: 600;
+.settings-row-title {
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .settings-row-sub {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
+  line-height: 1.3;
 }
 
-.settings-select {
-  height: 38px;
-  min-width: 120px;
+.settings-btn {
+  height: 46px;
+  min-width: 130px;
+  max-width: 170px;
   padding: 0 10px;
   border-radius: 6px;
   border: 1px solid var(--btn-border);
-  background: var(--input-bg);
-  color: var(--text-main);
-  font-size: 13.5px;
+  background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.settings-btn:hover {
+  border-color: var(--accent);
+}
+
+/* Physics Help Modal Styles — Full Offline Engineering Manual Viewer */
+.modal-help-card {
+  width: min(96vw, 960px) !important;
+  height: min(94vh, 900px) !important;
+  max-height: 94vh !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.help-modal-header {
+  height: 52px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.help-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-btn-open-tab {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--row-2);
+  color: var(--accent);
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
 }
 
-/* Physics Help Styles */
-.help-content {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text-main);
+.help-btn-open-tab:hover {
+  border-color: var(--accent);
 }
 
-.help-content h2 {
-  font-size: 17px;
-  color: var(--accent-green);
-  margin: 22px 0 8px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 4px;
-}
-
-.help-content h3 {
-  font-size: 14.5px;
-  color: var(--accent);
-  margin: 14px 0 6px;
-}
-
-.help-content p, .help-content li {
-  margin-bottom: 8px;
-}
-
-.help-content ul {
-  padding-left: 20px;
-  margin-bottom: 12px;
-}
-
-.help-content .eq {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin: 6px 0 10px;
-  color: var(--accent);
-  overflow-x: auto;
-}
-
-.help-content .note {
-  background: var(--input-bg);
-  border-left: 3px solid var(--accent-amber);
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin: 10px 0;
-  font-size: 13px;
-}
-
-.help-content .note.good {
-  border-left-color: var(--accent-green);
-}
-
-.help-table {
+.help-iframe-container {
+  flex: 1;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  margin: 10px 0 16px;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  background: var(--bg);
 }
 
-.help-table th, .help-table td {
-  border-bottom: 1px solid var(--border);
-  padding: 6px 8px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.help-table th {
-  color: var(--accent);
-  font-weight: 700;
+.help-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: var(--bg);
 }
 
 /* Responsive Rules — Matching B4A APK Design System */
@@ -1100,7 +1189,7 @@ input[type="text"].row-input {
     font-size: 17.5px;
   }
   .engineering-row {
-    grid-template-columns: 31% 39% 20%;
+    grid-template-columns: 48% 32% 18%;
     gap: 2%;
     padding: 2px 3%;
   }
@@ -1126,7 +1215,7 @@ input[type="text"].row-input {
     font-size: 13px;
   }
   .result-row {
-    grid-template-columns: 36% 32% 25%;
+    grid-template-columns: 46% 30% 24%;
     gap: 2%;
     padding: 2px 2%;
   }
@@ -1182,7 +1271,7 @@ input[type="text"].row-input {
     font-size: 12.5px;
   }
   .engineering-row {
-    grid-template-columns: 31% 39% 20%;
+    grid-template-columns: 48% 32% 18%;
     gap: 2%;
     padding: 2px 2%;
   }
@@ -1205,7 +1294,7 @@ input[type="text"].row-input {
     font-size: 14px;
   }
   .result-row {
-    grid-template-columns: 36% 32% 25%;
+    grid-template-columns: 46% 30% 24%;
     gap: 2%;
     padding: 2px 2%;
   }
@@ -1257,11 +1346,11 @@ input[type="text"].row-input {
 
 @media (min-width: 768px) {
   .app-shell {
-    max-width: 980px;
-    margin: 24px auto;
+    max-width: 960px;
+    margin: 20px auto;
     border-radius: 14px;
     border: 1px solid var(--border);
-    min-height: calc(100vh - 48px);
+    min-height: calc(100vh - 40px);
     box-shadow: 0 16px 60px rgba(0, 0, 0, 0.5);
   }
   .topbar {
@@ -1320,52 +1409,104 @@ input[type="text"].row-input {
     margin: 24px 6px 12px;
   }
   .engineering-row {
-    grid-template-columns: 28% 1fr 18%;
+    grid-template-columns: 46% 36% 18%;
     gap: 12px;
-    min-height: 58px;
-    padding: 6px 12px;
+    min-height: 54px;
+    padding: 6px 14px;
   }
   .row-label-btn {
-    height: 48px;
+    height: 46px;
     font-size: 15px;
-    padding: 0 14px;
+    padding: 0 12px;
+    text-align: left;
+    justify-content: flex-start;
     border-radius: 8px;
   }
   .row-input {
-    height: 48px;
-    font-size: 18px;
+    height: 46px;
+    font-size: 17px;
     border-radius: 8px;
   }
   .row-derived-val {
-    height: 48px;
-    font-size: 18px;
+    height: 46px;
+    font-size: 17px;
   }
   .row-unit-btn {
-    height: 48px;
+    height: 46px;
     font-size: 14.5px;
     border-radius: 8px;
   }
   .result-row {
-    grid-template-columns: 48% 1fr 18%;
-    min-height: 54px;
+    grid-template-columns: 46% 32% 22%;
+    min-height: 50px;
     padding: 6px 14px;
+    gap: 12px;
   }
   .result-label {
     font-size: 15.5px;
   }
   .result-val {
-    font-size: 17px;
+    font-size: 16.5px;
   }
   .result-unit {
     font-size: 14.5px;
   }
   .btn-open-sweep {
-    height: 54px;
+    height: 52px;
     font-size: 16px;
     border-radius: 10px;
   }
   .sweep-canvas-wrapper {
     aspect-ratio: 16 / 8.5;
     min-height: 380px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    max-width: 1240px;
+    margin: 24px auto;
+    min-height: calc(100vh - 48px);
+  }
+  .engineering-row {
+    grid-template-columns: 48% 34% 18%;
+    padding: 6px 18px;
+    min-height: 56px;
+  }
+  .row-label-btn {
+    height: 46px;
+    font-size: 15.5px;
+    padding: 0 14px;
+  }
+  .result-row {
+    grid-template-columns: 48% 32% 20%;
+    padding: 6px 18px;
+    min-height: 52px;
+  }
+  .result-label {
+    font-size: 16px;
+  }
+  .result-val {
+    font-size: 17px;
+  }
+  .sweep-canvas-wrapper {
+    aspect-ratio: 16 / 8.5;
+    min-height: 420px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .app-shell {
+    max-width: 1380px;
+    margin: 28px auto;
+    min-height: calc(100vh - 56px);
+  }
+  .engineering-row {
+    grid-template-columns: 48% 34% 18%;
+    padding: 6px 24px;
+  }
+  .result-row {
+    grid-template-columns: 48% 32% 20%;
+    padding: 6px 24px;
   }
 }

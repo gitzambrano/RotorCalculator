@@ -1,12 +1,18 @@
-const CACHE_NAME = "rotorcalculator-web-1790854529846";
+const CACHE_NAME = "rotorcalculator-web-1790910403046";
 const PRECACHE = [
   "./",
   "./.nojekyll",
-  "./assets/index-6ewEUfYN.js",
-  "./assets/style-DzNFKrsL.css",
+  "./assets/index-BLIOUYxo.js",
+  "./assets/style-DG9k0djd.css",
   "./icon.png",
+  "./icon_header.png",
   "./index.html",
-  "./manifest.webmanifest"
+  "./manifest.webmanifest",
+  "./physics_help.html",
+  "./physics_help_light.html",
+  "./physics_help_midnight.html",
+  "./privacy_policy.html",
+  "./privacy_policy_light.html"
 ];
 
 self.addEventListener("install", (event) => {

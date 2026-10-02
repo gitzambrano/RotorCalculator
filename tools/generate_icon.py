@@ -197,6 +197,8 @@ def main():
            '    <monochrome android:drawable="@drawable/icon_mono"/>\n'
            '</adaptive-icon>\n')
     write_ro(xml, res / "drawable-anydpi-v26" / "icon.xml")
+    # transparent in-app header logo (rotor only, no background tile)
+    down(rotor_layer(192 * SS, 0.46), 192).save(ROOT / "Files" / "icon_header.png", optimize=True)
     i512.save(ROOT / "store" / "icon.png", optimize=True)
 
     W, H = 1200, 900
