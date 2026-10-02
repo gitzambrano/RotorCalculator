@@ -1,5 +1,5 @@
 """Exercise the complete results/sweep catalogs and Android quick-converter UI."""
-import json, os, math
+import csv, json, os, math
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -21,11 +21,11 @@ with sync_playwright() as p:
         label = labels.nth(i)
         key = label.get_attribute('data-key')
         label.click()
-        assert page.locator('#modal-result-tooltip').is_visible(), key
+        assert 'open' in page.locator('#modal-result-tooltip').get_attribute('class'), key
         assert page.locator('#result-tooltip-title').inner_text().strip(), key
         assert page.locator('#result-tooltip-desc').inner_text().strip(), key
         page.keyboard.press('Escape')
-        page.locator('#modal-result-tooltip').wait_for(state='hidden')
+        page.wait_for_function("!document.querySelector('#modal-result-tooltip').classList.contains('open')")
         report['result_help'].append(key)
     page.locator('#btn-open-sweep').click()
     params = page.locator('#sweep-select-param option').evaluate_all('(options)=>options.map(o=>o.value)')
@@ -39,7 +39,7 @@ with sync_playwright() as p:
         download.save_as(target)
         lines = [line for line in target.read_text(encoding='utf-8-sig').splitlines() if line and not line.startswith('#')]
         assert len(lines) == 26, (key, len(lines))
-        assert lines[0].startswith('μ_x [-]'), (key, lines[0])
+        assert next(csv.reader([lines[0]]))[0] == 'μ_x [-]', (key, lines[0])
         report['sweep_parameters'].append(key)
     for family in ['0', '1', '2', '3', '4']:
         page.locator('#sweep-select-family').select_option(family)
@@ -51,7 +51,7 @@ with sync_playwright() as p:
             target = OUT / f'family-{family}.csv'
             event.value.save_as(target)
             header = [line for line in target.read_text(encoding='utf-8-sig').splitlines() if line and not line.startswith('#')][0]
-            assert len(header.split(',')) == 2, header
+            assert len(next(csv.reader([header]))) == 2, header
         report['families'].append(family)
     for axis in ['mu', 'vx', 'muLam']:
         page.locator('#sweep-select-xaxis').select_option(axis)

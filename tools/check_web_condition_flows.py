@@ -9,6 +9,8 @@ import argparse
 import json
 import math
 import sys
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 
@@ -54,12 +56,10 @@ def main() -> int:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=not args.headed)
         context = browser.new_context(viewport={"width": 393, "height": 852}, device_scale_factor=1, is_mobile=True, has_touch=True)
-        context.add_init_script("localStorage.clear(); sessionStorage.clear();")
         page = context.new_page()
         page.on("pageerror", lambda error: errors.append(f"pageerror: {error}"))
         page.on("console", lambda message: errors.append(f"console error: {message.text}") if message.type == "error" else None)
         page.goto(args.url, wait_until="networkidle")
-        page.locator("#page-conditions").wait_for()
         page.locator('.tab-btn[data-page="conditions"]').click()
 
         # All six operating pairs are selected through the actual picker and must
@@ -80,13 +80,13 @@ def main() -> int:
         page.locator("#inp-operating-1").fill("-1")
         page.locator("#inp-operating-1").dispatch_event("input")
         page.wait_for_timeout(250)
-        check(page.locator("#results-status").count() == 0 or True, "invalid-trim flow setup reached controls")
+        check(float(page.evaluate("JSON.parse(localStorage.getItem('rotorcalc_active_cond')).targetCT")) < 0, "invalid-trim target is stored")
 
         choose(page, "#btn-toggle-horiz-mode", "Airspeed Vx")
         vx = value(page, "#inp-horiz-val")
         choose(page, "#btn-toggle-horiz-mode", "Advance Ratio μx")
         mu_back = value(page, "#inp-horiz-val")
-        check(math.isfinite(vx) and vx > 0 and abs(mu_back - 0.15) < 0.003, f"invalid-trim μ↔Vx preserves flow (Vx={vx:.4g}, μ={mu_back:.4g})")
+        check(math.isfinite(vx) and vx > 10 and abs(mu_back - 0.15) < 0.003, f"invalid-trim μ↔Vx preserves flow (Vx={vx:.4g}, μ={mu_back:.4g})")
 
         choose(page, "#btn-toggle-axial-mode", "Climb Speed Vz")
         vz = value(page, "#inp-axial-val")
@@ -104,6 +104,7 @@ def main() -> int:
         for label in ("Uniform", "Coleman Simple", "Coleman-Feingold", "Drees"):
             choose(page, "#btn-inflow-model", label)
             check(label.split("-")[0] in page.locator("#btn-inflow-model").inner_text(), f"inflow selection {label}")
+        page.locator('.tab-btn[data-page="geometry"]').click()
         for label, expected in (("None", "NONE"), ("Fixed B", "FIXED B"), ("Sissingh", "SISSINGH")):
             choose(page, "#btn-tiploss-mode", label)
             check(expected in page.locator("#btn-tiploss-mode").inner_text(), f"tip-loss selection {label}")
@@ -113,6 +114,7 @@ def main() -> int:
         check("ON" in page.locator("#btn-compressibility").inner_text(), "Prandtl-Glauert on")
 
         # Reload must restore the saved page and condition session.
+        page.locator('.tab-btn[data-page="conditions"]').click()
         page.locator('.tab-btn[data-page="results"]').click()
         page.wait_for_function("localStorage.getItem('rotor_current_page') === 'results'")
         saved_cond = page.evaluate("JSON.parse(localStorage.getItem('rotorcalc_active_cond'))")
@@ -124,10 +126,10 @@ def main() -> int:
 
         # Back closes the picker first while retaining Results, then traverses
         # Results -> Conditions -> Geometry.
-        page.locator("#btn-inflow-model").click()
-        page.locator("#modal-options-selector.open").wait_for()
+        page.locator('button.result-label').first.click()
+        page.locator("#modal-result-tooltip.open").wait_for()
         close_back(page)
-        page.wait_for_function("!document.querySelector('#modal-options-selector').classList.contains('open')")
+        page.wait_for_function("!document.querySelector('#modal-result-tooltip').classList.contains('open')")
         check("active" in (page.locator("#page-results").get_attribute("class") or ""), "browser Back closes popup before changing page")
         close_back(page)
         page.wait_for_function("document.querySelector('#page-conditions').classList.contains('active')")

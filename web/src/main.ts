@@ -2137,6 +2137,11 @@ function bindBrowserBackNavigation(): void {
     history.pushState({ rotorCalculator: true, page: currentPage, root: true }, "");
   }
   window.addEventListener("popstate", (event) => {
+    if (!byId("main-popup-menu").hidden) {
+      byId("btn-menu-close").click();
+      history.pushState({ rotorCalculator: true, page: currentPage }, "");
+      return;
+    }
     const openModals = Array.from(document.querySelectorAll<HTMLElement>(".modal-overlay.open"));
     const top = openModals.sort((a, b) => (Number.parseInt(getComputedStyle(b).zIndex, 10) || 100) - (Number.parseInt(getComputedStyle(a).zIndex, 10) || 100))[0];
     if (top) {
@@ -2145,8 +2150,8 @@ function bindBrowserBackNavigation(): void {
       return;
     }
     if (!isAppState(event.state)) return;
-    const page = event.state.page;
-    if (page === "geometry" || page === "conditions" || page === "results") activatePage(page, "right", "none");
+    const page = currentPage === "results" ? "conditions" : currentPage === "conditions" ? "geometry" : event.state.page;
+    if (page === "geometry" || page === "conditions" || page === "results") activatePage(page, "right", "replace");
   });
 }
 
@@ -2405,15 +2410,16 @@ function bindSelectorButtons(): void {
       horizModes,
       activeCond.horizontalMode,
       (selId) => {
+        const fallback = nativeFallbackFlow();
         if (selId === "vx") {
           activeCond.horizontalMode = "vx";
-          activeCond.horizontalValue = activeResults.solutionValid ? activeResults.operatingVx : nativeFallbackFlow().vx;
+          activeCond.horizontalValue = activeResults.solutionValid ? activeResults.operatingVx : fallback.vx;
           byId("btn-toggle-horiz-mode").dataset.key = "Vx";
           byId("unit-horiz-val").textContent = prefSpeedUnit;
           byId<HTMLInputElement>("inp-horiz-val").value = convertValue(activeCond.horizontalValue, "m/s", prefSpeedUnit).toFixed(1);
         } else {
           activeCond.horizontalMode = "mu";
-          activeCond.horizontalValue = activeResults.solutionValid ? activeResults.operatingMu : nativeFallbackFlow().mu;
+          activeCond.horizontalValue = activeResults.solutionValid ? activeResults.operatingMu : fallback.mu;
           byId("btn-toggle-horiz-mode").dataset.key = "mu";
           byId("unit-horiz-val").textContent = "–";
           byId<HTMLInputElement>("inp-horiz-val").value = activeCond.horizontalValue.toFixed(3);

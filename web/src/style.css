@@ -1748,7 +1748,9 @@ button:active { filter: brightness(1.15); }
   }
   #modal-options-selector .modal-title, #modal-result-tooltip .modal-title { color: #fff; font-size: 18px; }
   #modal-result-tooltip .modal-header { min-height: 58px; }
-  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; line-height: 1.35; word-break: normal !important; overflow-wrap: normal !important; }
+  #modal-result-tooltip #result-tooltip-desc { font-size: 15px !important; font-weight: 400; line-height: 18px !important; margin-bottom: 18px !important; }
+  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; font-weight: 400; line-height: 18px; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 12px 10px !important; border-radius: 10px !important; margin-bottom: 16px !important; }
+  #modal-result-tooltip #result-tooltip-range-box, #modal-result-tooltip #result-tooltip-unit-box { font-size: 15px !important; font-weight: 400; line-height: 24px; }
   #modal-result-tooltip #result-tooltip-range-box span,
   #modal-result-tooltip #result-tooltip-unit-box span { display: block; }
   #modal-result-tooltip #btn-result-tooltip-open-help { display: none; }
@@ -1903,6 +1905,8 @@ button:active { filter: brightness(1.15); }
   #modal-unit-converter .modal-header { height: 52px; min-height: 52px; background: var(--header-bg); padding: 0 4px 0 16px; border: none; }
   #modal-unit-converter .modal-title { font-size: 15px; letter-spacing: 0; }
   #modal-unit-converter .modal-body { padding: 8px 16px 0; }
+  #modal-unit-converter #quick-converter-input, #modal-unit-converter .quick-mode-row .action-btn { border: none; border-radius: 0; }
+  #modal-unit-converter .quick-mode-row .action-btn { border-radius: 4px; }
   .advanced-converter { display: none; }
   #modal-help { padding: 0; backdrop-filter: none; align-items: stretch; }
   #modal-help .modal-help-card { width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; border: none; border-radius: 0; }

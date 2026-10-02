@@ -48,7 +48,13 @@ These are findings from the inventory snapshot; the root task may subsequently c
 
 ## Validation evidence and outstanding gates
 
-The targeted regression run after the local preset/family/plot fixes passed 22 tests in `storage.test.ts` and `sweep.test.ts`. The previous full web suite passed 40 tests before these additional regressions. TypeScript checking passed after the plot changes. Run the final full suite/build after integrating root edits.
+Final integrated build and all 53 web tests passed. `verify_engine.py` and 76 Python tests passed. `verify_compiled_engine.py` executed the compiled B4A engine: 100/100 cases, 14 outputs per case, maximum absolute error 8.942e-09; all six operating pairs passed in three flow regimes.
+
+`tools/check_web_complete_flows.py` exercised all 65 Results help dialogs, exported all 61 Sweep quantities, five families (including single custom values), three axes, all range controls, PNG, all 14 native quick conversions and Swap, copy cancellation/persistence and the mobile rotor picker. Download evidence is under ignored `qa-results/release-1.23/complete-flows/`.
+
+`tools/check_web_condition_flows.py` exercised all six operating pair selectors, invalid-trim alternative flows, four inflow models, three tip-loss modes, PG on/off, reload persistence and browser Back through popup/Results/Conditions/Geometry. A real browser test caught an incorrect ordering in fallback μ→Vx conversion; the corrected test verifies μ=0.15 becomes Vx=33.15 m/s and returns to μ=0.15.
+
+`tools/check_web_parity.py` passed draft/session persistence, editable geometry, desktop hover/click help, database text roundtrip, CSV/PNG/offline ZIP, three themes, offline HTML/PWA and 54 responsive page captures without JavaScript errors. Native converter and manual popup geometry was compared with actual emulator screenshots. These checks do not establish pixel identity for every popup.
 
 Source inspection and TypeScript tests do not prove B4A↔web numerical equivalence. Keep the local compiled B4A engine execution gate, Python reference matrix and existing source contracts. No aerodynamic equations were changed by this audit.
 
