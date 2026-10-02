@@ -353,9 +353,25 @@ def main() -> int:
                         continue
                     if any(not path.is_file() for path in paths):
                         raise ValueError(f"Missing {image_type} asset")
-                    service.edits().images().deleteall(packageName=args.package_name, editId=edit_id, language=language, imageType=image_type).execute()
+                    for attempt in range(4):
+                        try:
+                            service.edits().images().deleteall(packageName=args.package_name, editId=edit_id, language=language, imageType=image_type).execute()
+                            break
+                        except Exception as e:
+                            if attempt == 3:
+                                raise
+                            import time
+                            time.sleep(2 * (attempt + 1))
                     for path in paths:
-                        service.edits().images().upload(packageName=args.package_name, editId=edit_id, language=language, imageType=image_type, media_body=MediaFileUpload(str(path), mimetype="image/png")).execute()
+                        for attempt in range(4):
+                            try:
+                                service.edits().images().upload(packageName=args.package_name, editId=edit_id, language=language, imageType=image_type, media_body=MediaFileUpload(str(path), mimetype="image/png")).execute()
+                                break
+                            except Exception as e:
+                                if attempt == 3:
+                                    raise
+                                import time
+                                time.sleep(2 * (attempt + 1))
                 print(f"--> Prepared store listing and graphics: {language}")
 
         # Configure release

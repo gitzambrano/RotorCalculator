@@ -63,7 +63,7 @@ $$\text{GUI / Telas} \longrightarrow \text{Validação \& Conversão SI} \longri
    - Qualquer credencial que tenha sido historicamente versionada deve ser considerada exposta e rotacionada no provedor correspondente.
 2. **Publicação na Play Store**:
    - Sempre incrementar `#VersionCode` (inteiro estritamente crescente) e atualizar `#VersionName` antes de gerar pacotes de release.
-   - Gerar pacotes assinados `.aab` (*Android App Bundle*) direcionados ao SDK 36 (Android 16), mantendo compatibilidade retroativa até Android 5.0 (API 16/21).
+   - Gerar pacotes assinados `.aab` (*Android App Bundle*) direcionados ao SDK 36 (Android 16), com compatibilidade retroativa para Android 7.0+ (API 24+).
 
 ---
 
@@ -81,7 +81,7 @@ Antes de concluir qualquer entrega de desenvolvimento:
 
 - A navegação principal usa três painéis B4A nativos (`Geometry`, `Conditions`, `Results`) controlados pelas tabs do header; `AHViewPager` não faz parte do runtime atual.
 - As bibliotecas B4A declaradas são `core`, `phone` e `JavaObject`; JavaObject é restrito à integração Android necessária para exportação SAF.
-- O manifesto suporta Android 5.0+ (`minSdkVersion=21`) e usa `targetSdkVersion=36`.
+- O manifesto suporta Android 7.0+ (`minSdkVersion=24`) e usa `targetSdkVersion=36`.
 - Em Geometry e Conditions, o padrão visual segue o AeroCalculator: a coluna esquerda é uma superfície acionável de label/ajuda, a coluna central é o valor, e a coluna direita é uma superfície acionável de unidade. Trocar unidade altera apenas apresentação/conversão; o engine permanece em SI.
 - `Target Thrust` e `Target CT` são mutuamente exclusivos na UI quando o trim coletivo está ativo.
 - Horizontal Flow deve oferecer μ/Vx como representações alternativas. Axial Flow deve oferecer α/Vz/μz como representações alternativas; é proibido somá-las. A convenção é +Vz/+μz para baixo e α>0 para escoamento chegando de baixo.
