@@ -149,7 +149,8 @@ let currentPage: "geometry" | "conditions" | "results" = savedPage === "conditio
 let currentTheme: "dark" | "light" | "midnight" | "sepia" =
   (localStorage.getItem("rotor_theme") as "dark" | "light" | "midnight" | "sepia") || "dark";
 let unitSystem: "si" | "imperial" = (localStorage.getItem("rotor_units") as "si" | "imperial") || "si";
-let extraPrecision: number = parseInt(localStorage.getItem("rotor_extra_precision") || "0", 10);
+const rawPrec = parseInt(localStorage.getItem("rotor_extra_precision") || "0", 10);
+let extraPrecision: number = [-1, 0, 1].includes(rawPrec) ? rawPrec : 0;
 let angleFormat: "0/360" | "-180/180" = (localStorage.getItem("rotor_angle_format") as "0/360" | "-180/180") || "0/360";
 
 // Preferred Output Units
@@ -196,7 +197,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.25</span>
+            <span class="version-badge">v1.26</span>
           </div>
         </div>
         <div class="header-actions">
@@ -499,7 +500,7 @@ app.innerHTML = `
         <div class="result-row" data-key="lamh"><button class="result-label" data-key="lamh">Hover Inflow λ<sub>h</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="muLam"><button class="result-label" data-key="muLam">Advance-Inflow μ/λ</button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="Kx"><button class="result-label" data-key="Kx">Long. Gradient K<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
-        <div class="result-row" data-key="Ky"><button class="result-label" data-key="Ky">Lateral Gradient K<sub>y</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Ky"><button class="result-label" data-key="Ky">Lat. Gradient K<sub>y</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="chi"><button class="result-label" data-key="chi">Wake Skew χ</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
         <div class="result-row" data-key="Bres"><button class="result-label" data-key="Bres">Tip Factor B</button><div class="result-val">---</div><div class="result-unit">–</div></div>
 
@@ -536,7 +537,7 @@ app.innerHTML = `
             <span id="txt-solution-summary">Trim Mode</span>
           </button>
           <button class="status-chip-btn" id="badge-model-status" type="button" style="width: 100%; height: 38px; min-height: 38px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-muted); font-weight: 500; font-size: 13px; text-align: left; padding: 0 12px; display: flex; align-items: center; cursor: pointer;">
-            <span id="txt-model-status">Model valid</span>
+            <span id="txt-model-status">Model Valid</span>
           </button>
         </div>
       </section>
@@ -807,7 +808,7 @@ app.innerHTML = `
             <div class="settings-row">
               <div class="settings-row-info">
                 <div class="settings-row-title">Number Format</div>
-                <div class="settings-row-sub">Example: 0.0699 → 0.06993 with +1 decimal</div>
+                <div class="settings-row-sub">Cycle between -1 decimal, standard, and +1 decimal</div>
               </div>
               <button type="button" class="settings-btn" id="btn-setting-precision">STANDARD</button>
             </div>
@@ -859,8 +860,8 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.25</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.25.apk" download="RotorCalculator-1.25.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.26</div><div class="settings-row-sub">Download the verified Android APK</div></div>
+              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.26.apk" download="RotorCalculator-1.26.apk">APK</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
               <button type="button" class="action-btn" data-close="modal-settings" style="height: 44px; min-width: 120px; font-weight: 700; border-radius: 8px; font-size: 15px;">CLOSE</button>
@@ -896,7 +897,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.25</p>
+          <p>RotorCalculator v1.26</p>
           <p>Rotor performance calculator based on analytical blade-element theory.<br>Notation follows Johnson and Leishman.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
@@ -1154,7 +1155,7 @@ function refreshInputPresentation(): void {
     const field = byId<HTMLInputElement>(id);
     if (!field || document.activeElement === field) return;
     const unit = unitId ? byId(unitId).textContent?.trim() || base : base;
-    field.value = formatInputValue(key, base ? convertValue(value, base, unit) : value, unit);
+    field.value = formatInputValue(key, base ? convertValue(value, base, unit) : value, unit, extraPrecision);
   };
   const direct: Record<string, number> = { rpmNom: activeGeom.nominalRpm || activeGeom.rpm, a0: activeGeom.liftSlope0, Cd0: activeGeom.cd0, B: activeGeom.tipLossB };
   for (const [id, key, base, unitId] of geometry) display(id, key, key in direct ? direct[key] : getGeometryQuantity(activeGeom, key), base, unitId);
@@ -1214,20 +1215,20 @@ function renderResults(): void {
     statusTxt = "Invalid operating point";
     const sm = (r.statusMessage || "").replace("INVALID: ", "").replace("INVALID:", "").trim();
     if (sm && !sm.includes("could not be trimmed")) {
-      statusTxt += ` — ${sm}`;
+      statusTxt += `: ${sm}`;
     }
   } else if (r.advancingTipMach >= 0.9) {
     statusColor = "var(--accent-amber)";
     statusBg = "rgba(255, 179, 0, 0.08)";
     statusBorder = "rgba(255, 179, 0, 0.4)";
-    statusTxt = `Advancing tip Mach M_adv = ${formatSig(r.advancingTipMach, 3)} — compressibility caution`;
+    statusTxt = `Advancing tip Mach M_adv = ${formatSig(r.advancingTipMach, 3)}: compressibility caution`;
   } else if (tipMach >= 0.8 || r.compressibilityWarning) {
     statusColor = "var(--accent-amber)";
     statusBg = "rgba(255, 179, 0, 0.08)";
     statusBorder = "rgba(255, 179, 0, 0.4)";
-    statusTxt = `Tip Mach M_tip = ${formatSig(tipMach, 3)} — compressibility caution`;
+    statusTxt = `Tip Mach M_tip = ${formatSig(tipMach, 3)}: compressibility caution`;
   } else {
-    statusTxt = `Model valid — M_tip = ${formatSig(tipMach, 3)}, M_adv = ${formatSig(r.advancingTipMach, 3)}`;
+    statusTxt = `Model Valid: M_tip = ${formatSig(tipMach, 3)}, M_adv = ${formatSig(r.advancingTipMach, 3)}`;
   }
 
   const badgeModel = byId("badge-model-status");
@@ -1260,7 +1261,7 @@ function renderResults(): void {
         badgeTrim.style.borderColor = "var(--border)";
       }
     } else {
-      txtTrim.innerHTML = formatSubscripts(`Trim: ${pairTxt} — no solution`);
+      txtTrim.innerHTML = formatSubscripts(`Trim: ${pairTxt}: no solution`);
       if (badgeTrim) {
         badgeTrim.style.color = "var(--accent-red)";
         badgeTrim.style.background = "rgba(255, 23, 68, 0.08)";
@@ -1347,7 +1348,7 @@ function resTextFor(
   extraPrec: number
 ): string {
   if (!r.solutionValid) return "---";
-  const sg = 4 + extraPrec;
+  const sg = Math.max(1, 4 + extraPrec);
   const ft = 3.280839895;
   const omR = r.tipSpeed;
   const area = Math.PI * geom.radius * geom.radius;
@@ -1366,53 +1367,53 @@ function resTextFor(
   switch (key) {
     case "T":
       v = imp ? r.thrustLbf : r.thrustN;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "P":
       v = imp ? r.powerShaftHP : r.powerShaftKW;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Pi":
       v = (r.CQi * r.densityRho * area * omR * omR * omR) / 1000.0;
       if (imp) v = v * 1.34102209;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "P0":
       v = (r.CQ0 * r.densityRho * area * omR * omR * omR) / 1000.0;
       if (imp) v = v * 1.34102209;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Pair":
       v = (r.CPair * r.densityRho * area * omR * omR * omR) / 1000.0;
       if (imp) v = v * 1.34102209;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Qi":
       v = r.CQi * r.densityRho * area * omR * omR * geom.radius;
       if (imp) v = v * 0.737562149;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Q0":
       v = r.CQ0 * r.densityRho * area * omR * omR * geom.radius;
       if (imp) v = v * 0.737562149;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Hi":
       v = r.CHi * r.densityRho * area * omR * omR;
       if (imp) v = v * 0.224808943;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "H0":
       v = r.CH0 * r.densityRho * area * omR * omR;
       if (imp) v = v * 0.224808943;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Q":
       v = imp ? r.torqueLbft : r.torqueNm;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "H":
       v = imp ? r.dragHN * 0.224808943 : r.dragHN;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Y":
       v = imp ? r.sideForceYLbf : r.sideForceYN;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "Mx":
       v = imp ? r.rollMomentLbft : r.rollMomentNm;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "My":
       v = imp ? r.pitchMomentLbft : r.pitchMomentNm;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "DL":
       if (area <= 0) return "---";
       v = r.thrustN / area;
@@ -1440,41 +1441,30 @@ function resTextFor(
       v = r.FoM;
       break;
     case "LDe":
-      v = r.L_D_eff;
-      break;
+      return formatFixed(r.L_D_eff, 3, extraPrec);
     case "CT":
       v = r.CT;
       break;
     case "CQ":
-      v = r.CQ;
-      break;
+      return formatFixed(r.CQ, 7, extraPrec);
     case "CQi":
-      v = r.CQi;
-      break;
+      return formatFixed(r.CQi, 7, extraPrec);
     case "CQ0":
-      v = r.CQ0;
-      break;
+      return formatFixed(r.CQ0, 7, extraPrec);
     case "CH":
-      v = r.CH;
-      break;
+      return formatFixed(r.CH, 7, extraPrec);
     case "CHi":
-      v = r.CHi;
-      break;
+      return formatFixed(r.CHi, 7, extraPrec);
     case "CH0":
-      v = r.CH0;
-      break;
+      return formatFixed(r.CH0, 7, extraPrec);
     case "CY":
-      v = r.CY;
-      break;
+      return formatFixed(r.CY, 7, extraPrec);
     case "CMx":
-      v = r.CMx;
-      break;
+      return formatFixed(r.CMx, 6, extraPrec);
     case "CMy":
-      v = r.CMy;
-      break;
+      return formatFixed(r.CMy, 6, extraPrec);
     case "CPair":
-      v = r.CPair;
-      break;
+      return formatFixed(r.CPair, 7, extraPrec);
     case "CLbar": {
       const sg3 = resolveSolidity(cloneGeometry(geom));
       let sigma3 = sg3.sigmaThrust;
@@ -1501,8 +1491,7 @@ function resTextFor(
       v = derivedTc(r, area);
       break;
     case "Pc":
-      v = derivedPc(r, area);
-      break;
+      return formatFixed(derivedPc(r, area), 7, extraPrec);
     case "lamh":
       v = derivedLambdaH(r);
       break;
@@ -3448,7 +3437,13 @@ function refreshSettingsButtons(): void {
   }
   const btnPrec = byId<HTMLButtonElement>("btn-setting-precision");
   if (btnPrec) {
-    btnPrec.textContent = extraPrecision === 1 ? "+1 DECIMAL" : "STANDARD";
+    if (extraPrecision === 1) {
+      btnPrec.textContent = "+1 DECIMAL";
+    } else if (extraPrecision === -1) {
+      btnPrec.textContent = "-1 DECIMAL";
+    } else {
+      btnPrec.textContent = "STANDARD";
+    }
   }
   const btnPalette = byId<HTMLButtonElement>("btn-setting-palette");
   if (btnPalette) {
@@ -3487,9 +3482,12 @@ function bindSettingsListeners(): void {
 
   // 3. Precision Button
   byId("btn-setting-precision")?.addEventListener("click", () => {
-    extraPrecision = extraPrecision === 1 ? 0 : 1;
+    if (extraPrecision === 0) extraPrecision = 1;
+    else if (extraPrecision === 1) extraPrecision = -1;
+    else extraPrecision = 0;
     localStorage.setItem("rotor_extra_precision", extraPrecision.toString());
     refreshSettingsButtons();
+    refreshInputPresentation();
     recalculate();
   });
 

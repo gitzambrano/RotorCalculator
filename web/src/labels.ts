@@ -795,7 +795,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   Kx: {
     key: "Kx",
     full: "Longitudinal Inflow Gradient",
-    short: "Long Gradient",
+    short: "Long. Gradient",
     sym: "K_x",
     unit: "–",
     body: "Fore-aft slope of the induced inflow over the disk, set by the inflow model and wake skew.",
@@ -805,7 +805,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   Ky: {
     key: "Ky",
     full: "Lateral Inflow Gradient",
-    short: "Lat Gradient",
+    short: "Lat. Gradient",
     sym: "K_y",
     unit: "–",
     body: "Side-to-side slope of the induced inflow over the disk.",

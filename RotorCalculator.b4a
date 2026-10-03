@@ -70,8 +70,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 8
-	#VersionName: 1.25
+	#VersionCode: 9
+	#VersionName: 1.26
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -712,7 +712,7 @@ Private Sub LoadUiSettings
 		Dim m As Map = File.ReadMap(File.DirInternal, "ui_settings.txt")
 		ThemeMode = Max(0, Min(3, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
 		UnitSystem = Max(0, Min(1, ParseIntDef("" & m.GetDefault("units", 0), 0)))
-		ExtraPrecision = Max(0, Min(1, ParseIntDef("" & m.GetDefault("precision", 0), 0)))
+		ExtraPrecision = Max(-1, Min(1, ParseIntDef("" & m.GetDefault("precision", 0), 0)))
 		PlotPalette = Max(0, Min(RotorPopups.PlotPaletteCount - 1, ParseIntDef("" & m.GetDefault("palette", 0), 0)))
 		Dim tm As String = "" & m.GetDefault("swtrim", "coll_all")
 		If RotorPopups.SweepTrimModeKeys.IndexOf(tm) >= 0 Then SweepTrimMode = tm
@@ -941,7 +941,7 @@ Private Sub OpenSettingsPopup
 	y = y + rowH
 	AddSettingsRow(scv.Panel, cardW, y, rowH, "Result Units (Outputs Only)", "SI or Imperial for results; input rows keep their own units", "btnSettingUnits")
 	y = y + rowH
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Number Format", "Example: 0.0699 " & Chr(8594) & " 0.06993 with +1 decimal", "btnSettingPrecision")
+	AddSettingsRow(scv.Panel, cardW, y, rowH, "Number Format", "Cycle between -1 decimal, standard, and +1 decimal", "btnSettingPrecision")
 	y = y + rowH
 	y = AddSettingsHeader(scv.Panel, cardW, y, "PLOTS")
 	AddSettingsRow(scv.Panel, cardW, y, rowH, "Palette", "Sweep curve colors", "btnSettingPalette")
@@ -1038,7 +1038,13 @@ Private Sub RefreshSettingsButtons
 		If UnitSystem = 1 Then btnSettingUnits.Text = "IMPERIAL" Else btnSettingUnits.Text = "SI"
 	End If
 	If btnSettingPrecision.IsInitialized Then
-		If ExtraPrecision = 1 Then btnSettingPrecision.Text = "+1 DECIMAL" Else btnSettingPrecision.Text = "STANDARD"
+		If ExtraPrecision = 1 Then
+			btnSettingPrecision.Text = "+1 DECIMAL"
+		Else If ExtraPrecision = -1 Then
+			btnSettingPrecision.Text = "-1 DECIMAL"
+		Else
+			btnSettingPrecision.Text = "STANDARD"
+		End If
 		FitSettingBtn(btnSettingPrecision)
 	End If
 	If btnSettingPalette.IsInitialized Then
@@ -1075,7 +1081,11 @@ End Sub
 
 Sub btnSettingPrecision_Click
 	Tick
-	ExtraPrecision = 1 - ExtraPrecision
+	Select ExtraPrecision
+		Case 0: ExtraPrecision = 1
+		Case 1: ExtraPrecision = -1
+		Case Else: ExtraPrecision = 0
+	End Select
 	SaveUiSettings
 	RefreshSettingsButtons
 	RecalculateRotor
@@ -1664,13 +1674,17 @@ End Sub
 
 Private Sub KeyDigits(key As String, disp As Double) As Int
 	Select key
-		Case "Nb"
+		Case "Nb", "h"
 			Return 0
+		Case "T0"
+			Return 1
+		Case "mu"
+			Return 2
 		Case "x0", "taper", "B", "kind"
 			Return 3
-		Case "sigmaRef", "sigmaAct", "sigmaT", "Cd0", "mu", "muz"
+		Case "sigmaRef", "sigmaAct", "sigmaT", "Cd0", "muz"
 			Return 4
-		Case "AR", "a0", "T0", "Vx", "Vz"
+		Case "AR", "a0", "Vx", "Vz"
 			Return 2
 		Case "CTtgt"
 			Return 5
@@ -1678,9 +1692,12 @@ Private Sub KeyDigits(key As String, disp As Double) As Int
 			Return 1
 		Case "Ttgt"
 			Return 0
-		Case "thRoot", "thTip", "thTwist", "coll", "alpha"
+		Case "thRoot", "thTip", "thTwist", "coll"
 			If CurUnit(key) = "rad" Then Return 4
 			Return 2
+		Case "alpha"
+			If CurUnit(key) = "rad" Then Return 4
+			Return 1
 	End Select
 	Dim a As Double = Abs(disp)
 	If a >= 100 Then Return 1
@@ -1691,16 +1708,26 @@ End Sub
 
 Private Sub FormatKey(key As String, canon As Double) As String
 	Dim d As Double = CanonicalToDisplay(key, canon)
-	Dim dg As Int = KeyDigits(key, d)
-	Dim mn As Int = dg
+	Dim baseDg As Int = KeyDigits(key, d)
+	Dim baseMn As Int = baseDg
 	Select key
-		Case "R", "c0", "c1", "h", "T0", "A", "Ab", "Aact", "Vx", "Vz"
-			mn = Min(2, dg)
-		Case "thRoot", "thTip", "thTwist", "coll", "alpha"
-			mn = Min(1, dg)
-		Case "rpm", "rpmNom", "Ttgt"
-			mn = 0
+		Case "R", "c0", "c1", "A", "Ab", "Aact", "Vx", "Vz"
+			baseMn = Min(2, baseDg)
+		Case "thRoot", "thTip", "thTwist", "coll"
+			baseMn = Min(1, baseDg)
+		Case "alpha", "T0"
+			baseMn = Min(1, baseDg)
+		Case "mu"
+			baseMn = Min(2, baseDg)
+		Case "rpm", "rpmNom", "Ttgt", "h", "Nb"
+			baseMn = 0
 	End Select
+	Dim dg As Int = baseDg
+	Dim mn As Int = baseMn
+	If key <> "Nb" Then
+		dg = Max(0, baseDg + ExtraPrecision)
+		mn = Max(0, baseMn + ExtraPrecision)
+	End If
 	If Abs(d) < 0.5 / Power(10, dg) Then d = 0
 	Return NumberFormat2(d, 1, dg, mn, False)
 End Sub
@@ -2801,21 +2828,21 @@ Private Sub UpdateStatusChips
 	Dim col As Int
 	If r.CompressibilityInvalid Then
 		col = ColorAccentRed
-		txt = "Advancing tip Mach M_adv = " & FormatSig(r.AdvancingTipMach, 3) & " " & Chr(8212) & " Prandtl-Glauert invalid"
+		txt = "Advancing tip Mach M_adv = " & FormatSig(r.AdvancingTipMach, 3) & ": Prandtl-Glauert invalid"
 	Else If r.SolutionValid = False Then
 		col = ColorAccentRed
 		txt = "Invalid operating point"
 		Dim sm As String = r.StatusMessage.Replace("INVALID: ", "").Replace("INVALID:", "").Trim
-		If sm <> "" And sm.Contains("could not be trimmed") = False Then txt = txt & " " & Chr(8212) & " " & sm
+		If sm <> "" And sm.Contains("could not be trimmed") = False Then txt = txt & ": " & sm
 	Else If r.AdvancingTipMach >= 0.9 Then
 		col = ColorAccentAmber
-		txt = "Advancing tip Mach M_adv = " & FormatSig(r.AdvancingTipMach, 3) & " " & Chr(8212) & " compressibility caution"
+		txt = "Advancing tip Mach M_adv = " & FormatSig(r.AdvancingTipMach, 3) & ": compressibility caution"
 	Else If tipMach >= 0.8 Or r.CompressibilityWarning Then
 		col = ColorAccentAmber
-		txt = "Tip Mach M_tip = " & FormatSig(tipMach, 3) & " " & Chr(8212) & " compressibility caution"
+		txt = "Tip Mach M_tip = " & FormatSig(tipMach, 3) & ": compressibility caution"
 	Else
 		col = 0
-		txt = "Model valid " & Chr(8212) & " M_tip = " & FormatSig(tipMach, 3) & ", M_adv = " & FormatSig(r.AdvancingTipMach, 3)
+		txt = "Model Valid: M_tip = " & FormatSig(tipMach, 3) & ", M_adv = " & FormatSig(r.AdvancingTipMach, 3)
 	End If
 	lblResultStatus.Text = RotorNames.RichText(txt)
 	StyleChip(lblResultStatus, col)
@@ -2825,7 +2852,7 @@ Private Sub UpdateStatusChips
 		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt)
 		StyleChip(lblTrimSummary, 0)
 	Else
-		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt & " " & Chr(8212) & " no solution")
+		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt & ": no solution")
 		StyleChip(lblTrimSummary, ColorAccentRed)
 	End If
 End Sub
@@ -3076,7 +3103,7 @@ End Sub
 Private Sub ResTextFor(key As String) As String
 	Dim r As RotorResults = ActiveRes
 	Dim imp As Boolean = (UnitSystem = 1)
-	Dim sg As Int = 4 + ExtraPrecision
+	Dim sg As Int = Max(1, 4 + ExtraPrecision)
 	Dim ft As Double = 3.280839895
 	Dim omR As Double = r.TipSpeed
 	Dim area As Double = cPI * ActiveGeom.Radius * ActiveGeom.Radius
@@ -3093,39 +3120,53 @@ Private Sub ResTextFor(key As String) As String
 	Select key
 		Case "T"
 			If imp Then v = r.ThrustLbf Else v = r.ThrustN
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "P"
 			If imp Then v = r.PowerShaftHP Else v = r.PowerShaftKW
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Pi"
 			v = r.CQi * r.DensityRho * area * omR * omR * omR / 1000.0
 			If imp Then v = v * 1.34102209
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "P0"
 			v = r.CQ0 * r.DensityRho * area * omR * omR * omR / 1000.0
 			If imp Then v = v * 1.34102209
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Pair"
 			v = r.CPair * r.DensityRho * area * omR * omR * omR / 1000.0
 			If imp Then v = v * 1.34102209
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Qi"
 			v = r.CQi * r.DensityRho * area * omR * omR * ActiveGeom.Radius
 			If imp Then v = v * 0.737562149
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Q0"
 			v = r.CQ0 * r.DensityRho * area * omR * omR * ActiveGeom.Radius
 			If imp Then v = v * 0.737562149
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Hi"
 			v = r.CHi * r.DensityRho * area * omR * omR
 			If imp Then v = v * 0.224808943
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "H0"
 			v = r.CH0 * r.DensityRho * area * omR * omR
 			If imp Then v = v * 0.224808943
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Q"
 			If imp Then v = r.TorqueLbft Else v = r.TorqueNm
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "H"
 			If imp Then v = r.DragHN * 0.224808943 Else v = r.DragHN
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Y"
 			If imp Then v = r.SideForceYLbf Else v = r.SideForceYN
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "Mx"
 			If imp Then v = r.RollMomentLbft Else v = r.RollMomentNm
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "My"
 			If imp Then v = r.PitchMomentLbft Else v = r.PitchMomentNm
+			Return FormatFixed(v, 1 + ExtraPrecision)
 		Case "DL"
 			If area <= 0 Then Return Dash
 			v = r.ThrustN / area
@@ -3147,18 +3188,40 @@ Private Sub ResTextFor(key As String) As String
 		Case "FM"
 			If Abs(r.OperatingMu) > 0.0005 Or Abs(r.OperatingMuZ) > 0.0005 Then Return Dash
 			v = r.FoM
-		Case "LDe": v = r.L_D_eff
+		Case "LDe"
+			v = r.L_D_eff
+			Return FormatFixed(v, 3 + ExtraPrecision)
 		Case "CT": v = r.CT
-		Case "CQ": v = r.CQ
-		Case "CQi": v = r.CQi
-		Case "CQ0": v = r.CQ0
-		Case "CH": v = r.CH
-		Case "CHi": v = r.CHi
-		Case "CH0": v = r.CH0
-		Case "CY": v = r.CY
-		Case "CMx": v = r.CMx
-		Case "CMy": v = r.CMy
-		Case "CPair": v = r.CPair
+		Case "CQ"
+			v = r.CQ
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CQi"
+			v = r.CQi
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CQ0"
+			v = r.CQ0
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CH"
+			v = r.CH
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CHi"
+			v = r.CHi
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CH0"
+			v = r.CH0
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CY"
+			v = r.CY
+			Return FormatFixed(v, 7 + ExtraPrecision)
+		Case "CMx"
+			v = r.CMx
+			Return FormatFixed(v, 6 + ExtraPrecision)
+		Case "CMy"
+			v = r.CMy
+			Return FormatFixed(v, 6 + ExtraPrecision)
+		Case "CPair"
+			v = r.CPair
+			Return FormatFixed(v, 7 + ExtraPrecision)
 		Case "CLbar"
 			Dim sg3 As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(ActiveGeom))
 			Dim sigma3 As Double = sg3.SigmaThrust
@@ -3175,7 +3238,9 @@ Private Sub ResTextFor(key As String) As String
 			v = zBETEngine.DerivedOutput(r, key)
 			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Tc": v = zBETEngine.DerivedTc(r, area)
-		Case "Pc": v = zBETEngine.DerivedPc(r, area)
+		Case "Pc"
+			v = zBETEngine.DerivedPc(r, area)
+			Return FormatFixed(v, 7 + ExtraPrecision)
 		Case "lamh": v = zBETEngine.DerivedLambdaH(r)
 		Case "muLam": v = zBETEngine.DerivedMuOverLambda(r)
 		Case "lam": v = r.InflowLambda

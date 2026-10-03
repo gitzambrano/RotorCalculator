@@ -863,7 +863,7 @@ export const APK_NOMENCLATURE = {
   "Kx": {
     "key": "Kx",
     "full": "Longitudinal Inflow Gradient",
-    "short": "Long Gradient",
+    "short": "Long. Gradient",
     "sym": "K_x",
     "unit": "–",
     "body": "Fore-aft slope of the induced inflow over the disk, as a multiple of λ_i. Set by the inflow model from the wake skew angle; zero for uniform inflow.",
@@ -873,7 +873,7 @@ export const APK_NOMENCLATURE = {
   "Ky": {
     "key": "Ky",
     "full": "Lateral Inflow Gradient",
-    "short": "Lat Gradient",
+    "short": "Lat. Gradient",
     "sym": "K_y",
     "unit": "–",
     "body": "Side-to-side slope of the induced inflow over the disk, as a multiple of λ_i. Zero for uniform and Coleman; −2μ for Coleman-Feingold and Drees.",

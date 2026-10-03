@@ -254,11 +254,11 @@ html, body {
 
   color: var(--text-main);
 
-  overflow: hidden;
-
 }
 
-
+math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math msup, math munder, math mover, .katex, .katex *, #result-tooltip-eq-box, #result-tooltip-eq-box * {
+  font-style: normal !important;
+}
 
 #app {
 
@@ -661,7 +661,7 @@ html, body {
 
   display: flex;
 
-  border-top: 1px solid var(--border);
+  border-top: none;
 
   background: var(--card-bg);
 

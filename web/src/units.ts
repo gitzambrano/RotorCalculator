@@ -181,23 +181,57 @@ export function formatResultValue(val: number, decimals: number, extraPrecision 
   return formatFixed(val, decimals, extraPrecision);
 }
 
-/** Android Main.FormatKey presentation, without locale-dependent input widgets. */
-export function formatInputValue(key: string, value: number, unit = ""): string {
+export function formatInputValue(key: string, value: number, unit = "", extraPrecision = 0): string {
   if (!Number.isFinite(value)) return "";
   let digits: number;
-  if (key === "Nb") digits = 0;
-  else if (["x0", "taper", "B", "kind"].includes(key)) digits = 3;
-  else if (["sigmaRef", "sigmaAct", "sigmaT", "Cd0", "mu", "muz"].includes(key)) digits = 4;
-  else if (["AR", "a0", "T0", "Vx", "Vz"].includes(key)) digits = 2;
-  else if (key === "CTtgt") digits = 5;
-  else if (["rpm", "rpmNom"].includes(key)) digits = 1;
-  else if (key === "Ttgt") digits = 0;
-  else if (["thRoot", "thTip", "thTwist", "coll", "alpha"].includes(key)) digits = unit === "rad" ? 4 : 2;
-  else digits = Math.abs(value) >= 100 ? 1 : Math.abs(value) >= 10 ? 2 : Math.abs(value) >= 1 ? 3 : 4;
-  let minimum = digits;
-  if (["R", "c0", "c1", "h", "T0", "A", "Ab", "Aact", "Vx", "Vz"].includes(key)) minimum = Math.min(2, digits);
-  if (["thRoot", "thTip", "thTwist", "coll", "alpha"].includes(key)) minimum = Math.min(1, digits);
-  if (["rpm", "rpmNom", "Ttgt"].includes(key)) minimum = 0;
+  let minimum: number;
+  if (key === "Nb") {
+    digits = 0;
+    minimum = 0;
+  } else if (key === "h") {
+    digits = 0;
+    minimum = 0;
+  } else if (key === "T0") {
+    digits = 1;
+    minimum = 1;
+  } else if (key === "mu") {
+    digits = 2;
+    minimum = 2;
+  } else if (key === "alpha") {
+    digits = unit === "rad" ? 4 : 1;
+    minimum = unit === "rad" ? 4 : 1;
+  } else if (["x0", "taper", "B", "kind"].includes(key)) {
+    digits = 3;
+    minimum = 3;
+  } else if (["sigmaRef", "sigmaAct", "sigmaT", "Cd0", "muz"].includes(key)) {
+    digits = 4;
+    minimum = 4;
+  } else if (["AR", "a0", "Vx", "Vz"].includes(key)) {
+    digits = 2;
+    minimum = 2;
+  } else if (key === "CTtgt") {
+    digits = 5;
+    minimum = 5;
+  } else if (["rpm", "rpmNom"].includes(key)) {
+    digits = 1;
+    minimum = 0;
+  } else if (key === "Ttgt") {
+    digits = 0;
+    minimum = 0;
+  } else if (["thRoot", "thTip", "thTwist", "coll"].includes(key)) {
+    digits = unit === "rad" ? 4 : 2;
+    minimum = Math.min(1, digits);
+  } else {
+    digits = Math.abs(value) >= 100 ? 1 : Math.abs(value) >= 10 ? 2 : Math.abs(value) >= 1 ? 3 : 4;
+    minimum = digits;
+    if (["R", "c0", "c1", "A", "Ab", "Aact"].includes(key)) minimum = Math.min(2, digits);
+  }
+
+  if (key !== "Nb") {
+    digits = Math.max(0, digits + extraPrecision);
+    minimum = Math.max(0, minimum + extraPrecision);
+  }
+
   if (Math.abs(value) < 0.5 / 10 ** digits) value = 0;
   let result = value.toFixed(digits);
   while (result.includes(".") && result.endsWith("0") && result.length - result.indexOf(".") - 1 > minimum) result = result.slice(0, -1);

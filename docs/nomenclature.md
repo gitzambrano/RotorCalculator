@@ -111,8 +111,8 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | muLam | Advance-to-Inflow Ratio | Advance/Inflow | μ/λ |
 | Tc | Dynamic Thrust Coefficient | Dynamic Thrust Coeff | T_c |
 | Pc | Dynamic Power Coefficient | Dynamic Power Coeff | P_c |
-| Kx | Longitudinal Inflow Gradient | Long Gradient | K_x |
-| Ky | Lateral Inflow Gradient | Lat Gradient | K_y |
+| Kx | Longitudinal Inflow Gradient | Long. Gradient | K_x |
+| Ky | Lateral Inflow Gradient | Lat. Gradient | K_y |
 | chi | Wake Skew Angle | Wake Skew | χ |
 | Bres | Tip-Loss Factor | Tip Factor | B |
 | OmR | Tip Speed | Tip Speed | ΩR |

@@ -5,10 +5,13 @@ describe("Android input unit parity", () => {
   it("formats engineering inputs with the Android decimal limits", () => {
     expect(formatInputValue("rpmNom", 258, "rpm")).toBe("258");
     expect(formatInputValue("x0", 0.15)).toBe("0.150");
-    expect(formatInputValue("mu", 0)).toBe("0.0000");
+    expect(formatInputValue("mu", 0)).toBe("0.00");
+    expect(formatInputValue("mu", 0, "", 1)).toBe("0.000");
+    expect(formatInputValue("mu", 0, "", -1)).toBe("0.0");
     expect(formatInputValue("R", 8.18, "m")).toBe("8.18");
     expect(formatInputValue("c0", 0.53, "m")).toBe("0.53");
-    expect(formatInputValue("T0", 15, "°C")).toBe("15.00");
+    expect(formatInputValue("T0", 15, "°C")).toBe("15.0");
+    expect(formatInputValue("h", 0, "m")).toBe("0");
     expect(formatInputValue("alpha", 0, "deg")).toBe("0.0");
     expect(formatInputValue("CTtgt", 0.0065)).toBe("0.00650");
   });
