@@ -1,9 +1,0 @@
-{
-  "version": "1.23",
-  "versionCode": 6,
-  "package": "flightdyn.rotorcalculator",
-  "androidSourceCommit": "07447ebb25f40c2328161a0a315dda9a5133fd49",
-  "apkSha256": "6abfca194c0f7d200ded31f8add2629b4a820acb4847badb2e1646808bb86ef3",
-  "verification": "All 41 APK payload entries equal the locally compiled Android source payload. Installed and operated on emulator; three themes and nine screen configurations captured.",
-  "qaReport": "web-parity-audit.md"
-}
