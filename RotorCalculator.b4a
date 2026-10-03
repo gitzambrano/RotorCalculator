@@ -3665,8 +3665,8 @@ Sub btnViewPolarPlot_Click
 	Dim footerH As Int = 58dip
 	Dim btnFooterH As Int = 48dip
 	Dim btnFooterTop As Int = 5dip
-	Dim curLines As Int = 2
-	Dim rdLines As Int = 4
+	Dim curLines As Int = 3
+	Dim rdLines As Int = 12
 	If ld = 1 Then
 		topBarH = 40dip
 		gap = 4dip
@@ -3674,8 +3674,8 @@ Sub btnViewPolarPlot_Click
 		footerH = 42dip
 		btnFooterH = 34dip
 		btnFooterTop = 4dip
-		curLines = 1
-		rdLines = 2
+		curLines = 2
+		rdLines = 10
 	End If
 	Dim controlsH As Int = 2 * btnH + 3 * gap
 
@@ -3720,27 +3720,25 @@ Sub btnViewPolarPlot_Click
 	pnlControls.AddView(btnSweepMaxMu, 12dip + 2 * (bw + gap), ry, bw, btnH)
 	pnlControls.AddView(btnSweepTrim, 12dip + 3 * (bw + gap), ry, bw, btnH)
 
-	' Scrollable body: plot (takes all free height), then a fixed-height info area (ellipsized, never hidden).
+	' Scrollable body: plot, active operating point card, and full readout with vertical scroll.
 	Dim bodyTop As Int = topBarH + controlsH
 	Dim bodyH As Int = root.Height - bodyTop - footerH
 	svSweep.Initialize(bodyH)
 	pnlSweepPopup.AddView(svSweep, 0, bodyTop, root.Width, bodyH)
 	Dim plotW As Int = root.Width - 16dip
 	Dim infoW As Int = root.Width - 24dip
-	' curLines and rdLines set above
 	Dim curH As Int = curLines * MeasuredTextHeight("Ag", 14 * sc, infoW) + 6dip
-	Dim rdH As Int = rdLines * MeasuredTextHeight("Ag", 15 * sc, infoW) + 10dip
-	Dim plotH As Int = bodyH - curH - rdH - 16dip
-	Dim minPlotH As Int = 170dip
-	If ld = 1 Then minPlotH = 140dip
-	plotH = Max(plotH, minPlotH)
-	If root.Width >= 600dip And ld = 0 Then plotH = Min(plotH, plotW)
+	Dim rdH As Int = rdLines * MeasuredTextHeight("Ag", 15 * sc, infoW) + 16dip
+	Dim plotH As Int = 260dip
+	If ld = 1 Then plotH = 175dip
+	If root.Width >= 600dip And ld = 0 Then plotH = Min(320dip, plotW)
+	Dim plotY As Int = 12dip
 	ivSweepPlot.Initialize("")
-	svSweep.Panel.AddView(ivSweepPlot, 8dip, 4dip, plotW, plotH)
+	svSweep.Panel.AddView(ivSweepPlot, 8dip, plotY, plotW, plotH)
 	pnlSweepTouch.Initialize("pnlSweepTouch")
 	pnlSweepTouch.Color = Colors.Transparent
-	svSweep.Panel.AddView(pnlSweepTouch, 8dip, 4dip, plotW, plotH)
-	Dim yy As Int = 4dip + plotH + 6dip
+	svSweep.Panel.AddView(pnlSweepTouch, 8dip, plotY, plotW, plotH)
+	Dim yy As Int = plotY + plotH + 8dip
 	lblSweepCurrentVal.Initialize("")
 	lblSweepCurrentVal.TextColor = ColorAccentAmber
 	lblSweepCurrentVal.TextSize = 14 * sc
@@ -3755,8 +3753,8 @@ Sub btnViewPolarPlot_Click
 	lblSweepReadout.Gravity = Bit.Or(Gravity.TOP, Gravity.LEFT)
 	lblSweepReadout.SingleLine = False
 	SetTextLines(lblSweepReadout, rdLines)
-	svSweep.Panel.AddView(lblSweepReadout, 12dip, yy + curH + 4dip, infoW, rdH)
-	svSweep.Panel.Height = Max(yy + curH + 4dip + rdH + 12dip, bodyH)
+	svSweep.Panel.AddView(lblSweepReadout, 12dip, yy + curH + 6dip, infoW, rdH)
+	svSweep.Panel.Height = Max(yy + curH + 6dip + rdH + 30dip, bodyH + 10dip)
 
 	Dim pnlFooter As Panel
 	pnlFooter.Initialize("")
@@ -4102,6 +4100,12 @@ Private Sub RedrawSweepPlot
 		t = RotorPopups.SweepReadout(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, SweepCrossX, ExtraPrecision)
 	End If
 	lblSweepReadout.Text = RotorNames.RichText(t)
+	Dim infoW As Int = root.Width - 24dip
+	Dim actualRdH As Int = MeasuredTextHeight(t, 15 * sc, infoW) + 16dip
+	If actualRdH > lblSweepReadout.Height Then
+		lblSweepReadout.Height = actualRdH
+		svSweep.Panel.Height = Max(svSweep.Panel.Height, lblSweepReadout.Top + actualRdH + 30dip)
+	End If
 End Sub
 
 ' Height of text wrapped at widthPx, measured on a fresh TextView (honours font scale and wrapping).

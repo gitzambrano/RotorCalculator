@@ -865,7 +865,7 @@ export function drawSweepCanvas(
   const lineH = fs + 6;
   const mLeft = mobilePlot ? 30 : 70;
   const mRight = mobilePlot ? 14 : 20;
-  const mTop = mobilePlot ? 30 : Math.round(lineH * 1.7 + 4);
+  const mTop = mobilePlot ? 38 : Math.round(lineH * 2.2 + 4);
   const legendRows = Math.ceil(curves.length / 2);
   const mBottom = mobilePlot ? 65 : Math.round(lineH * 2 + 6 + (curves.length > 1 ? legendRows * lineH + 4 : 0));
   const pWidth = width - mLeft - mRight;
@@ -888,7 +888,7 @@ export function drawSweepCanvas(
     unitPart = paramMeta.unit;
   }
   const yTitle = `${paramMeta.full} ${paramMeta.symbol}${unitPart ? ` [${unitPart}]` : ""}`;
-  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, mobilePlot ? 4 : Math.round(lineH * 0.3));
+  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, mTop - fs - 5);
 
   // Y-Grid & Ticks
   ctx.lineWidth = 1;
@@ -942,27 +942,12 @@ export function drawSweepCanvas(
       : "Advance-to-Inflow Ratio μ/λ [–]";
   drawRichCanvasText(ctx, xTitle, mLeft + pWidth / 2, mTop + pHeight + (mobilePlot ? 16 : lineH * 1.6));
 
-  // Plot Curves with dash patterns & markers
-  const dashPatterns = [
-    [],
-    [6, 4],
-    [2, 3],
-    [8, 3, 2, 3],
-  ];
-
-  const drawMarker = (index: number, x: number, y: number, radius: number) => {
-    ctx.beginPath();
-    if (!mobilePlot || index % 4 === 0) ctx.arc(x, y, radius, 0, Math.PI * 2);
-    else if (index % 4 === 1) ctx.rect(x - radius, y - radius, radius * 2, radius * 2);
-    else if (index % 4 === 2) { ctx.moveTo(x, y - radius); ctx.lineTo(x + radius, y + radius); ctx.lineTo(x - radius, y + radius); ctx.closePath(); }
-    else { ctx.moveTo(x, y - radius); ctx.lineTo(x + radius, y); ctx.lineTo(x, y + radius); ctx.lineTo(x - radius, y); ctx.closePath(); }
-    ctx.fill();
-  };
-  curves.forEach((c, curveIdx) => {
+  // Plot Curves with solid lines
+  curves.forEach((c) => {
     ctx.beginPath();
     ctx.strokeStyle = c.color;
     ctx.lineWidth = 2.4;
-    ctx.setLineDash(dashPatterns[curveIdx % dashPatterns.length]);
+    ctx.setLineDash([]);
     let started = false;
 
     let previousIndex = -1;
@@ -980,18 +965,6 @@ export function drawSweepCanvas(
       previousIndex = index;
     });
     ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Markers every 4 points
-    c.points.forEach((pt, ptIdx) => {
-      if (!isSweepPointUsable(pt, xAxisMode) || (ptIdx + curveIdx) % 4 !== 0) return;
-      const x = getX(pt);
-      const xPos = mLeft + (x / xMax) * pWidth;
-      const yPos = mTop + pHeight - ((pt.val / yScale - yLo) / (yHi - yLo)) * pHeight;
-
-      ctx.fillStyle = c.color;
-      drawMarker(curveIdx, xPos, yPos, mobilePlot ? 3 : 3.5);
-    });
   });
 
   // Active Operating Point Marker
@@ -1105,16 +1078,14 @@ export function drawSweepCanvas(
 
       ctx.strokeStyle = c.color;
       ctx.lineWidth = 2.4;
+      ctx.setLineDash([]);
       ctx.beginPath();
       ctx.moveTo(curX, curY);
       ctx.lineTo(curX + 18, curY);
       ctx.stroke();
 
       ctx.fillStyle = c.color;
-      drawMarker(curveIdx, curX + 9, curY, 3);
-
-      ctx.fillStyle = c.color;
-      ctx.fillText(label, curX + (mobilePlot ? 18 : 24), curY);
+      ctx.fillText(label, curX + (mobilePlot ? 22 : 26), curY);
 
       curX += itemW;
     });

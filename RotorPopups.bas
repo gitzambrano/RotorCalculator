@@ -1214,27 +1214,19 @@ Public Sub DrawSweepPlot( _
 	Next
 	Dim mRight As Float = 14dip
 	If wDip < 400 Then mRight = 10dip
-	Dim mTop As Float = lineH * 1.7 + 4dip
+	Dim mTop As Float = lineH * 2.2 + 4dip
 	Dim mBottom As Float = lineH * 2 + 6dip + legendRows * lineH + 4dip
 	Dim plotW As Float = widthPx - mLeft - mRight
 	Dim plotH As Float = heightPx - mTop - mBottom
 	If plotW <= 10 Or plotH <= 10 Then Return bmp
 
 	' --- Title (top) and legend (below the X-axis title) ---
-	DrawRichText(cvs, yTitle, padX, lineH * 0.8, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
+	DrawRichText(cvs, yTitle, padX, mTop - 6dip, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
 	For i = 0 To nCurves - 1
 		Dim ly As Float = mTop + plotH + lineH * 2 + 6dip + legRow(i) * lineH + lineH * 0.5
 		Dim lc As Int = PlotColor(paletteIndex, i, lightTheme)
 		Dim lpt As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
-		If i Mod 4 = 0 Then
-			cvs.DrawLine(legX(i), ly, legX(i) + 22dip, ly, lc, 2.5dip)
-		Else
-			Dim lpat() As Float = DashPattern(i)
-			dpIdx = 0
-			dpRem = lpat(0)
-			DrawPatterned(cvs, legX(i), ly, legX(i) + 22dip, ly, lc, 2.5dip, lpat)
-		End If
-		DrawMarker(cvs, i, legX(i) + 11dip, ly, 3dip, lc)
+		cvs.DrawLine(legX(i), ly, legX(i) + 22dip, ly, lc, 2.5dip)
 		cvs.DrawText(lpt.CurveLabel, legX(i) + 26dip, ly + fs * 0.35 * 1dip, Typeface.DEFAULT_BOLD, fs, lc, "LEFT")
 	Next
 
@@ -1299,22 +1291,10 @@ Public Sub DrawSweepPlot( _
 				Dim x2 As Float = mLeft + PointX(p2, xAxisMode) / xMax * plotW
 				Dim y1 As Float = mTop + plotH - (p1.Value / yScale - yLo) / (yHi - yLo) * plotH
 				Dim y2 As Float = mTop + plotH - (p2.Value / yScale - yLo) / (yHi - yLo) * plotH
-				If curveIndex Mod 4 = 0 Then
-					cvs.DrawLine(x1, y1, x2, y2, curveColor, stroke)
-				Else
-					DrawPatterned(cvs, x1, y1, x2, y2, curveColor, stroke, pat)
-				End If
+				cvs.DrawLine(x1, y1, x2, y2, curveColor, stroke)
 			Else
 				dpIdx = 0
 				dpRem = pat(0)
-			End If
-		Next
-		For oi = 0 To ord.Size - 1
-			If (ord.Get(oi) - curveIndex * nPoints + curveIndex) Mod 4 = 0 Then
-				Dim pm As SweepPoint = samples.Get(ord.Get(oi))
-				Dim mx As Float = mLeft + PointX(pm, xAxisMode) / xMax * plotW
-				Dim my As Float = mTop + plotH - (pm.Value / yScale - yLo) / (yHi - yLo) * plotH
-				DrawMarker(cvs, curveIndex, mx, my, 3.5dip, curveColor)
 			End If
 		Next
 	Next
