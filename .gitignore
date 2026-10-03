@@ -1,10 +1,18 @@
-# B4A Build intermediates
-Objects/
+# Scratch workspace & temporary test artifacts
+scratch/*
+!scratch/.gitkeep
+output/
+qa-results/
 eval-screenshots/
 screenshots_mobile/
 temp_eval_screens/
 temp_human_eval/
 temp_ui.xml
+.playwright-cli/
+tests/screenshots/
+
+# B4A Build intermediates
+Objects/
 AutoBackups/
 
 # Python & Environment cache
@@ -12,10 +20,6 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
-qa-results/
-output/playwright/
-.playwright-cli/
-tests/screenshots/
 
 # Web dependencies and build
 node_modules/

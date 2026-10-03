@@ -107,7 +107,7 @@ Validation requirements are separated into two distinct operational gates:
 - Execute local emulator or physical device installation (`adb install`).
 - Validate the 9 target screen configurations: 320dp, 360dp, 393dp, 412dp, 600dp, 768dp, landscape orientations, and 130% font scale.
 - Perform interactive smoke tests: swipe navigation, modal pickers, theme switching, parameter sweeps, and file export via Storage Access Framework.
-- Capture and visually inspect real PNG screenshots to verify that no clipping, misalignment, or font wrapping defects exist.
+- Capture and visually inspect real PNG screenshots saved to `scratch/screenshots/` to verify that no clipping, misalignment, or font wrapping defects exist.
 - **Gate 2 is executed only when the user explicitly requests visual verification or before publishing a formal production release.**
 
 ---
@@ -119,3 +119,19 @@ Validation requirements are separated into two distinct operational gates:
 - Never retain an APK or AAB in the repository that was built from an older source commit.
 - Commit a release APK/AAB only after compiling the exact main source commit locally and validating its build artifacts.
 - GitHub Actions serves as an auxiliary CI validator; it does not promote binaries or bypass local engineering verification.
+
+---
+
+## 7. Workspace and Repository Hygiene (`scratch/`)
+
+1. **Dedicated Scratch Directory**:
+   - Store all temporary test outputs, ad-hoc execution logs, local inspection dumps, and evaluation screenshots exclusively in `scratch/` (for example, `scratch/screenshots/`, `scratch/human_eval/`).
+   - The repository tracks only `scratch/.gitkeep`.
+   - Git ignores all other files and subdirectories inside `scratch/`.
+2. **Repository Cleanliness**:
+   - Do not create temporary directories (such as `eval-screenshots`, `screenshots_mobile`, `temp_*`, `output`, or `qa-results`) in the repository root or in `tests/`.
+   - Keep the repository root and test folders clean and free of ephemeral artifacts.
+3. **Diagnostic Scripts**:
+   - Diagnostic, evaluation, and test capture scripts must write output to `scratch/` by default.
+   - Do not commit local test captures or scratch artifacts to version control.
+

@@ -8,6 +8,7 @@ export function triggerHapticFeedback(): void {
 }
 
 import { QUICK_CONVERSIONS, quickConvert } from "./quick-converter";
+import { renderEquationMathML } from "./math-renderer";
 import "./style.css";
 import iconUrl from "./assets/icon.png";
 import headerIconUrl from "./assets/icon_header.png";
@@ -1579,7 +1580,7 @@ export function showContextualHelp(key: string): void {
 
   const eqBox = byId("result-tooltip-eq-box");
   if (nom.eq) {
-    eqBox.textContent = nom.eq;
+    eqBox.innerHTML = renderEquationMathML(key, nom.eq);
     eqBox.style.display = "block";
   } else {
     eqBox.style.display = "none";

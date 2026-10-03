@@ -6,7 +6,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ADB = r"C:\Android\platform-tools\adb.exe"
-OUT_DIR = Path(r"c:\Projetos\RotorCalculator\temp_human_eval")
+OUT_DIR = Path(__file__).resolve().parent.parent / "scratch" / "human_eval"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def adb(*args):
     return subprocess.run([ADB, "-s", "emulator-5554", *args], capture_output=True, text=True, errors="replace").stdout.strip()
@@ -16,9 +17,10 @@ def tap(x, y):
     time.sleep(0.7)
 
 def dump_and_find(text_sub):
+    temp_ui = OUT_DIR / "temp_ui.xml"
     adb("shell", "uiautomator", "dump", "/data/local/tmp/ui.xml")
-    adb("pull", "/data/local/tmp/ui.xml", "temp_ui.xml")
-    tree = ET.parse("temp_ui.xml")
+    adb("pull", "/data/local/tmp/ui.xml", str(temp_ui))
+    tree = ET.parse(str(temp_ui))
     import re
     for elem in tree.iter("node"):
         txt = elem.attrib.get("text", "")

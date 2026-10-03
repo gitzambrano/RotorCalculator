@@ -348,17 +348,23 @@ Public Sub RichLabel(key As String, level As Int) As CSBuilder
 	Return RichText(PlainLabel(key, level))
 End Sub
 
-' Renders X_abc as X with a lowered, smaller abc. Subscript = letters/digits after "_".
+' Renders X_abc as X with a lowered, smaller abc; X^abc as X with a raised, smaller abc.
 Public Sub RichText(text As String) As CSBuilder
 	Dim cs As CSBuilder
 	cs.Initialize
-	Dim m As Matcher = Regex.Matcher("_\{([^}]+)\}|_([A-Za-z0-9]+)", text)
+	Dim m As Matcher = Regex.Matcher("(_\{([^}]+)\}|_([A-Za-z0-9]+))|(\^\{([^}]+)\}|\^([A-Za-z0-9]+))", text)
 	Dim prev As Int = 0
 	Do While m.Find
 		cs.Append(text.SubString2(prev, m.GetStart(0)))
-		Dim subText As String = m.Group(1)
-		If subText = Null Then subText = m.Group(2)
-		cs.VerticalAlign(2dip).RelativeSize(0.72).Append(subText).Pop.Pop
+		If m.Group(1) <> Null Then
+			Dim subText As String = m.Group(2)
+			If subText = Null Then subText = m.Group(3)
+			cs.VerticalAlign(2dip).RelativeSize(0.72).Append(subText).Pop.Pop
+		Else
+			Dim supText As String = m.Group(5)
+			If supText = Null Then supText = m.Group(6)
+			cs.VerticalAlign(-4dip).RelativeSize(0.72).Append(supText).Pop.Pop
+		End If
 		prev = m.GetEnd(0)
 	Loop
 	cs.Append(text.SubString(prev))
@@ -373,12 +379,14 @@ Private Sub MeasureText(text As String, textSizeSp As Float) As Float
 	Dim size As Float = textSizeSp * FontScale
 	Dim total As Float = 0
 	Dim prev As Int = 0
-	Dim m As Matcher = Regex.Matcher("_\{([^}]+)\}|_([A-Za-z0-9]+)", text)
+	Dim m As Matcher = Regex.Matcher("(_\{([^}]+)\}|_([A-Za-z0-9]+))|(\^\{([^}]+)\}|\^([A-Za-z0-9]+))", text)
 	Do While m.Find
 		total = total + cv.MeasureStringWidth(text.SubString2(prev, m.GetStart(0)), Typeface.DEFAULT_BOLD, size)
-		Dim subText As String = m.Group(1)
-		If subText = Null Then subText = m.Group(2)
-		total = total + cv.MeasureStringWidth(subText, Typeface.DEFAULT_BOLD, size * 0.72)
+		Dim childText As String = m.Group(2)
+		If childText = Null Then childText = m.Group(3)
+		If childText = Null Then childText = m.Group(5)
+		If childText = Null Then childText = m.Group(6)
+		total = total + cv.MeasureStringWidth(childText, Typeface.DEFAULT_BOLD, size * 0.72)
 		prev = m.GetEnd(0)
 	Loop
 	Return total + cv.MeasureStringWidth(text.SubString(prev), Typeface.DEFAULT_BOLD, size)

@@ -15,7 +15,7 @@ if sys.stdout.encoding.lower() != 'utf-8':
         pass
 
 ADB = r"C:\Android\platform-tools\adb.exe"
-OUT_DIR = Path(r"c:\Projetos\RotorCalculator\temp_human_eval")
+OUT_DIR = Path(__file__).resolve().parent.parent / "scratch" / "human_eval"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def adb(*args, check=True):
@@ -358,4 +358,4 @@ adb("shell", "wm", "density", "reset")
 adb("shell", "settings", "put", "system", "user_rotation", "0")
 time.sleep(1.0)
 
-print("\nHuman Walkthrough Evaluation finished successfully! All screenshots saved in temp_human_eval/.")
+print("\nHuman Walkthrough Evaluation finished successfully! All screenshots saved in scratch/human_eval/.")

@@ -14,7 +14,7 @@ if sys.stdout.encoding.lower() != 'utf-8':
 
 ADB = r"C:\Android\platform-tools\adb.exe"
 PACKAGE = "flightdyn.rotorcalculator"
-OUT_DIR = Path("eval-screenshots")
+OUT_DIR = Path(__file__).resolve().parent.parent / "scratch" / "eval-screenshots"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def run_adb(*args, check=True):

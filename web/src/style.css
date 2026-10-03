@@ -82,6 +82,8 @@
 
   --modal-overlay: rgba(0, 0, 0, 0.75);
 
+  --canvas-bg: #030508;
+
 }
 
 
@@ -129,6 +131,8 @@
   --btn-hover: #E2E8F0;
 
   --modal-overlay: rgba(15, 23, 42, 0.6);
+
+  --canvas-bg: #D8DEE8;
 
 }
 
@@ -178,6 +182,8 @@
 
   --modal-overlay: rgba(10, 20, 40, 0.75);
 
+  --canvas-bg: #050C1A;
+
 }
 
 
@@ -223,6 +229,7 @@
   --sheet-handle: #DDD2C0;
   --scroll-thumb: #DDD2C0;
   --scroll-track: #EFE8DC;
+  --canvas-bg: #D8CFC0;
 }
 
 
@@ -250,10 +257,28 @@ html, body {
 
   padding: 0;
 
-  background: var(--bg);
+  background: var(--canvas-bg);
 
   color: var(--text-main);
 
+}
+
+/* Premium thin scrollbar — overlay style, never obtrusive */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--accent-rgb), 0.25) transparent;
+}
+*::-webkit-scrollbar { width: 5px; height: 5px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), 0.22); border-radius: 10px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb), 0.40); }
+
+.content-area {
+  scrollbar-width: none;          /* Firefox: hide scrollbar on main content */
+  -ms-overflow-style: none;       /* IE and Edge: hide scrollbar on main content */
+}
+.content-area::-webkit-scrollbar {
+  display: none;                  /* WebKit: hide scrollbar on main content */
 }
 
 math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math msup, math munder, math mover, .katex, .katex *, #result-tooltip-eq-box, #result-tooltip-eq-box * {
@@ -262,15 +287,9 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 #app {
 
-  height: 100%;
+  min-height: 100%;
 
   width: 100%;
-
-  display: flex;
-
-  justify-content: center;
-
-  overflow: hidden;
 
 }
 
@@ -278,13 +297,11 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .app-shell {
 
-  width: 100%;
+  width: min(100%, 860px);
 
-  max-width: 860px;
+  min-height: 100vh;
 
-  height: 100%;
-
-  max-height: 100dvh;
+  margin: 0 auto;
 
   background: var(--bg);
 
@@ -296,7 +313,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   overflow: hidden;
 
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.2);
 
 }
 
@@ -555,7 +572,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   top: 56px;
 
-  right: 12px;
+  left: min(calc(50% + 165px), calc(100% - 280px));
 
   width: 260px;
 
@@ -2865,27 +2882,31 @@ button.result-label:hover {
 
 @media (min-width: 768px) {
 
+  body {
+
+    padding: 20px 0;
+
+  }
+
   .app-shell {
-
-    max-width: 960px;
-
-    margin: 20px auto;
-
-    border-radius: 14px;
-
-    border: 1px solid var(--border);
 
     height: calc(100dvh - 40px);
 
-    min-height: 0;
+    min-height: calc(100vh - 40px);
 
-    box-shadow: 0 16px 60px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+
+    border: 1px solid var(--border);
+
+    overflow: hidden;
+
+    box-shadow: 0 0 28px rgba(0, 0, 0, 0.2);
 
   }
 
   .topbar {
 
-    border-radius: 14px 14px 0 0;
+    border-radius: 8px 8px 0 0;
 
   }
 
@@ -3103,95 +3124,11 @@ button.result-label:hover {
 
 @media (min-width: 1024px) {
 
-  .app-shell {
-
-    max-width: 1240px;
-
-    margin: 24px auto;
-
-    height: calc(100dvh - 48px);
-
-  }
-
-  .engineering-row {
-
-    grid-template-columns: minmax(0, 48fr) minmax(0, 34fr) minmax(0, 18fr);
-
-    padding: 6px 18px;
-
-    min-height: 56px;
-
-  }
-
-  .row-label-btn {
-
-    height: 46px;
-
-    font-size: 15.5px;
-
-    padding: 0 14px;
-
-  }
-
-  .result-row {
-
-    grid-template-columns: minmax(0, 48fr) minmax(0, 32fr) minmax(0, 20fr);
-
-    padding: 6px 18px;
-
-    min-height: 52px;
-
-  }
-
-  .result-label {
-
-    font-size: 16px;
-
-  }
-
-  .result-val {
-
-    font-size: 17px;
-
-  }
-
   .sweep-canvas-wrapper {
 
     aspect-ratio: 16 / 8.5;
 
     min-height: 420px;
-
-  }
-
-}
-
-
-
-@media (min-width: 1440px) {
-
-  .app-shell {
-
-    max-width: 1380px;
-
-    margin: 28px auto;
-
-    height: calc(100dvh - 56px);
-
-  }
-
-  .engineering-row {
-
-    grid-template-columns: minmax(0, 48fr) minmax(0, 34fr) minmax(0, 18fr);
-
-    padding: 6px 24px;
-
-  }
-
-  .result-row {
-
-    grid-template-columns: minmax(0, 48fr) minmax(0, 32fr) minmax(0, 20fr);
-
-    padding: 6px 24px;
 
   }
 
@@ -3375,6 +3312,10 @@ input[type="number"] {
 .row-label-btn, .row-unit-btn { border: 0; border-radius: 4px; }
 
 @media (max-width: 767px) {
+
+  body { padding: 0; background: var(--bg); }
+
+  .app-shell { width: 100%; height: 100%; max-height: 100dvh; min-height: 100dvh; box-shadow: none; border-radius: 0; border: none; }
 
   .version-badge, .active-rotor-tag { display: none; }
 
@@ -3653,7 +3594,9 @@ input[type="number"] {
 
   #modal-result-tooltip #result-tooltip-desc { font-size: 15px !important; font-weight: 400; line-height: 18px !important; margin-bottom: 18px !important; }
 
-  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; font-weight: 400; line-height: 18px; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 12px 10px !important; border-radius: 10px !important; margin-bottom: 16px !important; }
+  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; font-weight: 400; line-height: 18px; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 12px 10px !important; border-radius: 10px !important; margin-bottom: 16px !important; display: flex; justify-content: center; align-items: center; }
+  #result-tooltip-eq-box math { display: block; text-align: center; font-size: 1.15em; color: var(--accent); overflow-x: auto; overflow-y: hidden; }
+  #result-tooltip-eq-box math mo[stretchy="false"] { font-size: 1em !important; transform: none !important; }
 
   #modal-result-tooltip #result-tooltip-range-box, #modal-result-tooltip #result-tooltip-unit-box { font-size: 15px !important; font-weight: 400; line-height: 24px; }
 

@@ -21,7 +21,7 @@ def run():
     server_thread.start()
     print(f"Server started at http://localhost:{PORT}")
 
-    screenshots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "screenshots_mobile"))
+    screenshots_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scratch", "screenshots_mobile"))
     os.makedirs(screenshots_dir, exist_ok=True)
 
     with sync_playwright() as p:

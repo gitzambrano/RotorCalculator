@@ -7,7 +7,8 @@ import re
 ADB = r"C:\Android\platform-tools\adb.exe"
 PKG = "flightdyn.rotorcalculator"
 ACT = f"{PKG}/.main"
-SCREENSHOTS_DIR = r"c:\Projetos\RotorCalculator\tests\screenshots"
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SCREENSHOTS_DIR = os.path.join(ROOT_DIR, "scratch", "screenshots")
 
 def run_adb(cmd, timeout=30):
     res = subprocess.run([ADB] + cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)

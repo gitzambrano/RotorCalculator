@@ -71,21 +71,12 @@ rows.sort(key=lambda e: re.sub(r"<[^>]+>|&[a-z]+;", "", e[0]).lower())
 items = "".join('<li data-k="%s"><a href="#%s">%s</a></li>' % ((e[0] + " " + e[1]).lower().replace('"', ""), e[2], e[0]) for e in rows)
 
 CSS = """
-.fs{margin:16px 0;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:12px}
-.fs summary{cursor:pointer;color:var(--accent);font-weight:600;min-height:44px;display:flex;align-items:center}
-.fs input{width:100%;min-height:44px;margin:8px 0;padding:8px 12px;font:16px system-ui,sans-serif;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:10px}
-.fs ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 12px}
-.fs li a{display:block;padding:10px 4px;min-height:44px;text-decoration:none;color:var(--accent);border-bottom:1px solid var(--line)}
-.fs li[hidden]{display:none}
 .totop{position:fixed;right:14px;bottom:14px;z-index:9;min-width:48px;min-height:48px;padding:0 16px;display:flex;align-items:center;justify-content:center;border-radius:24px;background:var(--accent);color:var(--bg);font-weight:700;font-size:15px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 main{overflow-x:hidden}
 """
-BLOCK = ('<details class="fs" open><summary>Find a symbol</summary><input id="fsq" type="search" placeholder="Type a symbol or term" aria-label="Find a symbol" autocomplete="off">'
-         '<ul id="fsl">' + items + '</ul></details>')
-JS = ("<script>(function(){var q=document.getElementById('fsq'),l=document.querySelectorAll('#fsl li');"
-      "q.addEventListener('input',function(){var v=q.value.toLowerCase().trim();for(var i=0;i<l.length;i++)"
-      "l[i].hidden=v&&l[i].getAttribute('data-k').indexOf(v)<0;});"
-      "var t=document.querySelector('.totop');function tg(){t.style.display=(window.pageYOffset||document.documentElement.scrollTop)>500?'flex':'none';}"
+JS = ("<script>(function(){"
+      "var t=document.querySelector('.totop');if(!t){t=document.createElement('a');t.className='totop';t.href='#top';t.textContent='↑ Top';document.body.appendChild(t);}"
+      "function tg(){t.style.display=(window.pageYOffset||document.documentElement.scrollTop)>500?'flex':'none';}"
       "window.addEventListener('scroll',tg);tg();})();</script>")
 
 for suffix, (scheme, root_vars) in THEMES.items():
@@ -94,8 +85,8 @@ for suffix, (scheme, root_vars) in THEMES.items():
         h = re.sub(r":root\{[^}]*\}", ":root{" + root_vars + "}", h, count=1)
     h = re.sub(r'(<meta name="color-scheme" content=")[a-z ]+"', r'\g<1>%s"' % scheme, h)
     h = h.replace("</style>", CSS + "</style>", 1)
-    h = h.replace("</nav>", "</nav>\n" + BLOCK, 1)
+    h = h.replace("</body>", JS + "</body>", 1)
     filename = "physics_help%s.html" % suffix
     for dest_dir in ["Files", "docs", "web/public"]:
         (root / dest_dir / filename).write_text(h, encoding="utf-8")
-    print("wrote %s to Files, docs, and web/public (%d idx)" % (filename, len(rows)))
+    print("wrote %s to Files, docs, and web/public" % filename)

@@ -331,7 +331,7 @@ def test_sweep_uses_canonical_single_source_nomenclature_and_readable_plot_text(
 def test_results_precision_is_variable_specific_plus_one():
     main = text("RotorCalculator.b4a")
     assert "Private Sub FormatSig(Value As Double, sig As Int) As String" in main
-    assert "Dim sg As Int = 4 + ExtraPrecision" in main
+    assert "Dim sg As Int = Max(1, 4 + ExtraPrecision)" in main
     assert "If rounded = 0 Then Return " in main
     assert "Chr(0x200A)" in main or "Chr(0x202F)" in main or "Chr(160)" in main  # subtle thousands separator for |x| >= 1000
     assert "FormatOutputValue" not in main
@@ -484,8 +484,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 8" in main
-    assert "#VersionName: 1.25" in main
+    assert "#VersionCode: 9" in main
+    assert "#VersionName: 1.26" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -712,7 +712,7 @@ def test_settings_sections_and_rename_flow():
     for hdr in ('"DISPLAY"', '"PLOTS"', '"ROTOR DATA"'):
         assert f"AddSettingsHeader(scv.Panel, cardW, y, {hdr})" in main
     assert '"Result Units (Outputs Only)"' in main
-    assert "0.0699 " in main and "0.06993" in main
+    assert "Cycle between -1 decimal, standard, and +1 decimal" in main
     assert "btnSettingRestore" in main
     assert "ShowChoiceSwatches" in main
     assert "Rename Current Rotor" in main and "sheet.ShowInput(\"Rename Rotor\"" in main

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-OUT = Path("output/playwright")
+OUT = Path(__file__).resolve().parent.parent / "scratch" / "playwright"
 OUT.mkdir(parents=True, exist_ok=True)
 BASE_URL = os.environ.get("ROTOR_WEB_BASE_URL", "http://127.0.0.1:8080")
 

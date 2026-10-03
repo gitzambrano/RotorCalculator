@@ -8,7 +8,8 @@ if sys.stdout.encoding.lower() != 'utf-8':
     except Exception:
         pass
 
-data = json.loads(Path(r'c:\Projetos\RotorCalculator\temp_eval_screens\nodes_inspection.json').read_text(encoding='utf-8'))
+INSP_DIR = Path(__file__).resolve().parent.parent / "scratch" / "eval_screens"
+data = json.loads((INSP_DIR / "nodes_inspection.json").read_text(encoding="utf-8"))
 
 out_lines = []
 out_lines.append("=== CONFIGURATIONS CAPTURED ===")
@@ -44,5 +45,5 @@ for cfg, screens in data.items():
             out_lines.append(f"    [{cls}] ({w}x{h}px) \"{txt}\"")
 
 report_txt = "\n".join(out_lines)
-Path(r"c:\Projetos\RotorCalculator\temp_eval_screens\inspection_report.txt").write_text(report_txt, encoding="utf-8")
+Path(INSP_DIR / "inspection_report.txt").write_text(report_txt, encoding="utf-8")
 print(f"Report written to inspection_report.txt ({len(report_txt)} chars)")
