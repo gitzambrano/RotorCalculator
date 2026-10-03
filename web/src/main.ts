@@ -474,7 +474,6 @@ app.innerHTML = `
         <div class="section-header">LOADING &amp; EFFICIENCY</div>
         <div class="result-row" data-key="DL"><button class="result-label" data-key="DL">Disk Loading DL</button><div class="result-val">---</div><div class="result-unit">N/m²</div></div>
         <div class="result-row" data-key="PL"><button class="result-label" data-key="PL">Power Loading PL</button><div class="result-val">---</div><div class="result-unit">N/kW</div></div>
-        <div class="result-row" data-key="vi"><button class="result-label" data-key="vi">Induced Velocity v<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
         <div class="result-row" data-key="CTs"><button class="result-label" data-key="CTs">Blade Loading C<sub>T</sub>/σ<sub>TR</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="FM"><button class="result-label" data-key="FM">Figure of Merit FM</button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="LDe"><button class="result-label" data-key="LDe">Effective L/D (L/D)<sub>e</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
@@ -495,10 +494,15 @@ app.innerHTML = `
         <div class="result-row" data-key="Tc"><button class="result-label" data-key="Tc">Dyn Thrust T<sub>c</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="Pc"><button class="result-label" data-key="Pc">Dyn Power P<sub>c</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
 
-        <div class="section-header">INFLOW &amp; WAKE</div>
+        <div class="section-header">INFLOW &amp; AXIAL FLOW</div>
         <div class="result-row" data-key="lam"><button class="result-label" data-key="lam">Inflow Ratio λ</button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="lami"><button class="result-label" data-key="lami">Induced Inflow λ<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="lamh"><button class="result-label" data-key="lamh">Hover Inflow λ<sub>h</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="vi"><button class="result-label" data-key="vi">Induced Velocity v<sub>i</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Vztot"><button class="result-label" data-key="Vztot">Total Axial Speed V<sub>z,tot</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="muz"><button class="result-label" data-key="muz">Axial Ratio μ<sub>z</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Vz"><button class="result-label" data-key="Vz">Climb Speed V<sub>z</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="alpha"><button class="result-label" data-key="alpha">Disk AoA α</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
         <div class="result-row" data-key="muLam"><button class="result-label" data-key="muLam">Advance-Inflow μ/λ</button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="Kx"><button class="result-label" data-key="Kx">Long. Gradient K<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="Ky"><button class="result-label" data-key="Ky">Lat. Gradient K<sub>y</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
@@ -506,26 +510,34 @@ app.innerHTML = `
         <div class="result-row" data-key="Bres"><button class="result-label" data-key="Bres">Tip Factor B</button><div class="result-val">---</div><div class="result-unit">–</div></div>
 
         <div class="section-header">FLOW &amp; BLADE DIAGNOSTICS</div>
-        <div class="result-row" data-key="Vztot"><button class="result-label" data-key="Vztot">Total Axial Speed V<sub>z,tot</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="mu"><button class="result-label" data-key="mu">Advance Ratio μ<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="Vx"><button class="result-label" data-key="Vx">Airspeed V<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="OmR"><button class="result-label" data-key="OmR">Tip Speed ΩR</button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Mtip"><button class="result-label" data-key="Mtip">Tip Mach M<sub>tip</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="Vadv"><button class="result-label" data-key="Vadv">Advancing Speed V<sub>adv</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
+        <div class="result-row" data-key="Madv"><button class="result-label" data-key="Madv">Advancing Mach M<sub>adv</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="Vret"><button class="result-label" data-key="Vret">Retreating Speed V<sub>ret</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
         <div class="result-row" data-key="Mret"><button class="result-label" data-key="Mret">Retreating Mach M<sub>ret</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
+        <div class="result-row" data-key="aoaAdv25"><button class="result-label" data-key="aoaAdv25">Adv. AoA 25% α<sub>adv,25</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="aoaRet25"><button class="result-label" data-key="aoaRet25">Ret. AoA 25% α<sub>ret,25</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="aoaAdv50"><button class="result-label" data-key="aoaAdv50">Adv. AoA 50% α<sub>adv,50</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="aoaRet50"><button class="result-label" data-key="aoaRet50">Ret. AoA 50% α<sub>ret,50</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
         <div class="result-row" data-key="aoaAdv75"><button class="result-label" data-key="aoaAdv75">Adv. AoA 75% α<sub>adv,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
         <div class="result-row" data-key="aoaRet75"><button class="result-label" data-key="aoaRet75">Ret. AoA 75% α<sub>ret,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="aoaAdvTip"><button class="result-label" data-key="aoaAdvTip">Adv. AoA Tip α<sub>adv,tip</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="aoaRetTip"><button class="result-label" data-key="aoaRetTip">Ret. AoA Tip α<sub>ret,tip</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiAdv25"><button class="result-label" data-key="phiAdv25">Adv. Inflow 25% φ<sub>adv,25</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiRet25"><button class="result-label" data-key="phiRet25">Ret. Inflow 25% φ<sub>ret,25</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiAdv50"><button class="result-label" data-key="phiAdv50">Adv. Inflow 50% φ<sub>adv,50</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiRet50"><button class="result-label" data-key="phiRet50">Ret. Inflow 50% φ<sub>ret,50</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
         <div class="result-row" data-key="phiAdv75"><button class="result-label" data-key="phiAdv75">Adv. Inflow 75% φ<sub>adv,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
         <div class="result-row" data-key="phiRet75"><button class="result-label" data-key="phiRet75">Ret. Inflow 75% φ<sub>ret,75</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiAdvTip"><button class="result-label" data-key="phiAdvTip">Adv. Inflow Tip φ<sub>adv,tip</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
+        <div class="result-row" data-key="phiRetTip"><button class="result-label" data-key="phiRetTip">Ret. Inflow Tip φ<sub>ret,tip</sub></button><div class="result-val">---</div><div class="result-unit">deg</div></div>
 
         <div class="section-header">STATE &amp; ATMOSPHERE</div>
         <div class="result-row" data-key="rpm"><button class="result-label" data-key="rpm">Rotor Speed Ω</button><div class="result-val">---</div><div class="result-unit">rpm</div></div>
         <div class="result-row" data-key="coll"><button class="result-label" data-key="coll">Collective Δθ</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row" data-key="mu"><button class="result-label" data-key="mu">Advance Ratio μ<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
-        <div class="result-row" data-key="Vx"><button class="result-label" data-key="Vx">Airspeed V<sub>x</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
-        <div class="result-row" data-key="muz"><button class="result-label" data-key="muz">Axial Ratio μ<sub>z</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
-        <div class="result-row" data-key="Vz"><button class="result-label" data-key="Vz">Climb Speed V<sub>z</sub></button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
-        <div class="result-row" data-key="alpha"><button class="result-label" data-key="alpha">Disk AoA α</button><div class="result-val">---</div><div class="result-unit">deg</div></div>
-        <div class="result-row" data-key="OmR"><button class="result-label" data-key="OmR">Tip Speed ΩR</button><div class="result-val">---</div><div class="result-unit">m/s</div></div>
-        <div class="result-row" data-key="Mtip"><button class="result-label" data-key="Mtip">Tip Mach M<sub>tip</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
-        <div class="result-row" data-key="Madv"><button class="result-label" data-key="Madv">Advancing Mach M<sub>adv</sub></button><div class="result-val">---</div><div class="result-unit">–</div></div>
         <div class="result-row" data-key="h"><button class="result-label" data-key="h">Altitude h</button><div class="result-val">---</div><div class="result-unit">m</div></div>
         <div class="result-row" data-key="T0"><button class="result-label" data-key="T0">Temperature T<sub>amb</sub></button><div class="result-val">---</div><div class="result-unit">°C</div></div>
         <div class="result-row" data-key="rho"><button class="result-label" data-key="rho">Density ρ</button><div class="result-val">---</div><div class="result-unit">kg/m³</div></div>
@@ -1325,10 +1337,22 @@ function resUnitFor(key: string, imp: boolean): string {
     case "chi":
     case "alpha":
     case "coll":
+    case "aoaAdv25":
+    case "aoaRet25":
+    case "phiAdv25":
+    case "phiRet25":
+    case "aoaAdv50":
+    case "aoaRet50":
+    case "phiAdv50":
+    case "phiRet50":
     case "aoaAdv75":
     case "aoaRet75":
     case "phiAdv75":
     case "phiRet75":
+    case "aoaAdvTip":
+    case "aoaRetTip":
+    case "phiAdvTip":
+    case "phiRetTip":
       return "deg";
     case "rpm":
       return "rpm";
@@ -1482,10 +1506,22 @@ function resTextFor(
     case "Mret":
       v = derivedOutput(r, key);
       return formatFixed(v, 3, extraPrec);
+    case "aoaAdv25":
+    case "aoaRet25":
+    case "phiAdv25":
+    case "phiRet25":
+    case "aoaAdv50":
+    case "aoaRet50":
+    case "phiAdv50":
+    case "phiRet50":
     case "aoaAdv75":
     case "aoaRet75":
     case "phiAdv75":
     case "phiRet75":
+    case "aoaAdvTip":
+    case "aoaRetTip":
+    case "phiAdvTip":
+    case "phiRetTip":
       v = derivedOutput(r, key);
       return formatFixed(v, 2, extraPrec);
     case "Tc":

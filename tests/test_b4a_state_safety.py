@@ -272,12 +272,13 @@ def test_kind_is_condition_input():
 
 RESULT_KEYS = (
     "T", "H", "Hi", "H0", "Y", "Q", "Qi", "Q0", "Mx", "My", "P", "Pi", "P0", "Pair",
-    "DL", "PL", "vi", "CTs", "FM", "LDe",
+    "DL", "PL", "CTs", "FM", "LDe",
     "CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", "CLbar", "Tc", "Pc",
-    "lam", "lami", "lamh", "muLam", "Kx", "Ky", "chi", "Bres",
-    "Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75",
-    "rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv",
-    "h", "T0", "rho", "p", "a",
+    "lam", "lami", "lamh", "vi", "Vztot", "muz", "Vz", "alpha", "muLam", "Kx", "Ky", "chi", "Bres",
+    "mu", "Vx", "OmR", "Mtip", "Vadv", "Madv", "Vret", "Mret",
+    "aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip",
+    "phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip",
+    "rpm", "coll", "h", "T0", "rho", "p", "a",
 )
 
 
@@ -875,8 +876,8 @@ def test_apk_results_preserve_name_symbol_order_and_speed_caption():
     assert 'abbr.Put("Vztot", "Axial Speed")' in src
     assert '"Adv. Speed"' in src and '"Ret. Speed"' in src
     assert '"V_{z,tot}"' in src and '"α_{adv,75}"' in src
-    assert 'abbr.Put("aoaAdv75", "Adv. AoA")' in src
-    assert 'abbr.Put("aoaRet75", "Ret. AoA")' in src
-    assert 'abbr.Put("phiAdv75", "Adv. Inflow")' in src
-    assert 'abbr.Put("phiRet75", "Ret. Inflow")' in src
+    assert 'abbr.Put("aoaAdv75", "Adv. AoA 75")' in src
+    assert 'abbr.Put("aoaRet75", "Ret. AoA 75")' in src
+    assert 'abbr.Put("phiAdv75", "Adv. Inflow 75")' in src
+    assert 'abbr.Put("phiRet75", "Ret. Inflow 75")' in src
     assert '"Advancing Section AoA 75%"' not in src

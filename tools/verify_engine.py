@@ -94,7 +94,7 @@ def verify_ui_source_contract() -> None:
         '"FORCES"',
         '"LOADING & EFFICIENCY"',
         '"AERODYNAMIC COEFFICIENTS"',
-        '"INFLOW & WAKE"',
+        '"INFLOW & AXIAL FLOW"',
         '"STATE & ATMOSPHERE"',
         "Private Sub FormatSig(Value As Double, sig As Int) As String",
         "Sub btnSweepTrim_Click",

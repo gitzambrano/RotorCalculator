@@ -257,7 +257,7 @@ export const APK_NOMENCLATURE = {
     "sym": "h",
     "unit": "m",
     "body": "Altitude in the International Standard Atmosphere. It sets the static pressure; density follows from that pressure and the temperature you enter.",
-    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^5.2561",
+    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}",
     "range": "0 to 6000 m"
   },
   "T0": {
@@ -550,6 +550,86 @@ export const APK_NOMENCLATURE = {
     "eq": "M_ret = |ΩR − V_x| / a",
     "range": ""
   },
+  "aoaAdv25": {
+    "key": "aoaAdv25",
+    "full": "Advancing AoA 25%",
+    "short": "Adv. AoA 25%",
+    "sym": "α_{adv,25}",
+    "unit": "deg",
+    "body": "Blade-section angle of attack at r/R = 0.25 and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable inside the root cutout or in reverse flow.",
+    "eq": "α_s = θ(0.25) − φ",
+    "range": ""
+  },
+  "aoaRet25": {
+    "key": "aoaRet25",
+    "full": "Retreating AoA 25%",
+    "short": "Ret. AoA 25%",
+    "sym": "α_{ret,25}",
+    "unit": "deg",
+    "body": "Blade-section angle of attack at r/R = 0.25 and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable inside the root cutout or in reverse flow.",
+    "eq": "α_s = θ(0.25) − φ",
+    "range": ""
+  },
+  "phiAdv25": {
+    "key": "phiAdv25",
+    "full": "Advancing Inflow Angle 25%",
+    "short": "Adv. Inflow 25%",
+    "sym": "φ_{adv,25}",
+    "unit": "deg",
+    "body": "Local inflow angle at r/R = 0.25 and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.",
+    "eq": "φ = atan2(u_P, u_T)",
+    "range": ""
+  },
+  "phiRet25": {
+    "key": "phiRet25",
+    "full": "Retreating Inflow Angle 25%",
+    "short": "Ret. Inflow 25%",
+    "sym": "φ_{ret,25}",
+    "unit": "deg",
+    "body": "Local inflow angle at r/R = 0.25 and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.",
+    "eq": "φ = atan2(u_P, u_T)",
+    "range": ""
+  },
+  "aoaAdv50": {
+    "key": "aoaAdv50",
+    "full": "Advancing AoA 50%",
+    "short": "Adv. AoA 50%",
+    "sym": "α_{adv,50}",
+    "unit": "deg",
+    "body": "Blade-section angle of attack at r/R = 0.50 and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable inside the root cutout or in reverse flow.",
+    "eq": "α_s = θ(0.50) − φ",
+    "range": ""
+  },
+  "aoaRet50": {
+    "key": "aoaRet50",
+    "full": "Retreating AoA 50%",
+    "short": "Ret. AoA 50%",
+    "sym": "α_{ret,50}",
+    "unit": "deg",
+    "body": "Blade-section angle of attack at r/R = 0.50 and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable inside the root cutout or in reverse flow.",
+    "eq": "α_s = θ(0.50) − φ",
+    "range": ""
+  },
+  "phiAdv50": {
+    "key": "phiAdv50",
+    "full": "Advancing Inflow Angle 50%",
+    "short": "Adv. Inflow 50%",
+    "sym": "φ_{adv,50}",
+    "unit": "deg",
+    "body": "Local inflow angle at r/R = 0.50 and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.",
+    "eq": "φ = atan2(u_P, u_T)",
+    "range": ""
+  },
+  "phiRet50": {
+    "key": "phiRet50",
+    "full": "Retreating Inflow Angle 50%",
+    "short": "Ret. Inflow 50%",
+    "sym": "φ_{ret,50}",
+    "unit": "deg",
+    "body": "Local inflow angle at r/R = 0.50 and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.",
+    "eq": "φ = atan2(u_P, u_T)",
+    "range": ""
+  },
   "aoaAdv75": {
     "key": "aoaAdv75",
     "full": "Advancing AoA 75%",
@@ -587,6 +667,46 @@ export const APK_NOMENCLATURE = {
     "sym": "φ_{ret,75}",
     "unit": "deg",
     "body": "Local inflow angle at r/R = 0.75 and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable outside the active span or when tangential speed is nonpositive.",
+    "eq": "φ = atan2(u_P, u_T)",
+    "range": ""
+  },
+  "aoaAdvTip": {
+    "key": "aoaAdvTip",
+    "full": "Advancing AoA Tip",
+    "short": "Adv. AoA Tip",
+    "sym": "α_{adv,tip}",
+    "unit": "deg",
+    "body": "Blade-section angle of attack at the blade tip (r/R = 1.0) and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable outside the active span or in reverse flow.",
+    "eq": "α_s = θ(1.0) − φ",
+    "range": ""
+  },
+  "aoaRetTip": {
+    "key": "aoaRetTip",
+    "full": "Retreating AoA Tip",
+    "short": "Ret. AoA Tip",
+    "sym": "α_{ret,tip}",
+    "unit": "deg",
+    "body": "Blade-section angle of attack at the blade tip (r/R = 1.0) and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable outside the active span or in reverse flow.",
+    "eq": "α_s = θ(1.0) − φ",
+    "range": ""
+  },
+  "phiAdvTip": {
+    "key": "phiAdvTip",
+    "full": "Advancing Inflow Angle Tip",
+    "short": "Adv. Inflow Tip",
+    "sym": "φ_{adv,tip}",
+    "unit": "deg",
+    "body": "Local inflow angle at the blade tip (r/R = 1.0) and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable when tangential speed is nonpositive.",
+    "eq": "φ = atan2(u_P, u_T)",
+    "range": ""
+  },
+  "phiRetTip": {
+    "key": "phiRetTip",
+    "full": "Retreating Inflow Angle Tip",
+    "short": "Ret. Inflow Tip",
+    "sym": "φ_{ret,tip}",
+    "unit": "deg",
+    "body": "Local inflow angle at the blade tip (r/R = 1.0) and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable when tangential speed is nonpositive.",
     "eq": "φ = atan2(u_P, u_T)",
     "range": ""
   },
@@ -787,7 +907,7 @@ export const APK_NOMENCLATURE = {
     "sym": "FM",
     "unit": "–",
     "body": "Ideal hover power over actual hover power, using the induced power factor and the profile torque. Shown only in hover; forward flight uses effective L/D.",
-    "eq": "FM = (C_T^1.5/√2) / (k_ind·C_T^1.5/√2 + C_Q0)",
+    "eq": "FM = (C_T^{1.5}/√2) / (k_ind·C_T^{1.5}/√2 + C_Q0)",
     "range": "0.55 to 0.80"
   },
   "LDe": {
@@ -947,7 +1067,7 @@ export const APK_NOMENCLATURE = {
     "sym": "p",
     "unit": "Pa",
     "body": "Static pressure at the pressure altitude, from the standard atmosphere.",
-    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^5.2561",
+    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}",
     "range": ""
   },
   "a": {

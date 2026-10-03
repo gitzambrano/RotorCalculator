@@ -126,10 +126,22 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | Vadv | Advancing Speed | Advancing Speed | V_adv |
 | Vret | Retreating Speed | Retreating Speed | V_ret |
 | Mret | Retreating Mach | Retreating Mach | M_ret |
+| aoaAdv25 | Advancing AoA 25% | Adv. AoA 25% | α_{adv,25} |
+| aoaRet25 | Retreating AoA 25% | Ret. AoA 25% | α_{ret,25} |
+| phiAdv25 | Advancing Inflow Angle 25% | Adv. Inflow 25% | φ_{adv,25} |
+| phiRet25 | Retreating Inflow Angle 25% | Ret. Inflow 25% | φ_{ret,25} |
+| aoaAdv50 | Advancing AoA 50% | Adv. AoA 50% | α_{adv,50} |
+| aoaRet50 | Retreating AoA 50% | Ret. AoA 50% | α_{ret,50} |
+| phiAdv50 | Advancing Inflow Angle 50% | Adv. Inflow 50% | φ_{adv,50} |
+| phiRet50 | Retreating Inflow Angle 50% | Ret. Inflow 50% | φ_{ret,50} |
 | aoaAdv75 | Advancing AoA 75% | Adv. AoA 75% | α_{adv,75} |
 | aoaRet75 | Retreating AoA 75% | Ret. AoA 75% | α_{ret,75} |
 | phiAdv75 | Advancing Inflow Angle 75% | Adv. Inflow 75% | φ_{adv,75} |
 | phiRet75 | Retreating Inflow Angle 75% | Ret. Inflow 75% | φ_{ret,75} |
+| aoaAdvTip | Advancing AoA Tip | Adv. AoA Tip | α_{adv,tip} |
+| aoaRetTip | Retreating AoA Tip | Ret. AoA Tip | α_{ret,tip} |
+| phiAdvTip | Advancing Inflow Angle Tip | Adv. Inflow Tip | φ_{adv,tip} |
+| phiRetTip | Retreating Inflow Angle Tip | Ret. Inflow Tip | φ_{ret,tip} |
 
 Dynamic-pressure coefficients (`Tc`, `Pc`) use the free-stream speed V = √(V_x² + V_z²) and are shown as – in hover. `CLbar` uses the thrust-weighted solidity σ_TR, like `CTs`.
 
@@ -290,10 +302,22 @@ The effective APK abbreviation map includes its responsive overrides. Each capti
 - `Vadv`: Adv. Speed
 - `Vret`: Ret. Speed
 - `Mret`: Ret. Mach
-- `aoaAdv75`: Adv. AoA
-- `aoaRet75`: Ret. AoA
-- `phiAdv75`: Adv. Inflow
-- `phiRet75`: Ret. Inflow
+- `aoaAdv25`: Adv. AoA 25
+- `aoaRet25`: Ret. AoA 25
+- `phiAdv25`: Adv. Inflow 25
+- `phiRet25`: Ret. Inflow 25
+- `aoaAdv50`: Adv. AoA 50
+- `aoaRet50`: Ret. AoA 50
+- `phiAdv50`: Adv. Inflow 50
+- `phiRet50`: Ret. Inflow 50
+- `aoaAdv75`: Adv. AoA 75
+- `aoaRet75`: Ret. AoA 75
+- `phiAdv75`: Adv. Inflow 75
+- `phiRet75`: Ret. Inflow 75
+- `aoaAdvTip`: Adv. AoA Tip
+- `aoaRetTip`: Ret. AoA Tip
+- `phiAdvTip`: Adv. Inflow Tip
+- `phiRetTip`: Ret. Inflow Tip
 
 
 ## Result Output Presentation and Typography

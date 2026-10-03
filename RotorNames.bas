@@ -99,7 +99,7 @@ Private Sub Ensure
 	Add("comp", "Compressibility Correction", "Compressibility", "", "", "ON: Prandtl-Glauert compressibility correction enabled. Scales the 2D lift-curve slope with the representative blade Mach number at 0.75R: a = a_0 / √(1 − M²), capped at M = 0.85. Increases thrust and power requirements as tip Mach increases. Valid for subsonic flow (M_adv < 1.0)." & CRLF & CRLF & "OFF: Incompressible aerodynamics (M = 0 baseline). Lift-curve slope remains constant at a_0 along the entire blade radius regardless of tip Mach number.", "a = a_0 / √(1 − M²)", "M_adv < 1.0")
 	Add("rpmNom", "Rotor Speed", "Rotor Speed", "Ω_nom", "rpm", "Design rotor speed stored with the rotor. It only seeds the rotor speed on the Conditions page.", "Ω = 2π·rpm / 60", "")
 	' ---------------- Conditions ----------------
-	Add("h", "Pressure Altitude", "Altitude", "h", "m", "Altitude in the International Standard Atmosphere. It sets the static pressure; density follows from that pressure and the temperature you enter.", "p = 101325·(1 − 0.0065·h / 288.15)^5.2561", "0 to 6000 m")
+	Add("h", "Pressure Altitude", "Altitude", "h", "m", "Altitude in the International Standard Atmosphere. It sets the static pressure; density follows from that pressure and the temperature you enter.", "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}", "0 to 6000 m")
 	Add("T0", "Ambient Temperature", "Temperature", "T_amb", "°C", "Static air temperature at the rotor. It is typed independently of altitude, so hot-and-high or cold days are possible. Sets density and speed of sound together with p.", "ρ = p / (287.058·T),  a = √(1.4·287.058·T),  T in kelvin", "-40 to 50 °C")
 	Add("mu", "Advance Ratio", "Advance Ratio", "μ_x", "-", "Airspeed component in the disk plane over tip speed. 0 is hover. One of two equivalent ways to enter horizontal flow.", "μ_x = V_x / (ΩR)", "0 to 0.5")
 	Add("Vx", "Forward Airspeed", "Airspeed", "V_x", "m/s", "Airspeed component in the rotor disk plane. Alternative to the advance ratio; the engine uses μ_x = V_x / (ΩR).", "V_x = μ_x·ΩR", "0 to 100 m/s")
@@ -134,14 +134,41 @@ Private Sub Ensure
 	abbr.Put("Vret", "Ret. Speed")
 	Add("Mret", "Retreating Mach", "Retreating Mach", "M_ret", "-", "Magnitude of retreating tip tangential speed divided by sound speed. Same tangential convention as Advancing Mach.", "M_ret = |ΩR − V_x| / a", "")
 	abbr.Put("Mret", "Ret. Mach")
+	Add("aoaAdv25", "Advancing AoA 25%", "Adv. AoA 25%", "α_{adv,25}", "deg", "Blade-section angle of attack at r/R = 0.25 and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable inside the root cutout or in reverse flow.", "α_s = θ(0.25) − φ", "")
+	abbr.Put("aoaAdv25", "Adv. AoA 25")
+	Add("aoaRet25", "Retreating AoA 25%", "Ret. AoA 25%", "α_{ret,25}", "deg", "Blade-section angle of attack at r/R = 0.25 and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable inside the root cutout or in reverse flow.", "α_s = θ(0.25) − φ", "")
+	abbr.Put("aoaRet25", "Ret. AoA 25")
+	Add("phiAdv25", "Advancing Inflow Angle 25%", "Adv. Inflow 25%", "φ_{adv,25}", "deg", "Local inflow angle at r/R = 0.25 and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
+	abbr.Put("phiAdv25", "Adv. Inflow 25")
+	Add("phiRet25", "Retreating Inflow Angle 25%", "Ret. Inflow 25%", "φ_{ret,25}", "deg", "Local inflow angle at r/R = 0.25 and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
+	abbr.Put("phiRet25", "Ret. Inflow 25")
+
+	Add("aoaAdv50", "Advancing AoA 50%", "Adv. AoA 50%", "α_{adv,50}", "deg", "Blade-section angle of attack at r/R = 0.50 and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable inside the root cutout or in reverse flow.", "α_s = θ(0.50) − φ", "")
+	abbr.Put("aoaAdv50", "Adv. AoA 50")
+	Add("aoaRet50", "Retreating AoA 50%", "Ret. AoA 50%", "α_{ret,50}", "deg", "Blade-section angle of attack at r/R = 0.50 and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable inside the root cutout or in reverse flow.", "α_s = θ(0.50) − φ", "")
+	abbr.Put("aoaRet50", "Ret. AoA 50")
+	Add("phiAdv50", "Advancing Inflow Angle 50%", "Adv. Inflow 50%", "φ_{adv,50}", "deg", "Local inflow angle at r/R = 0.50 and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
+	abbr.Put("phiAdv50", "Adv. Inflow 50")
+	Add("phiRet50", "Retreating Inflow Angle 50%", "Ret. Inflow 50%", "φ_{ret,50}", "deg", "Local inflow angle at r/R = 0.50 and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable inside the root cutout or when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
+	abbr.Put("phiRet50", "Ret. Inflow 50")
+
 	Add("aoaAdv75", "Advancing AoA 75%", "Adv. AoA 75%", "α_{adv,75}", "deg", "Blade-section angle of attack at r/R = 0.75 and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable outside the active span or in reverse flow.", "α_s = θ(0.75) − φ", "")
-	abbr.Put("aoaAdv75", "Adv. AoA")
+	abbr.Put("aoaAdv75", "Adv. AoA 75")
 	Add("aoaRet75", "Retreating AoA 75%", "Ret. AoA 75%", "α_{ret,75}", "deg", "Blade-section angle of attack at r/R = 0.75 and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable outside the active span or in reverse flow.", "α_s = θ(0.75) − φ", "")
-	abbr.Put("aoaRet75", "Ret. AoA")
+	abbr.Put("aoaRet75", "Ret. AoA 75")
 	Add("phiAdv75", "Advancing Inflow Angle 75%", "Adv. Inflow 75%", "φ_{adv,75}", "deg", "Local inflow angle at r/R = 0.75 and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable outside the active span or when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
-	abbr.Put("phiAdv75", "Adv. Inflow")
+	abbr.Put("phiAdv75", "Adv. Inflow 75")
 	Add("phiRet75", "Retreating Inflow Angle 75%", "Ret. Inflow 75%", "φ_{ret,75}", "deg", "Local inflow angle at r/R = 0.75 and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable outside the active span or when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
-	abbr.Put("phiRet75", "Ret. Inflow")
+	abbr.Put("phiRet75", "Ret. Inflow 75")
+
+	Add("aoaAdvTip", "Advancing AoA Tip", "Adv. AoA Tip", "α_{adv,tip}", "deg", "Blade-section angle of attack at the blade tip (r/R = 1.0) and ψ = 90°, from final trimmed pitch and prescribed local inflow. Diagnostic of the rigid-blade model, without cyclic trim, flapping or stall prediction. Unavailable outside the active span or in reverse flow.", "α_s = θ(1.0) − φ", "")
+	abbr.Put("aoaAdvTip", "Adv. AoA Tip")
+	Add("aoaRetTip", "Retreating AoA Tip", "Ret. AoA Tip", "α_{ret,tip}", "deg", "Blade-section angle of attack at the blade tip (r/R = 1.0) and ψ = 270°, from final trimmed pitch and prescribed local inflow. Diagnostic only; does not predict retreating blade stall. Unavailable outside the active span or in reverse flow.", "α_s = θ(1.0) − φ", "")
+	abbr.Put("aoaRetTip", "Ret. AoA Tip")
+	Add("phiAdvTip", "Advancing Inflow Angle Tip", "Adv. Inflow Tip", "φ_{adv,tip}", "deg", "Local inflow angle at the blade tip (r/R = 1.0) and ψ = 90°, with first-harmonic induced-flow gradients. Unavailable when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
+	abbr.Put("phiAdvTip", "Adv. Inflow Tip")
+	Add("phiRetTip", "Retreating Inflow Angle Tip", "Ret. Inflow Tip", "φ_{ret,tip}", "deg", "Local inflow angle at the blade tip (r/R = 1.0) and ψ = 270°, with first-harmonic induced-flow gradients. Unavailable when tangential speed is nonpositive.", "φ = atan2(u_P, u_T)", "")
+	abbr.Put("phiRetTip", "Ret. Inflow Tip")
 	Add("vi", "Induced Speed", "Induced Speed", "V_i", "m/s", "Mean velocity added to the air through the disk. Solved from the momentum balance with the blade-element thrust.", "v_i = λ_i·ΩR", "")
 	Add("CT", "Thrust Coefficient", "Thrust Coeff.", "C_T", "-", "Thrust made non-dimensional by disk area and tip speed. Computed from the blade-element integral with the solved inflow; it equals the momentum thrust.", "C_T = T / [ρA(ΩR)²]", "0.002 to 0.015")
 	Add("CQ", "Torque Coefficient", "Torque Coeff.", "C_Q", "-", "Torque made non-dimensional by ρA(ΩR)²R. Equals the shaft power coefficient C_P.", "C_Q = Q / [ρA(ΩR)²R] = C_Qi + C_Q0 = C_P", "")
@@ -161,7 +188,7 @@ Private Sub Ensure
 	Add("CPair", "Air Power Coefficient", "Air Power", "C_Pair", "-", "Power given to the air, from the energy balance: induced, climb and profile terms, including the profile translational work μ·C_H0.", "C_Pair = k_ind·λ_i·C_T + μ_z·C_T + C_Q0 + μ·C_H0", "")
 	Add("CTs", "Blade Loading", "Blade Loading", "C_T/σ_TR", "-", "Thrust coefficient per unit thrust-weighted solidity. Indicates how hard the blades work; stall limits it near 0.12 to 0.15.", "C_T / σ_TR", "0.05 to 0.12")
 	Add("CLbar", "Mean Lift Coefficient", "Mean Lift Coefficient", "C̄_L", "-", "Average section lift coefficient over the disk that carries the thrust, from the blade loading. A quick stall margin check against the section C_l,max.", "C̄_L = 6·C_T / σ_TR", "0.3 to 0.7")
-	Add("FM", "Figure of Merit (hover only)", "Figure of Merit", "FM", "-", "Ideal hover power over actual hover power, using the induced power factor and the profile torque. Shown only in hover; forward flight uses effective L/D.", "FM = (C_T^1.5/√2) / (k_ind·C_T^1.5/√2 + C_Q0)", "0.55 to 0.80")
+	Add("FM", "Figure of Merit (hover only)", "Figure of Merit", "FM", "-", "Ideal hover power over actual hover power, using the induced power factor and the profile torque. Shown only in hover; forward flight uses effective L/D.", "FM = (C_T^{1.5}/√2) / (k_ind·C_T^{1.5}/√2 + C_Q0)", "0.55 to 0.80")
 	Add("LDe", "Effective Lift/Drag Ratio", "Eff. Lift/Drag", "(L/D)_e", "-", "Rotor lift times forward speed over air power. Zero in hover.", "(L/D)_e = μ·C_T / C_Pair", "4 to 10")
 	Add("lam", "Total Inflow Ratio", "Inflow Ratio", "λ", "-", "Total flow through the disk normal to it, over tip speed: the axial free-stream component plus the induced part.", "λ = μ_z + λ_i", "")
 	Add("lami", "Induced Inflow Ratio", "Induced Inflow", "λ_i", "-", "Induced velocity over tip speed. Found by bisection so that the blade-element thrust equals the momentum thrust. In ideal hover it is √(C_T/2).", "C_T,BET(λ) = 2·B²·λ_i·√(μ_x² + λ²)", "0.03 to 0.08 (hover)")
@@ -177,7 +204,7 @@ Private Sub Ensure
 	Add("Mtip", "Tip Mach", "Tip Mach", "M_tip", "-", "Tip speed over local speed of sound.", "M_tip = ΩR / a", "0.4 to 0.7")
 	Add("Madv", "Advancing Tip Mach", "Adv. Mach", "M_adv", "-", "Mach number of the advancing blade tip. Compressibility effects start near 0.8 to 0.9; Prandtl-Glauert is not valid at or above 1.", "M_adv = ΩR·(1 + μ_x) / a", "up to 0.9")
 	Add("rho", "Air Density", "Density", "ρ", "kg/m³", "Air density from the standard-atmosphere pressure and the temperature entered.", "ρ = p / (287.058·T)", "0.9 to 1.225 kg/m³")
-	Add("p", "Ambient Pressure", "Pressure", "p", "Pa", "Static pressure at the pressure altitude, from the standard atmosphere.", "p = 101325·(1 − 0.0065·h / 288.15)^5.2561", "")
+	Add("p", "Ambient Pressure", "Pressure", "p", "Pa", "Static pressure at the pressure altitude, from the standard atmosphere.", "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}", "")
 	Add("a", "Speed of Sound", "Sound Speed", "a", "m/s", "Local speed of sound at the ambient temperature.", "a = √(1.4·287.058·T)", "")
 	' ---------------- Option help: tip loss ----------------
 	Add("tip_none", "Tip Loss None", "None", "B", "", "No tip loss. Blade loading is integrated all the way to the tip, which is optimistic.", "B = 1", "")
@@ -352,7 +379,7 @@ End Sub
 Public Sub RichText(text As String) As CSBuilder
 	Dim cs As CSBuilder
 	cs.Initialize
-	Dim m As Matcher = Regex.Matcher("(_\{([^}]+)\}|_([A-Za-z0-9]+))|(\^\{([^}]+)\}|\^([A-Za-z0-9]+))", text)
+	Dim m As Matcher = Regex.Matcher("(_\{([^}]+)\}|_([A-Za-z0-9]+))|(\^\{([^}]+)\}|\^([0-9]+(?:\.[0-9]+)?|[A-Za-z0-9]+))", text)
 	Dim prev As Int = 0
 	Do While m.Find
 		cs.Append(text.SubString2(prev, m.GetStart(0)))
@@ -379,7 +406,7 @@ Private Sub MeasureText(text As String, textSizeSp As Float) As Float
 	Dim size As Float = textSizeSp * FontScale
 	Dim total As Float = 0
 	Dim prev As Int = 0
-	Dim m As Matcher = Regex.Matcher("(_\{([^}]+)\}|_([A-Za-z0-9]+))|(\^\{([^}]+)\}|\^([A-Za-z0-9]+))", text)
+	Dim m As Matcher = Regex.Matcher("(_\{([^}]+)\}|_([A-Za-z0-9]+))|(\^\{([^}]+)\}|\^([0-9]+(?:\.[0-9]+)?|[A-Za-z0-9]+))", text)
 	Do While m.Find
 		total = total + cv.MeasureStringWidth(text.SubString2(prev, m.GetStart(0)), Typeface.DEFAULT_BOLD, size)
 		Dim childText As String = m.Group(2)

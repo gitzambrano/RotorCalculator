@@ -139,7 +139,9 @@ Public Sub ShowHelp(key As String)
 		bd.Initialize2(cCode, 10dip, 1dip, cDivider)
 		box.Background = bd
 		body.AddView(box, pad, y, iw, 10dip)
-		Dim le As Label = MkLabel(eq, 15, cAccent, True)
+		Dim eqSp As Float = 15
+		If eq.Length > 28 Then eqSp = 13.5
+		Dim le As Label = MkLabel(eq, eqSp, cAccent, True)
 		le.Typeface = Typeface.MONOSPACE
 		le.Text = RotorNames.RichText(eq)
 		Dim eh As Int = PlaceText(box, le, eq, 12dip, 10dip, iw - 24dip)

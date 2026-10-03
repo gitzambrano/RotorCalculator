@@ -2709,11 +2709,13 @@ Private Sub BuildPageRes
 	ResKeys.Initialize
 	ResKeys.AddAll(Array As String( _
 		"T", "H", "Hi", "H0", "Y", "Q", "Qi", "Q0", "Mx", "My", "P", "Pi", "P0", "Pair", _
-		"DL", "PL", "vi", "CTs", "FM", "LDe", _
+		"DL", "PL", "CTs", "FM", "LDe", _
 		"CT", "CQ", "CQi", "CQ0", "CH", "CHi", "CH0", "CY", "CMx", "CMy", "CPair", "CLbar", "Tc", "Pc", _
-		"lam", "lami", "lamh", "muLam", "Kx", "Ky", "chi", "Bres", _
-		"Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75", _
-		"rpm", "coll", "mu", "Vx", "muz", "Vz", "alpha", "OmR", "Mtip", "Madv", "h", "T0", "rho", "p", "a"))
+		"lam", "lami", "lamh", "vi", "Vztot", "muz", "Vz", "alpha", "muLam", "Kx", "Ky", "chi", "Bres", _
+		"mu", "Vx", "OmR", "Mtip", "Vadv", "Madv", "Vret", "Mret", _
+		"aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+		"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip", _
+		"rpm", "coll", "h", "T0", "rho", "p", "a"))
 	Dim rowW As Int = UiContentW
 	Dim nameW As Int = rowW * 46 / 100
 	Dim valW As Int = rowW * 30 / 100
@@ -2729,8 +2731,8 @@ Private Sub BuildPageRes
 			Case "P": sectionTitle = "POWER"
 			Case "DL": sectionTitle = "LOADING & EFFICIENCY"
 			Case "CT": sectionTitle = "AERODYNAMIC COEFFICIENTS"
-			Case "lam": sectionTitle = "INFLOW & WAKE"
-			Case "Vztot": sectionTitle = "FLOW & BLADE DIAGNOSTICS"
+			Case "lam": sectionTitle = "INFLOW & AXIAL FLOW"
+			Case "mu": sectionTitle = "FLOW & BLADE DIAGNOSTICS"
 			Case "rpm": sectionTitle = "STATE & ATMOSPHERE"
 		End Select
 		If sectionTitle <> "" Then y = AddSectionHeader(scvRes, y, sectionTitle)
@@ -3086,7 +3088,9 @@ Private Sub ResUnitFor(key As String) As String
 			If imp Then Return "lbf/hp" Else Return "N/kW"
 		Case "vi", "OmR", "Vx", "Vz", "Vztot", "Vadv", "Vret", "a"
 			If imp Then Return "ft/s" Else Return "m/s"
-		Case "chi", "alpha", "coll", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75"
+		Case "chi", "alpha", "coll", _
+			"aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+			"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip"
 			Return "deg"
 		Case "rpm"
 			Return "rpm"
@@ -3234,7 +3238,10 @@ Private Sub ResTextFor(key As String) As String
 		Case "Mret"
 			v = zBETEngine.DerivedOutput(r, key)
 			Return FormatFixed(v, 3 + ExtraPrecision)
-		Case "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75"
+		Case "aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip"
+			v = zBETEngine.DerivedOutput(r, key)
+			Return FormatFixed(v, 2 + ExtraPrecision)
+		Case "phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip"
 			v = zBETEngine.DerivedOutput(r, key)
 			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Tc": v = zBETEngine.DerivedTc(r, area)

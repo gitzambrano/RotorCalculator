@@ -119,7 +119,9 @@ Public Sub Initialize
 		AddSweepParam("muLam", SweepParamDisplayName("muLam"))
 		AddSweepParam("lamh", SweepParamDisplayName("lamh"))
 		AddSweepParam("CLbar", SweepParamDisplayName("CLbar"))
-		For Each outputKey As String In Array As String("vi", "Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75")
+		For Each outputKey As String In Array As String("vi", "Vztot", "Vadv", "Vret", "Mret", _
+			"aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+			"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip")
 			AddSweepParam(outputKey, SweepParamDisplayName(outputKey))
 		Next
 		AddSweepParam("Tc", SweepParamDisplayName("Tc"))
@@ -201,7 +203,9 @@ End Sub
 
 Private Sub SweepUnit(k As String) As String
 	Select k
-		Case "chi", "Collective", "Alpha", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75": Return "deg"
+		Case "chi", "Collective", "Alpha", _
+			"aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+			"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip": Return "deg"
 		Case "PowerKW", "PowerIndKW", "PowerProfKW", "PowerAirKW": Return "kW"
 		Case "PowerHP": Return "hp"
 		Case "ThrustN", "DragHN", "DragIndN", "DragProfN": Return "N"
@@ -361,7 +365,9 @@ Public Sub ExtractParamValueS(res As RotorResults, paramKey As String, sigma As 
 		Case "muLam": Return zBETEngine.DerivedMuOverLambda(res)
 		Case "lamh": Return zBETEngine.DerivedLambdaH(res)
 		Case "CLbar": Return zBETEngine.DerivedClBar(res, sigma)
-		Case "vi", "Vztot", "Vadv", "Vret", "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75": Return zBETEngine.DerivedOutput(res, paramKey)
+		Case "vi", "Vztot", "Vadv", "Vret", "Mret", _
+			"aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+			"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip": Return zBETEngine.DerivedOutput(res, paramKey)
 		Case "Tc": Return zBETEngine.DerivedTc(res, area)
 		Case "Pc": Return zBETEngine.DerivedPc(res, area)
 		Case "L_D_eff": Return res.L_D_eff

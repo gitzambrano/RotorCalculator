@@ -58,7 +58,11 @@ Sub Process_Globals
 		FxColeman As Double, _
 		FyColeman As Double)
 	
-	Type RotorResults (AoAAdv75 As Double, AoARet75 As Double, PhiAdv75 As Double, PhiRet75 As Double, CT As Double, CQ As Double, CQi As Double, CQ0 As Double, CH As Double, CHi As Double, CH0 As Double, CY As Double, _
+	Type RotorResults (AoAAdv75 As Double, AoARet75 As Double, PhiAdv75 As Double, PhiRet75 As Double, _
+		AoAAdv25 As Double, AoARet25 As Double, PhiAdv25 As Double, PhiRet25 As Double, _
+		AoAAdv50 As Double, AoARet50 As Double, PhiAdv50 As Double, PhiRet50 As Double, _
+		AoAAdvTip As Double, AoARetTip As Double, PhiAdvTip As Double, PhiRetTip As Double, _
+		CT As Double, CQ As Double, CQi As Double, CQ0 As Double, CH As Double, CHi As Double, CH0 As Double, CY As Double, _
 		CMx As Double, CMy As Double, CPair As Double, InflowLambda As Double, InflowLambdaI As Double, L_D_eff As Double, FoM As Double, _
 		ThrustN As Double, ThrustKgf As Double, ThrustLbf As Double, PowerShaftW As Double, PowerShaftKW As Double, PowerShaftHP As Double, _
 		TorqueNm As Double, TorqueLbft As Double, DragHN As Double, SideForceYN As Double, SideForceYLbf As Double, _
@@ -1216,11 +1220,29 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.PowerShaftW = res.TorqueNm * omega
 	res.PowerShaftKW = res.PowerShaftW / 1000.0
 	res.PowerShaftHP = res.PowerShaftW / 745.699872
-	res.PhiAdv75 = SectionPhi75(g, res, 1)
-	res.PhiRet75 = SectionPhi75(g, res, -1)
+	res.PhiAdv25 = SectionPhi(g, res, 0.25, 1)
+	res.PhiRet25 = SectionPhi(g, res, 0.25, -1)
+	Dim pitch25 As Double = LocalPitch(g, 0.25) * 180.0 / cPI
+	res.AoAAdv25 = pitch25 - res.PhiAdv25
+	res.AoARet25 = pitch25 - res.PhiRet25
+
+	res.PhiAdv50 = SectionPhi(g, res, 0.50, 1)
+	res.PhiRet50 = SectionPhi(g, res, 0.50, -1)
+	Dim pitch50 As Double = LocalPitch(g, 0.50) * 180.0 / cPI
+	res.AoAAdv50 = pitch50 - res.PhiAdv50
+	res.AoARet50 = pitch50 - res.PhiRet50
+
+	res.PhiAdv75 = SectionPhi(g, res, 0.75, 1)
+	res.PhiRet75 = SectionPhi(g, res, 0.75, -1)
 	Dim pitch75 As Double = LocalPitch(g, 0.75) * 180.0 / cPI
 	res.AoAAdv75 = pitch75 - res.PhiAdv75
 	res.AoARet75 = pitch75 - res.PhiRet75
+
+	res.PhiAdvTip = SectionPhi(g, res, 1.0, 1)
+	res.PhiRetTip = SectionPhi(g, res, 1.0, -1)
+	Dim pitchTip As Double = LocalPitch(g, 1.0) * 180.0 / cPI
+	res.AoAAdvTip = pitchTip - res.PhiAdvTip
+	res.AoARetTip = pitchTip - res.PhiRetTip
 	
 	Return res
 End Sub
@@ -1275,14 +1297,19 @@ Public Sub DerivedClBar(res As RotorResults, sigma As Double) As Double
 	Return 6 * res.CT / sigma
 End Sub
 
-' Section diagnostic at x=.75, psi=90/270 degrees. Normal forward flow only.
+' Section diagnostic at radial station x, psi=90 (side=1) / 270 (side=-1) degrees. Normal forward flow only.
 ' Johnson/Leishman section kinematics; docs/zBET-documentation.md section 6.1.
-Private Sub SectionPhi75(g As RotorGeometry, res As RotorResults, side As Double) As Double
-	If g.RootCutout >= 0.75 Or res.BFactor < 0.75 Then Return NaNValue
-	Dim ut As Double = 0.75 + side * res.OperatingMu
+Private Sub SectionPhi(g As RotorGeometry, res As RotorResults, x As Double, side As Double) As Double
+	If x < g.RootCutout Then Return NaNValue
+	If x <= 0.75 And res.BFactor < x Then Return NaNValue
+	Dim ut As Double = x + side * res.OperatingMu
 	If ut <= 1e-9 Then Return NaNValue
-	Dim up As Double = res.InflowLambda + 0.75 * side * res.InflowKy * res.InflowLambdaI
+	Dim up As Double = res.InflowLambda + x * side * res.InflowKy * res.InflowLambdaI
 	Return ATan(up / ut) * 180.0 / cPI
+End Sub
+
+Private Sub SectionPhi75(g As RotorGeometry, res As RotorResults, side As Double) As Double
+	Return SectionPhi(g, res, 0.75, side)
 End Sub
 
 Public Sub DerivedOutput(res As RotorResults, key As String) As Double
@@ -1294,10 +1321,22 @@ Public Sub DerivedOutput(res As RotorResults, key As String) As Double
 		Case "Mret"
 			If res.SpeedOfSound <= 0 Then Return NaNValue
 			Return Abs(res.TipSpeed - res.OperatingVx) / res.SpeedOfSound
+		Case "aoaAdv25": Return res.AoAAdv25
+		Case "aoaRet25": Return res.AoARet25
+		Case "phiAdv25": Return res.PhiAdv25
+		Case "phiRet25": Return res.PhiRet25
+		Case "aoaAdv50": Return res.AoAAdv50
+		Case "aoaRet50": Return res.AoARet50
+		Case "phiAdv50": Return res.PhiAdv50
+		Case "phiRet50": Return res.PhiRet50
 		Case "aoaAdv75": Return res.AoAAdv75
 		Case "aoaRet75": Return res.AoARet75
 		Case "phiAdv75": Return res.PhiAdv75
 		Case "phiRet75": Return res.PhiRet75
+		Case "aoaAdvTip", "aoaAdv100": Return res.AoAAdvTip
+		Case "aoaRetTip", "aoaRet100": Return res.AoARetTip
+		Case "phiAdvTip", "phiAdv100": Return res.PhiAdvTip
+		Case "phiRetTip", "phiRet100": Return res.PhiRetTip
 	End Select
 	Return NaNValue
 End Sub

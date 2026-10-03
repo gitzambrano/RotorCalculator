@@ -120,10 +120,22 @@ export interface RotorResults {
   powerLoadingN_kW: number;
   inducedVelocityM_s: number;
   CTs: number;
+  aoaAdv25: number;
+  aoaRet25: number;
+  phiAdv25: number;
+  phiRet25: number;
+  aoaAdv50: number;
+  aoaRet50: number;
+  phiAdv50: number;
+  phiRet50: number;
   aoaAdv75: number;
   aoaRet75: number;
   phiAdv75: number;
   phiRet75: number;
+  aoaAdvTip: number;
+  aoaRetTip: number;
+  phiAdvTip: number;
+  phiRetTip: number;
 }
 
 // 16-point and 24-point Gauss-Legendre quadrature nodes and weights
@@ -1009,7 +1021,10 @@ function createEmptyResults(): RotorResults {
     solutionValid: false, compressibilityWarning: false, statusMessage: "INIT",
     powerInducedKW: 0, powerProfileKW: 0, diskLoadingN_m2: 0, powerLoadingN_kW: 0,
     inducedVelocityM_s: 0, CTs: 0,
+    aoaAdv25: 0, aoaRet25: 0, phiAdv25: 0, phiRet25: 0,
+    aoaAdv50: 0, aoaRet50: 0, phiAdv50: 0, phiRet50: 0,
     aoaAdv75: 0, aoaRet75: 0, phiAdv75: 0, phiRet75: 0,
+    aoaAdvTip: 0, aoaRetTip: 0, phiAdvTip: 0, phiRetTip: 0,
   };
 }
 
@@ -1167,11 +1182,29 @@ export function calculateCoreResolvedMode(
   res.powerShaftKW = res.powerShaftW / 1000.0;
   res.powerShaftHP = res.powerShaftW / 745.699872;
 
-  res.phiAdv75 = sectionPhi75(g, res, 1);
-  res.phiRet75 = sectionPhi75(g, res, -1);
+  res.phiAdv25 = sectionPhi(g, res, 0.25, 1);
+  res.phiRet25 = sectionPhi(g, res, 0.25, -1);
+  const pitch25 = localPitch(g, 0.25) * (180.0 / Math.PI);
+  res.aoaAdv25 = Number.isNaN(res.phiAdv25) ? NaN : pitch25 - res.phiAdv25;
+  res.aoaRet25 = Number.isNaN(res.phiRet25) ? NaN : pitch25 - res.phiRet25;
+
+  res.phiAdv50 = sectionPhi(g, res, 0.50, 1);
+  res.phiRet50 = sectionPhi(g, res, 0.50, -1);
+  const pitch50 = localPitch(g, 0.50) * (180.0 / Math.PI);
+  res.aoaAdv50 = Number.isNaN(res.phiAdv50) ? NaN : pitch50 - res.phiAdv50;
+  res.aoaRet50 = Number.isNaN(res.phiRet50) ? NaN : pitch50 - res.phiRet50;
+
+  res.phiAdv75 = sectionPhi(g, res, 0.75, 1);
+  res.phiRet75 = sectionPhi(g, res, 0.75, -1);
   const pitch75 = localPitch(g, 0.75) * (180.0 / Math.PI);
   res.aoaAdv75 = Number.isNaN(res.phiAdv75) ? NaN : pitch75 - res.phiAdv75;
   res.aoaRet75 = Number.isNaN(res.phiRet75) ? NaN : pitch75 - res.phiRet75;
+
+  res.phiAdvTip = sectionPhi(g, res, 1.0, 1);
+  res.phiRetTip = sectionPhi(g, res, 1.0, -1);
+  const pitchTip = localPitch(g, 1.0) * (180.0 / Math.PI);
+  res.aoaAdvTip = Number.isNaN(res.phiAdvTip) ? NaN : pitchTip - res.phiAdvTip;
+  res.aoaRetTip = Number.isNaN(res.phiRetTip) ? NaN : pitchTip - res.phiRetTip;
 
   const cqRatio = Math.max(1e-12, Math.abs(res.CQ));
   res.powerInducedKW = (res.CQi / cqRatio) * res.powerShaftKW;
@@ -1185,7 +1218,7 @@ export function calculateCoreResolvedMode(
 }
 
 // ---------------------------------------------------------------------------
-// Section diagnostics at x = 0.75 (advancing/retreating; matching zBETEngine.bas)
+// Section diagnostics at radial stations (advancing/retreating; matching zBETEngine.bas)
 // ---------------------------------------------------------------------------
 
 export function localPitch(geom: RotorGeometry, x: number): number {
@@ -1193,12 +1226,17 @@ export function localPitch(geom: RotorGeometry, x: number): number {
   return t0 + t1 * x;
 }
 
-export function sectionPhi75(g: RotorGeometry, res: RotorResults, side: number): number {
-  if (g.rootCutout >= 0.75 || res.bFactor < 0.75) return NaN;
-  const ut = 0.75 + side * res.operatingMu;
+export function sectionPhi(g: RotorGeometry, res: RotorResults, x: number, side: number): number {
+  if (x < g.rootCutout) return NaN;
+  if (x <= 0.75 && res.bFactor < x) return NaN;
+  const ut = x + side * res.operatingMu;
   if (ut <= 1e-9) return NaN;
-  const up = res.inflowLambda + 0.75 * side * res.inflowKy * res.inflowLambdaI;
+  const up = res.inflowLambda + x * side * res.inflowKy * res.inflowLambdaI;
   return Math.atan(up / ut) * (180.0 / Math.PI);
+}
+
+export function sectionPhi75(g: RotorGeometry, res: RotorResults, side: number): number {
+  return sectionPhi(g, res, 0.75, side);
 }
 
 export function derivedOutput(res: RotorResults, key: string): number {
@@ -1214,6 +1252,22 @@ export function derivedOutput(res: RotorResults, key: string): number {
     case "Mret":
       if (res.speedOfSound <= 0) return NaN;
       return Math.abs(res.tipSpeed - res.operatingVx) / res.speedOfSound;
+    case "aoaAdv25":
+      return res.aoaAdv25;
+    case "aoaRet25":
+      return res.aoaRet25;
+    case "phiAdv25":
+      return res.phiAdv25;
+    case "phiRet25":
+      return res.phiRet25;
+    case "aoaAdv50":
+      return res.aoaAdv50;
+    case "aoaRet50":
+      return res.aoaRet50;
+    case "phiAdv50":
+      return res.phiAdv50;
+    case "phiRet50":
+      return res.phiRet50;
     case "aoaAdv75":
       return res.aoaAdv75;
     case "aoaRet75":
@@ -1222,6 +1276,18 @@ export function derivedOutput(res: RotorResults, key: string): number {
       return res.phiAdv75;
     case "phiRet75":
       return res.phiRet75;
+    case "aoaAdvTip":
+    case "aoaAdv100":
+      return res.aoaAdvTip;
+    case "aoaRetTip":
+    case "aoaRet100":
+      return res.aoaRetTip;
+    case "phiAdvTip":
+    case "phiAdv100":
+      return res.phiAdvTip;
+    case "phiRetTip":
+    case "phiRet100":
+      return res.phiRetTip;
     default:
       return NaN;
   }
