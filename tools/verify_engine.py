@@ -69,7 +69,6 @@ def verify_ui_source_contract() -> None:
     """Lock the current Android architecture without requiring B4A or an emulator."""
     main = (ROOT / "RotorCalculator.b4a").read_text(encoding="utf-8")
     storage = (ROOT / "RotorStorage.bas").read_text(encoding="utf-8")
-    plan = (ROOT / "plano.md").read_text(encoding="utf-8").lower()
     requirements = (ROOT / "docs" / "software_requirements.md").read_text(
         encoding="utf-8"
     ).lower()
@@ -139,10 +138,7 @@ def verify_ui_source_contract() -> None:
     if missing:
         raise AssertionError("Rotor storage contract missing: " + " | ".join(missing))
 
-    for token in ("direct in-page rotor editor", "active rotor", "six operating pairs", "universal plots"):
-        if token not in plan:
-            raise AssertionError(f"plan contract missing: {token}")
-    for token in ("active rotor", "**geo-6**", "**ux-9**", "**ux-29**", "**qa-9**"):
+    for token in ("direct in-page rotor editor", "active rotor", "six operating pairs", "universal plots", "**geo-6**", "**ux-9**", "**ux-29**", "**qa-9**"):
         if token not in requirements:
             raise AssertionError(f"requirements contract missing: {token}")
 

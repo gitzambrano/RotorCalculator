@@ -115,6 +115,7 @@ Validation requirements are separated into two distinct operational gates:
 ## 6. Release Artifact Hygiene
 
 - The current production target is **RotorCalculator 1.24 (versionCode 7)**.
+- Release delivery does not require creating or packaging ZIP files. Deliverables are committed source, verified release APK/AAB for Android, and GitHub Pages deployment for Web.
 - Never retain an APK or AAB in the repository that was built from an older source commit.
 - Commit a release APK/AAB only after compiling the exact main source commit locally and validating its build artifacts.
 - GitHub Actions serves as an auxiliary CI validator; it does not promote binaries or bypass local engineering verification.

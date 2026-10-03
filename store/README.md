@@ -17,7 +17,7 @@ The same policy is available offline from the app's global menu. Public support 
 
 ## Local release gates
 
-Run the offline verifier, pytest, the compiled-engine verifier, a real B4A build, and the complete Android UI/functional matrix. Open the real screenshots and inspect them before publication. Record the tested source revision and evidence in `plano.md`; Python reference tests alone are not a compiled-engine equivalence gate.
+Run the offline verifier, pytest, the compiled-engine verifier, a real B4A build, and the complete Android UI/functional matrix. Open the real screenshots and inspect them before publication. Record the tested source revision and evidence in release documentation; Python reference tests alone are not a compiled-engine equivalence gate.
 
 Signing and API credentials remain outside Git. Supply the keystore through `B4A_KEY_FILE`, `B4A_KEY_PASSWORD`, and `B4A_KEY_ALIAS`, and the service account through `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`.
 

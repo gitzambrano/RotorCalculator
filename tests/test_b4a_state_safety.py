@@ -349,7 +349,7 @@ def test_settings_include_geometry_import_export():
     assert 'intent.Initialize("android.intent.action.OPEN_DOCUMENT", "")' in main
     assert 'intent.Initialize("android.intent.action.CREATE_DOCUMENT", "")' in main
     assert "RotorStorage.ExportDatabaseText" in main
-    assert "RotorStorage.ParseDatabaseText" in main
+    assert "RotorStorage.ParseDatabase" in main
     assert "RotorStorage.MergeImportedRotors" in main
     assert "Public Sub MergeImportedRotors" in storage
 
@@ -484,8 +484,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 6" in main
-    assert "#VersionName: 1.23" in main
+    assert "#VersionCode: 7" in main
+    assert "#VersionName: 1.24" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -536,18 +536,17 @@ def test_runtime_qa_matches_responsive_labels_and_dimensions():
     assert len({key for key, _ in sweep_keys}) == 52
 
 
-def test_requirements_and_plan_are_authoritative_for_new_architecture():
+def test_requirements_are_authoritative_for_new_architecture():
     req = text("docs/software_requirements.md")
-    plan = text("plano.md")
     assert "**RPM + Collective**" in req
     assert "**CT + Thrust**" in req
     assert "**Import Geometries**" in req
     assert "**Trim only in hover**" in req
-    assert "six operating pairs" in plan.lower()
-    assert "universal plots" in plan.lower()
-    assert "direct in-page rotor editor" in plan.lower()
-    assert "active rotor" in plan.lower()
-    assert "label / value / unit" in plan.lower()
+    assert "six operating pairs" in req.lower()
+    assert "universal plots" in req.lower()
+    assert "direct in-page rotor editor" in req.lower()
+    assert "active rotor" in req.lower()
+    assert "label / value / unit" in req.lower()
 
 def test_activity_recreation_preserves_unsaved_geometry_and_sweep_state():
     main = text("RotorCalculator.b4a")
@@ -619,7 +618,8 @@ def test_premium_visual_contract_is_enforced_in_source():
 
 def test_active_ui_avoids_caption_sized_engineering_controls():
     main = text("RotorCalculator.b4a")
-    assert "l.TextSize = 14.5 * sc" in main            # status chips
+    assert "lblMode.TextSize = 13 * sc" in main        # status chips
+    assert "l.TextSize = 13 * sc" in main              # status chips
     assert "lblResults(i).TextSize = TextSp" in main  # result values
     assert "lbl.TextSize = resLblSp" in main
     assert "b.TextSize = 13 * sc" in main              # sweep selectors

@@ -20,7 +20,7 @@ Each requirement has a stable identifier. Screens are specified positively by th
 
 ### 2.1 Direct Geometry editor and active rotor
 
-- **GEO-1** — Opening **Geometry** shall immediately show the complete editable rotor definition; editing shall not require opening a rotor row or a modal Geometry popup.
+- **GEO-1** — Opening **Geometry** shall immediately show the complete editable rotor definition as a direct in-page rotor editor; editing shall not require opening a rotor row or a modal Geometry popup.
 - **GEO-2** — Geometry shall reserve the top selector position formerly occupied by NEW ROTOR for a persistent **Active Rotor** bar. The bar shall identify the current rotor at all times and visually indicate unsaved changes.
 - **GEO-3** — Tapping the Active Rotor bar shall open the saved-rotor selector and shall also expose **NEW ROTOR**.
 - **GEO-4** — NEW ROTOR shall create a uniquely named user rotor and make it the current inline geometry without changing tabs.
@@ -178,7 +178,7 @@ Sections shall appear in this order:
 - **RES-8** — Invalid operating points shall be clearly identified and shall not display false zero values.
 - **RES-9** — Every result row shall expose contextual physics/equation help.
 
-## 5. Parameter plots
+## 5. Universal plots and parameter sweep
 
 The plot tool shall combine the broad capability of the original sweep with the cleaner current presentation.
 
