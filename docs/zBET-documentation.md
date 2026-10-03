@@ -313,7 +313,7 @@ K_x=0,
 K_y=0.
 $$
 
-### 4.2 Coleman simple
+### 4.2 Coleman
 
 $$
 K_x=\tan\frac{\chi}{2},
@@ -1046,7 +1046,7 @@ atmosphere accuracy; real ambient density remains model dependent.
 
 ### Web engine canonical parity correction (1.23)
 
-The web port now uses the already-governed equations in sections 4.2–4.4 and the same representative Prandtl–Glauert Mach as Python and compiled B4A: M_eff=(ΩR/a)√(0.75²+0.5μ²), capped at 0.85. Coleman simple is tan(χ/2); Coleman–Feingold uses (15π/32)f_x tan(χ/2), K_y=−2f_yμ; Drees uses (4/3)(1−1.8μ²)tan(χ/2), K_y=−2μ. These restore the documented Johnson/Leishman/Coleman/Drees conventions; they introduce no new aerodynamic model.
+The web port now uses the already-governed equations in sections 4.2–4.4 and the same representative Prandtl–Glauert Mach as Python and compiled B4A: M_eff=(ΩR/a)√(0.75²+0.5μ²), capped at 0.85. Coleman is tan(χ/2); Coleman–Feingold uses (15π/32)f_x tan(χ/2), K_y=−2f_yμ; Drees uses (4/3)(1−1.8μ²)tan(χ/2), K_y=−2μ. These restore the documented Johnson/Leishman/Coleman/Drees conventions; they introduce no new aerodynamic model.
 
 The operating collective Δθ is a uniform increment added to both saved blade incidence endpoints, as in zBETEngine.ApplyOperatingGeometry and Python _operating_pitch. It is not an absolute replacement of the mean saved pitch. Both trim residuals and the final result use the same increment convention.
 

@@ -139,7 +139,7 @@ export function formatSig(value: number, sig: number): string {
   if (ip.length >= 5) {
     let spaced = "";
     for (let j = 0; j < ip.length; j++) {
-      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u00A0";
+      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u202F";
       spaced += ip[j];
     }
     ip = spaced;
@@ -148,15 +148,35 @@ export function formatSig(value: number, sig: number): string {
   return ip + fp;
 }
 
+export function formatFixed(value: number, decimals: number, extraPrecision = 0): string {
+  if (!Number.isFinite(value) || Math.abs(value) > 1.0e15) return "–";
+  const dec = Math.max(0, Math.min(9, decimals + extraPrecision));
+  const scale = Math.pow(10, dec);
+  const rounded = Math.round(Math.abs(value) * scale) / scale;
+  const s = rounded.toFixed(dec);
+  let ip = s;
+  let fp = "";
+  const dot = s.indexOf(".");
+  if (dot >= 0) {
+    ip = s.substring(0, dot);
+    fp = s.substring(dot);
+  }
+  if (ip.length >= 5) {
+    let spaced = "";
+    for (let j = 0; j < ip.length; j++) {
+      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u202F";
+      spaced += ip[j];
+    }
+    ip = spaced;
+  }
+  if (value < -0.5 / scale) ip = "-" + ip;
+  return ip + fp;
+}
+
 export function formatResultValue(val: number, decimals: number, extraPrecision = 0): string {
   if (!Number.isFinite(val)) return "–";
   if (Math.abs(val) < 1e-9 || Object.is(val, -0)) val = 0;
-  const effectiveDecimals = decimals + extraPrecision;
-  return val.toLocaleString("en-US", {
-    minimumFractionDigits: effectiveDecimals,
-    maximumFractionDigits: effectiveDecimals,
-    useGrouping: true,
-  });
+  return formatFixed(val, decimals, extraPrecision);
 }
 
 /** Android Main.FormatKey presentation, without locale-dependent input widgets. */
@@ -166,9 +186,10 @@ export function formatInputValue(key: string, value: number, unit = ""): string 
   if (key === "Nb") digits = 0;
   else if (["x0", "taper", "B", "kind"].includes(key)) digits = 3;
   else if (["sigmaRef", "sigmaAct", "sigmaT", "Cd0", "mu", "muz"].includes(key)) digits = 4;
-  else if (["AR", "a0", "T0"].includes(key)) digits = 2;
+  else if (["AR", "a0", "T0", "Vx", "Vz"].includes(key)) digits = 2;
   else if (key === "CTtgt") digits = 5;
-  else if (["rpm", "rpmNom", "Ttgt"].includes(key)) digits = 1;
+  else if (["rpm", "rpmNom"].includes(key)) digits = 1;
+  else if (key === "Ttgt") digits = 0;
   else if (["thRoot", "thTip", "thTwist", "coll", "alpha"].includes(key)) digits = unit === "rad" ? 4 : 2;
   else digits = Math.abs(value) >= 100 ? 1 : Math.abs(value) >= 10 ? 2 : Math.abs(value) >= 1 ? 3 : 4;
   let minimum = digits;

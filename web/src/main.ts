@@ -60,6 +60,7 @@ import {
   formatResultValue,
   formatInputValue,
   formatSig,
+  formatFixed,
   UNIT_CHOICES,
   UNIT_TABLE,
 } from "./units";
@@ -145,8 +146,8 @@ let activeResults: RotorResults = calculate(activeGeom, activeCond);
 
 const savedPage = localStorage.getItem("rotor_current_page");
 let currentPage: "geometry" | "conditions" | "results" = savedPage === "conditions" || savedPage === "results" ? savedPage : "geometry";
-let currentTheme: "dark" | "light" | "midnight" =
-  (localStorage.getItem("rotor_theme") as "dark" | "light" | "midnight") || "dark";
+let currentTheme: "dark" | "light" | "midnight" | "sepia" =
+  (localStorage.getItem("rotor_theme") as "dark" | "light" | "midnight" | "sepia") || "dark";
 let unitSystem: "si" | "imperial" = (localStorage.getItem("rotor_units") as "si" | "imperial") || "si";
 let extraPrecision: number = parseInt(localStorage.getItem("rotor_extra_precision") || "0", 10);
 let angleFormat: "0/360" | "-180/180" = (localStorage.getItem("rotor_angle_format") as "0/360" | "-180/180") || "0/360";
@@ -424,7 +425,7 @@ app.innerHTML = `
 
         <div class="section-header">AERODYNAMIC MODEL</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-key="inflow" data-tip="Inflow model formulation (Uniform, Coleman Simple, Coleman-Feingold, or Drees)." data-canonical="Inflow Model">Inflow Model</button>
+          <button class="row-label-btn" data-key="inflow" data-tip="Inflow model formulation (Uniform, Coleman, Coleman-Feingold, or Drees)." data-canonical="Inflow Model">Inflow Model</button>
           <button class="action-btn" id="btn-inflow-model" style="height: 44px;">Coleman-Feingold</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
@@ -946,7 +947,7 @@ function applyTheme(): void {
   if (metaTheme) {
     metaTheme.setAttribute(
       "content",
-      currentTheme === "light" ? "#006978" : currentTheme === "midnight" ? "#0B1730" : "#0D121B"
+      currentTheme === "sepia" ? "#EFE8DC" : currentTheme === "light" ? "#006978" : currentTheme === "midnight" ? "#0B1730" : "#0D121B"
     );
   }
   const iframe = byId<HTMLIFrameElement>("help-iframe");
@@ -980,7 +981,7 @@ function refreshSelectorCaptions(): void {
     collective_ct: "Collective + Target CT", collective_thrust: "Collective + Target Thrust", ct_thrust: "Target CT + Target Thrust",
   };
   byId("btn-trim-mode").innerHTML = formatSubscripts((mobile ? pairs : longPairs)[activeCond.operatingPair]);
-  const inflows: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman Simple", coleman_feingold: mobile ? "Coleman-FG" : "Coleman-Feingold", drees: "Drees" };
+  const inflows: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman", coleman_feingold: mobile ? "Coleman-FG" : "Coleman-Feingold", drees: "Drees" };
   byId("btn-inflow-model").textContent = inflows[activeCond.inflowModel];
   byId("btn-drag-info").textContent = mobile ? "Num. Vec." : "Numerical Vectorial";
   document.querySelectorAll<HTMLElement>(".engineering-row > .action-btn").forEach(el => {
@@ -1424,7 +1425,7 @@ function resTextFor(
     case "vi":
       v = r.inflowLambdaI * omR;
       if (imp) v = v * ft;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "CTs": {
       const sg2 = resolveSolidity(cloneGeometry(geom));
       let sigma = sg2.sigmaThrust;
@@ -1485,14 +1486,16 @@ function resTextFor(
     case "Vret":
       v = derivedOutput(r, key);
       if (imp) v = v * ft;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "Mret":
+      v = derivedOutput(r, key);
+      return formatFixed(v, 3, extraPrec);
     case "aoaAdv75":
     case "aoaRet75":
     case "phiAdv75":
     case "phiRet75":
       v = derivedOutput(r, key);
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "Tc":
       v = derivedTc(r, area);
       break;
@@ -1519,16 +1522,16 @@ function resTextFor(
       break;
     case "chi":
       v = r.wakeSkewChiDeg;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "Bres":
       v = r.bFactor;
       break;
     case "rpm":
       v = r.trimmedRPM;
-      break;
+      return formatFixed(v, 1, extraPrec);
     case "coll":
       v = r.trimmedCollectiveDeg;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "mu":
       v = r.operatingMu;
       break;
@@ -1537,34 +1540,34 @@ function resTextFor(
       break;
     case "alpha":
       v = r.operatingAlphaDeg;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "Vx":
       v = r.operatingVx;
       if (imp) v = v * ft;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "Vz":
       v = r.operatingVz;
       if (imp) v = v * ft;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "OmR":
       v = omR;
       if (imp) v = v * ft;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "a":
       v = r.speedOfSound;
       if (imp) v = v * ft;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "Mtip":
       if (r.speedOfSound <= 0) return "---";
       v = omR / r.speedOfSound;
-      break;
+      return formatFixed(v, 3, extraPrec);
     case "Madv":
       v = r.advancingTipMach;
-      break;
+      return formatFixed(v, 3, extraPrec);
     case "T0":
       v = r.temperatureC;
       if (imp) v = (v * 9.0) / 5.0 + 32.0;
-      break;
+      return formatFixed(v, 2, extraPrec);
     case "rho":
       v = r.densityRho;
       if (imp) v = v * 0.0019403203;
@@ -1689,7 +1692,7 @@ function refreshConditionFields(): void {
   byId("btn-toggle-axial-mode").dataset.key = axialKey;
   byId("unit-axial-val").textContent = axialKey === "Vz" ? "m/s" : axialKey === "alpha" ? "deg" : "–";
   byId<HTMLInputElement>("inp-axial-val").value = activeCond.axialValue.toString();
-  const inflowLabels: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman Simple", coleman_feingold: "Coleman-Feingold", drees: "Drees" };
+  const inflowLabels: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman", coleman_feingold: "Coleman-Feingold", drees: "Drees" };
   byId("btn-inflow-model").textContent = inflowLabels[activeCond.inflowModel] || activeCond.inflowModel;
   refreshOperatingControls();
 }
@@ -2378,7 +2381,7 @@ function bindSelectorButtons(): void {
   // 5. Inflow Model Modal
   const inflowModes: { id: FlightCondition["inflowModel"]; label: string; desc: string }[] = [
     { id: "uniform", label: "Uniform", desc: "Benchmark without first-harmonic gradients (Kx = 0, Ky = 0)" },
-    { id: "coleman_simple", label: "Coleman Simple", desc: "Longitudinal gradient proportional to wake skew angle" },
+    { id: "coleman_simple", label: "Coleman", desc: "Longitudinal gradient proportional to wake skew angle" },
     { id: "coleman_feingold", label: "Coleman-Feingold", desc: "Longitudinal and lateral gradients with empirical factors" },
     { id: "drees", label: "Drees", desc: "Classical forward-flight longitudinal & lateral formulation" },
   ];
@@ -2392,7 +2395,7 @@ function bindSelectorButtons(): void {
         activeCond.inflowModel = selId as FlightCondition["inflowModel"];
         const labels: Record<string, string> = {
           uniform: "Uniform",
-          coleman_simple: "Coleman Simple",
+          coleman_simple: "Coleman",
           coleman_feingold: "Coleman-Feingold",
           drees: "Drees",
         };
@@ -3455,9 +3458,10 @@ function bindSettingsListeners(): void {
       { id: "dark", label: "Dark", desc: "Cockpit stealth, high contrast" },
       { id: "light", label: "Light", desc: "Daylight, contrast tuned to 4.5:1 or better" },
       { id: "midnight", label: "Midnight Blue", desc: "Navy surfaces, cyan and amber accents" },
+      { id: "sepia", label: "Sepia", desc: "Warm parchment, sober pastel tones" },
     ];
     showOptionPicker("Theme", items, currentTheme, (selectedId) => {
-      currentTheme = selectedId as "dark" | "light" | "midnight";
+      currentTheme = selectedId as "dark" | "light" | "midnight" | "sepia";
       localStorage.setItem("rotor_theme", currentTheme);
       applyTheme();
       refreshSettingsButtons();

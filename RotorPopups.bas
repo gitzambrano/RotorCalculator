@@ -466,7 +466,7 @@ Private Sub SweepFamilyLabel(multiCurveMode As Int, curveIndex As Int, familyVal
 	If multiCurveMode = 0 Then
 		Select curveIndex
 			Case 0: Return "Uniform"
-			Case 1: Return "Coleman Simple"
+			Case 1: Return "Coleman"
 			Case 2: Return "Coleman-FG"
 			Case Else: Return "Drees"
 		End Select
@@ -1061,10 +1061,17 @@ Public Sub DrawSweepPlot( _
 	Dim colText As Int
 	Dim colCurrent As Int
 	Dim colAccent As Int
+	Dim isSepia As Boolean = (plotThemeIdx = 3)
 	Dim isMid As Boolean = (plotThemeIdx = 2)
-	If plotThemeIdx = 1 Then lightTheme = True
+	If plotThemeIdx = 1 Or isSepia Then lightTheme = True
 	If plotThemeIdx = 0 Or isMid Then lightTheme = False
-	If lightTheme Then
+	If isSepia Then
+		colBg = 0xFFFAF6EE
+		colGrid = 0xFFDDD2C0
+		colText = 0xFF2D2319
+		colCurrent = 0xFF8C5A2B
+		colAccent = 0xFF8C5A2B
+	Else If lightTheme Then
 		colBg = 0xFFFFFFFF
 		colGrid = 0xFFD9E1EA
 		colText = 0xFF344054
@@ -1095,20 +1102,29 @@ Public Sub DrawSweepPlot( _
 	If wDip < 400 Then padX = 6dip
 
 	' --- Legend layout (own band above the plot) ---
+	Dim itemWidths(nCurves) As Float
+	Dim totalLegW As Float = padX
+	For i = 0 To nCurves - 1
+		Dim lp As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
+		itemWidths(i) = 28dip + cvs.MeasureStringWidth(lp.CurveLabel, Typeface.DEFAULT_BOLD, fs) + 12dip
+		totalLegW = totalLegW + itemWidths(i)
+	Next
+	Dim fitsOneLine As Boolean = (totalLegW <= widthPx - padX)
+	Dim maxOnRow0 As Int = Ceil(nCurves / 2.0)
 	Dim legX(nCurves) As Float
 	Dim legRow(nCurves) As Int
 	Dim curX As Float = padX
 	Dim curRow As Int = 0
+	Dim countOnRow0 As Int = 0
 	For i = 0 To nCurves - 1
-		Dim lp As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
-		Dim itemW As Float = 28dip + cvs.MeasureStringWidth(lp.CurveLabel, Typeface.DEFAULT_BOLD, fs) + 12dip
-		If curX > padX And curX + itemW > widthPx - padX Then
+		If (fitsOneLine = False And curRow = 0 And countOnRow0 >= maxOnRow0) Or (curX > padX And curX + itemWidths(i) > widthPx - padX) Then
 			curRow = curRow + 1
 			curX = padX
 		End If
 		legX(i) = curX
 		legRow(i) = curRow
-		curX = curX + itemW
+		curX = curX + itemWidths(i)
+		If curRow = 0 Then countOnRow0 = countOnRow0 + 1
 	Next
 	Dim legendRows As Int = curRow + 1
 
@@ -1214,16 +1230,17 @@ Public Sub DrawSweepPlot( _
 	Next
 	Dim mRight As Float = 14dip
 	If wDip < 400 Then mRight = 10dip
-	Dim mTop As Float = lineH * 2.2 + 4dip
-	Dim mBottom As Float = lineH * 2 + 6dip + legendRows * lineH + 4dip
+	Dim mTop As Float = lineH * 2.6 + 12dip
+	Dim legGapTop As Float = lineH * 2.2 + 18dip
+	Dim mBottom As Float = legGapTop + legendRows * lineH + 8dip
 	Dim plotW As Float = widthPx - mLeft - mRight
 	Dim plotH As Float = heightPx - mTop - mBottom
 	If plotW <= 10 Or plotH <= 10 Then Return bmp
 
 	' --- Title (top) and legend (below the X-axis title) ---
-	DrawRichText(cvs, yTitle, padX, mTop - 6dip, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
+	DrawRichText(cvs, yTitle, padX, 10dip, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
 	For i = 0 To nCurves - 1
-		Dim ly As Float = mTop + plotH + lineH * 2 + 6dip + legRow(i) * lineH + lineH * 0.5
+		Dim ly As Float = mTop + plotH + legGapTop + legRow(i) * lineH + lineH * 0.5
 		Dim lc As Int = PlotColor(paletteIndex, i, lightTheme)
 		Dim lpt As SweepPoint = samples.Get(Min(samples.Size - 1, i * nPoints))
 		cvs.DrawLine(legX(i), ly, legX(i) + 22dip, ly, lc, 2.5dip)

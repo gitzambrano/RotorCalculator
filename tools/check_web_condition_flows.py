@@ -101,7 +101,7 @@ def main() -> int:
         check(math.isfinite(alpha) and abs(muz_alpha_back - 0.04) < 0.001, f"invalid-trim μz↔α preserves flow (α={alpha:.4g}°, μz={muz_alpha_back:.4g})")
 
         # Exercise every inflow and tip-loss option plus both PG states.
-        for label in ("Uniform", "Coleman Simple", "Coleman-Feingold", "Drees"):
+        for label in ("Uniform", "Coleman", "Coleman-Feingold", "Drees"):
             choose(page, "#btn-inflow-model", label)
             check(label.split("-")[0] in page.locator("#btn-inflow-model").inner_text(), f"inflow selection {label}")
         page.locator('.tab-btn[data-page="geometry"]').click()

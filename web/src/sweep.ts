@@ -273,7 +273,7 @@ export function runParameterSweep(
   customFamilyValues?: number[],
   trimMode: SweepTrimModeKey = "none",
   paletteIndex = 0,
-  theme: "dark" | "light" | "midnight" = "dark"
+  theme: "dark" | "light" | "midnight" | "sepia" = "dark"
 ): {
   curves: SweepCurve[];
   currentOpPoint: { mu: number; vx: number; muLam?: number; val: number } | null;
@@ -369,7 +369,7 @@ export function runParameterSweep(
     // Inflow Model Family
     familyConfigs = [
       { label: "Uniform", patch: { inflowModel: "uniform" } },
-      { label: "Coleman Simple", patch: { inflowModel: "coleman_simple" } },
+      { label: "Coleman", patch: { inflowModel: "coleman_simple" } },
       { label: "Coleman-Feingold", patch: { inflowModel: "coleman_feingold" } },
       { label: "Drees", patch: { inflowModel: "drees" } },
     ];
@@ -385,7 +385,7 @@ export function runParameterSweep(
 
   const dMu = maxMu / Math.max(1, numSteps - 1);
   const pal = PLOT_PALETTES[paletteIndex % PLOT_PALETTES.length] || PLOT_PALETTES[0];
-  const colors = theme === "light" ? pal.light : pal.dark;
+  const colors = theme === "light" || theme === "sepia" ? pal.light : pal.dark;
 
   familyConfigs.forEach((cfg, idx) => {
     const points: SweepPointData[] = [];
@@ -567,12 +567,12 @@ export function renderSweepTableHtml(
   xAxisMode: "mu" | "vx" | "muLam",
   trimMode: SweepTrimModeKey,
   extraPrecision = 0,
-  theme: "dark" | "light" | "midnight" = "dark"
+  theme: "dark" | "light" | "midnight" | "sepia" = "dark"
 ): string {
-  const bg = theme === "midnight" ? "#0f1d3a" : theme === "light" ? "#ffffff" : "#10141c";
-  const fg = theme === "light" ? "#172033" : "#f1f5f9";
-  const grid = theme === "midnight" ? "#263b63" : theme === "light" ? "#d5dce6" : "#273244";
-  const hintCol = theme === "midnight" ? "#9db2d6" : theme === "light" ? "#5a6678" : "#94a3b8";
+  const bg = theme === "sepia" ? "#FAF6EE" : theme === "midnight" ? "#0f1d3a" : theme === "light" ? "#ffffff" : "#10141c";
+  const fg = theme === "sepia" ? "#2D2319" : theme === "light" ? "#172033" : "#f1f5f9";
+  const grid = theme === "sepia" ? "#DDD2C0" : theme === "midnight" ? "#263b63" : theme === "light" ? "#d5dce6" : "#273244";
+  const hintCol = theme === "sepia" ? "#7A6E5F" : theme === "midnight" ? "#9db2d6" : theme === "light" ? "#5a6678" : "#94a3b8";
 
   const rows = buildSweepTableRows(curves, paramMeta, xAxisMode, extraPrecision, false);
   if (rows.length === 0) return "<p>No sweep data</p>";
@@ -759,7 +759,7 @@ export function drawSweepCanvas(
   currentOpPoint: { mu: number; vx: number; muLam?: number; val: number } | null,
   xAxisMode: "mu" | "vx" | "muLam",
   paramMeta: SweepParamMeta,
-  theme: "dark" | "light" | "midnight" = "dark",
+  theme: "dark" | "light" | "midnight" | "sepia" = "dark",
   hoverCoord: { x: number; y: number } | null = null,
   crossX = -1,
   extraPrecision = 0
@@ -780,13 +780,14 @@ export function drawSweepCanvas(
   ctx.save();
   ctx.scale(dpr, dpr);
 
+  const isSepia = theme === "sepia";
   const isLight = theme === "light";
   const isMid = theme === "midnight";
-  const bgCol = isLight ? "#FFFFFF" : isMid ? "#0D1B2A" : "#10141C";
-  const gridCol = isLight ? "#D9E1EA" : isMid ? "#2A4361" : "#2A3544";
-  const textCol = isLight ? "#344054" : isMid ? "#B9CBE0" : "#B4BFCE";
-  const currentMarkerCol = isLight ? "#AA5A00" : "#FFB300";
-  const titleCol = isLight ? "#007F95" : "#00E5FF";
+  const bgCol = isSepia ? "#FAF6EE" : isLight ? "#FFFFFF" : isMid ? "#0D1B2A" : "#10141C";
+  const gridCol = isSepia ? "#DDD2C0" : isLight ? "#D9E1EA" : isMid ? "#2A4361" : "#2A3544";
+  const textCol = isSepia ? "#2D2319" : isLight ? "#344054" : isMid ? "#B9CBE0" : "#B4BFCE";
+  const currentMarkerCol = isSepia ? "#8C5A2B" : isLight ? "#AA5A00" : "#FFB300";
+  const titleCol = isSepia ? "#8C5A2B" : isLight ? "#007F95" : "#00E5FF";
 
   // Background
   ctx.fillStyle = bgCol;
@@ -865,9 +866,9 @@ export function drawSweepCanvas(
   const lineH = fs + 6;
   const mLeft = mobilePlot ? 30 : 70;
   const mRight = mobilePlot ? 14 : 20;
-  const mTop = mobilePlot ? 38 : Math.round(lineH * 2.2 + 4);
+  const mTop = mobilePlot ? 48 : Math.round(lineH * 2.5 + 12);
   const legendRows = Math.ceil(curves.length / 2);
-  const mBottom = mobilePlot ? 65 : Math.round(lineH * 2 + 6 + (curves.length > 1 ? legendRows * lineH + 4 : 0));
+  const mBottom = mobilePlot ? 82 : Math.round(lineH * 2.2 + 20 + (curves.length > 1 ? legendRows * lineH + 4 : 0));
   const pWidth = width - mLeft - mRight;
   const pHeight = height - mTop - mBottom;
 
@@ -888,7 +889,7 @@ export function drawSweepCanvas(
     unitPart = paramMeta.unit;
   }
   const yTitle = `${paramMeta.full} ${paramMeta.symbol}${unitPart ? ` [${unitPart}]` : ""}`;
-  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, mTop - fs - 5);
+  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, 10);
 
   // Y-Grid & Ticks
   ctx.lineWidth = 1;
@@ -1062,18 +1063,42 @@ export function drawSweepCanvas(
   // Legend Below Plot
   if (curves.length > 1) {
     const legendLeft = mobilePlot ? 8 : mLeft;
-    let curX = legendLeft;
-    let curY = mTop + pHeight + (mobilePlot ? 40 : lineH * 2.8);
     ctx.font = `bold ${fs - 1}px 'RotorRoboto', Roboto, sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
-    curves.forEach((c, curveIdx) => {
+    const itemWidths: number[] = [];
+    const itemLabels: string[] = [];
+    let totalItemsW = 0;
+    curves.forEach((c) => {
       const label = mobilePlot ? c.label.replace("Coleman-Feingold", "Coleman-FG") : c.label;
-      const itemW = (mobilePlot ? 18 : 24) + ctx.measureText(label).width + (mobilePlot ? 10 : 16);
-      if (curX > legendLeft && ((mobilePlot && curveIdx % 3 === 0) || curX + itemW > width - mRight)) {
+      itemLabels.push(label);
+      const w = (mobilePlot ? 18 : 24) + ctx.measureText(label).width + (mobilePlot ? 10 : 16);
+      itemWidths.push(w);
+      totalItemsW += w;
+    });
+
+    const availW = width - mRight - legendLeft;
+    const fitsOneLine = totalItemsW <= availW;
+    const maxOnRow0 = Math.ceil(curves.length / 2);
+
+    let curX = legendLeft;
+    let curRow = 0;
+    let countOnRow0 = 0;
+    let curY = mTop + pHeight + (mobilePlot ? 46 : Math.round(lineH * 2.2 + 20));
+    const rowStep = mobilePlot ? 18 : lineH + 2;
+
+    curves.forEach((c, idx) => {
+      const label = itemLabels[idx];
+      const itemW = itemWidths[idx];
+
+      if (
+        (!fitsOneLine && curRow === 0 && countOnRow0 >= maxOnRow0) ||
+        (curX > legendLeft && curX + itemW > width - mRight)
+      ) {
+        curRow++;
         curX = legendLeft;
-        curY += mobilePlot ? 14 : lineH;
+        curY += rowStep;
       }
 
       ctx.strokeStyle = c.color;
@@ -1088,6 +1113,7 @@ export function drawSweepCanvas(
       ctx.fillText(label, curX + (mobilePlot ? 22 : 26), curY);
 
       curX += itemW;
+      if (curRow === 0) countOnRow0++;
     });
   }
 

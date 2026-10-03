@@ -78,7 +78,7 @@ explicit = [
  ("Geometry","Airfoil","⟨nome do perfil⟩ / Custom"),
  ("Geometry","Tip-Loss Selection","None / Fixed / Sissingh"),
  ("Geometry","Compressibility Selection","Off / Prandtl-Glauert"),
- ("Conditions","Inflow Selection","Uniform / Coleman Simple / Coleman-Feingold / Drees"),
+ ("Conditions","Inflow Selection","Uniform / Coleman / Coleman-Feingold / Drees"),
  ("Conditions","Operating Pair","Ω + Δθ / Ω + C_T / Ω + T / Δθ + C_T / Δθ + T / C_T + T"),
  ("Sweep","Y-Axis Button","⟨nome completo do resultado⟩ ⟨símbolo⟩ ▾"),
  ("Sweep","Family Button","Curves ↵ Models / α Set / Vz Set / μz Set / Active ▾"),

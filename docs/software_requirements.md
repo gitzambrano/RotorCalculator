@@ -152,7 +152,7 @@ The user prescribes any two; RotorCalculator solves the remaining two at the cur
 
 ### 3.5 Aerodynamic-model inputs
 
-- **COND-24** — Inflow Model shall offer Uniform, Coleman Simple, Coleman-Feingold, and Drees.
+- **COND-24** — Inflow Model shall offer Uniform, Coleman, Coleman-Feingold, and Drees.
 - **COND-25** — Conditions shall include induced-power factor **K_ind**. The same symbol/name shall be used consistently in Conditions, Results/help, plots, and documentation.
 - **COND-26** — Profile drag shall always use **Numerical Vectorial** radial/azimuthal integration.
 - **COND-27** — Every Conditions label shall be rendered as an AeroCalculator-style button/control, not passive text. Every displayed Conditions unit shall also be rendered as a button/control; when alternate units exist it shall open the unit selector, and otherwise it shall retain the same aligned button style. Horizontal and axial representation selection shall each use exactly one variable-selector button in the label column.

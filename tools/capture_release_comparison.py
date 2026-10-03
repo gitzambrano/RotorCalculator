@@ -85,7 +85,7 @@ async def refresh_web():
         ctx=await browser.new_context(viewport=dict(zip(['width','height'],size)))
         ns=json.loads((OUT/f'{theme}-{label}-conditions-nodes.json').read_text(encoding='utf-8'))
         texts=[n.get('text') for n in ns]
-        inflow='drees' if 'Drees' in texts else 'uniform' if 'Uniform' in texts else 'coleman_simple' if 'Coleman Simple' in texts else 'coleman_feingold'
+        inflow='drees' if 'Drees' in texts else 'uniform' if 'Uniform' in texts else 'coleman_simple' if 'Coleman' in texts else 'coleman_feingold'
         await ctx.add_init_script(f'localStorage.setItem("rotor_theme","{theme}");localStorage.setItem("rotorcalc_active_cond",JSON.stringify({{inflowModel:"{inflow}"}}));')
         page=await ctx.new_page();await page.goto(os.environ.get('ROTOR_WEB_URL','http://127.0.0.1:8080/'));await page.wait_for_selector('.app-shell');await page.evaluate('document.fonts.ready')
         if label=='320-font130':

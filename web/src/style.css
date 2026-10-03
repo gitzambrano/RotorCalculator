@@ -90,6 +90,38 @@
   --modal-overlay: rgba(10, 20, 40, 0.75);
 }
 
+
+:root[data-theme="sepia"] {
+  --bg: #F5EFEB;
+  --card-bg: #EFE8DC;
+  --card-border: #DDD2C0;
+  --text-main: #2D2319;
+  --text-sub: #7A6952;
+  --text-muted: #9E8D75;
+  --accent: #A66A38;
+  --accent-rgb: 166, 106, 56;
+  --accent-hover: #BF7F48;
+  --accent-glow: rgba(166, 106, 56, 0.15);
+  --accent-sec: #3D6647;
+  --accent-sec-rgb: 61, 102, 71;
+  --btn-bg: #E4DACB;
+  --btn-bg-hover: #DDD0BF;
+  --btn-border: #C8B9A2;
+  --input-bg: #FAF6EE;
+  --input-border: #D2C4AF;
+  --input-focus: #A66A38;
+  --badge-bg: rgba(166, 106, 56, 0.12);
+  --badge-border: rgba(166, 106, 56, 0.28);
+  --badge-color: #8C5320;
+  --table-border: #DDD2C0;
+  --table-stripe: #EBE3D5;
+  --overlay-bg: rgba(45, 35, 25, 0.45);
+  --sheet-bg: #FAF6EE;
+  --sheet-handle: #C8B9A2;
+  --scroll-thumb: #D2C4AF;
+  --scroll-track: #EFE8DC;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

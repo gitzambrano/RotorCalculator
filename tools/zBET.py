@@ -107,7 +107,7 @@ OUTPUTS = [
 MODELS = ["uniform", "coleman_simple", "coleman_feingold", "drees"]
 MODEL_LABELS = {
     "uniform": "Uniform",
-    "coleman_simple": "Coleman Simple",
+    "coleman_simple": "Coleman",
     "coleman_feingold": "Coleman-Feingold (NDARC)",
     "coleman": "Coleman-Feingold (NDARC)",
     "drees": "Drees",

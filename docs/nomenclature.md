@@ -142,7 +142,7 @@ Dynamic-pressure coefficients (`Tc`, `Pc`) use the free-stream speed V = √(V_x
 | comp_off | Compressibility Off | Off | – |
 | comp_pg | Prandtl-Glauert | Prandtl-Glauert | – |
 | inflow_uniform | Uniform Inflow | Uniform | – |
-| inflow_coleman_simple | Coleman Simple | Coleman Simple | – |
+| inflow_coleman_simple | Coleman | Coleman | – |
 | inflow_coleman_feingold | Coleman-Feingold (NDARC) | Coleman-FG | – |
 | inflow_drees | Drees | Drees | – |
 | drag_tangential | Analytical Tangential | Tangential | – |

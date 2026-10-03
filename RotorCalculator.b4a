@@ -130,7 +130,7 @@ Sub Process_Globals
 	Public ld As Int = 0
 	Public CurrentPage As Int = 0
 	Public UnitSystem As Int = 0 ' 0=Metric (SI), 1=Imperial
-	Public ThemeMode As Int = 0 ' 0=Dark, 1=Light, 2=Midnight Blue
+	Public ThemeMode As Int = 0 ' 0=Dark, 1=Light, 2=Midnight Blue, 3=Sepia
 	Public ExtraPrecision As Int = 0 ' AeroCalculator-compatible +1 decimal
 	Public ConditionAltitudeM As Double = 0.0
 	Public ConditionTemperatureC As Double = 15.0
@@ -710,7 +710,7 @@ Private Sub LoadUiSettings
 	If File.Exists(File.DirInternal, "ui_settings.txt") = False Then Return
 	Try
 		Dim m As Map = File.ReadMap(File.DirInternal, "ui_settings.txt")
-		ThemeMode = Max(0, Min(2, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
+		ThemeMode = Max(0, Min(3, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
 		UnitSystem = Max(0, Min(1, ParseIntDef("" & m.GetDefault("units", 0), 0)))
 		ExtraPrecision = Max(0, Min(1, ParseIntDef("" & m.GetDefault("precision", 0), 0)))
 		PlotPalette = Max(0, Min(RotorPopups.PlotPaletteCount - 1, ParseIntDef("" & m.GetDefault("palette", 0), 0)))
@@ -750,7 +750,7 @@ Private Sub ApplySystemBars
 			Dim flags As Int = decor.RunMethod("getSystemUiVisibility", Null)
 			Dim lightBits As Int = 0x2000
 			If ph.SdkVersion >= 26 Then lightBits = Bit.Or(lightBits, 0x10)
-			If ThemeMode = 1 Then
+			If ThemeMode = 1 Or ThemeMode = 3 Then
 				flags = Bit.Or(flags, lightBits)
 			Else
 				flags = Bit.And(flags, Bit.Not(lightBits))
@@ -825,6 +825,36 @@ Private Sub ApplyThemePalette
 			ColorResultText = 0xFFF1F6FF
 			ColorCtaFill = 0xFF22D3EE
 			ColorCtaText = 0xFF04202A
+		Case 3
+			' Sepia: warm parchment, sober pastel tones, high readability.
+			ColorPnlTitle = 0xFFEFE8DC
+			ColorTitleText = 0xFF2D2319
+			ColorPnlLine = 0xFF8C5A2B
+			ColorPnlLine2 = 0xFFDDD2C0
+			ColorPnlLine3 = 0xFFE7DECE
+			ColorButText2 = 0xFF7A6E5F
+			ColorButText3 = 0xFF8C5A2B
+			ColorBut1 = 0xFFEDE5D8
+			ColorBut2 = 0xFFE4DBD0
+			ColorButText1 = 0xFF2D2319
+			ColorEdt = 0xFFF0E9DC
+			ColorEdtText = 0xFF8C5A2B
+			ColorEdtHint = 0xFF8C8070
+			ColorPnlInput1 = 0xFFFAF6EE
+			ColorPnlInput2 = 0xFFF4EFE6
+			ColorPnlInput3 = 0xFFFAF6EE
+			ColorPnlInput4 = 0xFFF4EFE6
+			ColorPnlInput5 = 0xFFEAE3D5
+			ColorSelectedRow = 0xFFFAF6EE
+			ColorAccentCyan = 0xFF8C5A2B
+			ColorAccentGreen = 0xFF3B6E4A
+			ColorAccentAmber = 0xFF9E6728
+			ColorAccentRed = 0xFFA63D32
+			ColorFieldFill = 0xFFF0E9DC
+			ColorFieldBorder = 0x598C5A2B
+			ColorResultText = 0xFF2D2319
+			ColorCtaFill = 0xFF8C5A2B
+			ColorCtaText = 0xFFFAF6EE
 		Case Else
 			ColorPnlTitle = 0xFF0D121B
 			ColorTitleText = 0xFFFFFFFF
@@ -990,6 +1020,7 @@ Private Sub ThemeName(i As Int) As String
 	Select i
 		Case 1: Return "LIGHT"
 		Case 2: Return "MIDNIGHT BLUE"
+		Case 3: Return "SEPIA"
 	End Select
 	Return "DARK"
 End Sub
@@ -1023,6 +1054,7 @@ Sub btnSettingTheme_Click
 	items.Add("Dark|Cockpit stealth, high contrast")
 	items.Add("Light|Daylight, contrast tuned to 4.5:1 or better")
 	items.Add("Midnight Blue|Navy surfaces, cyan and amber accents")
+	items.Add("Sepia|Warm parchment, sober pastel tones")
 	Wait For (sheet.ShowChoice("Theme", items, ThemeMode)) Complete (idx As Int)
 	If idx < 0 Or idx = ThemeMode Then Return
 	ThemeMode = idx
@@ -1638,12 +1670,14 @@ Private Sub KeyDigits(key As String, disp As Double) As Int
 			Return 3
 		Case "sigmaRef", "sigmaAct", "sigmaT", "Cd0", "mu", "muz"
 			Return 4
-		Case "AR", "a0", "T0"
+		Case "AR", "a0", "T0", "Vx", "Vz"
 			Return 2
 		Case "CTtgt"
 			Return 5
-		Case "rpm", "rpmNom", "Ttgt"
+		Case "rpm", "rpmNom"
 			Return 1
+		Case "Ttgt"
+			Return 0
 		Case "thRoot", "thTip", "thTwist", "coll", "alpha"
 			If CurUnit(key) = "rad" Then Return 4
 			Return 2
@@ -3108,6 +3142,7 @@ Private Sub ResTextFor(key As String) As String
 		Case "vi"
 			v = r.InflowLambdaI * omR
 			If imp Then v = v * ft
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "CTs"
 			Dim sg2 As RotorGeometry = zBETEngine.ResolveSolidity(zBETEngine.CloneGeometry(ActiveGeom))
 			Dim sigma As Double = sg2.SigmaThrust
@@ -3137,8 +3172,13 @@ Private Sub ResTextFor(key As String) As String
 		Case "Vztot", "Vadv", "Vret"
 			v = zBETEngine.DerivedOutput(r, key)
 			If imp Then v = v * ft
-		Case "Mret", "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75"
+			Return FormatFixed(v, 2 + ExtraPrecision)
+		Case "Mret"
 			v = zBETEngine.DerivedOutput(r, key)
+			Return FormatFixed(v, 3 + ExtraPrecision)
+		Case "aoaAdv75", "aoaRet75", "phiAdv75", "phiRet75"
+			v = zBETEngine.DerivedOutput(r, key)
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Tc": v = zBETEngine.DerivedTc(r, area)
 		Case "Pc": v = zBETEngine.DerivedPc(r, area)
 		Case "lamh": v = zBETEngine.DerivedLambdaH(r)
@@ -3147,32 +3187,48 @@ Private Sub ResTextFor(key As String) As String
 		Case "lami": v = r.InflowLambdaI
 		Case "Kx": v = r.InflowKx
 		Case "Ky": v = r.InflowKy
-		Case "chi": v = r.WakeSkewChiDeg
+		Case "chi":
+			v = r.WakeSkewChiDeg
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Bres": v = r.BFactor
-		Case "rpm": v = r.TrimmedRPM
-		Case "coll": v = r.TrimmedCollectiveDeg
+		Case "rpm":
+			v = r.TrimmedRPM
+			Return FormatFixed(v, 1 + ExtraPrecision)
+		Case "coll":
+			v = r.TrimmedCollectiveDeg
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "mu": v = r.OperatingMu
 		Case "muz": v = r.OperatingMuZ
-		Case "alpha": v = r.OperatingAlphaDeg
+		Case "alpha":
+			v = r.OperatingAlphaDeg
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Vx"
 			v = r.OperatingVx
 			If imp Then v = v * ft
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Vz"
 			v = r.OperatingVz
 			If imp Then v = v * ft
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "OmR"
 			v = omR
 			If imp Then v = v * ft
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "a"
 			v = r.SpeedOfSound
 			If imp Then v = v * ft
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "Mtip"
 			If r.SpeedOfSound <= 0 Then Return Dash
 			v = omR / r.SpeedOfSound
-		Case "Madv": v = r.AdvancingTipMach
+			Return FormatFixed(v, 3 + ExtraPrecision)
+		Case "Madv":
+			v = r.AdvancingTipMach
+			Return FormatFixed(v, 3 + ExtraPrecision)
 		Case "T0"
 			v = r.TemperatureC
 			If imp Then v = v * 9.0 / 5.0 + 32.0
+			Return FormatFixed(v, 2 + ExtraPrecision)
 		Case "rho"
 			v = r.DensityRho
 			If imp Then v = v * 0.0019403203
@@ -3227,6 +3283,33 @@ End Sub
 
 ' Significant-digit formatting: sig digits, "." decimal point, non-breaking space as the
 ' thousands separator for |x| >= 10000, never a negative zero.
+Private Sub FormatFixed(Value As Double, decimals As Int) As String
+	If Value <> Value Or Abs(Value) > 1.0E15 Then Return Dash
+	Dim a As Double = Abs(Value)
+	Dim dec As Int = Max(0, Min(9, decimals))
+	Dim scale As Double = Power(10, dec)
+	Dim rounded As Double = Round(a * scale) / scale
+	Dim s As String = NumberFormat2(rounded, 1, dec, dec, False).Replace(",", ".")
+	Dim ip As String = s
+	Dim fp As String = ""
+	Dim dot As Int = s.IndexOf(".")
+	If dot >= 0 Then
+		ip = s.SubString2(0, dot)
+		fp = s.SubString(dot)
+	End If
+	If ip.Length >= 5 Then
+		Dim sb As StringBuilder
+		sb.Initialize
+		For j = 0 To ip.Length - 1
+			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(0x202F))
+			sb.Append(ip.SubString2(j, j + 1))
+		Next
+		ip = sb.ToString
+	End If
+	If Value < -0.5 / scale Then ip = "-" & ip
+	Return ip & fp
+End Sub
+
 Private Sub FormatSig(Value As Double, sig As Int) As String
 	If Value <> Value Or Abs(Value) > 1.0E15 Then Return Dash
 	Dim a As Double = Abs(Value)
@@ -3250,7 +3333,7 @@ Private Sub FormatSig(Value As Double, sig As Int) As String
 		Dim sb As StringBuilder
 		sb.Initialize
 		For j = 0 To ip.Length - 1
-			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(160))
+			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(0x202F))
 			sb.Append(ip.SubString2(j, j + 1))
 		Next
 		ip = sb.ToString

@@ -376,7 +376,7 @@ export const APK_NOMENCLATURE = {
     "short": "Inflow",
     "sym": "",
     "unit": "",
-    "body": "How the induced velocity is distributed across the rotor disk:\n\n• Uniform: Constant induced inflow across the entire disk from momentum theory. No gradients (K_x = K_y = 0); no hub moments or side force.\n\n• Coleman Simple: Adds a longitudinal inflow gradient K_x = tan(χ/2) based on the wake skew angle χ. Lateral gradient is zero.\n\n• Coleman-Feingold (NDARC): Longitudinal gradient with factor 15π/32 on tan(χ/2), plus a lateral inflow gradient K_y = −2μ.\n\n• Drees: Speed-dependent longitudinal gradient K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2) and lateral gradient K_y = −2μ. Classic helicopter reference.",
+    "body": "How the induced velocity is distributed across the rotor disk:\n\n• Uniform: Constant induced inflow across the entire disk from momentum theory. No gradients (K_x = K_y = 0); no hub moments or side force.\n\n• Coleman: Adds a longitudinal inflow gradient K_x = tan(χ/2) based on the wake skew angle χ. Lateral gradient is zero.\n\n• Coleman-Feingold (NDARC): Longitudinal gradient with factor 15π/32 on tan(χ/2), plus a lateral inflow gradient K_y = −2μ.\n\n• Drees: Speed-dependent longitudinal gradient K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2) and lateral gradient K_y = −2μ. Classic helicopter reference.",
     "eq": "λ_d(x,ψ) = λ + λ_i·x·(K_x·cosψ + K_y·sinψ)",
     "range": ""
   },
@@ -876,7 +876,7 @@ export const APK_NOMENCLATURE = {
     "short": "Lat Gradient",
     "sym": "K_y",
     "unit": "–",
-    "body": "Side-to-side slope of the induced inflow over the disk, as a multiple of λ_i. Zero for uniform and Coleman simple; −2μ for Coleman-Feingold and Drees.",
+    "body": "Side-to-side slope of the induced inflow over the disk, as a multiple of λ_i. Zero for uniform and Coleman; −2μ for Coleman-Feingold and Drees.",
     "eq": "Drees: K_y = −2μ",
     "range": ""
   },
@@ -1022,8 +1022,8 @@ export const APK_NOMENCLATURE = {
   },
   "inflow_coleman_simple": {
     "key": "inflow_coleman_simple",
-    "full": "Coleman Simple",
-    "short": "Coleman Simple",
+    "full": "Coleman",
+    "short": "Coleman",
     "sym": "",
     "unit": "",
     "body": "Longitudinal inflow gradient from the wake skew angle (Coleman 1945). No lateral gradient.",
