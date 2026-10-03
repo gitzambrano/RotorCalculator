@@ -230,7 +230,7 @@ app.innerHTML = `
       <a class="popup-menu-item menu-desktop-only" href="mailto:flightdyn@gmail.com?subject=RotorCalculator%20Feedback" id="feedback-link">Send Feedback</a>
     </div>
 
-    <div class="content-area" id="content-area">
+    <div class="content-area" id="content-area" tabindex="-1">
       <!-- PAGE 0: GEOMETRY -->
       <section class="page active" id="page-geometry">
         <div class="active-rotor-bar" id="active-rotor-bar" title="Click to switch or manage rotors">
@@ -862,6 +862,9 @@ app.innerHTML = `
               <div class="settings-row-info"><div class="settings-row-title">Android App 1.25</div><div class="settings-row-sub">Download the verified Android APK</div></div>
               <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.25.apk" download="RotorCalculator-1.25.apk">APK</a>
             </div>
+            <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
+              <button type="button" class="action-btn" data-close="modal-settings" style="height: 44px; min-width: 120px; font-weight: 700; border-radius: 8px; font-size: 15px;">CLOSE</button>
+            </div>
           </div>
         </div>
       </div>
@@ -880,7 +883,7 @@ app.innerHTML = `
           </div>
         </div>
         <div class="help-iframe-container">
-          <iframe id="help-iframe" class="help-iframe" src="./physics_help.html" title="RotorCalculator Physics Manual"></iframe>
+          <iframe id="help-iframe" class="help-iframe" src="" title="RotorCalculator Physics Manual"></iframe>
         </div>
       </div>
     </div>
@@ -932,7 +935,7 @@ export function openPhysicsHelp(anchor?: string): void {
   }
 
   const urlWithAnchor = anchor ? `${asset}#${anchor}` : asset;
-  if (iframe) {
+  if (iframe && iframe.src !== urlWithAnchor) {
     iframe.src = urlWithAnchor;
   }
   if (openTabBtn) {
@@ -950,9 +953,10 @@ function applyTheme(): void {
       currentTheme === "sepia" ? "#EFE8DC" : currentTheme === "light" ? "#006978" : currentTheme === "midnight" ? "#0B1730" : "#0D121B"
     );
   }
+  const helpModal = byId("modal-help");
   const iframe = byId<HTMLIFrameElement>("help-iframe");
   const openTabBtn = byId<HTMLAnchorElement>("btn-help-open-tab");
-  if (iframe && iframe.src) {
+  if (helpModal && helpModal.classList.contains("open") && iframe && iframe.src) {
     const curHash = iframe.src.includes("#") ? iframe.src.split("#")[1] : "";
     let asset = "./physics_help.html";
     if (currentTheme === "light") asset = "./physics_help_light.html";
@@ -2124,8 +2128,17 @@ function openModal(id: string): void {
 }
 
 function closeModal(id: string): void {
-  byId(id)?.classList.remove("open");
-  byId(id)?.style.removeProperty("z-index");
+  const modal = byId(id);
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.style.removeProperty("z-index");
+  if (document.activeElement && document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  const ca = byId<HTMLElement>("content-area");
+  if (ca && !document.querySelector(".modal-overlay.open")) {
+    ca.focus?.({ preventScroll: true });
+  }
 }
 
 function bindBrowserBackNavigation(): void {
