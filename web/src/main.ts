@@ -343,7 +343,7 @@ app.innerHTML = `
         <div class="section-header">AERODYNAMICS</div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="airfoil" data-tip="Select aerodynamic airfoil polar section." data-canonical="Airfoil">Airfoil</button>
-          <button class="action-btn" id="btn-select-airfoil" style="height: 44px;">SC1095</button>
+          <button class="action-btn" id="btn-select-airfoil">SC1095</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
@@ -358,7 +358,7 @@ app.innerHTML = `
         </div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="tipModel" data-tip="Tip-loss model (none, fixed factor B, or Sissingh momentum coupling)." data-canonical="Tip Loss">Tip Loss</button>
-          <button class="action-btn" id="btn-tiploss-mode" style="height: 44px;">Sissingh</button>
+          <button class="action-btn" id="btn-tiploss-mode">Sissingh</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
@@ -371,7 +371,7 @@ app.innerHTML = `
         </div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="comp" data-tip="Prandtl-Glauert subsonic compressibility correction on blade lift slope." data-canonical="Compressibility">Compressibility</button>
-          <button class="action-btn" id="btn-compressibility" style="height: 44px;">On</button>
+          <button class="action-btn" id="btn-compressibility">On</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
 
@@ -409,7 +409,7 @@ app.innerHTML = `
         <div class="section-header">OPERATING CONSTRAINTS</div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="trim" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim">Trim</button>
-          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">Ω + C<sub>T</sub></button>
+          <button class="action-btn" id="btn-trim-mode">Ω + C<sub>T</sub></button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row" id="row-operating-1">
@@ -426,7 +426,7 @@ app.innerHTML = `
         <div class="section-header">AERODYNAMIC MODEL</div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="inflow" data-tip="Inflow model formulation (Uniform, Coleman, Coleman-Feingold, or Drees)." data-canonical="Inflow Model">Inflow Model</button>
-          <button class="action-btn" id="btn-inflow-model" style="height: 44px;">Coleman-Feingold</button>
+          <button class="action-btn" id="btn-inflow-model">Coleman-Feingold</button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row">
@@ -2303,12 +2303,12 @@ function bindSelectorButtons(): void {
 
   // 2. Trim Mode Modal (All 6 pairs)
   const trimModes: { id: FlightCondition["operatingPair"]; label: string; desc: string }[] = [
-    { id: "rpm_ct", label: "RPM + Target C<sub>T</sub>", desc: "Prescribe RPM & Target C<sub>T</sub>; solves Collective Δθ and Thrust" },
-    { id: "rpm_thrust", label: "RPM + Target Thrust", desc: "Prescribe RPM & Target Thrust; solves Collective Δθ and C<sub>T</sub>" },
-    { id: "rpm_collective", label: "RPM + Collective Δθ", desc: "Prescribe RPM & Collective pitch increment; direct evaluation" },
-    { id: "collective_ct", label: "Collective Δθ + Target C<sub>T</sub>", desc: "Prescribe Collective & Target C<sub>T</sub>; solves unique rotor RPM" },
-    { id: "collective_thrust", label: "Collective Δθ + Target Thrust", desc: "Prescribe Collective & Thrust; solves rotor RPM and C<sub>T</sub>" },
-    { id: "ct_thrust", label: "Target C<sub>T</sub> + Target Thrust", desc: "Prescribe Target C<sub>T</sub> & Thrust; solves both RPM and Collective" },
+    { id: "rpm_collective", label: "Rotor Speed Ω + Collective Δθ", desc: "Solves C<sub>T</sub> and T" },
+    { id: "rpm_ct", label: "Rotor Speed Ω + Target C<sub>T</sub>", desc: "Solves Δθ and T" },
+    { id: "rpm_thrust", label: "Rotor Speed Ω + Target Thrust T", desc: "Solves Δθ and C<sub>T</sub>" },
+    { id: "collective_ct", label: "Collective Δθ + Target C<sub>T</sub>", desc: "Solves Ω and T" },
+    { id: "collective_thrust", label: "Collective Δθ + Target Thrust T", desc: "Solves Ω and C<sub>T</sub>" },
+    { id: "ct_thrust", label: "Target C<sub>T</sub> + Target Thrust T", desc: "Solves Ω and Δθ" },
   ];
 
   byId("btn-trim-mode").addEventListener("click", () => {

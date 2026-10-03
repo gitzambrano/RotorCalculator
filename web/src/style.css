@@ -1169,7 +1169,7 @@ input[type="text"].row-input {
 }
 
 #inp-rotor-name {
-  text-align: left !important;
+  text-align: center !important;
   padding: 0 10px !important;
 }
 

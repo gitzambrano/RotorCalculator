@@ -1,9 +1,9 @@
-const CACHE_NAME = "rotorcalculator-web-1791026074611";
+const CACHE_NAME = "rotorcalculator-web-1791031021323";
 const PRECACHE = [
   "./",
   "./.nojekyll",
-  "./assets/index-adBJz0w5.js",
-  "./assets/style-B1hQjVNF.css",
+  "./assets/index-CApEdd0p.js",
+  "./assets/style-DdzEjvt-.css",
   "./icon.png",
   "./icon_header.png",
   "./index.html",
@@ -39,15 +39,27 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          return (await caches.match("./index.html")) ?? Response.error();
+        })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).catch(async () => {
-        if (event.request.mode === "navigate") {
-          return (await caches.match("./index.html")) ?? Response.error();
-        }
-        return Response.error();
-      });
+      return fetch(event.request).catch(() => Response.error());
     })
   );
 });
