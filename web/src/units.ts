@@ -136,10 +136,10 @@ export function formatSig(value: number, sig: number): string {
     ip = s.substring(0, dot);
     fp = s.substring(dot);
   }
-  if (ip.length >= 5) {
+  if (ip.length >= 4) {
     let spaced = "";
     for (let j = 0; j < ip.length; j++) {
-      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u202F";
+      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u200A";
       spaced += ip[j];
     }
     ip = spaced;
@@ -161,10 +161,10 @@ export function formatFixed(value: number, decimals: number, extraPrecision = 0)
     ip = s.substring(0, dot);
     fp = s.substring(dot);
   }
-  if (ip.length >= 5) {
+  if (ip.length >= 4) {
     let spaced = "";
     for (let j = 0; j < ip.length; j++) {
-      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u202F";
+      if (j > 0 && (ip.length - j) % 3 === 0) spaced += "\u200A";
       spaced += ip[j];
     }
     ip = spaced;

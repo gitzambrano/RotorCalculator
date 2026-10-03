@@ -325,8 +325,8 @@ export const APK_NOMENCLATURE = {
     "full": "Trim Mode",
     "short": "Trim",
     "sym": "",
-    "unit": "",
-    "body": "The operating state has four linked variables: rotor speed Ω, collective Δθ, thrust coefficient C_T and thrust T. You prescribe any two and the engine solves the other two. Six pairs are available.",
+    "unit": "–",
+    "body": "Rotor equilibrium couples four operational variables: rotor speed Ω, collective pitch Δθ, thrust coefficient C_T, and rotor thrust T. Prescribe two variables as constraints. The solver calculates the remaining two variables from blade-element momentum equilibrium across the specified forward and axial flight conditions.",
     "eq": "T = C_T·ρ·A·(ΩR)²",
     "range": ""
   },

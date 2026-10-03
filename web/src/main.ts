@@ -1667,10 +1667,7 @@ function bindResultRowTooltips(): void {
   });
 
   byId("badge-solution-summary")?.addEventListener("click", () => {
-    showContextualHelpCustom(
-      "Operating Solution",
-      "The operating solution always reports all four linked quantities: Ω, collective Δθ, C_T and thrust T.\n\nYou prescribe any two in Conditions. RotorCalculator solves the remaining two at the current forward/axial flight condition."
-    );
+    showContextualHelp("trim");
   });
 
   byId("btn-result-tooltip-open-help")?.addEventListener("click", () => {

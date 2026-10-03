@@ -348,7 +348,7 @@ export function runParameterSweep(
     // Alpha Family
     const alphas = customFamilyValues && customFamilyValues.length >= 1 ? customFamilyValues : [-10, -5, 0, 5, 10];
     familyConfigs = alphas.map((a) => ({
-      label: `α = ${a > 0 ? "+" : ""}${a}°`,
+      label: `α=${Number.isInteger(a) ? a : Number(a.toFixed(4))}°`,
       patch: { axialMode: "alpha", axialValue: a },
     }));
   } else if (multiMode === 2) {
@@ -866,7 +866,7 @@ export function drawSweepCanvas(
   const lineH = fs + 6;
   const mLeft = mobilePlot ? 30 : 70;
   const mRight = mobilePlot ? 14 : 20;
-  const mTop = mobilePlot ? 48 : Math.round(lineH * 2.5 + 12);
+  const mTop = mobilePlot ? 44 : Math.round(lineH * 2.3 + 8);
   const legendRows = Math.ceil(curves.length / 2);
   const mBottom = mobilePlot ? 82 : Math.round(lineH * 2.2 + 20 + (curves.length > 1 ? legendRows * lineH + 4 : 0));
   const pWidth = width - mLeft - mRight;
@@ -889,7 +889,7 @@ export function drawSweepCanvas(
     unitPart = paramMeta.unit;
   }
   const yTitle = `${paramMeta.full} ${paramMeta.symbol}${unitPart ? ` [${unitPart}]` : ""}`;
-  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, 10);
+  drawRichCanvasText(ctx, yTitle, mobilePlot ? 8 : 10, mobilePlot ? 20 : 18);
 
   // Y-Grid & Ticks
   ctx.lineWidth = 1;

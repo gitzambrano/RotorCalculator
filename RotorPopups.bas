@@ -471,7 +471,11 @@ Private Sub SweepFamilyLabel(multiCurveMode As Int, curveIndex As Int, familyVal
 			Case Else: Return "Drees"
 		End Select
 	Else If multiCurveMode = 1 Then
-		Return Chr(945) & "=" & FmtNum(familyValue, 1) & Chr(176)
+		If familyValue = Floor(familyValue) Then
+			Return Chr(945) & "=" & NumberFormat2(familyValue, 1, 0, 0, False) & Chr(176)
+		Else
+			Return Chr(945) & "=" & FmtNum(familyValue, 1) & Chr(176)
+		End If
 	Else If multiCurveMode = 2 Then
 		Return "Vz=" & FmtNum(familyValue, 1) & " m/s"
 	Else If multiCurveMode = 3 Then
@@ -1230,7 +1234,7 @@ Public Sub DrawSweepPlot( _
 	Next
 	Dim mRight As Float = 14dip
 	If wDip < 400 Then mRight = 10dip
-	Dim mTop As Float = lineH * 2.6 + 12dip
+	Dim mTop As Float = lineH * 2.3 + 8dip
 	Dim legGapTop As Float = lineH * 2.2 + 18dip
 	Dim mBottom As Float = legGapTop + legendRows * lineH + 8dip
 	Dim plotW As Float = widthPx - mLeft - mRight
@@ -1238,7 +1242,7 @@ Public Sub DrawSweepPlot( _
 	If plotW <= 10 Or plotH <= 10 Then Return bmp
 
 	' --- Title (top) and legend (below the X-axis title) ---
-	DrawRichText(cvs, yTitle, padX, 10dip, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
+	DrawRichText(cvs, yTitle, padX, 22dip, Typeface.DEFAULT_BOLD, fs, colText, "LEFT")
 	For i = 0 To nCurves - 1
 		Dim ly As Float = mTop + plotH + legGapTop + legRow(i) * lineH + lineH * 0.5
 		Dim lc As Int = PlotColor(paletteIndex, i, lightTheme)

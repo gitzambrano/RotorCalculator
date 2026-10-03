@@ -333,7 +333,7 @@ def test_results_precision_is_variable_specific_plus_one():
     assert "Private Sub FormatSig(Value As Double, sig As Int) As String" in main
     assert "Dim sg As Int = 4 + ExtraPrecision" in main
     assert "If rounded = 0 Then Return " in main
-    assert "Chr(0x202F)" in main or "Chr(160)" in main  # narrow thousands separator for |x| >= 10000
+    assert "Chr(0x200A)" in main or "Chr(0x202F)" in main or "Chr(160)" in main  # subtle thousands separator for |x| >= 1000
     assert "FormatOutputValue" not in main
     assert "FormatResultValue" not in main
     assert 'btnSettingPrecision.Text = "+1 DECIMAL"' in main

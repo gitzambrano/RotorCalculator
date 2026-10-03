@@ -1811,10 +1811,6 @@ Private Sub ShowHelpFor(tagText As String)
 		lblResultStatus_Click
 		Return
 	End If
-	If tagText = "trim" Then
-		lblTrimSummary_Click
-		Return
-	End If
 	Dim key As String = tagText
 	If tagText.StartsWith("res:") Then
 		key = tagText.SubString(4)
@@ -2861,8 +2857,7 @@ Sub lblResultStatus_Click
 End Sub
 
 Sub lblTrimSummary_Click
-	sheet.ShowMessage("Operating Solution", "The operating solution always reports all four linked quantities: Ω, collective Δθ, C_T and thrust T." & CRLF & CRLF & _
-		"You prescribe any two in Conditions. RotorCalculator solves the remaining two at the current forward/axial flight condition.")
+	sheet.ShowHelp("trim")
 End Sub
 
 ' ====================================================================
@@ -3297,11 +3292,11 @@ Private Sub FormatFixed(Value As Double, decimals As Int) As String
 		ip = s.SubString2(0, dot)
 		fp = s.SubString(dot)
 	End If
-	If ip.Length >= 5 Then
+	If ip.Length >= 4 Then
 		Dim sb As StringBuilder
 		sb.Initialize
 		For j = 0 To ip.Length - 1
-			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(0x202F))
+			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(0x200A))
 			sb.Append(ip.SubString2(j, j + 1))
 		Next
 		ip = sb.ToString
@@ -3329,11 +3324,11 @@ Private Sub FormatSig(Value As Double, sig As Int) As String
 		ip = s.SubString2(0, dot)
 		fp = s.SubString(dot)
 	End If
-	If ip.Length >= 5 Then
+	If ip.Length >= 4 Then
 		Dim sb As StringBuilder
 		sb.Initialize
 		For j = 0 To ip.Length - 1
-			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(0x202F))
+			If j > 0 And (ip.Length - j) Mod 3 = 0 Then sb.Append(Chr(0x200A))
 			sb.Append(ip.SubString2(j, j + 1))
 		Next
 		ip = sb.ToString
