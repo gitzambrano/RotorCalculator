@@ -65,7 +65,7 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | rpm | Rotor Speed | Rotor Speed | Ω |
 | coll | Collective Pitch | Collective | Δθ |
 | Ttgt | Target Thrust | Target Thrust | T |
-| CTtgt | Target Thrust Coefficient | Target CT | C_T |
+| CTtgt | Target Thrust Coefficient | Target | C_T |
 | inflow | Inflow Model | Inflow | – |
 | kind | Induced Power Factor | Induced Factor | k_ind |
 | drag | Profile Drag Integration | Drag Integration | – |
@@ -236,7 +236,7 @@ The effective APK abbreviation map includes its responsive overrides. Each capti
 - `rpm`: Rot. Speed
 - `coll`: Collective
 - `Ttgt`: Target Thrust
-- `CTtgt`: Target CT
+- `CTtgt`: Target
 - `kind`: Ind. Factor
 - `T`: Thrust
 - `P`: Power

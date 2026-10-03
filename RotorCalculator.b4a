@@ -68,10 +68,10 @@ NumberOfModules=5
 Version=13
 @EndOfDesignText@
 #Region  Project Attributes 
-	#ApplicationLabel: Rotor Calc
+	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 7
-	#VersionName: 1.24
+	#VersionCode: 8
+	#VersionName: 1.25
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region

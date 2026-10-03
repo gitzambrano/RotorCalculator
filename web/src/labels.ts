@@ -373,7 +373,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   CTtgt: {
     key: "CTtgt",
     full: "Target Thrust Coefficient",
-    short: "Target CT",
+    short: "Target",
     sym: "C_T",
     unit: "–",
     body: "Thrust coefficient the trim must reach. Exclusive with the target thrust.",
@@ -1057,7 +1057,9 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Trim Mode":
       case "Trim Condition": return "Trim Mode";
       case "Collective Δθ": return "Δθ";
-      case "Target CT": return "Target CT";
+      case "Target CT":
+      case "Target":
+      case "Target C_T": return "Target C_T";
       case "Target Thrust": return "Target T";
       case "Induced Factor kind":
       case "K_ind": return "kind";
@@ -1107,7 +1109,9 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Trim Mode":
       case "Trim Condition": return "Trim Mode";
       case "Collective Δθ": return "Collective Δθ";
-      case "Target CT": return "Target CT";
+      case "Target CT":
+      case "Target":
+      case "Target C_T": return "Target C_T";
       case "Target Thrust": return "Target Thrust T";
       case "Induced Factor kind":
       case "K_ind": return "Induced kind";
@@ -1199,7 +1203,7 @@ export const ABBREVIATIONS: Record<string, string> = {
   "rpm": "Rot. Speed",
   "coll": "Collective",
   "Ttgt": "Target Thrust",
-  "CTtgt": "Target CT",
+  "CTtgt": "Target",
   "kind": "Ind. Factor",
   "T": "Thrust",
   "P": "Power",
@@ -1261,7 +1265,7 @@ export const ABBREVIATIONS: Record<string, string> = {
 
 export const NARROW_NAMES: Record<string, string> = {
   "AR": "Aspect",
-  "CTtgt": "Target CT",
+  "CTtgt": "Target",
   "CTs": "Blade Load",
   "LDe": "Eff. L/D",
   "T0": "Temp.",

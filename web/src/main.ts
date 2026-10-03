@@ -196,7 +196,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.24</span>
+            <span class="version-badge">v1.25</span>
           </div>
         </div>
         <div class="header-actions">
@@ -418,7 +418,7 @@ app.innerHTML = `
           <button class="row-unit-btn" id="unit-operating-1">rpm</button>
         </div>
         <div class="engineering-row" id="row-operating-2">
-          <button class="row-label-btn" id="lbl-operating-2" data-key="CTtgt" data-canonical="Target CT">Target CT</button>
+          <button class="row-label-btn" id="lbl-operating-2" data-key="CTtgt" data-canonical="Target C_T">Target C<sub>T</sub></button>
           <input class="row-input" type="number" step="0.0005" id="inp-operating-2" value="0.0065" />
           <button class="row-unit-btn" id="unit-operating-2">–</button>
         </div>
@@ -859,8 +859,8 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.24</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.24.apk" download="RotorCalculator-1.24.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.25</div><div class="settings-row-sub">Download the verified Android APK</div></div>
+              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.25.apk" download="RotorCalculator-1.25.apk">APK</a>
             </div>
           </div>
         </div>
@@ -893,7 +893,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.24</p>
+          <p>RotorCalculator v1.25</p>
           <p>Rotor performance calculator based on analytical blade-element theory.<br>Notation follows Johnson and Leishman.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
@@ -1743,7 +1743,7 @@ function refreshOperatingControls(): void {
     p1.value = activeCond.rpm.toFixed(0);
 
     l2.dataset.key = "CTtgt";
-    l2.dataset.canonical = "Target CT";
+    l2.dataset.canonical = "Target C_T";
     u2.textContent = "–";
     p2.value = activeCond.targetCT.toFixed(5);
   } else if (pair === "rpm_thrust") {
@@ -1763,7 +1763,7 @@ function refreshOperatingControls(): void {
     p1.value = activeCond.collectiveDeg.toFixed(2);
 
     l2.dataset.key = "CTtgt";
-    l2.dataset.canonical = "Target CT";
+    l2.dataset.canonical = "Target C_T";
     u2.textContent = "–";
     p2.value = activeCond.targetCT.toFixed(5);
   } else if (pair === "collective_thrust") {
@@ -1778,7 +1778,7 @@ function refreshOperatingControls(): void {
     p2.value = convertValue(activeCond.targetThrustN || 45000, "N", thrustUnit).toFixed(0);
   } else if (pair === "ct_thrust") {
     l1.dataset.key = "CTtgt";
-    l1.dataset.canonical = "Target CT";
+    l1.dataset.canonical = "Target C_T";
     u1.textContent = "–";
     p1.value = activeCond.targetCT.toFixed(5);
 

@@ -363,7 +363,7 @@ export const APK_NOMENCLATURE = {
   "CTtgt": {
     "key": "CTtgt",
     "full": "Target Thrust Coefficient",
-    "short": "Target CT",
+    "short": "Target",
     "sym": "C_T",
     "unit": "–",
     "body": "Thrust coefficient the trim must reach. With Δθ prescribed it fixes Ω; with Ω prescribed it fixes Δθ. With thrust T it fixes Ω directly.",

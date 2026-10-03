@@ -103,6 +103,8 @@ export const UNIT_CHOICES: Record<string, string[]> = {
   RPM: ["rpm", "rad/s"],
   "Target Thrust": ["N", "kN", "lbf", "kgf"],
   "Target CT": ["–"],
+  "Target C_T": ["–"],
+  Target: ["–"],
   Thrust: ["N", "kN", "lbf", "kgf"],
   Power: ["kW", "hp", "W"],
   Torque: ["N·m", "lb·ft", "kgf·m"],
