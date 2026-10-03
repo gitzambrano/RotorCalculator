@@ -365,7 +365,7 @@ app.innerHTML = `
           <button class="row-label-btn" data-key="B" data-tip="Fixed tip loss factor B (active when tip loss is set to Fixed)." data-canonical="Tip Factor B">Tip Factor B</button>
           <div class="tip-factor-value">
             <input class="row-input" type="number" step="0.005" id="inp-tiploss-b" value="0.97" />
-            <div class="row-derived-val" id="drv-tip-factor" hidden></div>
+            <input class="row-input" type="text" id="drv-tip-factor" readonly style="display: none;" />
           </div>
           <button class="row-unit-btn" disabled>–</button>
         </div>
@@ -409,7 +409,7 @@ app.innerHTML = `
         <div class="section-header">OPERATING CONSTRAINTS</div>
         <div class="engineering-row">
           <button class="row-label-btn" data-key="trim" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim Mode">Trim Mode</button>
-          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">RPM + Target CT</button>
+          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">RPM + Target C<sub>T</sub></button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row" id="row-operating-1">
@@ -977,8 +977,8 @@ function refreshSelectorCaptions(): void {
     collective_ct: "Δθ + C_T", collective_thrust: "Δθ + T", ct_thrust: "C_T + T",
   };
   const longPairs: Record<string, string> = {
-    rpm_collective: "RPM + Collective", rpm_ct: "RPM + Target CT", rpm_thrust: "RPM + Target Thrust",
-    collective_ct: "Collective + Target CT", collective_thrust: "Collective + Target Thrust", ct_thrust: "Target CT + Target Thrust",
+    rpm_collective: "RPM + Collective", rpm_ct: "RPM + Target C_T", rpm_thrust: "RPM + Target Thrust",
+    collective_ct: "Collective + Target C_T", collective_thrust: "Collective + Target Thrust", ct_thrust: "Target C_T + Target Thrust",
   };
   byId("btn-trim-mode").innerHTML = formatSubscripts((mobile ? pairs : longPairs)[activeCond.operatingPair]);
   const inflows: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman", coleman_feingold: mobile ? "Coleman-FG" : "Coleman-Feingold", drees: "Drees" };
@@ -1108,6 +1108,7 @@ function showOptionPicker(
     const item = document.createElement("div");
     const isSel = opt.id === currentSelectedId;
     item.className = `option-item ${isSel ? "selected" : ""}`;
+    item.dataset.optionId = opt.id;
     item.innerHTML = `
       <div class="option-text-group">
         <div class="option-label">${opt.label}</div>
@@ -1169,11 +1170,11 @@ function refreshInputPresentation(): void {
 
 function renderDerivedGeometry(): void {
   const tipInput = byId<HTMLInputElement>("inp-tiploss-b");
-  const tipReadOnly = byId("drv-tip-factor");
+  const tipReadOnly = byId<HTMLInputElement>("drv-tip-factor");
   const fixedTip = activeGeom.tipLossMode === "fixed";
   tipInput.style.display = fixedTip ? "" : "none";
-  tipReadOnly.style.display = fixedTip ? "none" : "flex";
-  tipReadOnly.textContent = (activeGeom.tipLossMode === "none" ? 1 : activeResults.solutionValid ? activeResults.bFactor : activeGeom.tipLossB).toFixed(4 + extraPrecision);
+  tipReadOnly.style.display = fixedTip ? "none" : "";
+  tipReadOnly.value = (activeGeom.tipLossMode === "none" ? 1 : activeResults.solutionValid ? activeResults.bFactor : activeGeom.tipLossB).toFixed(4 + extraPrecision);
   const fields: [string, string, string | null, string, number][] = [
     ["drv-taper", "taper", null, "", 3],
     ["drv-sigma-geom", "sigmaAct", null, "", 4],
@@ -1704,15 +1705,24 @@ function refreshOperatingControls(): void {
   const u2 = byId("unit-operating-2");
 
   const btnTrim = byId("btn-trim-mode");
-  const pairLabels: Record<string, string> = {
-    rpm_collective: "RPM + Collective",
-    rpm_ct: "RPM + Target CT",
-    rpm_thrust: "RPM + Target Thrust",
-    collective_ct: "Collective + Target CT",
-    collective_thrust: "Collective + Target Thrust",
-    ct_thrust: "Target CT + Target Thrust",
+  const mobile = (document.querySelector<HTMLElement>(".app-shell")?.clientWidth || innerWidth) < 600;
+  const pairs: Record<string, string> = {
+    rpm_collective: "Ω + Δθ",
+    rpm_ct: "Ω + C_T",
+    rpm_thrust: "Ω + T",
+    collective_ct: "Δθ + C_T",
+    collective_thrust: "Δθ + T",
+    ct_thrust: "C_T + T",
   };
-  btnTrim.textContent = pairLabels[pair] || "RPM + Target CT";
+  const longPairs: Record<string, string> = {
+    rpm_collective: "RPM + Collective",
+    rpm_ct: "RPM + Target C_T",
+    rpm_thrust: "RPM + Target Thrust",
+    collective_ct: "Collective + Target C_T",
+    collective_thrust: "Collective + Target Thrust",
+    ct_thrust: "Target C_T + Target Thrust",
+  };
+  btnTrim.innerHTML = formatSubscripts((mobile ? pairs : longPairs)[pair] || (mobile ? "Ω + C_T" : "RPM + Target C_T"));
 
   const thrustUnit = prefThrustUnit;
 
@@ -2305,12 +2315,12 @@ function bindSelectorButtons(): void {
 
   // 2. Trim Mode Modal (All 6 pairs)
   const trimModes: { id: FlightCondition["operatingPair"]; label: string; desc: string }[] = [
-    { id: "rpm_ct", label: "RPM + Target CT", desc: "Prescribe RPM & Target CT; solves Collective Δθ and Thrust" },
-    { id: "rpm_thrust", label: "RPM + Target Thrust", desc: "Prescribe RPM & Target Thrust; solves Collective Δθ and CT" },
+    { id: "rpm_ct", label: "RPM + Target C<sub>T</sub>", desc: "Prescribe RPM & Target C<sub>T</sub>; solves Collective Δθ and Thrust" },
+    { id: "rpm_thrust", label: "RPM + Target Thrust", desc: "Prescribe RPM & Target Thrust; solves Collective Δθ and C<sub>T</sub>" },
     { id: "rpm_collective", label: "RPM + Collective Δθ", desc: "Prescribe RPM & Collective pitch increment; direct evaluation" },
-    { id: "collective_ct", label: "Collective Δθ + Target CT", desc: "Prescribe Collective & CT; solves unique rotor RPM" },
-    { id: "collective_thrust", label: "Collective Δθ + Target Thrust", desc: "Prescribe Collective & Thrust; solves rotor RPM and CT" },
-    { id: "ct_thrust", label: "Target CT + Target Thrust", desc: "Prescribe Target CT & Thrust; solves both RPM and Collective" },
+    { id: "collective_ct", label: "Collective Δθ + Target C<sub>T</sub>", desc: "Prescribe Collective & Target C<sub>T</sub>; solves unique rotor RPM" },
+    { id: "collective_thrust", label: "Collective Δθ + Target Thrust", desc: "Prescribe Collective & Thrust; solves rotor RPM and C<sub>T</sub>" },
+    { id: "ct_thrust", label: "Target C<sub>T</sub> + Target Thrust", desc: "Prescribe Target C<sub>T</sub> & Thrust; solves both RPM and Collective" },
   ];
 
   byId("btn-trim-mode").addEventListener("click", () => {
@@ -2336,7 +2346,7 @@ function bindSelectorButtons(): void {
   const tipModes: { id: RotorGeometry["tipLossMode"]; label: string; desc: string }[] = [
     { id: "none", label: "None", desc: "Full aerodynamic span effective (B = 1.0)" },
     { id: "fixed", label: "Fixed", desc: "Prescribed tip-loss factor entered in Tip Factor B" },
-    { id: "sissingh", label: "Sissingh", desc: "Iterated thrust-dependent tip-loss factor: B = 1 - √(2CT)/Nb" },
+    { id: "sissingh", label: "Sissingh", desc: "Iterated thrust-dependent tip-loss factor: B = 1 - √(2C<sub>T</sub>)/N<sub>b</sub>" },
   ];
 
   byId("btn-tiploss-mode").addEventListener("click", () => {

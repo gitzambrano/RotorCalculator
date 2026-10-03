@@ -506,6 +506,23 @@ html, body {
 
 }
 
+#btn-install-app {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  font-size: 18px !important;
+  padding: 0 !important;
+  margin-right: 4px;
+  opacity: 0.88;
+}
+
+#btn-install-app:hover {
+  opacity: 1;
+}
+
 
 
 .icon-btn:hover {
@@ -1101,17 +1118,15 @@ html, body {
 
 
 .row-label-btn sub,
-
 .result-label sub,
-
-button.result-label sub {
-
+button.result-label sub,
+.action-btn sub,
+.engineering-row sub,
+.option-label sub,
+.option-desc sub {
   font-size: 0.72em;
-
   line-height: 1;
-
   vertical-align: -0.2em;
-
 }
 
 
@@ -1149,11 +1164,35 @@ button.result-label sub {
 
 
 input[type="text"].row-input {
+  text-align: center;
+  padding: 0 4px;
+}
 
-  text-align: left;
+#inp-rotor-name {
+  text-align: left !important;
+  padding: 0 10px !important;
+}
 
-  padding: 0 10px;
+.engineering-row .row-input,
+.engineering-row input,
+.engineering-row .row-derived-val,
+.engineering-row .action-btn {
+  text-align: center !important;
+  text-align-last: center;
+  justify-content: center !important;
+}
 
+#drv-tip-factor,
+.tip-factor-value .row-input {
+  color: var(--accent) !important;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: inherit;
+  text-align: center !important;
+}
+
+#drv-tip-factor:read-only {
+  color: var(--accent) !important;
 }
 
 
@@ -3327,6 +3366,7 @@ button:active { filter: brightness(1.15); }
   .engineering-row + .section-header { margin-top: 6px; }
 
   .header-actions .icon-btn { border: none; background: transparent; font-size: 28px; }
+  .header-actions #btn-install-app { font-size: 18px !important; width: 34px !important; height: 34px !important; min-width: 34px !important; }
 
 }
 
