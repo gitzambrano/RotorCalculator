@@ -1,6 +1,6 @@
 # RotorCalculator — Software Requirements
 
-> **Status:** Binding implementation specification for RotorCalculator 1.20+  
+> **Status:** Binding implementation specification for RotorCalculator 1.24+ (versionCode 7)  
 > **Physics reference:** `tools/zBET.py` and the zBEMT reference-planform convention.  
 > **UI reference:** AeroCalculator interaction principles, adapted where RotorCalculator can be clearer or more capable.
 
@@ -225,8 +225,8 @@ The plot tool shall combine the broad capability of the original sweep with the 
 ## 6. Geometry backup and sharing
 
 - **LIB-1** — Settings shall provide **Import Geometries** and **Export Geometries**.
-- **LIB-2** — Export shall write the complete saved-rotor database to a portable, versioned text file.
-- **LIB-3** — Import shall validate schema and numeric domains before merge.
+- **LIB-2** — Export shall write the complete saved-rotor database to a portable, versioned text file or standard JSON file with explicit rotor count confirmation.
+- **LIB-3** — Import shall validate schema, version, and numeric domains for both text and JSON formats before merge.
 - **LIB-4** — Import shall report how many valid geometries were found before confirmation.
 - **LIB-5** — Name conflicts shall explicitly support Rename, Replace, and Skip.
 - **LIB-6** — Import shall preserve unrelated local rotors.
@@ -235,9 +235,9 @@ The plot tool shall combine the broad capability of the original sweep with the 
 
 ## 7. Settings and help
 
-- **SET-1** — Settings shall contain Theme (Dark/Light), Result Units (SI/Imperial), Output Format (Standard/+1 Decimal), Import Geometries, and Export Geometries.
+- **SET-1** — Settings shall contain Theme (Dark/Light/Midnight), Result Units (SI/Imperial), Output Format (Standard/+1 Decimal), Import Geometries, and Export Geometries.
 - **SET-2** — Theme, units, and precision shall persist across restart.
-- **SET-3** — The global menu shall expose Settings, Quick Unit Converter, Physics & Equations, zBET/zBEMT Conventions, Restore Factory Presets, and About.
+- **SET-3** — The global menu shall expose Settings, Quick Unit Converter, Physics & Equations, zBET/zBEMT Conventions, Restore Factory Presets, Install App (Web), and About.
 - **SET-4** — Physics & Equations shall work fully offline and describe the implemented equations, operating pairs, plot behavior, conventions, and limitations.
 
 ## 8. Visual/mobile requirements
@@ -284,7 +284,7 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-32** — Normal label and unit controls shall remain visibly actionable but shall be visually subordinate to editable values and model/action selectors. Derived Geometry shall use a quieter read-only treatment while retaining aligned actionable help/unit controls.
 - **UX-33** — Rotor Name is textual metadata rather than a physical scalar. On the narrowest phone layouts its editable row shall grow vertically and wrap the full name at a legible size while retaining the same column grid and touch geometry.
 - **UX-34** — Every input, result and action shall be understandable to an engineer opening the app for the first time. Compact on-screen wording may use established symbols, but shall not make a quantity or action ambiguous. Symbols including σgeom, K_ind, μz, CPair and χ shall have short, accessible contextual explanations stating the physical meaning and the convention used here.
-- **UX-35** — Tapping a non-selector label shall open concise contextual help. Tapping a label that denotes a selectable variable, operating pair or model shall open that selector directly. Tapping a unit with alternatives shall open its unit selector. A single-unit or dimensionless unit button may retain the grid footprint, but its behavior shall clearly explain why no conversion is offered.
+- **UX-35** — Tapping any row label in Column 1 shall open comprehensive contextual help. Tapping a selectable parameter in Column 2 (Airfoil, Tip Loss, Compressibility, Trim Condition, Inflow Model) shall open the dedicated selection modal sheet. Tapping a unit control in Column 3 with alternatives shall open its unit selector. A single-unit or dimensionless unit button retains the grid footprint, displaying an invariant dash (`–`).
 - **UX-36** — Main screens shall favor short rows and contextual help over permanent descriptive paragraphs. Important actions shall be visible in the app, without requiring external documentation or trial and error to discover them.
 - **UX-37** — Every popup/dialog shall have a contextual title, self-explanatory options, a clear indication of the current selection where applicable, and a working Cancel path. A popup shall exist only when it serves a current user action; obsolete popup flows shall be removed.
 - **UX-38** — Engineering indices shall use clear mathematical typography when the platform can render them legibly (for example x₀, c₀, c₁, a₀ and inverse units such as rad⁻¹). Mathematical meaning and font legibility take precedence over decorating every symbol. Results shall reserve enough width for long numerical values and units such as slug/ft³ at 320 dp with 130% font scale.
@@ -358,3 +358,41 @@ Latest APK label correction: omit Section in full AoA names; abbreviated names a
 ### Pontuação das abreviações do APK (2026-10-01)
 
 Usar `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` e `Eff.` em todos os níveis abreviados. `Coeff` e `Dyn` permanecem sem ponto. Nomes completos e símbolos não mudam. O nível intermediário sem Force continua antes do símbolo.
+
+## 10. Release 1.24 Requirements (versionCode 7)
+
+- **NAV-1 / UX-44** — Horizontal Swipe Navigation:
+  - The application shall support horizontal swipe gestures across the three primary tabs: `GEOMETRY` $\longleftrightarrow$ `CONDITIONS` $\longleftrightarrow$ `RESULTS`.
+  - The gesture recognizer shall use horizontal velocity and diagonal angle rejection to prevent accidental tab switching during vertical scrolling.
+  - Active modal sheets, popups, and dialogs shall suppress swipe tab transitions while open.
+
+- **UX-45** — Haptic Feedback:
+  - All interactive buttons, clickable label controls (Column 1), and clickable unit controls (Column 3) shall trigger subtle 15ms haptic vibration upon touch.
+
+- **PLOT-19b** — Full Engineering Dataset CSV Export:
+  - The parameter sweep shall provide a modal export choice between:
+    1. "Current Chart CSV" (plotted curve values vs advance ratio);
+    2. "Full Dataset CSV" (complete rotor geometry inputs, ISA flight conditions, baseline operating point, and all 21 calculated aerodynamic variables per sample).
+
+- **UX-46** — Title Case Typography and Compressibility Simplification:
+  - Modal choice sheets, status toggles, and picker buttons shall use standardized Title Case typography (e.g., "On", "Off", "None", "Fixed", "Sissingh", "Uniform").
+  - The compressibility control shall display strictly "On" or "Off", without the "P-G" or "Prandtl-Glauert" prefix in the button face.
+
+- **UX-47** — Results Status Banner Equalization:
+  - In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38px), compact typography, and neutral secondary styling across all themes.
+
+- **UX-48** — Column 1 vs Column 2 Interaction Separation:
+  - Column 1 (Label Button) touches shall strictly route to comprehensive contextual help (`ShowHelpFor` / `showContextualHelp`).
+  - Column 2 (Value Button) touches for discrete parameters shall open the parameter selection modal sheet (Airfoil, Tip Loss, Compressibility, Inflow Model, Trim Condition).
+
+- **PWA-1** — Web Application Installation:
+  - The web application shall provide an install icon button (`📥`) in the header adjacent to the options menu.
+  - The options menu shall expose an "Install App" action positioned immediately prior to "About".
+
+- **LIB-9** — Multi-Format Geometry Sharing:
+  - Geometry backup and sharing shall support both human-readable text (`.txt`) and structured JSON (`.json`) formats.
+  - Import workflows shall report the count of discovered rotors and provide interactive conflict resolution (Rename, Replace, Skip).
+
+- **THEME-1** — Three-Theme Parity:
+  - Support Default Dark, Light, and Midnight themes with identical visual hierarchy, contrast compliance, and state preservation across all screens and offline manuals.
+
