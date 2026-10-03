@@ -1,6 +1,6 @@
 # RotorCalculator — Software Requirements
 
-> **Status:** Binding implementation specification for RotorCalculator 1.24+ (versionCode 7)  
+> **Status:** Binding baseline implementation specification for RotorCalculator across all versions.  
 > **Physics reference:** `tools/zBET.py` and the zBEMT reference-planform convention.  
 > **UI reference:** AeroCalculator interaction principles, adapted where RotorCalculator can be clearer or more capable.
 
@@ -177,6 +177,18 @@ Sections shall appear in this order:
 - **RES-7** — +1 Decimal shall add exactly one decimal place to each baseline format.
 - **RES-8** — Invalid operating points shall be clearly identified and shall not display false zero values.
 - **RES-9** — Every result row shall expose contextual physics/equation help.
+- **RES-10** — Results shall display section and tip speed diagnostics alongside climb speed $V_z$:
+  - Total axial speed $V_{z,\text{tot}}$;
+  - Advancing tip tangential speed $V_{\text{adv}}$;
+  - Retreating tip tangential speed $V_{\text{ret}}$;
+  - Retreating tip Mach number $M_{\text{ret}}$;
+  - Advancing angle of attack at 75% radius $\alpha_{0.75,\text{adv}}$;
+  - Retreating angle of attack at 75% radius $\alpha_{0.75,\text{ret}}$;
+  - Advancing inflow angle at 75% radius $\phi_{0.75,\text{adv}}$;
+  - Retreating inflow angle at 75% radius $\phi_{0.75,\text{ret}}$.
+  Section diagnostics shall evaluate local kinematics using trimmed collective pitch and local induced inflow.
+- **RES-11** — Section diagnostic labels shall place the mathematical symbol after the descriptive title (e.g., `Advancing AoA α_{adv,75}`). Responsive compact levels shall omit "Section" and use standardized abbreviations: `Adv. AoA`, `Ret. AoA`, `Adv. Inflow`, and `Ret. Inflow`. Narrowest displays shall present the symbol alone.
+- **RES-12** — In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38px), compact typography, and neutral secondary styling across all themes.
 
 ## 5. Universal plots and parameter sweep
 
@@ -221,6 +233,13 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **PLOT-23** — Sweep/plot variable names shall derive from one canonical symbol-first catalog shared with Results. Unit-specific variants may append the unit in brackets, but shall not introduce an alternate physical name for the same quantity.
 - **PLOT-24** — Plot title, tick labels, axis title, current-value footer, legend, selector controls, TABLE/CSV/PNG controls, and family-value dialogs shall remain readable on phones. The plot shall reserve enough margin/legend band for larger text rather than shrinking engineering text into caption-sized labels.
 - **PLOT-25** — The responsive legend shall remain outside the data rectangle and shall increase its row spacing as needed to avoid overlap when text size increases.
+- **PLOT-19b** — The parameter sweep shall provide a modal export choice between:
+  1. "Current Chart CSV" (plotted curve values vs advance ratio);
+  2. "Full Dataset CSV" (complete rotor geometry inputs, ISA flight conditions, baseline operating point, and all calculated aerodynamic variables per sample).
+- **PLOT-26** — Plot curves and legend items shall render as continuous solid lines without dashed or dotted patterns.
+- **PLOT-27** — Plot curves shall omit discrete point marker dots along the curves to display smooth, continuous lines while retaining the active crosshair touch probe.
+- **PLOT-28** — The plot canvas and Y-axis title shall provide vertical clearance below control buttons, positioning the title directly above the plot grid.
+- **PLOT-29** — The parameter sweep modal shall support vertical scrolling to display the complete multi-curve readout without text clipping.
 
 ## 6. Geometry backup and sharing
 
@@ -232,6 +251,7 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **LIB-6** — Import shall preserve unrelated local rotors.
 - **LIB-7** — Export shall use Android CREATE_DOCUMENT; import shall use OPEN_DOCUMENT.
 - **LIB-8** — Restore Factory Presets shall restore factory definitions while preserving unrelated user rotors.
+- **LIB-9** — Geometry backup and sharing shall support both human-readable text (`.txt`) and structured JSON (`.json`) formats. Import workflows shall report the count of discovered rotors and provide interactive conflict resolution (Rename, Replace, Skip).
 
 ## 7. Settings and help
 
@@ -239,6 +259,7 @@ The plot tool shall combine the broad capability of the original sweep with the 
 - **SET-2** — Theme, units, and precision shall persist across restart.
 - **SET-3** — The global menu shall expose Settings, Quick Unit Converter, Physics & Equations, zBET/zBEMT Conventions, Restore Factory Presets, Install App (Web), and About.
 - **SET-4** — Physics & Equations shall work fully offline and describe the implemented equations, operating pairs, plot behavior, conventions, and limitations.
+- **SET-5 / PWA-1** — The web application shall provide an install icon button in the header adjacent to the options menu. The options menu shall expose an "Install App" action positioned immediately prior to "About".
 
 ## 8. Visual/mobile requirements
 
@@ -293,8 +314,17 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-41** — Atmosphere fields use the names Altitude and Temperature. The operating-pair selector is named Trim Condition. Horizontal advance ratio uses μₓ consistently in inputs, results, plots, contextual help and visible exports; internal SI state and engine conventions remain unchanged. Use full engineering names wherever they fit and reflow these labels before reducing type size.
 - **UX-42** — Flow quantities use the canonical names μₓ — Advance Ratio, α — AoA, Vx — Airspeed and Vz — Climb Speed. Selector buttons show the name alongside the symbol where width permits; compact symbols retain directly accessible, named selector options. The existing positive axial-flow convention remains explicit in contextual help.
 - **UX-43** — Reference may be abbreviated as Ref. in visible area and solidity labels. Contextual help retains the complete physical definition.
+- **UX-44 / NAV-1** — The application shall support horizontal swipe gestures across the three primary tabs: `GEOMETRY` $\longleftrightarrow$ `CONDITIONS` $\longleftrightarrow$ `RESULTS`. The gesture recognizer shall use horizontal velocity and diagonal angle rejection thresholds to prevent conflict with vertical scrolling. Open modal sheets, popups, and dialogs shall suppress swipe tab transitions.
+- **UX-45** — All interactive buttons, clickable label controls (Column 1), and clickable unit controls (Column 3) shall trigger subtle 15 ms haptic vibration upon touch.
+- **UX-46** — Modal choice sheets, status toggles, and picker buttons shall use standardized Title Case typography (e.g., "On", "Off", "None", "Fixed", "Sissingh", "Uniform"). The compressibility control shall display strictly "On" or "Off", without "P-G" or "Prandtl-Glauert" prefix in the button face.
+- **UX-47** — In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38 px), compact typography, and neutral secondary styling across all themes.
+- **UX-48** — Column 1 (Label Button) touches shall strictly route to comprehensive contextual help (`ShowHelpFor` / `showContextualHelp`). Column 2 (Value Button) touches for discrete parameters shall open the parameter selection modal sheet (Airfoil, Tip Loss, Compressibility, Inflow Model, Trim Condition).
+- **UX-49 / THEME-1** — The application shall provide Default Dark, Light, and Midnight themes with identical visual hierarchy, contrast compliance, and state preservation across all screens and offline manuals.
+- **UX-50** — Responsive nomenclature shall use a four-level fallback hierarchy when display width is constrained: Full Name $\rightarrow$ Medium Name $\rightarrow$ Abbreviated / Short Name $\rightarrow$ Symbol Only. The nomenclature level shall be evaluated uniformly per section/page to prevent mixing discordant abbreviation levels within the same block. Symbols shall always follow the descriptive title and preserve mathematical subscripts.
+- **UX-51** — Standardized engineering abbreviations shall use trailing periods consistently: `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.`, and `Eff.`. Dimensionless acronyms `Coeff` and `Dyn` shall not take trailing periods.
+- **UX-52** — In-plane force labels shall step down cleanly: Full `Induced In-Plane Force H_ind` $\rightarrow$ Medium `Induced In-Plane Force H_ind` $\rightarrow$ Abbreviated `Ind. In-Plane Force H_ind` $\rightarrow$ Short `Ind. In-Plane H_ind` $\rightarrow$ Symbol `H_ind`. The word "Force" shall be omitted at the narrowest multi-word level before falling back to symbol-only.
 
-## 9. Verification/release
+## 9. Verification and Quality Assurance
 
 - **QA-1** — Geometry tests shall verify radius scaling, AR, σgeom, σact, σthrust, and taper preservation.
 - **QA-2** — All six operating pairs shall be tested in hover, forward flight, and nonzero axial flow.
@@ -328,71 +358,4 @@ The following requirements are mandatory and take precedence over older Geometry
 - **QA-29** — Inspect status/navigation-bar separation in portrait and landscape and verify the Privacy Policy menu action in both themes.
 
 - **QA-30** — Run the locally compiled B4A engine against the Python reference, including all six operating pairs in hover, forward flight and nonzero axial flow, plus default RPM + CT target closure. Tolerances and the invalid-to-valid collective-bracket regression are documented in `docs/trim-regression-2026-09-30.md`.
-
-
-## APK 1.23 — result diagnostics
-
-Native APK only: versionCode 6. Add total axial speed V_{z,tot}, advancing/retreating tip tangential speed, retreating tip Mach and section AoA/inflow angles at 75% radius. Preserve Climb Speed V_z. Adv./Ret. abbreviations are allowed; result symbols remain present with native subscripts, one line without truncation. Section diagnostics use final trimmed geometry and prescribed inflow; no changes to integrated rotor loads. Local QA evidence is recorded in qa-results.
-
-APK output labels put the symbol after the name, as explicitly requested. Compact V_{z,tot} caption is Axial Speed. Width measurement includes the real 72% subscript size and system font scale.
-
-
-Latest APK label correction: omit Section in full AoA names; abbreviated names are Adv. AoA, Ret. AoA, Adv. Inflow, Ret. Inflow. Minimum is symbol-only. See docs/apk-label-catalog.md for all canonical and fixed control captions. Emulator validation is performed only when explicitly requested by the user; this overrides automatic emulator QA for routine edits.
-
-
-### APK — nomes aprovados e nível intermediário de forças (2026-10-01)
-
-- Ordem responsiva: L completo → M curto → A abreviado → S estreito → mínimo. Results agora também tenta S antes do símbolo.
-- Símbolo sempre depois do nome, com subscritos; mínimo somente símbolo para grandezas com símbolo.
-- sigmaT: A/S `Thr. Solidity σ_TR`; comp: A/S `Compres.`, mínimo `Comp.`.
-- T0: S `Temp. T_amb`; drag: A/S `Integration`, mínimo `Integ.`.
-- LDe: A/S `Eff. (L/D)_e`, sem duplicar a razão no nome.
-- rpmNom: L/M `Rotor Speed Ω_nom`, A/S `Rot. Speed Ω_nom`; rpm: A/S `Rot. Speed Ω`.
-- muLam: M/A/S `Advance/Inflow μ/λ`. Mtip: L `Tip Mach M_tip`; Madv: L `Advancing Tip Mach M_adv`. Sem “Number”.
-- Induced Factor permanece como está.
-- Hi/CHi: M `Induced In-Plane Force`, A `Ind. In-Plane Force`, S `Ind. In-Plane`; H0/CH0: M `Profile In-Plane Force`, A `Prof. In-Plane Force`, S `Prof. In-Plane`. Cada nível mantém seu símbolo após o nome.
-- O ajuste mede a largura e remove “Force” no nível S quando necessário, antes de recorrer somente ao símbolo. A tabela completa é gerada em docs/apk-label-catalog.*.
-- Testes no emulador somente mediante pedido explícito do usuário.
-
-
-### Pontuação das abreviações do APK (2026-10-01)
-
-Usar `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` e `Eff.` em todos os níveis abreviados. `Coeff` e `Dyn` permanecem sem ponto. Nomes completos e símbolos não mudam. O nível intermediário sem Force continua antes do símbolo.
-
-## 10. Release 1.24 Requirements (versionCode 7)
-
-- **NAV-1 / UX-44** — Horizontal Swipe Navigation:
-  - The application shall support horizontal swipe gestures across the three primary tabs: `GEOMETRY` $\longleftrightarrow$ `CONDITIONS` $\longleftrightarrow$ `RESULTS`.
-  - The gesture recognizer shall use horizontal velocity and diagonal angle rejection to prevent accidental tab switching during vertical scrolling.
-  - Active modal sheets, popups, and dialogs shall suppress swipe tab transitions while open.
-
-- **UX-45** — Haptic Feedback:
-  - All interactive buttons, clickable label controls (Column 1), and clickable unit controls (Column 3) shall trigger subtle 15ms haptic vibration upon touch.
-
-- **PLOT-19b** — Full Engineering Dataset CSV Export:
-  - The parameter sweep shall provide a modal export choice between:
-    1. "Current Chart CSV" (plotted curve values vs advance ratio);
-    2. "Full Dataset CSV" (complete rotor geometry inputs, ISA flight conditions, baseline operating point, and all 21 calculated aerodynamic variables per sample).
-
-- **UX-46** — Title Case Typography and Compressibility Simplification:
-  - Modal choice sheets, status toggles, and picker buttons shall use standardized Title Case typography (e.g., "On", "Off", "None", "Fixed", "Sissingh", "Uniform").
-  - The compressibility control shall display strictly "On" or "Off", without the "P-G" or "Prandtl-Glauert" prefix in the button face.
-
-- **UX-47** — Results Status Banner Equalization:
-  - In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38px), compact typography, and neutral secondary styling across all themes.
-
-- **UX-48** — Column 1 vs Column 2 Interaction Separation:
-  - Column 1 (Label Button) touches shall strictly route to comprehensive contextual help (`ShowHelpFor` / `showContextualHelp`).
-  - Column 2 (Value Button) touches for discrete parameters shall open the parameter selection modal sheet (Airfoil, Tip Loss, Compressibility, Inflow Model, Trim Condition).
-
-- **PWA-1** — Web Application Installation:
-  - The web application shall provide an install icon button (`📥`) in the header adjacent to the options menu.
-  - The options menu shall expose an "Install App" action positioned immediately prior to "About".
-
-- **LIB-9** — Multi-Format Geometry Sharing:
-  - Geometry backup and sharing shall support both human-readable text (`.txt`) and structured JSON (`.json`) formats.
-  - Import workflows shall report the count of discovered rotors and provide interactive conflict resolution (Rename, Replace, Skip).
-
-- **THEME-1** — Three-Theme Parity:
-  - Support Default Dark, Light, and Midnight themes with identical visual hierarchy, contrast compliance, and state preservation across all screens and offline manuals.
 

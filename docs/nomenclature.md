@@ -296,25 +296,24 @@ The effective APK abbreviation map includes its responsive overrides. Each capti
 - `phiRet75`: Ret. Inflow
 
 
-## APK 1.23 output presentation
+## Result Output Presentation and Typography
 
-The web uses the same APK nomenclature and responsive fitting; desktop layouts offer more room for full names.
+Both the Android APK and Web application share identical nomenclature and responsive fitting. Desktop layouts offer additional space for full terminology.
 Results use description-first labels with the symbol AFTER the name and native mathematical subscripts. Braced notation
 such as V_{z,tot} and α_{adv,75} is rendered as a single complete subscript.
 Each result chooses full, compact, abbreviated or symbol-only text at normal engineering
 font size within the shared three-column grid; symbols are never dropped. Adv. and Ret.
-are explicitly permitted abbreviations with periods. These APK rules override the older
-page-wide result fitting and punctuation restrictions above. Inputs retain page-wide fitting.
+are explicitly permitted abbreviations with periods. Inputs retain page-wide fitting.
 V_z remains Climb Speed, positive downward relative flow through the disk.
 V_{z,tot} is total mean axial speed, not free-stream magnitude.
-Its compact caption is Axial Speed. The minimum level is only V_{z,tot}, as explicitly requested.
+Its compact caption is Axial Speed. The minimum level is only V_{z,tot}.
 Advancing/Retreating Speed and Mach refer to tangential tip kinematics, excluding axial speed.
 Section AoA and inflow angles are sampled at 75% radius and 90°/270° azimuth, not averaged.
 They are unavailable outside the active span or in reverse flow and are model diagnostics,
 not a stall or blade-dynamics prediction. Tip Mach and Advancing Mach coincide only at V_x=0.
 
 
-### Latest APK label decision
+### Canonical Label Formatting and Punctuation
 
 Full AoA captions are Advancing AoA 75% and Retreating AoA 75%, without Section.
 Abbreviated captions are Adv. AoA, Ret. AoA, Adv. Inflow and Ret. Inflow.
@@ -322,25 +321,23 @@ The minimum level is the symbol alone for quantities with a defined symbol.
 Actions without a physical symbol retain a caption rather than disappearing.
 All names are followed by the mathematical symbol; the symbol is never prefixed.
 Full catalog: [apk-label-catalog.md](apk-label-catalog.md), with rendered HTML and CSV variants.
-Regenerate using python tools/export_apk_label_catalog.py. Do not use the emulator automatically:
-emulator testing requires a fresh explicit user request.
+Regenerate using python tools/export_apk_label_catalog.py.
 
 
-### APK — nomes aprovados e nível intermediário de forças (2026-10-01)
+### Approved Intermediate Nomenclature Levels
 
-- Ordem responsiva: L completo → M curto → A abreviado → S estreito → mínimo. Results agora também tenta S antes do símbolo.
-- Símbolo sempre depois do nome, com subscritos; mínimo somente símbolo para grandezas com símbolo.
-- sigmaT: A/S `Thr. Solidity σ_TR`; comp: A/S `Compres.`, mínimo `Comp.`.
-- T0: S `Temp. T_amb`; drag: A/S `Integration`, mínimo `Integ.`.
-- LDe: A/S `Eff. (L/D)_e`, sem duplicar a razão no nome.
+- Responsive order: L (Full) → M (Short) → A (Abbreviated) → S (Narrow) → Minimum (Symbol only). Results also tests S before falling back to symbol-only.
+- Symbol always follows the descriptive name with mathematical subscripts; minimum level is symbol-only for quantities with a symbol.
+- sigmaT: A/S `Thr. Solidity σ_TR`; comp: A/S `Compres.`, minimum `Comp.`.
+- T0: S `Temp. T_amb`; drag: A/S `Integration`, minimum `Integ.`.
+- LDe: A/S `Eff. (L/D)_e`, without repeating the ratio in the name.
 - rpmNom: L/M `Rotor Speed Ω_nom`, A/S `Rot. Speed Ω_nom`; rpm: A/S `Rot. Speed Ω`.
-- muLam: M/A/S `Advance/Inflow μ/λ`. Mtip: L `Tip Mach M_tip`; Madv: L `Advancing Tip Mach M_adv`. Sem “Number”.
-- Induced Factor permanece como está.
-- Hi/CHi: M `Induced In-Plane Force`, A `Ind. In-Plane Force`, S `Ind. In-Plane`; H0/CH0: M `Profile In-Plane Force`, A `Prof. In-Plane Force`, S `Prof. In-Plane`. Cada nível mantém seu símbolo após o nome.
-- O ajuste mede a largura e remove “Force” no nível S quando necessário, antes de recorrer somente ao símbolo. A tabela completa é gerada em docs/apk-label-catalog.*.
-- Testes no emulador somente mediante pedido explícito do usuário.
+- muLam: M/A/S `Advance/Inflow μ/λ`. Mtip: L `Tip Mach M_tip`; Madv: L `Advancing Tip Mach M_adv`. Omit "Number".
+- Induced Factor remains unchanged.
+- Hi/CHi: M `Induced In-Plane Force`, A `Ind. In-Plane Force`, S `Ind. In-Plane`; H0/CH0: M `Profile In-Plane Force`, A `Prof. In-Plane Force`, S `Prof. In-Plane`. Each level retains its symbol after the name.
+- Label fitting measures text width and removes "Force" at the S level when required, before falling back to symbol-only.
 
 
-### Pontuação das abreviações do APK (2026-10-01)
+### Abbreviation Punctuation Rules
 
-Usar `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` e `Eff.` em todos os níveis abreviados. `Coeff` e `Dyn` permanecem sem ponto. Nomes completos e símbolos não mudam. O nível intermediário sem Force continua antes do símbolo.
+Use `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` and `Eff.` across all abbreviated levels. The acronyms `Coeff` and `Dyn` do not take trailing periods. Full names and mathematical symbols do not change. The intermediate level omitting "Force" precedes symbol-only fallback.
