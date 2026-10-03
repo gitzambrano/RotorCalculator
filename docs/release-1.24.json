@@ -1,9 +1,0 @@
-{
-  "version": "1.24",
-  "versionCode": 7,
-  "package": "flightdyn.rotorcalculator",
-  "androidSourceCommit": "9fc36257d1a6ebe462c2a3d1120984050343fc82",
-  "apkSha256": "2b3227c4468ba8ca129b000ab25dde67b86f787cf18d3f9889fa84f337d7b1bb",
-  "verification": "Release 1.24 (versionCode 7). Full mobile swipe gesture navigation, title case typography, 15ms haptic feedback, full engineering dataset CSV export, and Google Play production release.",
-  "qaReport": "web-parity-audit.md"
-}

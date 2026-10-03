@@ -3300,34 +3300,59 @@ button:active { filter: brightness(1.15); }
 .rotor-name-row[hidden] { display: none; }
 
 .engineering-row > .action-btn {
-
+  display: block !important;
+  position: relative !important;
   height: 52px !important;
-
+  line-height: 50px !important;
   border-radius: 4px;
-
   background: var(--input-bg);
-
-  border-color: rgba(var(--accent-rgb), 0.3);
-
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
   color: var(--accent) !important;
-
+  font-family: inherit;
   font-size: 16px;
-
   font-weight: 400;
-
   letter-spacing: normal;
-
-  padding: 0 16px 0 4px;
-
+  padding: 0 18px !important;
+  text-align: center !important;
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
-
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
-.row-input, .row-derived-val { font-weight: 400; border-radius: 4px; border-color: rgba(var(--accent-rgb), 0.3); }
+.engineering-row > .action-btn::after {
+  content: "▾";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.engineering-row > .action-btn sub,
+.engineering-row sub {
+  font-size: 0.72em !important;
+  vertical-align: -0.22em !important;
+  line-height: 1 !important;
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  letter-spacing: normal !important;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.row-input, .row-derived-val { font-weight: 400; border-radius: 4px; border-color: rgba(var(--accent-rgb), 0.3); text-align: center !important; }
 
 .row-label-btn, .row-unit-btn { border: 0; border-radius: 4px; }
 
@@ -3382,29 +3407,7 @@ button:active { filter: brightness(1.15); }
 
   .btn-open-sweep { height: 52px !important; box-shadow: none; letter-spacing: 0; }
 
-  .engineering-row > .action-btn { position: relative; }
 
-  #btn-select-airfoil::after, #btn-tiploss-mode::after,
-
-  #btn-compressibility::after, #btn-trim-mode::after,
-
-  #btn-inflow-model::after {
-
-    content: "▾";
-
-    position: absolute;
-
-    right: 7px;
-
-    top: 50%;
-
-    transform: translateY(-50%);
-
-    font-size: 10px;
-
-    color: var(--accent);
-
-  }
 
   .menu-backdrop {
 

@@ -1055,7 +1055,8 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Altitude": return "Altitude";
       case "Temperature": return "Tamb";
       case "Trim Mode":
-      case "Trim Condition": return "Trim Mode";
+      case "Trim":
+      case "Trim Condition": return "Trim";
       case "Collective Δθ": return "Δθ";
       case "Target CT":
       case "Target":
@@ -1107,7 +1108,8 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Fixed Tip Factor B": return "Tip Factor B";
       case "Temperature": return "Temperature";
       case "Trim Mode":
-      case "Trim Condition": return "Trim Mode";
+      case "Trim":
+      case "Trim Condition": return "Trim";
       case "Collective Δθ": return "Collective Δθ";
       case "Target CT":
       case "Target":

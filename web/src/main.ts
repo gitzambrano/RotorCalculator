@@ -408,8 +408,8 @@ app.innerHTML = `
 
         <div class="section-header">OPERATING CONSTRAINTS</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-key="trim" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim Mode">Trim Mode</button>
-          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">RPM + Target C<sub>T</sub></button>
+          <button class="row-label-btn" data-key="trim" data-tip="Trim mode solver constraint: prescribe any two from RPM, Collective, CT, and Thrust." data-canonical="Trim">Trim</button>
+          <button class="action-btn" id="btn-trim-mode" style="height: 44px;">Ω + C<sub>T</sub></button>
           <button class="row-unit-btn" disabled>—</button>
         </div>
         <div class="engineering-row" id="row-operating-1">
@@ -976,11 +976,7 @@ function refreshSelectorCaptions(): void {
     rpm_collective: "Ω + Δθ", rpm_ct: "Ω + C_T", rpm_thrust: "Ω + T",
     collective_ct: "Δθ + C_T", collective_thrust: "Δθ + T", ct_thrust: "C_T + T",
   };
-  const longPairs: Record<string, string> = {
-    rpm_collective: "RPM + Collective", rpm_ct: "RPM + Target C_T", rpm_thrust: "RPM + Target Thrust",
-    collective_ct: "Collective + Target C_T", collective_thrust: "Collective + Target Thrust", ct_thrust: "Target C_T + Target Thrust",
-  };
-  byId("btn-trim-mode").innerHTML = formatSubscripts((mobile ? pairs : longPairs)[activeCond.operatingPair]);
+  byId("btn-trim-mode").innerHTML = formatSubscripts(pairs[activeCond.operatingPair] || "Ω + C_T");
   const inflows: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman", coleman_feingold: mobile ? "Coleman-FG" : "Coleman-Feingold", drees: "Drees" };
   byId("btn-inflow-model").textContent = inflows[activeCond.inflowModel];
   byId("btn-drag-info").textContent = mobile ? "Num. Vec." : "Numerical Vectorial";
@@ -1714,15 +1710,7 @@ function refreshOperatingControls(): void {
     collective_thrust: "Δθ + T",
     ct_thrust: "C_T + T",
   };
-  const longPairs: Record<string, string> = {
-    rpm_collective: "RPM + Collective",
-    rpm_ct: "RPM + Target C_T",
-    rpm_thrust: "RPM + Target Thrust",
-    collective_ct: "Collective + Target C_T",
-    collective_thrust: "Collective + Target Thrust",
-    ct_thrust: "Target C_T + Target Thrust",
-  };
-  btnTrim.innerHTML = formatSubscripts((mobile ? pairs : longPairs)[pair] || (mobile ? "Ω + C_T" : "RPM + Target C_T"));
+  btnTrim.innerHTML = formatSubscripts(pairs[pair] || "Ω + C_T");
 
   const thrustUnit = prefThrustUnit;
 
