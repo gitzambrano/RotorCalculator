@@ -73,11 +73,11 @@ main{overflow-x:hidden}
 <p>Positive loads use the directions in the table. These signs also define the nondimensional coefficients.</p>
 <div class="tw"><table><tr><th>Quantity</th><th>Positive direction</th></tr>
 <tr><td>Thrust T</td><td>up, along the shaft axis (−Z)</td></tr>
-<tr><td>In-plane force H</td><td>toward the tail (−X), drag-like</td></tr>
+<tr><td>In-plane force H</td><td>toward the tail (−X)</td></tr>
 <tr><td>Side force Y</td><td>to the right (+Y)</td></tr>
 <tr><td>Roll moment M<sub>x</sub></td><td>advancing (right) side down</td></tr>
 <tr><td>Pitch moment M<sub>y</sub></td><td>nose up</td></tr>
-<tr><td>Torque Q</td><td>the torque the shaft supplies against the air, so P = QΩ &gt; 0</td></tr>
+<tr><td>Torque Q</td><td>shaft torque required to drive the rotor; P = QΩ &gt; 0</td></tr>
 <tr><td>Blade pitch θ</td><td>leading edge up relative to the rotor plane</td></tr>
 <tr><td>Inflow λ, v<sub>i</sub></td><td>downward through the disk</td></tr></table></div>
 
@@ -132,9 +132,9 @@ main{overflow-x:hidden}
 <tr><th>Quantity</th><th>Definition and formula</th><th>Source</th><th>Edit behavior</th></tr>
 <tr><td>R, rotor radius</td><td>Axis to blade tip [m]. Sets A = πR² and ΩR.</td><td>Stored input.</td><td>Chords c<sub>R</sub>, c<sub>T</sub> scale by R<sub>new</sub>/R<sub>old</sub>: σ<sub>geom</sub>, taper and AR are preserved.</td></tr>
 <tr><td>N<sub>b</sub>, blade count</td><td>Identical blades, integer 1 to 16.</td><td>Stored input.</td><td>Chords unchanged, so every solidity scales with N<sub>b</sub>. Also sets Sissingh B.</td></tr>
-<tr><td>x<sub>0</sub>, root cutout</td><td>x<sub>0</sub> = r<sub>root</sub>/R. Lower limit of every load integral. No lift or drag inboard.</td><td>Input (stored), limited to 0 to 0.95.</td><td>Chords and σ<sub>geom</sub> unchanged. σ<sub>act</sub>, σ<sub>TR</sub>, A<sub>act</sub> change. The pitch law is re-anchored at x<sub>0</sub>.</td></tr>
-<tr><td>c<sub>R</sub>, root chord</td><td>Chord of the fictitious planform at the rotation axis, x = 0 [m]. The real blade starts at x<sub>0</sub>, where the chord is smaller (or larger, if inverse taper).</td><td>Stored input.</td><td>Changes σ<sub>geom</sub>, A<sub>geom</sub>, AR, taper and the other solidities. c<sub>T</sub> unchanged.</td></tr>
-<tr><td>c<sub>T</sub>, tip chord</td><td>Chord at x = 1 [m]. Equal to c<sub>R</sub> for a rectangular blade.</td><td>Stored input.</td><td>Same as c<sub>R</sub>, with c<sub>R</sub> unchanged.</td></tr>
+<tr><td>x<sub>0</sub>, root cutout</td><td>x<sub>0</sub> = r<sub>root</sub>/R. Lower limit of every load integral. No lift or drag inboard.</td><td>Stored input, limited to 0 to 0.95.</td><td>Chords and σ<sub>geom</sub> unchanged. σ<sub>act</sub>, σ<sub>TR</sub>, A<sub>act</sub> change. The pitch law is re-anchored at x<sub>0</sub>.</td></tr>
+<tr><td>c<sub>R</sub>, root chord</td><td>Chord of the fictitious planform at the rotation axis, x = 0 [m]. The real blade starts at x<sub>0</sub>, where the chord is smaller (or larger, if inverse taper).</td><td>Stored input.</td><td>Updates the derived geometry while c<sub>T</sub> remains fixed.</td></tr>
+<tr><td>c<sub>T</sub>, tip chord</td><td>Chord at x = 1 [m]. Equal to c<sub>R</sub> for a rectangular blade.</td><td>Stored input.</td><td>Updates the derived geometry while c<sub>R</sub> remains fixed.</td></tr>
 <tr><td>c<sub>T</sub>/c<sub>R</sub>, taper ratio</td><td>Tip chord over axis chord. 1 means rectangular.</td><td>Derived: c<sub>T</sub>/c<sub>R</sub>.</td><td>Keeps the mean chord (c<sub>R</sub> + c<sub>T</sub>)/2, hence σ<sub>geom</sub>: c<sub>R</sub> = 2c<sub>m</sub>/(1 + taper), c<sub>T</sub> = taper·c<sub>R</sub>.</td></tr>
 <tr><td>σ<sub>geom</sub>, geometric solidity</td><td>σ<sub>geom</sub> = N<sub>b</sub>A<sub>geom</sub>/A = N<sub>b</sub>(c<sub>R</sub> + c<sub>T</sub>)/(2πR). The solidity used by the analytical equations. It is defined on the fictitious planform extended to the rotation axis.</td><td>Derived from N<sub>b</sub>, c<sub>R</sub>, c<sub>T</sub>, R.</td><td>Both chords scale by σ<sub>new</sub>/σ<sub>old</sub> (taper kept).</td></tr>
 <tr><td>σ<sub>act</sub>, actual solidity</td><td>σ<sub>act</sub> = N<sub>b</sub>A<sub>act</sub>/A = σ<sub>geom</sub>(1 − x<sub>0</sub>) for a rectangular blade. Real blade, from x<sub>0</sub> to the tip.</td><td>Derived. Reference only. The load integrals already include the root cutout.</td><td>Both chords scale uniformly.</td></tr>
@@ -145,11 +145,11 @@ main{overflow-x:hidden}
 <tr><td>A<sub>act</sub>, actual blade area</td><td>A<sub>act</sub> = R[c<sub>R</sub>(1 − x<sub>0</sub>) + (c<sub>T</sub> − c<sub>R</sub>)(1 − x<sub>0</sub>²)/2] [m²]. This is the real blade area, integrated from x<sub>0</sub>R to R.</td><td>Derived.</td><td>Both chords scale uniformly.</td></tr>
 <tr><td>θ<sub>R</sub>, root pitch</td><td>Geometric pitch at station x<sub>0</sub>, before collective.</td><td>Stored input.</td><td>Changes twist and θ<sub>75</sub>; θ<sub>T</sub> kept.</td></tr>
 <tr><td>θ<sub>T</sub>, tip pitch</td><td>Geometric pitch at the tip, before collective.</td><td>Stored input.</td><td>Changes twist and θ<sub>75</sub>; θ<sub>R</sub> kept.</td></tr>
-<tr><td>θ<sub>twist</sub>, total twist</td><td>θ<sub>twist</sub> = θ<sub>T</sub> − θ<sub>R</sub>. Negative twist (washout) levels out the inflow.</td><td>Derived.</td><td>The mean pitch (θ<sub>R</sub> + θ<sub>T</sub>)/2 is kept, and root and tip move by ∓θ<sub>twist</sub>/2.</td></tr>
+<tr><td>θ<sub>twist</sub>, total twist</td><td>θ<sub>twist</sub> = θ<sub>T</sub> − θ<sub>R</sub>. Negative twist reduces pitch toward the blade tip.</td><td>Derived.</td><td>The mean pitch (θ<sub>R</sub> + θ<sub>T</sub>)/2 is kept, and root and tip move by ∓θ<sub>twist</sub>/2.</td></tr>
 <tr><td>θ<sub>75</sub>, three-quarter pitch</td><td>θ<sub>75</sub> = θ<sub>R</sub> + 0.75·θ<sub>twist</sub>: the point 75% of the way from root to tip. It equals the pitch at station x = 0.75 only when x<sub>0</sub> = 0.</td><td>Derived.</td><td>Root and tip shift by the same amount; twist kept.</td></tr>
-<tr><td>a<sub>0</sub>, lift-curve slope</td><td>C<sub>l</sub> = a<sub>0</sub>α<sub>e</sub> [1/rad]. Thin airfoil gives 2π.</td><td>Input, or from the airfoil section.</td><td>None. With Prandtl-Glauert the effective a replaces it.</td></tr>
+<tr><td>a<sub>0</sub>, lift-curve slope</td><td>C<sub>l</sub> = a<sub>0</sub>α<sub>e</sub> [1/rad]. Thin-airfoil theory gives a<sub>0</sub> = 2π rad<sup>−1</sup>.</td><td>Input, or from the airfoil section.</td><td>None. With Prandtl-Glauert the effective a replaces it.</td></tr>
 <tr><td>C<sub>d0</sub>, profile drag coefficient</td><td>C<sub>d</sub> = C<sub>d0</sub> at every station and azimuth. Enter an equivalent profile-drag value. The model keeps this value constant with radius, azimuth, lift, and Mach.</td><td>Input, or from the airfoil section.</td><td>None.</td></tr>
-<tr><td>B, tip-loss factor</td><td>Loading and momentum area end at x = B. None: B = 1. Fixed: B typed (at least x<sub>0</sub> + 0.01). Sissingh: B = 1 − √(2C<sub>T</sub>)/N<sub>b</sub>, never below x<sub>0</sub> + 0.01.</td><td>Input, or solved together with C<sub>T</sub> (Section 4).</td><td>Profile drag is still integrated to the tip.</td></tr>
+<tr><td>B, tip-loss factor</td><td>Loading and momentum area end at x = B. None: B = 1. Fixed: B typed (at least x<sub>0</sub> + 0.01). Sissingh: B = 1 − √(2C<sub>T</sub>)/N<sub>b</sub>, never below x<sub>0</sub> + 0.01.</td><td>Input or value solved with C<sub>T</sub> (Section 4).</td><td>Profile drag is still integrated to the tip.</td></tr>
 <tr><td>Ω<sub>nom</sub>, nominal speed</td><td>Design speed stored with the rotor [rpm].</td><td>Input.</td><td>Only seeds the rotor speed on Conditions.</td></tr>
 </table></div>
 <div class="note info"><b>Reference-planform rule.</b> The analytical load integrals use the local solidity σ(x) and the explicit lower limit x<sub>0</sub>. Do not replace this local solidity with actual-blade solidity. That substitution would apply the root cutout twice.</div>
@@ -190,9 +190,9 @@ main{overflow-x:hidden}
 
 <h3 id="s-tip-loss">Tip Loss</h3>
 <div class="tw"><table><tr><th>Mode</th><th>B</th><th>Effect</th></tr>
-<tr><td>None</td><td>1</td><td>Loading integrated to the tip. Optimistic.</td></tr>
+<tr><td>None</td><td>1</td><td>Loading extends to the physical tip. No tip-loss correction is applied.</td></tr>
 <tr><td>Fixed</td><td>typed value, at least x<sub>0</sub> + 0.01</td><td>Lift is cut at x = B and the momentum area is B²A.</td></tr>
-<tr><td>Sissingh</td><td>1 − √(2C<sub>T</sub>)/N<sub>b</sub>, at least x<sub>0</sub> + 0.01</td><td>B depends on C<sub>T</sub> and C<sub>T</sub> on B: the engine repeats the inflow solution up to 8 times until ΔB &lt; 10<sup>-8</sup>.</td></tr></table></div>
+<tr><td>Sissingh</td><td>1 − √(2C<sub>T</sub>)/N<sub>b</sub>, at least x<sub>0</sub> + 0.01</td><td>B and C<sub>T</sub> are coupled. RotorCalculator repeats the inflow solution until ΔB &lt; 10<sup>-8</sup>, with a maximum of 8 iterations.</td></tr></table></div>
 <p>Tip loss truncates lift-producing loading at x = B and uses B²A in the momentum closure. Profile drag remains integrated to the physical tip. Sissingh couples B to C<sub>T</sub>, so RotorCalculator iterates the tip factor and inflow solution together.</p>
 
 <h3 id="s-induced-power-factor">Induced Power Factor</h3>
@@ -289,10 +289,10 @@ main{overflow-x:hidden}
 <tr><td>v<sub>i</sub>, induced velocity</td><td><math><mrow><msub><mi>v</mi><mi>i</mi></msub><mo>=</mo><msub><mi>λ</mi><mi>i</mi></msub><mspace width="0.17em"/><mi>Ω</mi><mi>R</mi></mrow></math></td><td>m/s.</td></tr>
 <tr><td>C<sub>T</sub>/σ<sub>TR</sub>, blade loading</td><td><math><mrow><msub><mi>C</mi><mi>T</mi></msub><mo>/</mo><msub><mi>σ</mi><mrow><mi mathvariant="normal">TR</mi></mrow></msub></mrow></math></td><td>Use with section lift limits. The model does not calculate stall.</td></tr>
 <tr><td>C̄<sub>L</sub>, mean lift coefficient</td><td><math><mrow><msub><mover accent="true"><mi>C</mi><mo>¯</mo></mover><mi>L</mi></msub><mo>=</mo><mn>6</mn><mspace width="0.17em"/><msub><mi>C</mi><mi>T</mi></msub><mo>/</mo><msub><mi>σ</mi><mrow><mi mathvariant="normal">TR</mi></mrow></msub></mrow></math></td><td>Exact for uniform loading: C<sub>T</sub> = σ<sub>TR</sub>C̄<sub>L</sub>/6. Compare with C<sub>l,max</sub> of the section.</td></tr>
-<tr><td>FM, figure of merit</td><td><math><mrow><mi>F</mi><mi>M</mi><mo>=</mo><mfrac><mrow><msubsup><mi>C</mi><mi>T</mi><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msubsup><mo>/</mo><msqrt><mn>2</mn></msqrt></mrow><mrow><msub><mi>k</mi><mi mathvariant="normal">ind</mi></msub><mspace width="0.17em"/><msubsup><mi>C</mi><mi>T</mi><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msubsup><mo>/</mo><msqrt><mn>2</mn></msqrt><mo>+</mo><msub><mi>C</mi><mi mathvariant="normal">Q0</mi></msub></mrow></mfrac></mrow></math></td><td>Hover only; shown as a dash otherwise. Ideal hover power over actual hover power.</td></tr>
+<tr><td>FM, figure of merit</td><td><math><mrow><mi>F</mi><mi>M</mi><mo>=</mo><mfrac><mrow><msubsup><mi>C</mi><mi>T</mi><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msubsup><mo>/</mo><msqrt><mn>2</mn></msqrt></mrow><mrow><msub><mi>k</mi><mi mathvariant="normal">ind</mi></msub><mspace width="0.17em"/><msubsup><mi>C</mi><mi>T</mi><mrow><mn>3</mn><mo>/</mo><mn>2</mn></mrow></msubsup><mo>/</mo><msqrt><mn>2</mn></msqrt><mo>+</mo><msub><mi>C</mi><mi mathvariant="normal">Q0</mi></msub></mrow></mfrac></mrow></math></td><td>Defined only in hover. Ratio of ideal hover power to modeled hover power.</td></tr>
 <tr><td>(L/D)<sub>e</sub></td><td><math><mrow><mo>(</mo><mi>L</mi><mo>/</mo><mi>D</mi><msub><mo>)</mo><mi>e</mi></msub><mo>=</mo><mi>μ</mi><mspace width="0.17em"/><msub><mi>C</mi><mi>T</mi></msub><mo>/</mo><msub><mi>C</mi><mi mathvariant="normal">Pair</mi></msub></mrow></math></td><td>Zero in hover.</td></tr>
-<tr><td>μ/λ</td><td><math><mrow><mi>μ</mi><mo>/</mo><mi>λ</mi><mo>=</mo><msub><mi>μ</mi><mi>x</mi></msub><mo>/</mo><mo>(</mo><msub><mi>μ</mi><mi>z</mi></msub><mo>+</mo><msub><mi>λ</mi><mi>i</mi></msub><mo>)</mo></mrow></math></td><td>Advance-to-inflow ratio. Drives the wake skew angle: tan χ = μ/λ for λ &gt; 0.</td></tr>
-<tr><td>λ<sub>h</sub>, hover inflow ratio</td><td><math><mrow><msub><mi>λ</mi><mi>h</mi></msub><mo>=</mo><msqrt><mrow><msub><mi>C</mi><mi>T</mi></msub><mo>/</mo><mn>2</mn></mrow></msqrt></mrow></math></td><td>Reference scale. λ<sub>i</sub>/λ<sub>h</sub> shows the relief by flow.</td></tr>
+<tr><td>μ/λ</td><td><math><mrow><mi>μ</mi><mo>/</mo><mi>λ</mi><mo>=</mo><msub><mi>μ</mi><mi>x</mi></msub><mo>/</mo><mo>(</mo><msub><mi>μ</mi><mi>z</mi></msub><mo>+</mo><msub><mi>λ</mi><mi>i</mi></msub><mo>)</mo></mrow></math></td><td>Advance-to-inflow ratio used in the wake-skew relation: tan χ = μ/λ for λ &gt; 0.</td></tr>
+<tr><td>λ<sub>h</sub>, hover inflow ratio</td><td><math><mrow><msub><mi>λ</mi><mi>h</mi></msub><mo>=</mo><msqrt><mrow><msub><mi>C</mi><mi>T</mi></msub><mo>/</mo><mn>2</mn></mrow></msqrt></mrow></math></td><td>Ideal-hover reference. λ<sub>i</sub>/λ<sub>h</sub> compares induced inflow with this reference.</td></tr>
 <tr><td>T<sub>c</sub></td><td><math><mrow><msub><mi>T</mi><mi>c</mi></msub><mo>=</mo><mfrac><mrow><mi>T</mi></mrow><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mi>ρ</mi><msup><mi>V</mi><mn>2</mn></msup><mi>A</mi></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>2</mn><msub><mi>C</mi><mi>T</mi></msub></mrow><mrow><msubsup><mi>μ</mi><mo>∞</mo><mn>2</mn></msubsup></mrow></mfrac></mrow></math></td><td>Dynamic-pressure thrust coefficient. V = √(V<sub>x</sub>² + V<sub>z</sub>²). Undefined in hover.</td></tr>
 <tr><td>P<sub>c</sub></td><td><math><mrow><msub><mi>P</mi><mi>c</mi></msub><mo>=</mo><mfrac><mrow><mi>P</mi></mrow><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mi>ρ</mi><msup><mi>V</mi><mn>3</mn></msup><mi>A</mi></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>2</mn><msub><mi>C</mi><mi>P</mi></msub></mrow><mrow><msubsup><mi>μ</mi><mo>∞</mo><mn>3</mn></msubsup></mrow></mfrac></mrow></math></td><td>Dynamic power coefficient (dynamic-pressure power coefficient). Undefined in hover.</td></tr>
 <tr><td>ΩR, tip speed</td><td><math><mrow><mi>Ω</mi><mi>R</mi><mo>=</mo><mn>2</mn><mi>π</mi><mspace width="0.17em"/><mi mathvariant="normal">rpm</mi><mspace width="0.17em"/><mi>R</mi><mo>/</mo><mn>60</mn></mrow></math></td><td>m/s.</td></tr>
@@ -322,19 +322,19 @@ main{overflow-x:hidden}
 <tr><td>Ω and Δθ</td><td>C<sub>T</sub>, T</td><td>Direct evaluation.</td></tr>
 <tr><td>Ω and C<sub>T</sub></td><td>Δθ, T</td><td>Collective bisection until C<sub>T</sub> matches.</td></tr>
 <tr><td>Ω and T</td><td>Δθ, C<sub>T</sub></td><td>Collective bisection until T matches.</td></tr>
-<tr><td>Δθ and C<sub>T</sub></td><td>Ω, T</td><td>Search for the speed that gives the target. Invalid if non-unique or absent (for example with only dimensionless flow and no Prandtl-Glauert, C<sub>T</sub> does not depend on Ω).</td></tr>
-<tr><td>Δθ and T</td><td>Ω, C<sub>T</sub></td><td>Search for the speed that gives the target thrust.</td></tr>
+<tr><td>Δθ and C<sub>T</sub></td><td>Ω, T</td><td>Solve Ω for the target C<sub>T</sub>. The solution is invalid if Ω does not uniquely determine C<sub>T</sub> in the selected state.</td></tr>
+<tr><td>Δθ and T</td><td>Ω, C<sub>T</sub></td><td>Solve Ω for the target thrust.</td></tr>
 <tr><td>C<sub>T</sub> and T</td><td>Ω, Δθ</td><td><math><mrow><mi>Ω</mi><mi>R</mi><mo>=</mo><msqrt><mrow><mi>T</mi><mo>/</mo><mo>(</mo><mi>ρ</mi><mi>A</mi><mspace width="0.17em"/><msub><mi>C</mi><mi>T</mi></msub><mo>)</mo></mrow></msqrt></mrow></math> directly, then collective bisection.</td></tr></table></div>
 <p>Each trim trial recalculates inflow. A solution is valid only when the target residual is bracketed by valid aerodynamic states.</p>
 
 <h3 id="s-sweep-trim-modes">Sweep Trim Modes</h3>
 <p>A sweep changes the horizontal-flow condition. The sweep trim mode defines which control remains fixed and which control is solved at each point.</p>
 <div class="tw"><table class="wide"><tr><th>Mode</th><th>Held fixed</th><th>Re-solved</th></tr>
-<tr><td>No Trim (Fixed Controls)</td><td>Δθ and Ω from Conditions</td><td>Nothing; thrust varies with μ.</td></tr>
-<tr><td>Trim Collective Δθ · Every Point</td><td>Ω</td><td>Δθ at every μ so the target holds.</td></tr>
-<tr><td>Trim Rotor Speed Ω · Every Point</td><td>Δθ</td><td>Ω at every μ so the target holds.</td></tr>
-<tr><td>Trim Collective Δθ · Hover Only</td><td>Δθ from μ = 0, and Ω</td><td>Δθ once at μ = 0; thrust varies with μ.</td></tr>
-<tr><td>Trim Rotor Speed Ω · Hover Only</td><td>Ω from μ = 0, and Δθ</td><td>Ω once at μ = 0; thrust varies with μ.</td></tr></table></div>
+<tr><td>No Trim (Fixed Controls)</td><td>Δθ and Ω from Conditions</td><td>No control is solved. Thrust varies with μ.</td></tr>
+<tr><td>Trim Collective Δθ · Every Point</td><td>Ω</td><td>Solve Δθ at every μ to maintain the target.</td></tr>
+<tr><td>Trim Rotor Speed Ω · Every Point</td><td>Δθ</td><td>Solve Ω at every μ to maintain the target.</td></tr>
+<tr><td>Trim Collective Δθ · Hover Only</td><td>Δθ from μ = 0, and Ω</td><td>Solve Δθ once at μ = 0. Hold Δθ fixed for the sweep.</td></tr>
+<tr><td>Trim Rotor Speed Ω · Hover Only</td><td>Ω from μ = 0, and Δθ</td><td>Solve Ω once at μ = 0. Hold Ω fixed for the sweep.</td></tr></table></div>
 <p>The trim target is the active C<sub>T</sub> or thrust target from Conditions. A hover-only trim solves the selected control at μ = 0 and then holds that control fixed for the remaining sweep points.</p>
 <h2 id="scope">8. Model Scope and Limits <a class="top" href="#top">top</a></h2>
 <p>Use the model inside the assumptions below. A numerically converged solution is not evidence that the physical assumptions are valid.</p>
