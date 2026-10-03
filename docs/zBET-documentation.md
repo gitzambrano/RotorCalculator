@@ -1,35 +1,37 @@
-# zBET — Theory, Implementation, and Model Scope
+# Rotor Calculator — Theory, Implementation, and Model Scope
 
 ## 1. Purpose
 
-**zBET** is a fast, semi-empirical Blade Element Theory (BET) rotor solver intended for conceptual design, parametric sweeps, and preliminary performance studies. The implementation combines:
+**Rotor Calculator** is a fast, semi-empirical Blade Element Theory (BET) rotor solver designed for conceptual design, parametric sweeps, and preliminary performance studies.
+
+The implementation combines:
 
 - analytical radial moments for the main blade-element loads;
 - global momentum theory for mean induced velocity;
 - first-harmonic inflow-gradient models;
 - selectable profile-drag formulations;
 - selectable direct-BET or energy-balance induced torque; and
-- an energy balance for the reported air-power coefficient `CPair`.
+- an energy balance for the reported air-power coefficient $C_{Pair}$.
 
 The implementation is deliberately lighter than a comprehensive rotorcraft analysis. It does **not** solve blade dynamics, cyclic trim, nonlinear airfoil tables, dynamic stall, or a local momentum equation at each annulus.
 
 ### 1.1 Literature basis
 
-The implementation has been checked against the formulation and interpretation used in:
+The formulation has been checked against:
 
 - Wayne Johnson, *Rotorcraft Aeromechanics*, especially Chapter 6 (forward-flight section forces, rotor forces, and power), Chapter 7 (performance), and the profile-power discussion in Section 6.23.
 - J. Gordon Leishman, *Principles of Helicopter Aerodynamics*, especially Chapter 3 (blade-element analysis) and Chapter 5 (helicopter performance).
 
-Both references distinguish the **general blade-element force integration** from the **closed-form formulas obtained after simplifying assumptions**. Johnson also shows that force-balance and energy-balance methods are equivalent when they are built from the same assumptions and load model.
+Both references distinguish the **general blade-element force integration** from the **closed-form formulas obtained after simplifying assumptions**. Johnson also shows that force-balance and energy-balance methods are equivalent when built from the same assumptions and load model.
 
 ### 1.2 Aerodynamic model selectors
 
-zBET exposes two independent selectors.
+Rotor Calculator exposes two independent selectors.
 
 **Induced shaft torque**
 
-- `analytical_bet`: compute $C_{Qi}$ from the direct BET torque integral;
-- `energy_balance`: infer $C_{Qi}$ by reversing the energy balance; the direct induced-torque integral is not evaluated in this mode,
+- `analytical_bet`: compute $C_{Qi}$ from the direct BET torque integral.
+- `energy_balance`: infer $C_{Qi}$ by reversing the energy balance. The direct induced-torque integral is not evaluated in this mode:
 
 $$
 \boxed{
@@ -47,8 +49,8 @@ The default is `energy_balance`.
 
 **Profile drag**
 
-- `analytical_tangential`: tangential-only closed-form $C_{H0}$ and $C_{Q0}$;
-- `analytical_vectorial`: low-order vectorial closed form;
+- `analytical_tangential`: tangential-only closed-form $C_{H0}$ and $C_{Q0}$.
+- `analytical_vectorial`: low-order vectorial closed form.
 - `numerical_vectorial`: direct radial/azimuthal vector quadrature.
 
 The default is `numerical_vectorial`.
@@ -63,8 +65,8 @@ $K_{\mathrm{ind}}$ is used only by energy-balance quantities: the `energy_balanc
 
 The hub-centered Cartesian axes are:
 
-- $+x$: forward;
-- $+y$: right / starboard;
+- $+x$: forward.
+- $+y$: right (starboard).
 - $+z$: downward through the rotor disk.
 
 Positive thrust acts upward, therefore along $-z$.
@@ -76,35 +78,37 @@ Viewed from above, the rotor rotates counter-clockwise. The advancing side is th
 The local nondimensional tangential velocity is
 
 $$
-u_T = x + \mu \sin\psi
+u_T = x + \mu \sin\psi,
 $$
 
-with
-
-$
-x=\frac{r}{R},
-\qquad
-\mu=\frac{V_x}{\Omega R}.
-$
-
-Here $V_x>0$ is forward in-plane free-stream velocity.
-
-At $\psi=90^\circ$,
+where
 
 $$
-u_T=x+\mu,
+x = \frac{r}{R},
 $$
 
-and at $\psi=270^\circ$,
+$$
+\mu = \frac{V_x}{\Omega R}.
+$$
+
+Here $V_x > 0$ is the forward in-plane free-stream velocity.
+
+At $\psi = 90°$:
 
 $$
-u_T=x-\mu.
+u_T = x + \mu.
+$$
+
+At $\psi = 270°$:
+
+$$
+u_T = x - \mu.
 $$
 
 The in-plane radial velocity used by the profile quadrature is
 
 $$
-u_R=\mu\cos\psi.
+u_R = \mu\cos\psi.
 $$
 
 ### 2.3 Axial flow
@@ -112,59 +116,69 @@ $$
 The total mean inflow used by the analytical lift model is
 
 $$
-\lambda=\mu_z+\lambda_i,
+\lambda = \mu_z + \lambda_i,
 $$
 
-where $\lambda_i\ge 0$ is induced downwash in the $+z$ direction.
+where $\lambda_i \ge 0$ is induced downwash in the $+z$ direction.
 
 The code and UI convention is:
 
-- $V_z>0$: imposed relative flow is downward through the disk;
-- $\mu_z=V_z/(\Omega R)$, so $\mu_z>0$ is also downward;
-- rotor angle of attack $\alpha>0$ means the free stream arrives from below the disk.
+- $V_z > 0$: imposed relative flow is downward through the disk.
+- $\mu_z = V_z / (\Omega R)$, so $\mu_z > 0$ is also downward.
+- Rotor angle of attack $\alpha > 0$ means the free stream arrives from below the disk.
 
-Therefore, when the axial state is prescribed by angle,
+Therefore, when the axial state is prescribed by angle:
 
-$
-\mu_z=-\mu\tan\alpha.
-$
+$$
+\mu_z = -\mu\tan\alpha.
+$$
 
-The three inputs $\alpha$, $V_z$, and $\mu_z$ are **alternative representations of the same axial operating condition**. They are not additive inputs. Likewise, $V_x$ and $\mu$ are alternative horizontal representations linked by $\mu=V_x/(\Omega R)$. At $V_x=0$, a nonzero axial condition should be specified with $V_z$ or $\mu_z$, because $\alpha$ alone is not a unique representation.
+The three inputs $\alpha$, $V_z$, and $\mu_z$ are **alternative representations of the same axial operating condition**. They are not additive. Likewise, $V_x$ and $\mu$ are alternative horizontal representations linked by $\mu = V_x / (\Omega R)$.
+
+At $V_x = 0$, use $V_z$ or $\mu_z$ to specify a nonzero axial condition, because $\alpha$ alone is not unique at zero advance ratio.
 
 ### 2.4 Rotor loads
 
 The nondimensional coefficients are
 
 $$
-C_T=\frac{T}{\rho A(\Omega R)^2},
-\qquad
-C_H=\frac{H}{\rho A(\Omega R)^2},
-\qquad
-C_Y=\frac{Y}{\rho A(\Omega R)^2},
+C_T = \frac{T}{\rho A (\Omega R)^2},
 $$
 
 $$
-C_Q=\frac{Q}{\rho A(\Omega R)^2R},
-\qquad
-C_{Mx}=\frac{M_x}{\rho A(\Omega R)^2R},
-\qquad
-C_{My}=\frac{M_y}{\rho A(\Omega R)^2R},
+C_H = \frac{H}{\rho A (\Omega R)^2},
+$$
+
+$$
+C_Y = \frac{Y}{\rho A (\Omega R)^2},
+$$
+
+$$
+C_Q = \frac{Q}{\rho A (\Omega R)^2 R},
+$$
+
+$$
+C_{Mx} = \frac{M_x}{\rho A (\Omega R)^2 R},
+$$
+
+$$
+C_{My} = \frac{M_y}{\rho A (\Omega R)^2 R},
 $$
 
 with
 
 $$
-A=\pi R^2.
+A = \pi R^2.
 $$
 
 Sign conventions:
 
-- $C_T>0$: upward rotor thrust;
-- $C_H>0$: aft rotor drag;
-- $C_Y>0$: force toward starboard;
-- $C_Q>0$: positive shaft-torque magnitude required to power the rotor;
-- $C_{Mx}>0$: right wing down;
-- $C_{My}>0$: nose up.
+- $C_T > 0$: upward rotor thrust.
+- $C_H > 0$: aft rotor drag.
+- $C_Y > 0$: force toward starboard.
+- $C_Q > 0$: positive shaft-torque magnitude required to power the rotor.
+- $C_{Mx} > 0$: right wing down.
+- $C_{My} > 0$: nose up.
 
 ---
 
@@ -173,21 +187,21 @@ Sign conventions:
 The lifting span starts at
 
 $$
-x_0=\frac{r_0}{R}.
+x_0 = \frac{r_0}{R}.
 $$
 
-For a linear chord distribution,
+For a linear chord distribution:
 
 $$
-c(x)=c_{\mathrm{root}}
-+\left(c_{\mathrm{tip}}-c_{\mathrm{root}}\right)
-\frac{x-x_0}{1-x_0}.
+c(x) = c_{\mathrm{root}}
++ \left(c_{\mathrm{tip}} - c_{\mathrm{root}}\right)
+\frac{x - x_0}{1 - x_0}.
 $$
 
 The local rotor solidity is
 
 $$
-\sigma(x)=\frac{Nc(x)}{\pi R}=s_0+s_1x.
+\sigma(x) = \frac{N c(x)}{\pi R} = s_0 + s_1 x.
 $$
 
 ### 3.1 Reference solidity
@@ -199,13 +213,13 @@ $$
 =
 \int_0^1 \sigma(x)\,dx
 =
-s_0+\frac{s_1}{2}.
+s_0 + \frac{s_1}{2}.
 $$
 
-For a rectangular blade,
+For a rectangular blade:
 
 $$
-\sigma_{\mathrm{ref}}=\frac{Nc}{\pi R}.
+\sigma_{\mathrm{ref}} = \frac{Nc}{\pi R}.
 $$
 
 ### 3.2 Physical geometric solidity
@@ -215,33 +229,33 @@ The actual blade area begins at the root cutout:
 $$
 \sigma_{\mathrm{geom}}
 =
-\int_{x_0}^1\sigma(x)\,dx.
+\int_{x_0}^1 \sigma(x)\,dx.
 $$
 
-For a rectangular blade,
+For a rectangular blade:
 
 $$
 \sigma_{\mathrm{geom}}
 =
-(1-x_0)\sigma_{\mathrm{ref}}.
+(1 - x_0)\,\sigma_{\mathrm{ref}}.
 $$
 
 ### 3.3 Thrust-weighted solidity
 
-zBET also reports
+Rotor Calculator also reports
 
 $$
 \sigma_{\mathrm{thrust}}
 =
-3\int_{x_0}^1\sigma(x)x^2\,dx.
+3\int_{x_0}^1 \sigma(x)\,x^2\,dx.
 $$
 
-For a rectangular blade,
+For a rectangular blade:
 
 $$
 \sigma_{\mathrm{thrust}}
 =
-(1-x_0^3)\sigma_{\mathrm{ref}}.
+(1 - x_0^3)\,\sigma_{\mathrm{ref}}.
 $$
 
 ### 3.4 Why the BET equations use local solidity
@@ -249,23 +263,23 @@ $$
 The section force is proportional to local chord. Therefore the BET integrands are naturally scaled by
 
 $$
-\sigma(x)=\frac{Nc(x)}{\pi R}.
+\sigma(x) = \frac{N c(x)}{\pi R}.
 $$
 
 The root cutout is already represented by the integration limits. Replacing local solidity by the physical-area solidity inside an integral that already begins at $x_0$ would apply the root-cutout penalty twice.
 
 ### 3.5 Pitch
 
-For constant pitch,
+For constant pitch:
 
 $$
-\theta(x)=\theta_0.
+\theta(x) = \theta_0.
 $$
 
-For linear twist,
+For linear twist:
 
 $$
-\theta(x)=t_0+t_1x.
+\theta(x) = t_0 + t_1 x.
 $$
 
 Collective trim shifts the complete pitch distribution by a constant and preserves the specified twist.
@@ -291,9 +305,11 @@ $$
 with
 
 $$
-\lambda_{1c}=K_x\lambda_i,
-\qquad
-\lambda_{1s}=K_y\lambda_i.
+\lambda_{1c} = K_x \lambda_i,
+$$
+
+$$
+\lambda_{1s} = K_y \lambda_i.
 $$
 
 The wake-skew helper used by the code is
@@ -302,23 +318,27 @@ $$
 \tan\frac{\chi}{2}
 =
 \frac{\mu}
-{\sqrt{\mu^2+\lambda^2}+|\lambda|}.
+{\sqrt{\mu^2 + \lambda^2} + |\lambda|}.
 $$
 
 ### 4.1 Uniform
 
 $$
-K_x=0,
-\qquad
-K_y=0.
+K_x = 0,
+$$
+
+$$
+K_y = 0.
 $$
 
 ### 4.2 Coleman
 
 $$
-K_x=\tan\frac{\chi}{2},
-\qquad
-K_y=0.
+K_x = \tan\frac{\chi}{2},
+$$
+
+$$
+K_y = 0.
 $$
 
 ### 4.3 Coleman-Feingold / NDARC form
@@ -326,10 +346,12 @@ $$
 $$
 K_x
 =
-f_x\frac{15\pi}{32}
+f_x \frac{15\pi}{32}
 \tan\frac{\chi}{2},
-\qquad
-K_y=-2f_y\mu.
+$$
+
+$$
+K_y = -2 f_y \mu.
 $$
 
 ### 4.4 Drees
@@ -338,36 +360,32 @@ $$
 K_x
 =
 \frac{4}{3}
-\left(1-1.8\mu^2\right)
+\left(1 - 1.8\mu^2\right)
 \tan\frac{\chi}{2},
-\qquad
-K_y=-2\mu.
+$$
+
+$$
+K_y = -2\mu.
 $$
 
 ### 4.5 Mean momentum closure
 
-For a given blade pitch, zBET solves $\lambda_i$ from the intersection of analytical BET thrust and global momentum theory:
+For a given blade pitch, Rotor Calculator solves $\lambda_i$ from the intersection of analytical BET thrust and global momentum theory:
 
 $$
 C_T
 =
-2B^2\lambda_i
-\sqrt{\mu^2+\lambda^2}.
+2 B^2 \lambda_i
+\sqrt{\mu^2 + \lambda^2}.
 $$
 
-This is a **global** closure. zBET is therefore BET plus global momentum theory, not a multi-annulus BEMT solver.
+This is a **global** closure. Rotor Calculator uses BET plus global momentum theory, not a multi-annulus BEMT solver.
 
 ---
 
 ## 5. Hover Trim
 
-Hover trim is performed at
-
-$$
-\mu=0,
-\qquad
-\mu_z=0.
-$$
+Hover trim is performed at $\mu = 0$ and $\mu_z = 0$.
 
 ### 5.1 Collective trim
 
@@ -378,9 +396,7 @@ With fixed RPM, the pitch distribution is shifted until the requested hover $C_T
 With fixed pitch, RPM is adjusted using
 
 $$
-T
-=
-C_T\rho A(\Omega R)^2.
+T = C_T \rho A (\Omega R)^2.
 $$
 
 Therefore
@@ -402,20 +418,22 @@ With `HOVER_TRIM_MODE = "none"`, the specified RPM and pitch are used directly.
 
 ### 6.1 General blade-element reference model
 
-The general section-level BET picture in Johnson and Leishman starts from the local relative velocity, section angle of attack, lift, and drag. In a two-dimensional blade section plane,
+The general section-level BET picture in Johnson and Leishman starts from the local relative velocity, section angle of attack, lift, and drag. In a two-dimensional blade section plane:
 
 $$
 U_{2D}
 =
-\sqrt{u_T^2+u_P^2},
+\sqrt{u_T^2 + u_P^2},
 $$
 
 $$
 \phi
 =
 \tan^{-1}\left(\frac{u_P}{u_T}\right),
-\qquad
-\alpha_s=\theta-\phi.
+$$
+
+$$
+\alpha_s = \theta - \phi.
 $$
 
 The local lift and drag can then be resolved into normal and in-plane section forces:
@@ -423,45 +441,43 @@ The local lift and drag can then be resolved into normal and in-plane section fo
 $$
 dF_z
 =
-dL\cos\phi-dD\sin\phi,
+dL\cos\phi - dD\sin\phi,
 $$
 
 $$
 dF_x
 =
-dL\sin\phi+dD\cos\phi.
+dL\sin\phi + dD\cos\phi.
 $$
 
 A **fully integrated force-balance solver** would evaluate a common local aerodynamic state and consistently integrate the resulting forces for thrust, in-plane forces, torque, and hub moments over radius and azimuth.
 
-zBET does not currently expose a fully integrated force-balance model.
+Rotor Calculator does not currently expose a fully integrated force-balance model.
 
-### 6.2 Analytical weighted moments used by zBET
+### 6.2 Analytical weighted moments
 
-The principal zBET load model applies the standard small-inflow-angle analytical reduction and evaluates the radial dependence exactly through weighted moments.
+The principal load model applies the standard small-inflow-angle analytical reduction and evaluates the radial dependence exactly through weighted moments.
 
 Define
 
 $$
 J_n
 =
-\int_{x_0}^{B}x^n\,dx
+\int_{x_0}^{B} x^n\,dx
 =
-\frac{B^{n+1}-x_0^{n+1}}{n+1},
+\frac{B^{n+1} - x_0^{n+1}}{n+1},
 $$
 
 $$
 I_m
 =
-\int_{x_0}^{B}\sigma(x)x^m\,dx,
+\int_{x_0}^{B} \sigma(x)\,x^m\,dx,
 $$
-
-and
 
 $$
 T_m
 =
-\int_{x_0}^{B}\sigma(x)\theta(x)x^m\,dx.
+\int_{x_0}^{B} \sigma(x)\,\theta(x)\,x^m\,dx.
 $$
 
 Because $\sigma(x)$ and $\theta(x)$ are linear in $x$, these moments are evaluated analytically.
@@ -475,13 +491,13 @@ C_T
 \left[
 T_2
 +
-\frac{\mu^2}{2}T_0
+\frac{\mu^2}{2} T_0
 -
 \left(
 \lambda
 +
-\frac{\mu\lambda_{1s}}{2}
-\right)I_1
+\frac{\mu \lambda_{1s}}{2}
+\right) I_1
 \right].
 $$
 
@@ -492,11 +508,11 @@ C_{Hi}
 =
 \frac{a}{4}
 \left[
-\lambda\mu T_0
+\lambda \mu\, T_0
 +
 \lambda_{1s}
 \left(
-T_2-2\lambda I_1
+T_2 - 2\lambda I_1
 \right)
 \right].
 $$
@@ -506,9 +522,9 @@ The side force is
 $$
 C_Y
 =
--\frac{a\lambda_{1c}}{4}
+-\frac{a \lambda_{1c}}{4}
 \left(
-T_2-2\lambda I_1
+T_2 - 2\lambda I_1
 \right).
 $$
 
@@ -519,10 +535,10 @@ C_{Mx}
 =
 -\frac{a\mu}{2}
 \left(
-T_2-\frac{\lambda I_1}{2}
+T_2 - \frac{\lambda I_1}{2}
 \right)
 +
-\frac{a\lambda_{1s}}{4}I_3.
+\frac{a \lambda_{1s}}{4} I_3.
 $$
 
 The pitching moment is
@@ -530,7 +546,7 @@ The pitching moment is
 $$
 C_{My}
 =
-\frac{a\lambda_{1c}}{4}I_3.
+\frac{a \lambda_{1c}}{4} I_3.
 $$
 
 These expressions are independent of the profile-drag torque integration described below.
@@ -541,35 +557,39 @@ All profile models return $C_{H0}$ and $C_{Q0}$.
 
 #### Tangential analytical model
 
-Neglecting the radial component of profile drag,
+Neglecting the radial component of profile drag:
 
 $$
 \boxed{
 C_{H0}^{\mathrm{tang}}
 =
-\frac{C_{d0}\mu}{2}I_1
+\frac{C_{d0}\,\mu}{2}\,I_1
 }
 $$
-
-and
 
 $$
 \boxed{
 C_{Q0}^{\mathrm{tang}}
 =
-\frac{C_{d0}}2
+\frac{C_{d0}}{2}
 \left(
-I_3+\frac{\mu^2}{2}I_1
+I_3 + \frac{\mu^2}{2}\,I_1
 \right)
-}.
+}
 $$
 
-For a rectangular blade without root cutout,
+For a rectangular blade without root cutout:
 
 $$
-C_{H0}^{\mathrm{tang}}=\frac{\sigma C_{d0}}4\mu,
-\qquad
-C_{Q0}^{\mathrm{tang}}=\frac{\sigma C_{d0}}8(1+\mu^2).
+C_{H0}^{\mathrm{tang}}
+=
+\frac{\sigma C_{d0}}{4}\,\mu,
+$$
+
+$$
+C_{Q0}^{\mathrm{tang}}
+=
+\frac{\sigma C_{d0}}{8}(1 + \mu^2).
 $$
 
 #### Low-order vectorial analytical model
@@ -580,32 +600,37 @@ $$
 \boxed{
 C_{H0}^{\mathrm{vec}}
 =
-\frac{3C_{d0}\mu}{4}I_1
+\frac{3 C_{d0}\,\mu}{4}\,I_1
 }
 $$
-
-and
 
 $$
 \boxed{
 C_{Q0}^{\mathrm{vec}}
 =
-\frac{C_{d0}}2
+\frac{C_{d0}}{2}
 \left[
-I_3+
+I_3
++
 \left(
-\frac34\mu^2+\frac12\mu_z^2
-\right)I_1
+\frac{3}{4}\mu^2 + \frac{1}{2}\mu_z^2
+\right) I_1
 \right]
-}.
+}
 $$
 
-For a rectangular blade in edgewise flight without root cutout,
+For a rectangular blade in edgewise flight without root cutout:
 
 $$
-C_{H0}^{\mathrm{vec}}\simeq\frac{3\sigma C_{d0}}8\mu,
-\qquad
-C_{Q0}^{\mathrm{vec}}\simeq\frac{\sigma C_{d0}}8(1+1.5\mu^2).
+C_{H0}^{\mathrm{vec}}
+\simeq
+\frac{3\sigma C_{d0}}{8}\,\mu,
+$$
+
+$$
+C_{Q0}^{\mathrm{vec}}
+\simeq
+\frac{\sigma C_{d0}}{8}(1 + 1.5\mu^2).
 $$
 
 #### Numerical vectorial model
@@ -616,26 +641,24 @@ $$
 \boxed{
 C_{H0}
 =
-\frac{C_{d0}}2
+\frac{C_{d0}}{2}
 \int_{x_0}^{1}
 \sigma(x)
 \left\langle
-W(x\sin\psi+\mu)
+W(x\sin\psi + \mu)
 \right\rangle_\psi dx
 }
 $$
-
-and
 
 $$
 \boxed{
 C_{Q0}
 =
-\frac{C_{d0}}2
+\frac{C_{d0}}{2}
 \int_{x_0}^{1}
 \sigma(x)
 \left\langle
-Wu_Tx
+W u_T x
 \right\rangle_\psi dx
 }
 $$
@@ -643,14 +666,19 @@ $$
 with
 
 $$
-u_T=x+\mu\sin\psi,
-\qquad
-u_R=\mu\cos\psi,
-\qquad
-W=\sqrt{u_T^2+u_R^2+\mu_z^2}.
+u_T = x + \mu\sin\psi,
 $$
 
-The physical blade span $x_0\le x\le1$ is used for profile drag.
+$$
+u_R = \mu\cos\psi,
+$$
+
+$$
+W = \sqrt{u_T^2 + u_R^2 + \mu_z^2}.
+$$
+
+The physical blade span $x_0 \le x \le 1$ is used for profile drag.
+
 ### 6.4 Induced shaft torque selector
 
 For `analytical_bet`, $C_{Qi}$ is obtained directly from the moment of the lift-induced in-plane force about the shaft:
@@ -659,18 +687,18 @@ $$
 \boxed{
 C_{Qi}^{\mathrm{BET}}
 =
-\frac12
+\frac{1}{2}
 \int_{x_0}^{B}
-\sigma(x)a
+\sigma(x)\,a
 \left[
-\left(\lambda+\frac{\mu\lambda_{1s}}2\right)
-\theta(x)x^2
+\left(\lambda + \frac{\mu \lambda_{1s}}{2}\right)
+\theta(x)\,x^2
 -
-\lambda^2x
+\lambda^2 x
 -
-\frac{\lambda_{1c}^2+\lambda_{1s}^2}{2}x^3
-\right]dx
-}.
+\frac{\lambda_{1c}^2 + \lambda_{1s}^2}{2}\,x^3
+\right] dx
+}
 $$
 
 For `energy_balance`, the same shaft-torque component is inferred from the power balance:
@@ -679,22 +707,23 @@ $$
 \boxed{
 C_{Qi}^{\mathrm{EB}}
 =
-K_{\mathrm{ind}}\lambda_iC_T
+K_{\mathrm{ind}} \lambda_i C_T
 +
-\mu_zC_T
+\mu_z C_T
 -
 \mu C_{Hi}
-}.
+}
 $$
 
 Thus $K_{\mathrm{ind}}$ appears in the energy-balance torque mode, but not in the direct BET torque mode.
+
 ### 6.5 Total shaft torque
 
 $$
-\boxed{C_Q=C_{Qi}+C_{Q0}}.
+\boxed{C_Q = C_{Qi} + C_{Q0}}
 $$
 
-$C_Q$ always remains $C_{Qi}+C_{Q0}$. Which expression supplies $C_{Qi}$ and $C_{Q0}$ is controlled by the two selectors above.
+$C_Q$ always equals $C_{Qi} + C_{Q0}$. Which expression supplies each component is controlled by the two selectors above.
 
 ### 6.6 Scope of the mixed analytical/numerical formulation
 
@@ -707,43 +736,43 @@ Lift-induced loads remain analytical weighted-moment expressions. The profile qu
 ### 7.1 Shaft power
 
 $$
-P_{\mathrm{shaft}}=Q\Omega.
+P_{\mathrm{shaft}} = Q \Omega.
 $$
 
-In coefficient form,
+In coefficient form:
 
 $$
-C_{P,\mathrm{shaft}}=C_Q.
+C_{P,\mathrm{shaft}} = C_Q.
 $$
 
-No $\mu C_H$ term belongs to shaft power: $C_Q$ is the mechanical torque coefficient about the rotor axis.
+No $\mu C_H$ term belongs to shaft power. $C_Q$ is the mechanical torque coefficient about the rotor axis.
 
-### 7.2 Air power (`CPair`)
+### 7.2 Air power (CPair)
 
-`CPair` is always evaluated from the energy balance, independently of the selected induced-torque mode.
+$C_{Pair}$ is always evaluated from the energy balance, independently of the selected induced-torque mode.
 
 The induced-power contribution is
 
 $$
 \boxed{
-C_{Pi}=K_{\mathrm{ind}}\lambda_iC_T
-}.
+C_{Pi} = K_{\mathrm{ind}} \lambda_i C_T
+}
 $$
 
 The climb contribution is
 
 $$
 \boxed{
-C_{Pc}=\mu_zC_T
-}.
+C_{Pc} = \mu_z C_T
+}
 $$
 
 The profile-drag contribution relative to the air is
 
 $$
 \boxed{
-C_{P0,\mathrm{air}}=C_{Q0}+\mu C_{H0}
-}.
+C_{P0,\mathrm{air}} = C_{Q0} + \mu C_{H0}
+}
 $$
 
 Therefore
@@ -752,38 +781,26 @@ $$
 \boxed{
 C_{Pair}
 =
-K_{\mathrm{ind}}\lambda_iC_T
+K_{\mathrm{ind}} \lambda_i C_T
 +
-\mu_zC_T
-+
-C_{P0,\mathrm{air}}
-}
-$$
-
-or, after expanding the profile term,
-
-$$
-\boxed{
-C_{Pair}
-=
-K_{\mathrm{ind}}\lambda_iC_T
-+
-\mu_zC_T
+\mu_z C_T
 +
 C_{Q0}
 +
 \mu C_{H0}
-}.
+}
 $$
 
-There is no additional $+\mu C_{Hi}$ term in this expression. In the `energy_balance` torque mode,
+There is no additional $+\mu C_{Hi}$ term in this expression.
+
+In the `energy_balance` torque mode:
 
 $$
 C_{Qi}^{\mathrm{EB}}
 =
-K_{\mathrm{ind}}\lambda_iC_T
+K_{\mathrm{ind}} \lambda_i C_T
 +
-\mu_zC_T
+\mu_z C_T
 -
 \mu C_{Hi},
 $$
@@ -791,39 +808,45 @@ $$
 so
 
 $$
-C_{Qi}^{\mathrm{EB}}+\mu C_{Hi}
+C_{Qi}^{\mathrm{EB}} + \mu C_{Hi}
 =
-K_{\mathrm{ind}}\lambda_iC_T+\mu_zC_T.
+K_{\mathrm{ind}} \lambda_i C_T + \mu_z C_T.
 $$
 
-Consequently, when `INDUCED_TORQUE_MODEL = "energy_balance"`,
+Consequently, when `INDUCED_TORQUE_MODEL = "energy_balance"`:
 
 $$
 \boxed{
-C_{Pair}=C_Q+\mu C_H
+C_{Pair} = C_Q + \mu C_H
 }
 $$
 
-because $C_Q=C_{Qi}+C_{Q0}$ and $C_H=C_{Hi}+C_{H0}$. This identity is a consistency check of the energy-balance mode. When `analytical_bet` is selected, $C_Q$ comes from the direct BET torque route while `CPair` remains the energy-balance estimate, so the two routes are intentionally independent and need not be identical.
+because $C_Q = C_{Qi} + C_{Q0}$ and $C_H = C_{Hi} + C_{H0}$.
+
+This identity is a consistency check. When `analytical_bet` is selected, $C_Q$ comes from the direct BET torque route while $C_{Pair}$ remains the energy-balance estimate, so the two routes are intentionally independent and need not be identical.
 
 For a rectangular blade in edgewise flight, the low-order vectorial profile terms are
 
 $$
-C_{Q0}\simeq\frac{\sigma C_{d0}}8(1+1.5\mu^2),
-\qquad
-C_{H0}\simeq\frac{3\sigma C_{d0}}8\mu.
+C_{Q0}
+\simeq
+\frac{\sigma C_{d0}}{8}(1 + 1.5\mu^2),
+$$
+
+$$
+C_{H0}
+\simeq
+\frac{3\sigma C_{d0}}{8}\,\mu.
 $$
 
 Hence
 
 $$
-\begin{aligned}
 C_{P0,\mathrm{air}}
-&=C_{Q0}+\mu C_{H0}\\
-&\simeq
-\frac{\sigma C_{d0}}8
-\left(1+1.5\mu^2+3\mu^2\right),
-\end{aligned}
+= C_{Q0} + \mu C_{H0}
+\simeq
+\frac{\sigma C_{d0}}{8}
+\left(1 + 1.5\mu^2 + 3\mu^2\right),
 $$
 
 and therefore
@@ -832,15 +855,15 @@ $$
 \boxed{
 C_{P0,\mathrm{air}}
 \simeq
-\frac{\sigma C_{d0}}8(1+4.5\mu^2)
-}.
+\frac{\sigma C_{d0}}{8}(1 + 4.5\mu^2)
+}
 $$
 
 The $4.5\mu^2$ factor belongs to profile power relative to the air, not to $C_{Q0}$.
 
 ### 7.3 Effective rotor lift-to-drag ratio
 
-For $\mu>0$,
+For $\mu > 0$:
 
 $$
 \left(\frac{L}{D}\right)_{\mathrm{eff}}
@@ -850,15 +873,19 @@ $$
 
 ### 7.4 Operating geometry after trim
 
-The Android UI reports the geometry actually used by the solver after trim through the result fields `TrimmedRPM` and `TrimmedTheta0Deg`. When RPM trim is active, any dimensional flow representation that depends on tip speed must use the solved value of $\Omega R$:
+The UI reports the geometry actually used by the solver after trim through the result fields `TrimmedRPM` and `TrimmedTheta0Deg`.
 
-$
-\mu = \frac{V_x}{\Omega_{trim}R},
-\qquad
-\mu_z = \frac{V_z}{\Omega_{trim}R}.
-$
+When RPM trim is active, any dimensional flow representation that depends on tip speed must use the solved value of $\Omega R$:
 
-The same resolved tip speed is used for the Sweep $V_x$ axis and Mach quantities. This avoids a mismatch where the UI would otherwise show a dimensional speed based on the nominal geometry while the aerodynamic calculation used a different trimmed RPM.
+$$
+\mu = \frac{V_x}{\Omega_{\mathrm{trim}} R},
+$$
+
+$$
+\mu_z = \frac{V_z}{\Omega_{\mathrm{trim}} R}.
+$$
+
+The same resolved tip speed is used for the sweep $V_x$ axis and Mach quantities. This avoids a mismatch where the UI would show a dimensional speed based on the nominal geometry while the aerodynamic calculation used a different trimmed RPM.
 
 ### 7.5 Hover figure of merit
 
@@ -867,7 +894,7 @@ The ideal hover power coefficient is
 $$
 C_{P,\mathrm{ideal}}
 =
-\frac{C_T^{3/2}}{\sqrt2}.
+\frac{C_T^{3/2}}{\sqrt{2}}.
 $$
 
 The performance model uses
@@ -876,7 +903,7 @@ $$
 C_{P,\mathrm{hover}}
 =
 K_{\mathrm{ind}}
-\frac{C_T^{3/2}}{\sqrt2}
+\frac{C_T^{3/2}}{\sqrt{2}}
 +
 C_{Q0},
 $$
@@ -887,9 +914,9 @@ $$
 \boxed{
 FoM
 =
-\frac{C_T^{3/2}/\sqrt2}
-{K_{\mathrm{ind}}C_T^{3/2}/\sqrt2+C_{Q0}}
-}.
+\frac{C_T^{3/2} / \sqrt{2}}
+{K_{\mathrm{ind}}\,C_T^{3/2} / \sqrt{2} + C_{Q0}}
+}
 $$
 
 This definition keeps $K_{\mathrm{ind}}$ in the hover energy balance even when the direct BET torque selector is used.
@@ -900,41 +927,41 @@ This definition keeps $K_{\mathrm{ind}}$ in the hover energy balance even when t
 
 ### 8.1 Tip loss
 
-zBET can use an effective aerodynamic radius $B$ and integrate the **lift-induced analytical moments** from $x_0$ to $B$. Profile drag is integrated over the physical blade span $x_0$ to $1$, because the blade material still produces drag outside the effective lift radius.
+Rotor Calculator can use an effective aerodynamic radius $B$ and integrate the **lift-induced analytical moments** from $x_0$ to $B$. Profile drag is integrated over the physical blade span $x_0$ to $1$, because the blade material still produces drag outside the effective lift radius.
 
 The optional Sissingh-style relation is
 
 $$
 B
 =
-1-\frac{\sqrt{2C_T}}{N}.
+1 - \frac{\sqrt{2 C_T}}{N}.
 $$
 
-The momentum closure also uses the effective area factor $B^2$. For Sissingh mode, $B$, $C_T$, and the inflow solution are iterated to mutual consistency (up to eight updates with a $10^{-8}$ change criterion); the same iteration is used by the Python reference and Android engine.
+The momentum closure also uses the effective area factor $B^2$. For Sissingh mode, $B$, $C_T$, and the inflow solution are iterated to mutual consistency (up to eight updates with a $10^{-8}$ change criterion).
 
 > This is an **effective-radius engineering approximation**. It should not be interpreted as a literal implementation of the full Prandtl finite-blade circulation/inflow correction.
 
 ### 8.2 Prandtl-Glauert lift-slope correction
 
-If enabled, zBET modifies the linear section lift-curve slope using the same representative subsonic Mach definition in Python and B4A:
+If enabled, Rotor Calculator modifies the linear section lift-curve slope using a representative subsonic Mach number:
 
-$
+$$
 M_{\mathrm{eff}}
 =
 \frac{\Omega R}{a_{\mathrm{sound}}}
-\sqrt{0.75^2+0.5\mu^2},
-$
+\sqrt{0.75^2 + 0.5\mu^2},
+$$
 
 with $M_{\mathrm{eff}}$ capped at $0.85$, and
 
-$
+$$
 a(M)
 =
 \frac{a_0}
-{\sqrt{\max(0.01,1-M_{\mathrm{eff}}^2)}}.
-$
+{\sqrt{\max(0.01,\;1 - M_{\mathrm{eff}}^2)}}.
+$$
 
-The reported advancing-tip Mach $M_{at}=\Omega R(1+\mu)/a_{\mathrm{sound}}$ is a separate operational caution metric. The representative Mach construction and cap are engineering approximations, not a local compressible-airfoil solution.
+The reported advancing-tip Mach $M_{at} = \Omega R(1+\mu) / a_{\mathrm{sound}}$ is a separate operational caution metric. The representative Mach construction and cap are engineering approximations, not a local compressible-airfoil solution.
 
 ---
 
@@ -942,21 +969,21 @@ The reported advancing-tip Mach $M_{at}=\Omega R(1+\mu)/a_{\mathrm{sound}}$ is a
 
 The current implementation is intentionally compact. Important limitations are:
 
-- small-angle analytical treatment for the principal lift-induced rotor loads;
-- linear section lift curve;
-- constant `CD0` rather than an airfoil polar;
-- no nonlinear stall or dynamic stall;
-- no cyclic-pitch trim;
-- no blade flapping solution in the aerodynamic load calculation;
-- no elastic blade motion;
-- no local annular momentum iteration;
-- no full reverse-flow airfoil model;
-- first-harmonic prescribed inflow gradients rather than a free wake;
-- the vectorial profile integration uses constant `CD0`; it does not include a local airfoil polar;
-- the vectorial profile path uses imposed $\mu_z$ in its local speed magnitude rather than local induced normal velocity;
-- lift-induced loads remain analytical even when profile drag is numerical;
+- Small-angle analytical treatment for the principal lift-induced rotor loads.
+- Linear section lift curve.
+- Constant $C_{D0}$ rather than an airfoil polar.
+- No nonlinear stall or dynamic stall.
+- No cyclic-pitch trim.
+- No blade flapping solution in the aerodynamic load calculation.
+- No elastic blade motion.
+- No local annular momentum iteration.
+- No full reverse-flow airfoil model.
+- First-harmonic prescribed inflow gradients rather than a free wake.
+- The vectorial profile integration uses constant $C_{D0}$; it does not include a local airfoil polar.
+- The vectorial profile path uses imposed $\mu_z$ in its local speed magnitude rather than local induced normal velocity.
+- Lift-induced loads remain analytical even when profile drag is numerical.
 
-These limitations are compatible with the intended use of zBET as a rapid conceptual-analysis tool. They should be considered before applying the code to high advance ratio, severe descent, stalled conditions, or detailed loads work.
+These limitations are compatible with the intended use as a rapid conceptual-analysis tool. Consider them before applying the code to high advance ratio, severe descent, stalled conditions, or detailed loads work.
 
 ---
 
@@ -964,90 +991,52 @@ These limitations are compatible with the intended use of zBET as a rapid concep
 
 ### Geometry and atmosphere
 
-- `RHO`: air density
-- `SPEED_OF_SOUND`: speed of sound
-- `RPM`: rotor speed
-- `R`: rotor radius
-- `R0_BAR`: root cutout
-- `A_LIFT`: linear lift-curve slope
-- `CD0`: constant profile drag coefficient
+- `RHO`: air density.
+- `SPEED_OF_SOUND`: speed of sound.
+- `RPM`: rotor speed.
+- `R`: rotor radius.
+- `R0_BAR`: root cutout.
+- `A_LIFT`: linear lift-curve slope.
+- `CD0`: constant profile drag coefficient.
 
 ### Solidity and planform
 
-- `SOLIDITY_MODE = "sigma_ref"`
-- `SOLIDITY_MODE = "sigma_geom"`
-- `SOLIDITY_MODE = "chords"`
+- `SOLIDITY_MODE = "sigma_ref"`: reference solidity input.
+- `SOLIDITY_MODE = "sigma_geom"`: geometric solidity input.
+- `SOLIDITY_MODE = "chords"`: chord-based input.
 
 ### Pitch and trim
 
-- `PITCH_MODE = "constant"`
-- `PITCH_MODE = "linear_twist"`
-- `HOVER_TRIM_MODE = "collective"`
-- `HOVER_TRIM_MODE = "rpm"`
-- `HOVER_TRIM_MODE = "none"`
+- `PITCH_MODE = "constant"`: uniform pitch.
+- `PITCH_MODE = "linear_twist"`: linear twist distribution.
+- `HOVER_TRIM_MODE = "collective"`: adjust collective for target thrust.
+- `HOVER_TRIM_MODE = "rpm"`: adjust RPM for target thrust.
+- `HOVER_TRIM_MODE = "none"`: use specified RPM and pitch directly.
 
 ### Inflow
 
-- `uniform`
-- `coleman_simple`
-- `coleman_feingold`
-- `drees`
+- `uniform`: no inflow gradient.
+- `coleman_simple`: Coleman basic model.
+- `coleman_feingold`: Coleman-Feingold / NDARC form.
+- `drees`: Drees model.
 
 ### Torque and profile paths
 
-- `INDUCED_TORQUE_MODEL = "analytical_bet"`
-- `INDUCED_TORQUE_MODEL = "energy_balance"` (default)
-- `PROFILE_DRAG_MODEL = "analytical_tangential"`
-- `PROFILE_DRAG_MODEL = "analytical_vectorial"`
-- `PROFILE_DRAG_MODEL = "numerical_vectorial"` (default)
-- `K_IND = 1.15` by default
+- `INDUCED_TORQUE_MODEL = "analytical_bet"`: direct BET torque integral.
+- `INDUCED_TORQUE_MODEL = "energy_balance"` (default): energy-balance closure.
+- `PROFILE_DRAG_MODEL = "analytical_tangential"`: tangential-only closed form.
+- `PROFILE_DRAG_MODEL = "analytical_vectorial"`: low-order vectorial closed form.
+- `PROFILE_DRAG_MODEL = "numerical_vectorial"` (default): full numerical quadrature.
+- `K_IND = 1.15` by default.
 
-`K_IND` affects the energy-balance torque mode, `CPair`, and hover FoM. It does not modify the direct BET torque integral.
+$K_{\mathrm{ind}}$ affects the energy-balance torque mode, $C_{Pair}$, and hover FoM. It does not modify the direct BET torque integral.
 
 ---
 
 ## 11. References
 
 1. Wayne Johnson, *Rotorcraft Aeromechanics*, Cambridge University Press, 2013. See especially Chapter 6, including the section-force relations around Eqs. 6.39–6.46, rotor-force decomposition around Eqs. 6.71–6.76, and the power/energy-balance development around Eqs. 6.105–6.115; also Chapter 7 and Section 6.23.
-2. J. Gordon Leishman, *Principles of Helicopter Aerodynamics*, Cambridge University Press. See especially Chapter 3, “Blade Element Analysis,” and Chapter 5, “Basic Helicopter Performance.”
+2. J. Gordon Leishman, *Principles of Helicopter Aerodynamics*, Cambridge University Press. See especially Chapter 3, "Blade Element Analysis," and Chapter 5, "Basic Helicopter Performance."
 3. Wayne Johnson, *NDARC — NASA Design and Analysis of Rotorcraft: Theory*, NASA/TP-2009-215402.
 4. R. P. Coleman, A. M. Feingold, and C. W. Stempin, *Evaluation of the Induced-Velocity Field of an Idealized Helicopter Rotor*, NACA ARR L5E10, 1945.
-5. J. M. Drees, “A Theory of Airflow Through Rotors and Its Application to Some Helicopter Problems,” 1949.
-
-
-## APK section diagnostics (1.23)
-
-Postprocessing only, based on section 6.1 and the existing Johnson/Leishman kinematics.
-At x=0.75 and ψ=90°/270°, u_T=x±μ and u_P=λ±x K_y λ_i (cos ψ=0).
-φ=atan2(u_P,u_T) and α_s=θ(x)−φ using the final trimmed pitch law.
-Since diagnostics reject u_T≤1e-9, atan(u_P/u_T) is equivalent in the supported domain.
-Angles are undefined when x_0≥0.75 or B<0.75. No flapping, cyclic or stall model is added.
-V_i=λ_i ΩR, V_{z,tot}=λ ΩR; V_adv=ΩR+V_x and V_ret=ΩR−V_x are tip tangential speeds.
-M_ret=|V_ret|/a; existing M_tip and M_adv keep their definitions.
-Acceptance: compiled diagnostic identities within 1e-10 absolute in degrees or m/s;
-integrated-load equivalence retains the established compiled reference-matrix tolerances.
-
-### Web/Android atmosphere adapter parity (1.23)
-
-The web atmosphere adapter now reproduces the shipped Android `Main.UpdateAtmosphere`
-tropospheric ideal-gas/lapse-rate model, with its rounded constants: R_air = 287.058
-J/(kg K), pressure exponent 5.2561, lapse rate 0.0065 K/m, T_ref = 288.15 K and
-p_ref = 101325 Pa. This preserves the Android engineering convention instead of
-mixing two rounded atmosphere implementations in the same product. Supported
-inputs match Android: altitude −500 to 11000 m and ambient temperature −80 to
-60 °C. The analytical rotor, inflow and drag equations are unchanged.
-
-Previously the web used R_air = 287.05287 and exponent g/(R_air L), producing
-approximately 1 N difference in the default UH-60 hover display. The adapter
-contract is verified at sea level, 3000 m, 11000 m and clamped endpoints:
-pressure agreement to 1e-9 Pa, density to 1e-12 kg/m³, sound speed to 1e-10 m/s.
-These are parity tolerances for the numerical formulas, not claims of physical
-atmosphere accuracy; real ambient density remains model dependent.
-
-### Web engine canonical parity correction (1.23)
-
-The web port now uses the already-governed equations in sections 4.2–4.4 and the same representative Prandtl–Glauert Mach as Python and compiled B4A: M_eff=(ΩR/a)√(0.75²+0.5μ²), capped at 0.85. Coleman is tan(χ/2); Coleman–Feingold uses (15π/32)f_x tan(χ/2), K_y=−2f_yμ; Drees uses (4/3)(1−1.8μ²)tan(χ/2), K_y=−2μ. These restore the documented Johnson/Leishman/Coleman/Drees conventions; they introduce no new aerodynamic model.
-
-The operating collective Δθ is a uniform increment added to both saved blade incidence endpoints, as in zBETEngine.ApplyOperatingGeometry and Python _operating_pitch. It is not an absolute replacement of the mean saved pitch. Both trim residuals and the final result use the same increment convention.
-
-Golden verification: 200 Python coefficient cases (PG off/on; 5 advance ratios × 5 axial ratios × 4 models), with tolerance 2e−9 + 2e−7|reference| over 14 outputs. The first 100 use the geometry of the executed compiled B4A gate. All six operating pairs at three flows also match the compiled-gate Python references: coefficient tolerance 2e−8 + 3e−6|reference|, collective 2e−4 degrees, RPM 0.1 + 2e−4|reference|. Actual APK and browser sweep CSVs match all 25 points/four models at the six-decimal export precision (≤1e−6 absolute). Golden fixtures are regenerated by tools/export_web_engine_reference.py.
+5. J. M. Drees, "A Theory of Airflow Through Rotors and Its Application to Some Helicopter Problems," 1949.
