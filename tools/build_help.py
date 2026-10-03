@@ -62,7 +62,7 @@ IDX = [
  ("Sign conventions","sign convention","s-forces-moments-signs"),
  ("Normalization","normalization","s-normalization"),
  ("Derived outputs","outputs power figure of merit","out"),
- ("Limits of the model (&mu; &le; 0.60)","scope limits","scope"),
+ ("Model scope and limits","scope limits validity assumptions","scope"),
  ("References","references","ref"),
 ]
 ids = set(re.findall(r'id="([^"]+)"', src))
