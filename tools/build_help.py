@@ -95,6 +95,7 @@ for suffix, (scheme, root_vars) in THEMES.items():
     h = re.sub(r'(<meta name="color-scheme" content=")[a-z ]+"', r'\g<1>%s"' % scheme, h)
     h = h.replace("</style>", CSS + "</style>", 1)
     h = h.replace("</nav>", "</nav>\n" + BLOCK, 1)
-    h = h.replace("</main></body>", '</main><a class="totop" href="#top" aria-label="Back to top">&uarr; Top</a>' + JS + "</body>")
-    (root / ("Files/physics_help%s.html" % suffix)).write_text(h, encoding="utf-8")
-    print("wrote physics_help%s.html (%d idx)" % (suffix, len(rows)))
+    filename = "physics_help%s.html" % suffix
+    for dest_dir in ["Files", "docs", "web/public"]:
+        (root / dest_dir / filename).write_text(h, encoding="utf-8")
+    print("wrote %s to Files, docs, and web/public (%d idx)" % (filename, len(rows)))
