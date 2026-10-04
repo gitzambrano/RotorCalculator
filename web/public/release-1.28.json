@@ -1,0 +1,8 @@
+{
+  "version": "1.28",
+  "versionCode": 11,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": "926e78d9776d5226d051b62cb9f9bfe2ca561fad472ca8be80fd194edaf961cd",
+  "verification": "Release 1.28 (versionCode 11). Standardized swept disk area symbol to A_DISK and disk loading to T/A_DISK across equations, documentation, and contextual help dialogs. Refined reference solidity (sigma_REF) and reference blade area (A_REF) nomenclature with REF subscript. Enhanced contextual help readability with clean paragraph separation and direct editing guidance. Full UI synchronization and parity across Android APK and Web application.",
+  "qaReport": "release_notes_1.28.txt"
+}

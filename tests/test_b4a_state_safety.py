@@ -485,8 +485,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 10" in main
-    assert "#VersionName: 1.27" in main
+    assert "#VersionCode: 11" in main
+    assert "#VersionName: 1.28" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
