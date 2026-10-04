@@ -3668,7 +3668,7 @@ End Sub
 Sub btnInflowModel_Click
 	Tick
 	Dim keys() As String = Array As String("uniform", "coleman_simple", "coleman_feingold", "drees")
-	Dim secs() As String = Array As String("Benchmark, no gradient", "Longitudinal gradient", "Longitudinal and lateral gradients", "Classical longitudinal and lateral")
+	Dim secs() As String = Array As String("Actuator disk momentum theory (K_x = K_y = 0)", "Longitudinal wake gradient K_x = tan(χ/2)", "NDARC model with longitudinal and lateral gradients", "Classic helicopter harmonic model (K_x, K_y = −2μ)")
 	Dim items As List
 	items.Initialize
 	Dim selected As Int = 2
@@ -3719,8 +3719,8 @@ Sub btnHorizontalInput_Click
 	Tick
 	Dim items As List
 	items.Initialize
-	items.Add(RotorNames.PlainLabel("mu", 0) & "|V_x / (ΩR), dimensionless")
-	items.Add(RotorNames.PlainLabel("Vx", 0) & "|Positive forward in the rotor plane")
+	items.Add(RotorNames.PlainLabel("mu", 0) & "|Advance ratio V_x / (ΩR) in the rotor disk plane")
+	items.Add(RotorNames.PlainLabel("Vx", 0) & "|In-plane forward airspeed component")
 	Dim selected As Int = 0
 	If HorizontalInputMode = "vx" Then selected = 1
 	Wait For (sheet.ShowChoice("Horizontal Flow Input", items, selected)) Complete (idx As Int)
@@ -3748,9 +3748,9 @@ Sub btnAxialInput_Click
 	Tick
 	Dim items As List
 	items.Initialize
-	items.Add(RotorNames.PlainLabel("alpha", 0) & "|Positive when the stream arrives from below")
-	items.Add(RotorNames.PlainLabel("Vz", 0) & "|Positive when the relative flow goes downward through the disk")
-	items.Add(RotorNames.PlainLabel("muz", 0) & "|V_z / (ΩR), positive downward through the disk")
+	items.Add(RotorNames.PlainLabel("alpha", 0) & "|Positive when relative flow is upward through the disk")
+	items.Add(RotorNames.PlainLabel("Vz", 0) & "|Positive when relative flow is downward through the disk")
+	items.Add(RotorNames.PlainLabel("muz", 0) & "|V_z / (ΩR). Positive when relative flow is downward through the disk")
 	Dim selected As Int = 0
 	If AxialInputMode = "vz" Then selected = 1
 	If AxialInputMode = "muz" Then selected = 2

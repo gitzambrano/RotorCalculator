@@ -2472,9 +2472,9 @@ function bindSelectorButtons(): void {
 
   // 7. Axial Flow Representation Modal (alpha vs vz vs muz)
   const axialModes: { id: "alpha" | "vz" | "muz"; label: string; desc: string }[] = [
-    { id: "alpha", label: "Angle of Attack α [deg]", desc: "Rotor disk angle of attack (α > 0 for climb/wind from below)" },
-    { id: "vz", label: "Climb Speed Vz", desc: "Dimensional vertical velocity (Vz > 0 downward through disk)" },
-    { id: "muz", label: "Axial Ratio μz [–]", desc: "Non-dimensional axial velocity Vz / (ΩR)" },
+    { id: "alpha", label: "Angle of Attack α [deg]", desc: "Positive when relative flow is upward through the disk" },
+    { id: "vz", label: "Climb Speed Vz", desc: "Positive when relative flow is downward through the disk" },
+    { id: "muz", label: "Axial Ratio μz [–]", desc: "Vz / (ΩR). Positive when relative flow is downward through the disk" },
   ];
 
   byId("btn-toggle-axial-mode").addEventListener("click", () => {

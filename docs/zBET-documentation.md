@@ -1035,8 +1035,9 @@ $K_{\mathrm{ind}}$ affects the energy-balance torque mode, $C_{Pair}$, and hover
 
 ## 11. References
 
-1. Wayne Johnson, *Rotorcraft Aeromechanics*, Cambridge University Press, 2013. See especially Chapter 6, including the section-force relations around Eqs. 6.39–6.46, rotor-force decomposition around Eqs. 6.71–6.76, and the power/energy-balance development around Eqs. 6.105–6.115; also Chapter 7 and Section 6.23.
-2. J. Gordon Leishman, *Principles of Helicopter Aerodynamics*, Cambridge University Press. See especially Chapter 3, "Blade Element Analysis," and Chapter 5, "Basic Helicopter Performance."
-3. Wayne Johnson, *NDARC — NASA Design and Analysis of Rotorcraft: Theory*, NASA/TP-2009-215402.
-4. R. P. Coleman, A. M. Feingold, and C. W. Stempin, *Evaluation of the Induced-Velocity Field of an Idealized Helicopter Rotor*, NACA ARR L5E10, 1945.
-5. J. M. Drees, "A Theory of Airflow Through Rotors and Its Application to Some Helicopter Problems," 1949.
+1. G. Zambrano, *Equações analíticas para os coeficientes aerodinâmicos de um rotor rígido*, [Second Brain](https://gitzambrano.github.io/second-brain-site/essays/equacoes-analiticas-para-os-coeficientes-aerodinamicos-de-um-rotor-rigido.html), 2026.
+2. Wayne Johnson, *Rotorcraft Aeromechanics*, Cambridge University Press, 2013. See especially Chapter 6, including the section-force relations around Eqs. 6.39–6.46, rotor-force decomposition around Eqs. 6.71–6.76, and the power/energy-balance development around Eqs. 6.105–6.115; also Chapter 7 and Section 6.23.
+3. J. Gordon Leishman, *Principles of Helicopter Aerodynamics*, Cambridge University Press. See especially Chapter 3, "Blade Element Analysis," and Chapter 5, "Basic Helicopter Performance."
+4. Wayne Johnson, *NDARC — NASA Design and Analysis of Rotorcraft: Theory*, NASA/TP-2009-215402.
+5. R. P. Coleman, A. M. Feingold, and C. W. Stempin, *Evaluation of the Induced-Velocity Field of an Idealized Helicopter Rotor*, NACA ARR L5E10, 1945.
+6. J. M. Drees, "A Theory of Airflow Through Rotors and Its Application to Some Helicopter Problems," 1949.

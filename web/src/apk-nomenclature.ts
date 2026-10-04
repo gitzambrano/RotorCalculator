@@ -166,7 +166,7 @@ export const APK_NOMENCLATURE = {
     "short": "Twist",
     "sym": "θ_twist",
     "unit": "°",
-    "body": "Pitch change from root to tip, linear along the span. Derived. Editing it keeps the mean pitch (θ_R + θ_T)/2 and splits the change equally between root and tip. Negative twist evens out the inflow and improves hover efficiency.",
+    "body": "Pitch change from root to tip, linear along the span. Derived. Editing it keeps the mean pitch (θ_R + θ_T)/2 and splits the change equally between root and tip. Negative twist produces a more uniform induced inflow distribution across the disk and improves hover efficiency.",
     "eq": "θ_twist = θ_T − θ_R",
     "range": "-20° to 0° (typical -8° to -14°)"
   },
@@ -176,7 +176,7 @@ export const APK_NOMENCLATURE = {
     "short": "Pitch 75%",
     "sym": "θ_75",
     "unit": "°",
-    "body": "Pitch at 75% of the way from root to tip, the usual reference pitch of a twisted blade. Derived. Editing it shifts root and tip pitch together and keeps the twist. It equals the pitch at station x = 0.75 only when the cutout is zero.",
+    "body": "Reference blade pitch at 75% radial station (r/R = 0.75), standard reference pitch for linearly twisted helicopter blades. Derived from root and tip pitch. Editing it translates the entire blade pitch distribution uniformly, preserving total twist.",
     "eq": "θ_75 = θ_R + 0.75·θ_twist",
     "range": ""
   },
@@ -186,7 +186,7 @@ export const APK_NOMENCLATURE = {
     "short": "Airfoil",
     "sym": "",
     "unit": "",
-    "body": "Blade section from the airfoil database. It supplies the lift-curve slope a_0 and the profile drag coefficient C_d0. Choose Custom to type your own values.",
+    "body": "Blade aerodynamic section from the database. Defines lift-curve slope a_0 and zero-lift profile drag coefficient C_d0. Select Custom to specify custom aerodynamic characteristics.",
     "eq": "C_l = a_0·α_e,  C_d = C_d0",
     "range": ""
   },
@@ -196,7 +196,7 @@ export const APK_NOMENCLATURE = {
     "short": "Lift Slope",
     "sym": "a_0",
     "unit": "1/rad",
-    "body": "Section lift per radian of effective angle of attack, assumed linear with no stall. Thin-airfoil theory gives 2π, real sections give less. With Prandtl-Glauert on, the effective slope a is larger.",
+    "body": "Two-dimensional blade section lift-curve slope dC_l/dα in linear unstalled flight. Thin-airfoil theory gives 2π rad⁻¹ (≈ 6.28 rad⁻¹); real airfoils typically exhibit 5.7 to 6.0 rad⁻¹. Subsonic compressibility scales this value via Prandtl-Glauert.",
     "eq": "C_l = a_0·α_e",
     "range": "5.0 to 6.3 per rad"
   },
@@ -206,7 +206,7 @@ export const APK_NOMENCLATURE = {
     "short": "Profile Drag",
     "sym": "C_d0",
     "unit": "–",
-    "body": "Constant section drag coefficient used everywhere on the disk. Treat it as a mean equivalent value for the lift range of the rotor, above the minimum drag of the section. It drives the profile torque and in-plane force.",
+    "body": "Equivalent profile drag coefficient of the blade section, assumed uniform across the rotor disk. Represents the mean profile drag across operational section lift coefficients. Determines profile torque Q_0 and profile in-plane force H_0.",
     "eq": "C_d = C_d0",
     "range": "0.008 to 0.012"
   },
@@ -216,7 +216,7 @@ export const APK_NOMENCLATURE = {
     "short": "Tip Loss",
     "sym": "",
     "unit": "",
-    "body": "How the loss of lift near the blade tip is modeled. None integrates the loading to the tip. Fixed cuts it at the factor B you type. Sissingh computes B from the thrust coefficient and blade count.",
+    "body": "Tip-loss formulation modeling finite-blade lift reduction near the tip. None integrates blade loading to the physical tip (x = 1.0). Fixed truncates lift integration at prescribed station B. Sissingh computes effective B iteratively from thrust coefficient C_T and blade count N_b.",
     "eq": "lift integrated from x_0 to B",
     "range": ""
   },
@@ -226,7 +226,7 @@ export const APK_NOMENCLATURE = {
     "short": "Tip Factor",
     "sym": "B",
     "unit": "–",
-    "body": "Radial station beyond which the blade carries no lift. 1 means no loss. In Fixed mode you type it (never below x_0 + 0.01); in Sissingh mode it is solved together with C_T. The momentum disk area is scaled by B².",
+    "body": "Non-dimensional radial station (r/R) beyond which blade aerodynamic lift is zero due to tip vortex relief. A factor of 1.0 indicates no tip loss. Effective actuator disk momentum area is scaled by B².",
     "eq": "Sissingh: B = 1 − √(2C_T) / N_b",
     "range": "0.92 to 1.00"
   },
@@ -246,7 +246,7 @@ export const APK_NOMENCLATURE = {
     "short": "Rotor Speed",
     "sym": "Ω_nom",
     "unit": "rpm",
-    "body": "Design rotor speed stored with the rotor. It only seeds the rotor speed on the Conditions page.",
+    "body": "Nominal design rotational speed stored with the rotor definition. Seeds the initial rotor speed on the Conditions page.",
     "eq": "Ω = 2π·rpm / 60",
     "range": ""
   },
@@ -256,7 +256,7 @@ export const APK_NOMENCLATURE = {
     "short": "Altitude",
     "sym": "h",
     "unit": "m",
-    "body": "Altitude in the International Standard Atmosphere. It sets the static pressure; density follows from that pressure and the temperature you enter.",
+    "body": "Pressure altitude in the International Standard Atmosphere (ISA). Determines ambient static pressure p. Air density ρ is calculated from p and ambient temperature T_amb using the ideal gas law.",
     "eq": "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}",
     "range": "0 to 6000 m"
   },
@@ -266,7 +266,7 @@ export const APK_NOMENCLATURE = {
     "short": "Temperature",
     "sym": "T_amb",
     "unit": "°C",
-    "body": "Static air temperature at the rotor. It is typed independently of altitude, so hot-and-high or cold days are possible. Sets density and speed of sound together with p.",
+    "body": "Ambient static air temperature. Specified independently of altitude to model non-standard atmospheric conditions (e.g. hot-and-high). Determines air density ρ and local speed of sound a.",
     "eq": "ρ = p / (287.058·T),  a = √(1.4·287.058·T),  T in kelvin",
     "range": "-40 to 50 °C"
   },
@@ -276,7 +276,7 @@ export const APK_NOMENCLATURE = {
     "short": "Advance Ratio",
     "sym": "μ_x",
     "unit": "–",
-    "body": "Airspeed component in the disk plane over tip speed. 0 is hover. One of two equivalent ways to enter horizontal flow.",
+    "body": "Advance ratio in the rotor disk plane (tip-path plane), defined as in-plane free-stream airspeed over tip speed: μ_x = V_x / (ΩR). Static hover corresponds to μ_x = 0.",
     "eq": "μ_x = V_x / (ΩR)",
     "range": "0 to 0.5"
   },
@@ -286,7 +286,7 @@ export const APK_NOMENCLATURE = {
     "short": "Airspeed",
     "sym": "V_x",
     "unit": "m/s",
-    "body": "Airspeed component in the rotor disk plane. Alternative to the advance ratio; the engine uses μ_x = V_x / (ΩR).",
+    "body": "Component of the free-stream airspeed parallel to the rotor disk plane. Alternative to the advance ratio: μ_x = V_x / (ΩR).",
     "eq": "V_x = μ_x·ΩR",
     "range": "0 to 100 m/s"
   },
@@ -296,7 +296,7 @@ export const APK_NOMENCLATURE = {
     "short": "Disk AoA",
     "sym": "α",
     "unit": "°",
-    "body": "Angle between the free stream and the disk plane. Positive when the flow arrives from below the disk (nose-up disk), which lowers the inflow and raises thrust. One of three alternative axial-flow inputs.",
+    "body": "Angle between oncoming flow and the rotor disk. Positive when relative flow is upward through the disk, tilting the disk aft and increasing thrust.",
     "eq": "μ_z = −μ_x·tan α",
     "range": "-20° to 20°"
   },
@@ -306,7 +306,7 @@ export const APK_NOMENCLATURE = {
     "short": "Climb Speed",
     "sym": "V_z",
     "unit": "m/s",
-    "body": "Axial speed of the air through the disk, positive downward, which is a climb. Alternative axial-flow input; negative values are descent.",
+    "body": "Axial component of airspeed along the rotor shaft (+Z axis). Positive when relative flow is downward through the disk.",
     "eq": "V_z = μ_z·ΩR",
     "range": "-10 to 10 m/s"
   },
@@ -316,7 +316,7 @@ export const APK_NOMENCLATURE = {
     "short": "Axial Ratio",
     "sym": "μ_z",
     "unit": "–",
-    "body": "Axial speed over tip speed, positive downward through the disk. It adds to the induced inflow in the total inflow. Alternative axial-flow input.",
+    "body": "Non-dimensional axial flow ratio along the rotor shaft, V_z / (ΩR). Positive when relative flow is downward through the disk.",
     "eq": "μ_z = V_z / (ΩR) = −μ_x·tan α",
     "range": "-0.1 to 0.1"
   },
@@ -336,7 +336,7 @@ export const APK_NOMENCLATURE = {
     "short": "Rotor Speed",
     "sym": "Ω",
     "unit": "rpm",
-    "body": "Rotor rotation rate. It sets tip speed, dynamic pressure and, through Mach, the compressibility correction. Solved when it is not one of the two prescribed variables.",
+    "body": "Rotational speed of the rotor hub. Determines tip speed ΩR, dynamic pressure, and blade Mach numbers. Solved by the trim algorithm when not prescribed.",
     "eq": "ΩR = 2π·rpm·R / 60",
     "range": ""
   },
@@ -346,7 +346,7 @@ export const APK_NOMENCLATURE = {
     "short": "Collective",
     "sym": "Δθ",
     "unit": "°",
-    "body": "Pitch increment applied equally to every blade station and added to the geometric pitch. Solved by bisection when it is not prescribed.",
+    "body": "Collective pitch increment added uniformly along the blade span to the baseline geometric twist distribution. Solved by bisection equilibrium when not prescribed.",
     "eq": "θ(x) = θ_R + θ_twist·(x − x_0)/(1 − x_0) + Δθ",
     "range": "0° to 20°"
   },
@@ -356,7 +356,7 @@ export const APK_NOMENCLATURE = {
     "short": "Target Thrust",
     "sym": "T",
     "unit": "N",
-    "body": "Thrust the trim must reach. Used together with one other prescribed variable.",
+    "body": "Target rotor thrust constraint enforced during equilibrium trim solution. Paired with one other prescribed operating variable.",
     "eq": "T = C_T·ρ·A·(ΩR)²",
     "range": ""
   },
@@ -366,7 +366,7 @@ export const APK_NOMENCLATURE = {
     "short": "Target",
     "sym": "C_T",
     "unit": "–",
-    "body": "Thrust coefficient the trim must reach. With Δθ prescribed it fixes Ω; with Ω prescribed it fixes Δθ. With thrust T it fixes Ω directly.",
+    "body": "Target thrust coefficient constraint enforced during equilibrium trim solution. Paired with collective pitch Δθ, rotor speed Ω, or target thrust T.",
     "eq": "C_T = T / [ρA(ΩR)²]",
     "range": "0.002 to 0.015"
   },
@@ -386,7 +386,7 @@ export const APK_NOMENCLATURE = {
     "short": "Induced Factor",
     "sym": "k_ind",
     "unit": "–",
-    "body": "Factor on ideal induced power that accounts for non-uniform inflow and tip losses. It is an input to the energy-balance torque, air power and figure of merit; it does not change thrust. 1 is the ideal rotor.",
+    "body": "Empirical induced power correction factor accounting for non-uniform downwash, tip losses, and wake swirl. Scales the ideal induced torque in the energy balance: C_Qi = k_ind·λ_i·C_T + μ_z·C_T − μ·C_Hi. Ideal momentum theory corresponds to k_ind = 1.0.",
     "eq": "C_Qi = k_ind·λ_i·C_T + μ_z·C_T − μ·C_Hi",
     "range": "1.05 to 1.30"
   },
@@ -396,7 +396,7 @@ export const APK_NOMENCLATURE = {
     "short": "Drag Integration",
     "sym": "",
     "unit": "",
-    "body": "Method used to integrate the section profile drag over the disk. Tangential counts only the in-plane tangential velocity. Vectorial uses the full relative velocity in closed form. Numerical uses Gauss-Legendre quadrature (16 radial by 24 azimuth points), the reference method.",
+    "body": "Integration formulation for profile drag power over the rotor disk. Tangential retains only in-plane tangential velocity u_T. Vectorial includes radial and axial velocities in closed form. Numerical evaluates the total resultant velocity W via Gauss-Legendre quadrature (16 radial × 24 azimuth stations).",
     "eq": "dD = ½ρ W² c C_d0 dr",
     "range": ""
   },
@@ -406,7 +406,7 @@ export const APK_NOMENCLATURE = {
     "short": "Thrust",
     "sym": "T",
     "unit": "N",
-    "body": "Rotor force along the shaft axis, positive up. Computed from the thrust coefficient.",
+    "body": "Total aerodynamic force along the rotor shaft axis, positive upward along −Z. Evaluated from the thrust coefficient as T = C_T·ρ·A·(ΩR)².",
     "eq": "T = C_T·ρ·A·(ΩR)²",
     "range": ""
   },
@@ -416,7 +416,7 @@ export const APK_NOMENCLATURE = {
     "short": "Power",
     "sym": "P",
     "unit": "W",
-    "body": "Mechanical power at the rotor shaft: torque times rotor speed. Equals the sum of induced and profile power.",
+    "body": "Total mechanical shaft power required to drive the rotor: P = Q·Ω. Decomposed via energy balance into induced power P_i and profile power P_0.",
     "eq": "P = Q·Ω = C_Q·ρ·A·(ΩR)³",
     "range": ""
   },
@@ -426,7 +426,7 @@ export const APK_NOMENCLATURE = {
     "short": "Induced Power",
     "sym": "P_i",
     "unit": "W",
-    "body": "Shaft power attributed to producing thrust. Taken from the induced torque coefficient, which by the energy balance includes the induced term k_ind·λ_i·C_T, the climb term μ_z·C_T and minus the propulsive term μ·C_Hi.",
+    "body": "Shaft power required to generate rotor thrust and support climb/propulsive work. Derived from the induced torque coefficient C_Qi through the blade-element energy balance.",
     "eq": "P_i = C_Qi·ρ·A·(ΩR)³",
     "range": ""
   },
@@ -436,7 +436,7 @@ export const APK_NOMENCLATURE = {
     "short": "Profile Power",
     "sym": "P_0",
     "unit": "W",
-    "body": "Shaft power spent overcoming blade section drag, from the integrated profile torque.",
+    "body": "Shaft power dissipated by section profile drag over the rotor disk. Derived from the integrated profile torque coefficient C_Q0.",
     "eq": "P_0 = C_Q0·ρ·A·(ΩR)³",
     "range": ""
   },
@@ -446,7 +446,7 @@ export const APK_NOMENCLATURE = {
     "short": "Torque",
     "sym": "Q",
     "unit": "N·m",
-    "body": "Torque about the rotor shaft, induced plus profile.",
+    "body": "Aerodynamic shaft torque opposing rotor rotation. Sum of induced torque Q_i and profile torque Q_0: Q = C_Q·ρ·A·(ΩR)²·R.",
     "eq": "Q = C_Q·ρ·A·(ΩR)²·R",
     "range": ""
   },
@@ -456,7 +456,7 @@ export const APK_NOMENCLATURE = {
     "short": "In-Plane Force",
     "sym": "H",
     "unit": "N",
-    "body": "Rotor force in the disk plane along the flow direction, positive aft (drag-like). Rigid hub, no flapping, so it is the full hub force.",
+    "body": "In-plane rotor force component parallel to the in-plane free stream, positive aft (opposing flight direction). Rigid-rotor formulation; equals the total longitudinal hub force.",
     "eq": "H = C_H·ρ·A·(ΩR)²",
     "range": ""
   },
@@ -466,7 +466,7 @@ export const APK_NOMENCLATURE = {
     "short": "Side Force",
     "sym": "Y",
     "unit": "N",
-    "body": "Rotor force in the disk plane perpendicular to the flow, positive to the right (advancing side). Zero with uniform inflow.",
+    "body": "In-plane rotor force component perpendicular to the in-plane free stream, positive toward the advancing side (right side for counter-clockwise rotation). Zero under axisymmetric uniform inflow.",
     "eq": "Y = C_Y·ρ·A·(ΩR)²",
     "range": ""
   },
@@ -476,7 +476,7 @@ export const APK_NOMENCLATURE = {
     "short": "Roll Moment",
     "sym": "M_x",
     "unit": "N·m",
-    "body": "Hub moment about the longitudinal axis, positive advancing side down. Rigid hub, no flapping, so the full moment goes into the hub.",
+    "body": "Aerodynamic roll moment about the rotor hub, positive advancing side down (right-wing down). Transmitted directly to the shaft in a rigid-rotor model without flapping hinges.",
     "eq": "M_x = C_Mx·ρ·A·(ΩR)²·R",
     "range": ""
   },
@@ -486,7 +486,7 @@ export const APK_NOMENCLATURE = {
     "short": "Pitch Moment",
     "sym": "M_y",
     "unit": "N·m",
-    "body": "Hub moment about the lateral axis, positive nose up. Rigid hub, no flapping. Zero with uniform inflow.",
+    "body": "Aerodynamic pitching moment about the rotor hub, positive nose-up. Transmitted directly to the shaft in a rigid-rotor model; non-zero only with asymmetric longitudinal inflow gradients.",
     "eq": "M_y = C_My·ρ·A·(ΩR)²·R",
     "range": ""
   },
@@ -496,7 +496,7 @@ export const APK_NOMENCLATURE = {
     "short": "Disk Loading",
     "sym": "T/A",
     "unit": "N/m²",
-    "body": "Thrust per unit disk area. Low disk loading means efficient hover.",
+    "body": "Rotor thrust per unit swept disk area: DL = T / A. Lower disk loading reduces momentum induced velocity and improves hover power efficiency.",
     "eq": "DL = T / A",
     "range": "50 to 500 N/m² (helicopters)"
   },
@@ -506,7 +506,7 @@ export const APK_NOMENCLATURE = {
     "short": "Power Loading",
     "sym": "T/P",
     "unit": "N/W",
-    "body": "Thrust produced per unit of shaft power.",
+    "body": "Rotor thrust produced per unit shaft power: PL = T / P. Classical measure of rotor lifting efficiency per unit installed engine power.",
     "eq": "PL = T / P",
     "range": "0.05 to 0.15 N/W"
   },
@@ -516,8 +516,8 @@ export const APK_NOMENCLATURE = {
     "short": "Total Axial Speed",
     "sym": "V_{z,tot}",
     "unit": "m/s",
-    "body": "Mean total normal flow through the disk, positive downward. Sum of imposed climb flow and mean induced flow. Not the free-stream magnitude used by dynamic coefficients.",
-    "eq": "V_{z,tot} = V_z + V_i = λ ΩR",
+    "body": "Total flow velocity through the rotor disk: V_{z,tot} = V_z + v_i = λ·ΩR. Positive when total flow is downward through the disk.",
+    "eq": "V_{z,tot} = V_z + v_i = λ ΩR",
     "range": ""
   },
   "Vadv": {
@@ -716,7 +716,7 @@ export const APK_NOMENCLATURE = {
     "short": "Induced Speed",
     "sym": "V_i",
     "unit": "m/s",
-    "body": "Mean velocity added to the air through the disk. Solved from the momentum balance with the blade-element thrust.",
+    "body": "Mean momentum induced downwash velocity: v_i = λ_i·ΩR. Positive when induced flow is downward through the disk.",
     "eq": "v_i = λ_i·ΩR",
     "range": ""
   },
@@ -726,7 +726,7 @@ export const APK_NOMENCLATURE = {
     "short": "Thrust Coeff.",
     "sym": "C_T",
     "unit": "–",
-    "body": "Thrust made non-dimensional by disk area and tip speed. Computed from the blade-element integral with the solved inflow; it equals the momentum thrust.",
+    "body": "Non-dimensional rotor thrust coefficient: C_T = T / [ρ·A·(ΩR)²]. Computed from spanwise blade-element integration in equilibrium with actuator disk momentum theory.",
     "eq": "C_T = T / [ρA(ΩR)²]",
     "range": "0.002 to 0.015"
   },
@@ -736,7 +736,7 @@ export const APK_NOMENCLATURE = {
     "short": "Torque Coeff.",
     "sym": "C_Q",
     "unit": "–",
-    "body": "Torque made non-dimensional by ρA(ΩR)²R. Equals the shaft power coefficient C_P.",
+    "body": "Non-dimensional rotor shaft torque coefficient: C_Q = Q / [ρ·A·(ΩR)²·R]. Identically equals the rotor power coefficient C_P.",
     "eq": "C_Q = Q / [ρA(ΩR)²R] = C_Qi + C_Q0 = C_P",
     "range": ""
   },
@@ -746,7 +746,7 @@ export const APK_NOMENCLATURE = {
     "short": "Ind. Torque Coeff.",
     "sym": "C_Qi",
     "unit": "–",
-    "body": "Induced part of the torque coefficient, obtained from the energy balance with the induced power factor.",
+    "body": "Induced and axial-flight component of the torque coefficient from global energy conservation: C_Qi = k_ind·λ_i·C_T + μ_z·C_T − μ·C_Hi.",
     "eq": "C_Qi = k_ind·λ_i·C_T + μ_z·C_T − μ·C_Hi",
     "range": ""
   },
@@ -756,7 +756,7 @@ export const APK_NOMENCLATURE = {
     "short": "Induced Torque",
     "sym": "Q_i",
     "unit": "N·m",
-    "body": "Induced part of the shaft torque, from the induced torque coefficient. Q_i·Ω equals the induced power P_i.",
+    "body": "Induced shaft torque component, evaluated from the induced torque coefficient: Q_i = C_Qi·ρ·A·(ΩR)²·R. Q_i·Ω equals induced power P_i.",
     "eq": "Q_i = C_Qi·ρ·A·(ΩR)²·R",
     "range": ""
   },
@@ -766,7 +766,7 @@ export const APK_NOMENCLATURE = {
     "short": "Profile Torque",
     "sym": "Q_0",
     "unit": "N·m",
-    "body": "Profile-drag part of the shaft torque, from the integrated profile torque coefficient. Q_0·Ω equals the profile power P_0.",
+    "body": "Profile drag shaft torque component, evaluated from the integrated profile torque coefficient: Q_0 = C_Q0·ρ·A·(ΩR)²·R. Q_0·Ω equals profile power P_0.",
     "eq": "Q_0 = C_Q0·ρ·A·(ΩR)²·R",
     "range": ""
   },
@@ -776,7 +776,7 @@ export const APK_NOMENCLATURE = {
     "short": "Induced In-Plane Force",
     "sym": "H_i",
     "unit": "N",
-    "body": "Induced part of the in-plane force, from the backward tilt of the lift vector.",
+    "body": "Induced component of the in-plane hub force, resulting from the rearward tilt of the section lift vectors by local inflow: H_i = C_Hi·ρ·A·(ΩR)².",
     "eq": "H_i = C_Hi·ρ·A·(ΩR)²",
     "range": ""
   },
@@ -786,7 +786,7 @@ export const APK_NOMENCLATURE = {
     "short": "Profile In-Plane Force",
     "sym": "H_0",
     "unit": "N",
-    "body": "Profile-drag part of the in-plane force, integrated numerically. H = H_i + H_0.",
+    "body": "Profile drag component of the in-plane hub force, integrated over the rotor disk: H_0 = C_H0·ρ·A·(ΩR)². Total in-plane force is H = H_i + H_0.",
     "eq": "H_0 = C_H0·ρ·A·(ΩR)²",
     "range": ""
   },
@@ -796,7 +796,7 @@ export const APK_NOMENCLATURE = {
     "short": "Air Power",
     "sym": "P_air",
     "unit": "W",
-    "body": "Power delivered to the air. The engine computes C_Pair from the energy balance: induced, climb and profile terms plus the profile translational work μ·C_H0. It equals the shaft power plus the work of the in-plane force, P + μ·H·ΩR, so it differs from the shaft power P in forward flight.",
+    "body": "Total aerodynamic rate of work delivered to the airflow. Sum of shaft power and propulsive work of the in-plane hub force: P_air = P + μ·H·ΩR.",
     "eq": "P_air = C_Pair·ρ·A·(ΩR)³ = P + μ·H·ΩR",
     "range": ""
   },
@@ -806,7 +806,7 @@ export const APK_NOMENCLATURE = {
     "short": "Prof. Torque Coeff.",
     "sym": "C_Q0",
     "unit": "–",
-    "body": "Profile-drag part of the torque coefficient, integrated numerically over blade and azimuth with the full relative velocity.",
+    "body": "Profile drag component of the rotor torque coefficient, integrated over blade span and azimuth using the local resultant velocity.",
     "eq": "C_Q0 = ∬ (σ·C_d0/2)·W·u_T·x dx dψ / 2π",
     "range": ""
   },
@@ -816,7 +816,7 @@ export const APK_NOMENCLATURE = {
     "short": "In-Plane Coeff.",
     "sym": "C_H",
     "unit": "–",
-    "body": "In-plane force coefficient, positive aft. Sum of induced and profile parts.",
+    "body": "Total in-plane hub force coefficient, positive rearward (drag direction): C_H = C_Hi + C_H0.",
     "eq": "C_H = C_Hi + C_H0",
     "range": ""
   },
@@ -826,7 +826,7 @@ export const APK_NOMENCLATURE = {
     "short": "Ind. In-Plane Coeff.",
     "sym": "C_Hi",
     "unit": "–",
-    "body": "Induced part of the in-plane force, from the backward tilt of the lift vector by the inflow angle. Analytical blade-element result.",
+    "body": "Induced component of the in-plane force coefficient, resulting from the rearward tilt of section lift vectors by the local inflow angle.",
     "eq": "C_Hi = (a/4)·[λ·μ·Θ_0 + λ_1s·(Θ_2 − 2λ·I_1)]",
     "range": ""
   },
@@ -836,7 +836,7 @@ export const APK_NOMENCLATURE = {
     "short": "Prof. In-Plane Coeff.",
     "sym": "C_H0",
     "unit": "–",
-    "body": "Profile-drag part of the in-plane force, integrated numerically. About 3/8·σ·C_d0·μ for small μ.",
+    "body": "Profile drag component of the in-plane force coefficient, integrated over blade radius and azimuth using the local relative velocity.",
     "eq": "C_H0 = ∬ (σ·C_d0/2)·W·(x·sinψ + μ) dx dψ / 2π",
     "range": ""
   },
@@ -846,7 +846,7 @@ export const APK_NOMENCLATURE = {
     "short": "Side Force",
     "sym": "C_Y",
     "unit": "–",
-    "body": "Side force made non-dimensional like thrust. Non-zero only when the inflow model has a longitudinal gradient K_x.",
+    "body": "Side force coefficient directed toward the advancing blade (+Y). Arises from longitudinal inflow asymmetry across the rotor disk.",
     "eq": "C_Y = −(a/4)·K_x·λ_i·(Θ_2 − 2λ·I_1)",
     "range": ""
   },
@@ -856,7 +856,7 @@ export const APK_NOMENCLATURE = {
     "short": "Roll Moment",
     "sym": "C_Mx",
     "unit": "–",
-    "body": "Roll hub moment made non-dimensional by ρA(ΩR)²R. Rigid hub, no flapping.",
+    "body": "Non-dimensional hub rolling moment coefficient, positive advancing side down. Evaluated for a rigid rotor without flapping hinges.",
     "eq": "C_Mx = −(a·μ/2)·(Θ_2 − ½λ·I_1) + (a/4)·λ_1s·I_3",
     "range": ""
   },
@@ -866,7 +866,7 @@ export const APK_NOMENCLATURE = {
     "short": "Pitch Moment",
     "sym": "C_My",
     "unit": "–",
-    "body": "Pitch hub moment made non-dimensional by ρA(ΩR)²R. Rigid hub, no flapping. Non-zero only when K_x is not zero.",
+    "body": "Non-dimensional hub pitching moment coefficient, positive nose-up. Evaluated for a rigid rotor; driven by the longitudinal inflow gradient K_x.",
     "eq": "C_My = (a/4)·K_x·λ_i·I_3",
     "range": ""
   },
@@ -876,7 +876,7 @@ export const APK_NOMENCLATURE = {
     "short": "Air Power",
     "sym": "C_Pair",
     "unit": "–",
-    "body": "Power given to the air, from the energy balance: induced, climb and profile terms, including the profile translational work μ·C_H0.",
+    "body": "Total air power coefficient from energy conservation: C_Pair = k_ind·λ_i·C_T + μ_z·C_T + C_Q0 + μ·C_H0 = C_P + μ·C_H.",
     "eq": "C_Pair = k_ind·λ_i·C_T + μ_z·C_T + C_Q0 + μ·C_H0",
     "range": ""
   },
@@ -886,7 +886,7 @@ export const APK_NOMENCLATURE = {
     "short": "Blade Loading",
     "sym": "C_T/σ_TR",
     "unit": "–",
-    "body": "Thrust coefficient per unit thrust-weighted solidity. Indicates how hard the blades work; stall limits it near 0.12 to 0.15.",
+    "body": "Rotor blade loading coefficient: C_T / σ_TR. Characterizes mean aerodynamic lift demand per blade. Blade stall typically limits maximum values to 0.12–0.15.",
     "eq": "C_T / σ_TR",
     "range": "0.05 to 0.12"
   },
@@ -896,7 +896,7 @@ export const APK_NOMENCLATURE = {
     "short": "Mean Lift Coefficient",
     "sym": "C̄_L",
     "unit": "–",
-    "body": "Average section lift coefficient over the disk that carries the thrust, from the blade loading. A quick stall margin check against the section C_l,max.",
+    "body": "Mean rotor blade lift coefficient, evaluated from thrust-weighted blade loading: C̄_L = 6·C_T / σ_TR. Provides stall margin comparison against airfoil C_l,max.",
     "eq": "C̄_L = 6·C_T / σ_TR",
     "range": "0.3 to 0.7"
   },
@@ -906,7 +906,7 @@ export const APK_NOMENCLATURE = {
     "short": "Figure of Merit",
     "sym": "FM",
     "unit": "–",
-    "body": "Ideal hover power over actual hover power, using the induced power factor and the profile torque. Shown only in hover; forward flight uses effective L/D.",
+    "body": "Rotor Figure of Merit in hover, defined as the ratio of ideal minimum induced power to actual shaft power: FM = (C_T^{1.5} / √2) / C_P.",
     "eq": "FM = (C_T^{1.5}/√2) / (k_ind·C_T^{1.5}/√2 + C_Q0)",
     "range": "0.55 to 0.80"
   },
@@ -916,7 +916,7 @@ export const APK_NOMENCLATURE = {
     "short": "Eff. Lift/Drag",
     "sym": "(L/D)_e",
     "unit": "–",
-    "body": "Rotor lift times forward speed over air power. Zero in hover.",
+    "body": "Effective rotor lift-to-drag ratio in translational flight: (L/D)_e = V_x·T / P_air = μ·C_T / C_Pair. Measure of cruise aerodynamic transport efficiency.",
     "eq": "(L/D)_e = μ·C_T / C_Pair",
     "range": "4 to 10"
   },
@@ -926,7 +926,7 @@ export const APK_NOMENCLATURE = {
     "short": "Inflow Ratio",
     "sym": "λ",
     "unit": "–",
-    "body": "Total flow through the disk normal to it, over tip speed: the axial free-stream component plus the induced part.",
+    "body": "Total rotor inflow ratio normal to the disk (+Z axis): λ = μ_z + λ_i. Positive when total flow is downward through the disk.",
     "eq": "λ = μ_z + λ_i",
     "range": ""
   },
@@ -936,7 +936,7 @@ export const APK_NOMENCLATURE = {
     "short": "Induced Inflow",
     "sym": "λ_i",
     "unit": "–",
-    "body": "Induced velocity over tip speed. Found by bisection so that the blade-element thrust equals the momentum thrust. In ideal hover it is √(C_T/2).",
+    "body": "Non-dimensional induced velocity ratio: λ_i = v_i / (ΩR). Positive when induced flow is downward through the disk. Solved iteratively to balance blade-element thrust with actuator disk momentum flux.",
     "eq": "C_T,BET(λ) = 2·B²·λ_i·√(μ_x² + λ²)",
     "range": "0.03 to 0.08 (hover)"
   },
@@ -946,7 +946,7 @@ export const APK_NOMENCLATURE = {
     "short": "Hover Inflow",
     "sym": "λ_h",
     "unit": "–",
-    "body": "Induced inflow ratio an ideal rotor would have in hover at the current thrust coefficient. Reference scale for the inflow: λ_i / λ_h shows how far forward or axial flow has relieved the induced velocity.",
+    "body": "Ideal hover induced inflow ratio from momentum theory: λ_h = √(C_T / 2). Serves as aerodynamic normalization reference for forward and axial flight inflow.",
     "eq": "λ_h = √(C_T / 2)",
     "range": "0.03 to 0.08"
   },
@@ -956,7 +956,7 @@ export const APK_NOMENCLATURE = {
     "short": "Advance/Inflow",
     "sym": "μ/λ",
     "unit": "–",
-    "body": "In-plane flow over total axial inflow. Zero in hover and growing as the wake skews toward the disk plane. It sets the wake skew angle that drives the inflow gradients.",
+    "body": "Advance-to-inflow ratio: μ_x / λ. Characterizes rotor wake inclination relative to the shaft axis and governs wake skew angle χ.",
     "eq": "μ/λ = μ_x / (μ_z + λ_i)",
     "range": "0 to 20"
   },
@@ -966,7 +966,7 @@ export const APK_NOMENCLATURE = {
     "short": "Dynamic Thrust Coeff",
     "sym": "T_c",
     "unit": "–",
-    "body": "Thrust over the dynamic pressure of the free stream times disk area, T_c = T / (½ρV∞²A). Useful when the rotor is treated like a propeller or a lifting surface moving at V. Undefined in hover.",
+    "body": "Dynamic thrust coefficient based on free-stream dynamic pressure: T_c = T / (½ρV_∞²A) = 2C_T / μ_∞². Undefined in static hover (V_∞ = 0).",
     "eq": "T_c = T / (½ρV²A) = 2C_T / μ_∞²,  V = √(V_x² + V_z²)",
     "range": ""
   },
@@ -976,8 +976,8 @@ export const APK_NOMENCLATURE = {
     "short": "Dynamic Power Coeff",
     "sym": "P_c",
     "unit": "–",
-    "body": "Shaft power over ½ρV∞³A for the free-stream speed V∞, P_c = P / (½ρV∞³A). Undefined in hover.",
-    "eq": "P_c = P / (½ρV³A) = 2C_P / μ_∞³,  V = √(V_x² + V_z²)",
+    "body": "Dynamic power coefficient based on free-stream dynamic pressure: P_c = P / (½ρV_∞³A) = 2C_P / μ_∞³. Undefined in static hover (V_∞ = 0).",
+    "eq": "P_c = P / (½ρV³A) = 2C_P / μ_∞²,  V = √(V_x² + V_z²)",
     "range": ""
   },
   "Kx": {
@@ -986,7 +986,7 @@ export const APK_NOMENCLATURE = {
     "short": "Long. Gradient",
     "sym": "K_x",
     "unit": "–",
-    "body": "Fore-aft slope of the induced inflow over the disk, as a multiple of λ_i. Set by the inflow model from the wake skew angle; zero for uniform inflow.",
+    "body": "Longitudinal induced inflow gradient parameter. Produces increased induced downwash over the aft portion of the rotor disk: λ_i(x, ψ) = λ_i·(1 + K_x·x·cosψ).",
     "eq": "Coleman: K_x = tan(χ/2)",
     "range": ""
   },
@@ -996,7 +996,7 @@ export const APK_NOMENCLATURE = {
     "short": "Lat. Gradient",
     "sym": "K_y",
     "unit": "–",
-    "body": "Side-to-side slope of the induced inflow over the disk, as a multiple of λ_i. Zero for uniform and Coleman; −2μ for Coleman-Feingold and Drees.",
+    "body": "Lateral induced inflow gradient parameter. Accounts for lateral downwash asymmetry between advancing and retreating sides: λ_i(x, ψ) = λ_i·(1 + K_y·x·sinψ).",
     "eq": "Drees: K_y = −2μ",
     "range": ""
   },
@@ -1006,7 +1006,7 @@ export const APK_NOMENCLATURE = {
     "short": "Wake Skew",
     "sym": "χ",
     "unit": "°",
-    "body": "Angle of the wake from the shaft axis. 0° is hover, close to 90° at high speed.",
+    "body": "Rotor wake skew angle relative to the shaft axis (+Z downward). Approaches 0° in axial climb/hover and 90° in high-speed forward flight.",
     "eq": "tan(χ/2) = μ / (√(μ² + λ²) + |λ|)",
     "range": "0° to 90°"
   },
@@ -1016,7 +1016,7 @@ export const APK_NOMENCLATURE = {
     "short": "Tip Factor",
     "sym": "B",
     "unit": "–",
-    "body": "Tip-loss factor used in this solution. Equals the typed value in Fixed mode and the converged value in Sissingh mode.",
+    "body": "Effective blade tip-loss factor B applied in the aerodynamic solution. Prescribed directly in Fixed mode, or converged iteratively in Sissingh mode.",
     "eq": "Sissingh: B = 1 − √(2C_T) / N_b",
     "range": "0.92 to 1.00"
   },
@@ -1086,7 +1086,7 @@ export const APK_NOMENCLATURE = {
     "short": "None",
     "sym": "B",
     "unit": "",
-    "body": "No tip loss. Blade loading is integrated all the way to the tip, which is optimistic.",
+    "body": "No tip-loss correction. Aerodynamic blade loading is integrated across the full span to x = 1.0 (optimistic bound).",
     "eq": "B = 1",
     "range": ""
   },
@@ -1096,7 +1096,7 @@ export const APK_NOMENCLATURE = {
     "short": "Fixed",
     "sym": "B",
     "unit": "",
-    "body": "Uses the tip-loss factor B typed in Geometry, for example the value a preset specifies. It is not the same as off.",
+    "body": "Fixed tip-loss station B specified in geometry. Radial blade integration cuts off at station B, neglecting tip vortex relief outboard.",
     "eq": "B = typed value",
     "range": "0.92 to 0.98"
   },
@@ -1106,7 +1106,7 @@ export const APK_NOMENCLATURE = {
     "short": "Sissingh",
     "sym": "B",
     "unit": "",
-    "body": "Computes B from the thrust coefficient and the blade count, iterating with the thrust until B stops changing.",
+    "body": "Semi-empirical tip-loss factor calculated from blade count and operating thrust coefficient: B = 1 − √(2C_T) / N_b, solved iteratively.",
     "eq": "B = 1 − √(2C_T) / N_b",
     "range": ""
   },
@@ -1116,7 +1116,7 @@ export const APK_NOMENCLATURE = {
     "short": "Off",
     "sym": "",
     "unit": "",
-    "body": "Lift-curve slope stays constant at a_0.",
+    "body": "Incompressible flow assumption (M = 0). Blade section lift-curve slope remains constant at the nominal incompressible value a_0.",
     "eq": "a = a_0",
     "range": ""
   },
@@ -1126,7 +1126,7 @@ export const APK_NOMENCLATURE = {
     "short": "On",
     "sym": "",
     "unit": "",
-    "body": "Corrects the lift-curve slope for subsonic compressibility using the Mach number near 0.75R, capped at 0.85. A caution appears from M_adv = 0.8; the result is invalid at M_adv = 1.",
+    "body": "Prandtl-Glauert subsonic compressibility correction. Scales 2D lift-curve slope using effective Mach number at 0.75R: a = a_0 / √(1 − M_eff²), capped at M = 0.85.",
     "eq": "a = a_0 / √(1 − M_eff²),  M_eff = M_tip·√(0.75² + μ²/2)",
     "range": ""
   },
@@ -1136,7 +1136,7 @@ export const APK_NOMENCLATURE = {
     "short": "Uniform",
     "sym": "",
     "unit": "",
-    "body": "Momentum theory: one induced velocity for the whole disk. No gradients, so there is no side force or pitch moment.",
+    "body": "Classical actuator disk momentum theory with uniform induced downwash across the rotor disk (K_x = K_y = 0). Produces zero hub pitching moment and side force.",
     "eq": "K_x = K_y = 0",
     "range": ""
   },
@@ -1146,7 +1146,7 @@ export const APK_NOMENCLATURE = {
     "short": "Coleman",
     "sym": "",
     "unit": "",
-    "body": "Longitudinal inflow gradient from the wake skew angle (Coleman 1945). No lateral gradient.",
+    "body": "Coleman (1945) first-harmonic inflow model with longitudinal gradient K_x = tan(χ/2) derived from wake skew angle χ. Lateral gradient is zero (K_y = 0).",
     "eq": "K_x = tan(χ/2),  K_y = 0",
     "range": ""
   },
@@ -1156,7 +1156,7 @@ export const APK_NOMENCLATURE = {
     "short": "Coleman-FG",
     "sym": "",
     "unit": "",
-    "body": "NDARC form of the Coleman model with the factor 15π/32 on the longitudinal gradient and a lateral gradient.",
+    "body": "Coleman-Feingold harmonic inflow model (NDARC standard). Longitudinal gradient K_x = (15π/32)·tan(χ/2) and lateral gradient K_y = −2μ.",
     "eq": "K_x = (15π/32)·tan(χ/2),  K_y = −2μ",
     "range": ""
   },
@@ -1166,7 +1166,7 @@ export const APK_NOMENCLATURE = {
     "short": "Drees",
     "sym": "",
     "unit": "",
-    "body": "Drees (1949) gradients, with a speed-dependent longitudinal term and a lateral gradient.",
+    "body": "Drees (1949) harmonic inflow model. Incorporates advance-ratio dependent longitudinal gradient K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2) and lateral gradient K_y = −2μ.",
     "eq": "K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2),  K_y = −2μ",
     "range": ""
   },
