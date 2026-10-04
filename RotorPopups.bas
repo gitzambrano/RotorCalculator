@@ -1529,19 +1529,23 @@ Private Sub GetJetColor(t As Double) As Int
 End Sub
 
 Private Sub FmtColorbarValue(v As Double) As String
-	If Abs(v) < 0.000001 Then Return "0"
-	If Abs(v) >= 1000 Or (Abs(v) < 0.01 And Abs(v) > 0) Then
-		Dim expVal As Int
-		expVal = Floor(Logarithm(Abs(v), 10))
+	If Abs(v) < 0.000000001 Then Return "0"
+	Dim expVal As Double
+	expVal = Floor(Logarithm(Abs(v), 10))
+	Dim expInt As Int
+	expInt = expVal
+	If Abs(v) >= 1000 Or Abs(v) < 0.01 Then
 		Dim mant As Double
-		mant = v / Power(10, expVal)
+		mant = v / Power(10, expInt)
 		Dim signStr As String
 		signStr = "+"
-		If expVal < 0 Then signStr = ""
-		Return NumberFormat2(mant, 1, 2, 2, False) & "e" & signStr & expVal
+		If expInt < 0 Then signStr = ""
+		Return NumberFormat2(mant, 1, 1, 1, False) & "e" & signStr & expInt
+	Else
+		Dim decs As Int
+		decs = Max(0, 1 - expInt)
+		Return NumberFormat2(v, 1, decs, decs, False)
 	End If
-	If Abs(v) >= 10 Then Return NumberFormat2(v, 1, 1, 1, False)
-	Return NumberFormat2(v, 1, 3, 3, False)
 End Sub
 
 Public Sub DrawDiskContourPlot( _
@@ -1758,67 +1762,132 @@ Public Sub DrawDiskContourPlot( _
 	If minVal = maxVal Then maxVal = minVal + 1.0
 
 	Dim centerX As Float
-	centerX = Round(widthPx * 0.44)
-	Dim centerY As Float
-	centerY = Round(heightPx * 0.50)
+	centerX = widthPx / 2.0
+	Dim topSpace As Float
+	If includeTitle Then topSpace = 60dip Else topSpace = 46dip
+	Dim bottomSpace As Float
+	bottomSpace = 86dip
+	Dim sideSpace As Float
+	sideSpace = 54dip
+	Dim availRadiusH As Float
+	availRadiusH = (widthPx - 2 * sideSpace) / 2.0
+	Dim availRadiusV As Float
+	availRadiusV = (heightPx - topSpace - bottomSpace) / 2.0
 	Dim maxRadius As Float
-	maxRadius = Round(Min(155dip, (heightPx - 110dip) / 2))
+	maxRadius = Round(Min(availRadiusH, Min(availRadiusV, 185dip)))
+	Dim centerY As Float
+	centerY = topSpace + maxRadius
 
-	For i = 0 To numR - 2
-		Dim r1Px As Float
-		r1Px = rStations(i) * maxRadius
-		Dim r2Px As Float
-		r2Px = rStations(i + 1) * maxRadius
+	' Precompute 256-level Jet colormap lookup table
+	Dim lut(256) As Int
+	For k = 0 To 255
+		lut(k) = GetJetColor(k / 255.0)
+	Next
 
-		For j = 0 To numPsi - 1
-			Dim jNext As Int
-			jNext = (j + 1) Mod numPsi
-			Dim v1 As Double
-			v1 = values(i, j)
-			Dim v2 As Double
-			v2 = values(i, jNext)
-			Dim v3 As Double
-			v3 = values(i + 1, j)
-			Dim v4 As Double
-			v4 = values(i + 1, jNext)
-			Dim vAvg As Double
-			vAvg = (v1 + v2 + v3 + v4) / 4.0
-			Dim normV As Double
-			normV = (vAvg - minVal) / (maxVal - minVal)
-			Dim wedgeCol As Int
-			wedgeCol = GetJetColor(normV)
+	Dim rMinPxSq As Float
+	rMinPxSq = (rStations(0) * maxRadius) * (rStations(0) * maxRadius)
+	Dim rMaxPxSq As Float
+	rMaxPxSq = maxRadius * maxRadius
+	Dim invRRange As Double
+	invRRange = (numR - 1) / (rMax - rMin)
+	Dim invValRange As Double
+	invValRange = 1.0 / (maxVal - minVal)
+	Dim twoPi As Double
+	twoPi = 2.0 * piVal
+	Dim halfPi As Double
+	halfPi = piVal / 2.0
+	Dim psiScale As Double
+	psiScale = numPsi / twoPi
 
-			Dim a1 As Double
-			a1 = piVal / 2.0 - psiStations(j)
-			Dim a2 As Double
-			a2 = piVal / 2.0 - psiStations(jNext)
+	Dim x0 As Int
+	x0 = Max(0, Floor(centerX - maxRadius))
+	Dim y0 As Int
+	y0 = Max(0, Floor(centerY - maxRadius))
+	Dim x1 As Int
+	x1 = Min(widthPx - 1, Ceil(centerX + maxRadius))
+	Dim y1 As Int
+	y1 = Min(heightPx - 1, Ceil(centerY + maxRadius))
+	Dim boxW As Int
+	boxW = x1 - x0 + 1
+	Dim boxH As Int
+	boxH = y1 - y0 + 1
+	Dim diskPixels(boxW * boxH) As Int
 
-			Dim x1a As Float
-			x1a = centerX + r1Px * Cos(a1)
-			Dim y1a As Float
-			y1a = centerY - r1Px * Sin(a1)
-			Dim x2a As Float
-			x2a = centerX + r2Px * Cos(a1)
-			Dim y2a As Float
-			y2a = centerY - r2Px * Sin(a1)
-			Dim x2b As Float
-			x2b = centerX + r2Px * Cos(a2)
-			Dim y2b As Float
-			y2b = centerY - r2Px * Sin(a2)
-			Dim x1b As Float
-			x1b = centerX + r1Px * Cos(a2)
-			Dim y1b As Float
-			y1b = centerY - r1Px * Sin(a2)
+	Dim joBmp As JavaObject
+	joBmp = bmp
+	joBmp.RunMethod("getPixels", Array(diskPixels, 0, boxW, x0, y0, boxW, boxH))
 
-			Dim poly As Path
-			poly.Initialize(x1a, y1a)
-			poly.LineTo(x2a, y2a)
-			poly.LineTo(x2b, y2b)
-			poly.LineTo(x1b, y1b)
-			poly.LineTo(x1a, y1a)
-			cvs.DrawPath(poly, wedgeCol, True, 1)
+	For py = y0 To y1
+		Dim dy As Float
+		dy = py - centerY
+		Dim dySq As Float
+		dySq = dy * dy
+		Dim rowOff As Int
+		rowOff = (py - y0) * boxW
+
+		For px = x0 To x1
+			Dim dx As Float
+			dx = px - centerX
+			Dim distSq As Float
+			distSq = dx * dx + dySq
+			If distSq >= rMinPxSq And distSq <= rMaxPxSq Then
+				Dim dist As Double
+				dist = Sqrt(distSq)
+				Dim r As Double
+				r = dist / maxRadius
+				Dim a As Double
+				a = CalcATan2(dy, dx)
+				Dim psi As Double
+				psi = halfPi - a
+				If psi < 0 Then psi = psi + twoPi
+				If psi >= twoPi Then psi = psi - twoPi
+
+				Dim rIdxExact As Double
+				rIdxExact = (r - rMin) * invRRange
+				Dim i0 As Int
+				i0 = Floor(rIdxExact)
+				If i0 < 0 Then i0 = 0
+				If i0 > numR - 2 Then i0 = numR - 2
+				Dim i1 As Int
+				i1 = i0 + 1
+				Dim fr As Double
+				fr = rIdxExact - i0
+
+				Dim psiIdxExact As Double
+				psiIdxExact = psi * psiScale
+				Dim j0 As Int
+				j0 = Floor(psiIdxExact) Mod numPsi
+				If j0 < 0 Then j0 = j0 + numPsi
+				Dim j1 As Int
+				j1 = (j0 + 1) Mod numPsi
+				Dim fpsi As Double
+				fpsi = psiIdxExact - Floor(psiIdxExact)
+
+				Dim v00 As Double
+				v00 = values(i0, j0)
+				Dim v10 As Double
+				v10 = values(i1, j0)
+				Dim v01 As Double
+				v01 = values(i0, j1)
+				Dim v11 As Double
+				v11 = values(i1, j1)
+
+				Dim vInterp As Double
+				vInterp = (1.0 - fr) * ((1.0 - fpsi) * v00 + fpsi * v01) + fr * ((1.0 - fpsi) * v10 + fpsi * v11)
+				Dim tNorm As Double
+				tNorm = (vInterp - minVal) * invValRange
+				If tNorm < 0 Then tNorm = 0
+				If tNorm > 1 Then tNorm = 1
+
+				Dim lutIdx As Int
+				lutIdx = Floor(tNorm * 255.0)
+				If lutIdx > 255 Then lutIdx = 255
+				diskPixels(rowOff + (px - x0)) = lut(lutIdx)
+			End If
 		Next
 	Next
+
+	joBmp.RunMethod("setPixels", Array(diskPixels, 0, boxW, x0, y0, boxW, boxH))
 
 	Dim colGuide As Int
 	colGuide = 0x99000000
@@ -1849,53 +1918,66 @@ Public Sub DrawDiskContourPlot( _
 	cvs.DrawCircle(centerX, centerY, rootRPx, colBg, True, 1dip)
 	cvs.DrawCircle(centerX, centerY, rootRPx, 0xFF000000, False, 1dip)
 
-	cvs.DrawText("Fore", centerX, centerY - maxRadius - 20dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
-	cvs.DrawText("180°", centerX, centerY - maxRadius - 6dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
+	cvs.DrawText("Fore", centerX, centerY - maxRadius - 26dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
+	cvs.DrawText("180°", centerX, centerY - maxRadius - 10dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
 
-	cvs.DrawText("0°", centerX, centerY + maxRadius + 14dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
-	cvs.DrawText("Aft", centerX, centerY + maxRadius + 26dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+	cvs.DrawText("0°", centerX, centerY + maxRadius + 14dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Aft", centerX, centerY + maxRadius + 28dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
 
-	cvs.DrawText("90°", centerX + maxRadius + 24dip, centerY - 2dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
-	cvs.DrawText("Adv.", centerX + maxRadius + 24dip, centerY + 12dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+	cvs.DrawText("90°", centerX + maxRadius + 26dip, centerY - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Adv.", centerX + maxRadius + 26dip, centerY + 10dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
 
-	cvs.DrawText("270°", centerX - maxRadius - 24dip, centerY - 2dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
-	cvs.DrawText("Ret.", centerX - maxRadius - 24dip, centerY + 12dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+	cvs.DrawText("270°", centerX - maxRadius - 26dip, centerY - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Ret.", centerX - maxRadius - 26dip, centerY + 10dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
 
-	Dim cbX As Float
-	cbX = widthPx - 68dip
-	Dim cbY As Float
-	cbY = centerY - maxRadius
 	Dim cbW As Float
-	cbW = 10dip
+	cbW = Round(widthPx * 0.82)
 	Dim cbH As Float
-	cbH = 2 * maxRadius
+	cbH = 16dip
+	Dim cbX As Float
+	cbX = Round((widthPx - cbW) / 2.0)
+	Dim cbY As Float
+	cbY = centerY + maxRadius + 44dip
 	Dim cbSteps As Int
-	cbSteps = 50
+	cbSteps = 100
 	For s = 0 To cbSteps - 1
-		Dim sy1 As Float
-		sy1 = cbY + cbH - (cbH * (s + 1) / cbSteps)
-		Dim sy2 As Float
-		sy2 = cbY + cbH - (cbH * s / cbSteps)
+		Dim sx1 As Float
+		sx1 = cbX + (cbW * s / cbSteps)
+		Dim sx2 As Float
+		sx2 = cbX + (cbW * (s + 1) / cbSteps)
 		Dim sNorm As Double
 		sNorm = (s + 0.5) / cbSteps
 		Dim segCol As Int
 		segCol = GetJetColor(sNorm)
 		Dim segRect As Rect
-		segRect.Initialize(cbX, sy1, cbX + cbW, sy2)
+		segRect.Initialize(sx1, cbY, sx2, cbY + cbH)
 		cvs.DrawRect(segRect, segCol, True, 1)
 	Next
 	Dim cbBorder As Rect
 	cbBorder.Initialize(cbX, cbY, cbX + cbW, cbY + cbH)
 	cvs.DrawRect(cbBorder, colGrid, False, 1dip)
 
-	cvs.DrawText(FmtColorbarValue(maxVal), cbX + cbW + 4dip, cbY + 8dip, Typeface.MONOSPACE, 10, colText, "LEFT")
-	cvs.DrawText(FmtColorbarValue((maxVal + minVal) / 2.0), cbX + cbW + 4dip, cbY + cbH / 2.0 + 4dip, Typeface.MONOSPACE, 10, colText, "LEFT")
-	cvs.DrawText(FmtColorbarValue(minVal), cbX + cbW + 4dip, cbY + cbH, Typeface.MONOSPACE, 10, colText, "LEFT")
+	' Subtle vertical tick division marks across the bar at 0%, 25%, 50%, 75%, 100%
+	Dim colBarTick As Int
+	colBarTick = 0x80000000
+	Dim tickFracs() As Float = Array As Float(0.0, 0.25, 0.50, 0.75, 1.0)
+	For Each tf As Float In tickFracs
+		Dim tx As Float
+		tx = Round(cbX + tf * cbW)
+		cvs.DrawLine(tx, cbY, tx, cbY + cbH, colBarTick, 1dip)
+	Next
+
+	' Colorbar tick labels: 2 significant figures (min on left, mid in center, max on right)
+	Dim tickY As Float
+	tickY = cbY + cbH + 6dip
+	cvs.DrawText(FmtColorbarValue(minVal), cbX, tickY + 8dip, Typeface.MONOSPACE, 12, colText, "LEFT")
+	cvs.DrawText(FmtColorbarValue((maxVal + minVal) / 2.0), centerX, tickY + 8dip, Typeface.MONOSPACE, 12, colText, "CENTER")
+	cvs.DrawText(FmtColorbarValue(maxVal), cbX + cbW, tickY + 8dip, Typeface.MONOSPACE, 12, colText, "RIGHT")
 
 	If includeTitle Then
 		Dim tTitle As String
 		tTitle = DiskContourParamLabel(paramKey)
-		cvs.DrawText(tTitle, widthPx / 2.0, 20dip, Typeface.DEFAULT_BOLD, 13, colText, "CENTER")
+		cvs.DrawText(tTitle, widthPx / 2.0, 16dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
 	End If
 
 	Return bmp

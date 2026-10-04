@@ -285,6 +285,38 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
   font-style: normal !important;
 }
 
+#result-tooltip-eq-box {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 14px 16px !important;
+  font-size: 15px !important;
+  color: var(--accent);
+  margin-bottom: 16px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+#result-tooltip-eq-box math {
+  display: block;
+  text-align: center;
+  font-size: 1.15em;
+  line-height: normal !important;
+  color: var(--accent);
+  overflow-x: auto;
+  overflow-y: visible !important;
+  padding: 8px 6px !important;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+#result-tooltip-eq-box math * {
+  overflow: visible !important;
+}
+
 #app {
 
   min-height: 100%;
@@ -3648,8 +3680,9 @@ input[type="number"] {
 
   #modal-result-tooltip #result-tooltip-desc { font-size: 15px !important; font-weight: 400; line-height: 18px !important; margin-bottom: 18px !important; }
 
-  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; font-weight: 400; line-height: 18px; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 12px 10px !important; border-radius: 10px !important; margin-bottom: 16px !important; display: flex; justify-content: center; align-items: center; }
-  #result-tooltip-eq-box math { display: block; text-align: center; font-size: 1.15em; color: var(--accent); overflow-x: auto; overflow-y: hidden; }
+  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; font-weight: 400; line-height: normal !important; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 14px 16px !important; border-radius: 10px !important; margin-bottom: 16px !important; display: flex; justify-content: center; align-items: center; overflow: visible !important; box-sizing: border-box; }
+  #result-tooltip-eq-box math { display: block; text-align: center; font-size: 1.15em; line-height: normal !important; color: var(--accent); overflow-x: auto; overflow-y: visible !important; padding: 8px 6px !important; margin: 0 auto; box-sizing: border-box; }
+  #result-tooltip-eq-box math * { overflow: visible !important; }
   #result-tooltip-eq-box math mo[stretchy="false"] { font-size: 1em !important; transform: none !important; }
 
   #modal-result-tooltip #result-tooltip-range-box, #modal-result-tooltip #result-tooltip-unit-box { font-size: 15px !important; font-weight: 400; line-height: 24px; }

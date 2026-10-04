@@ -764,7 +764,7 @@ app.innerHTML = `
         <div class="modal-body" style="padding: 16px 20px;">
           <div id="result-tooltip-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 14px;"></div>
           <div id="result-tooltip-svg-box" style="display: none;"></div>
-          <div id="result-tooltip-eq-box" style="display: none; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.25); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 13.5px; color: var(--accent); margin-bottom: 12px; word-break: break-all;"></div>
+          <div id="result-tooltip-eq-box" style="display: none;"></div>
           <div id="result-tooltip-range-box" style="display: none; font-size: 13.5px; margin-bottom: 10px;">
             <span style="font-weight: 700; color: var(--accent-green);">Typical range: </span>
             <span id="result-tooltip-range-text" style="color: var(--text-main);"></span>

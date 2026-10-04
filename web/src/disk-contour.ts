@@ -173,12 +173,13 @@ function getJetColor(t: number): string {
 }
 
 function formatColorbarValue(v: number): string {
-  if (Math.abs(v) < 1e-6) return "0";
-  if (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && Math.abs(v) > 0)) {
-    return v.toExponential(2);
+  if (Math.abs(v) < 1e-9) return "0";
+  const prec = v.toPrecision(2);
+  const abs = Math.abs(v);
+  if (abs >= 1000 || abs < 0.01) {
+    return Number(prec).toExponential(1);
   }
-  if (Math.abs(v) >= 10) return v.toFixed(1);
-  return v.toFixed(3);
+  return Number(prec).toString();
 }
 
 export function drawDiskContour(
@@ -222,49 +223,105 @@ export function drawDiskContour(
     maxVal = minVal + 1;
   }
   
-  // Layout geometry designed to maximize lateral space while providing generous margins for both 270° / Ret. and colorbar
-  const centerX = Math.round(width * 0.44); // ~220 on 500px canvas
-  const centerY = Math.round(height * 0.50); // 250 on 500px canvas
-  const maxRadius = Math.round(Math.min(155, (height - 110) / 2));
+  // Layout geometry: centered disk with horizontal colorbar below to maximize lateral disk size
+  const centerX = Math.round(width / 2);
+  const topSpace = includeTitle ? 56 : 42;
+  const bottomSpace = 84; // space for 0°/Aft + horizontal colorbar + ticks + bottom margin
+  const sideSpace = 52; // space for 270°/Ret. and 90°/Adv. labels with generous breathing room
+
+  const availRadiusH = (width - 2 * sideSpace) / 2;
+  const availRadiusV = (height - topSpace - bottomSpace) / 2;
+  const maxRadius = Math.floor(Math.min(availRadiusH, availRadiusV, 178));
+  const centerY = topSpace + maxRadius;
   
-  // Draw colored wedges
+  // 1. Smooth continuous bilinear interpolation onto canvas pixel buffer
+  const imgData = ctx.createImageData(width, height);
+  const buf = new Uint32Array(imgData.data.buffer);
+  
+  // Precompute 256-level Jet colormap lookup table in 32-bit integer format (0xAABBGGRR)
+  const lut = new Uint32Array(256);
+  for (let k = 0; k < 256; k++) {
+    const t = k / 255;
+    let r = 0, g = 0, b = 0;
+    if (t < 0.125) {
+      r = 0; g = 0; b = 0.5 + 4 * t;
+    } else if (t < 0.375) {
+      r = 0; g = 4 * (t - 0.125); b = 1;
+    } else if (t < 0.625) {
+      r = 4 * (t - 0.375); g = 1; b = 1 - 4 * (t - 0.375);
+    } else if (t < 0.875) {
+      r = 1; g = 1 - 4 * (t - 0.625); b = 0;
+    } else {
+      r = 1 - 4 * (t - 0.875); g = 0; b = 0;
+    }
+    const R = Math.round(r * 255);
+    const G = Math.round(g * 255);
+    const B = Math.round(b * 255);
+    lut[k] = (255 << 24) | (B << 16) | (G << 8) | R;
+  }
+  
   const numR = data.rStations.length;
   const numPsi = data.psiStations.length;
+  const rMin = data.rStations[0];
+  const rMax = data.rStations[numR - 1];
+  const rootR = rMin * maxRadius;
+  const rMinPxSq = rootR * rootR;
+  const rMaxPxSq = maxRadius * maxRadius;
   
-  for (let i = 0; i < numR - 1; i++) {
-    const r1 = data.rStations[i] * maxRadius;
-    const r2 = data.rStations[i+1] * maxRadius;
+  const invRRange = (numR - 1) / (rMax - rMin);
+  const invValRange = 1 / (maxVal - minVal);
+  const twoPi = 2 * Math.PI;
+  const psiScale = numPsi / twoPi;
+  
+  const yStart = Math.max(0, centerY - maxRadius);
+  const yEnd = Math.min(height, centerY + maxRadius + 1);
+  const xStart = Math.max(0, centerX - maxRadius);
+  const xEnd = Math.min(width, centerX + maxRadius + 1);
+  
+  for (let y = yStart; y < yEnd; y++) {
+    const dy = y - centerY;
+    const dySq = dy * dy;
+    const rowOffset = y * width;
     
-    for (let j = 0; j < numPsi; j++) {
-      const psi1 = data.psiStations[j];
-      const psi2 = data.psiStations[(j + 1) % numPsi];
+    for (let x = xStart; x < xEnd; x++) {
+      const dx = x - centerX;
+      const distSq = dx * dx + dySq;
+      if (distSq < rMinPxSq || distSq > rMaxPxSq) continue;
       
-      const v1 = data.values[i][j];
-      const v2 = data.values[i][(j + 1) % numPsi];
-      const v3 = data.values[i+1][j];
-      const v4 = data.values[i+1][(j + 1) % numPsi];
-      
-      const vAvg = (v1 + v2 + v3 + v4) / 4;
-      if (isNaN(vAvg)) continue;
-      
-      const normalizedV = (vAvg - minVal) / (maxVal - minVal);
-      ctx.fillStyle = getJetColor(normalizedV);
-      ctx.strokeStyle = ctx.fillStyle;
-      ctx.lineWidth = 0.5;
+      const dist = Math.sqrt(distSq);
+      const r = dist / maxRadius;
       
       // Canvas angle: psi=0 at bottom, psi=90 right, psi=180 top, psi=270 left
-      const a1 = Math.PI / 2 - psi1;
-      const a2 = Math.PI / 2 - psi2;
+      let a = Math.atan2(dy, dx);
+      let psi = Math.PI / 2 - a;
+      if (psi < 0) psi += twoPi;
+      else if (psi >= twoPi) psi -= twoPi;
       
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, r2, a1, a2, true);
-      ctx.arc(centerX, centerY, r1, a2, a1, false);
-      ctx.closePath();
+      const rIdxExact = (r - rMin) * invRRange;
+      const i0 = Math.max(0, Math.min(numR - 2, Math.floor(rIdxExact)));
+      const i1 = i0 + 1;
+      const fr = rIdxExact - i0;
       
-      ctx.fill();
-      ctx.stroke();
+      const psiIdxExact = psi * psiScale;
+      const j0 = Math.floor(psiIdxExact) % numPsi;
+      const j1 = (j0 + 1) % numPsi;
+      const fpsi = psiIdxExact - Math.floor(psiIdxExact);
+      
+      const v00 = data.values[i0][j0];
+      const v10 = data.values[i1][j0];
+      const v01 = data.values[i0][j1];
+      const v11 = data.values[i1][j1];
+      
+      const v = (1 - fr) * ((1 - fpsi) * v00 + fpsi * v01) + fr * ((1 - fpsi) * v10 + fpsi * v11);
+      let t = (v - minVal) * invValRange;
+      if (t < 0) t = 0; else if (t > 1) t = 1;
+      
+      const lutIdx = (t * 255) | 0;
+      buf[rowOffset + x] = lut[lutIdx];
     }
   }
+  
+  ctx.putImageData(imgData, 0, 0);
   
   // Faint dashed black concentric radial circles: 0.25R, 0.50R, 0.75R (clearly visible black dashes)
   ctx.strokeStyle = "rgba(0, 0, 0, 0.60)";
@@ -295,8 +352,7 @@ export function drawDiskContour(
   ctx.arc(centerX, centerY, maxRadius, 0, 2 * Math.PI);
   ctx.stroke();
   
-  // Root cutout circle (covers central axes intersection)
-  const rootR = data.rStations[0] * maxRadius;
+  // Root cutout circle (clean inner boundary)
   ctx.fillStyle = bgColor;
   ctx.beginPath();
   ctx.arc(centerX, centerY, rootR, 0, 2 * Math.PI);
@@ -305,50 +361,50 @@ export function drawDiskContour(
   ctx.lineWidth = 1;
   ctx.stroke();
   
-  // Azimuth labels & flight orientation annotations with identical font hierarchy:
-  // Degrees: bold 12px textColor | Sub-label: 10px mutedColor ("Fore", "Aft", "Adv.", "Ret.")
+  // Azimuth labels & flight orientation annotations:
+  // Degrees: bold 14px textColor | Sub-label: bold 12px mutedColor ("Fore", "Aft", "Adv.", "Ret.")
 
   // TOP (180° - FORE: Fore placed cleanly ABOVE 180°, well clear of outer perimeter)
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "10px sans-serif";
-  ctx.fillStyle = mutedColor;
-  ctx.fillText("Fore", centerX, centerY - maxRadius - 24);
   ctx.font = "bold 12px sans-serif";
+  ctx.fillStyle = mutedColor;
+  ctx.fillText("Fore", centerX, centerY - maxRadius - 26);
+  ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
   ctx.fillText("180°", centerX, centerY - maxRadius - 10);
   
   // BOTTOM (0° - AFT: 0° first, then Aft below)
-  ctx.font = "bold 12px sans-serif";
+  ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("0°", centerX, centerY + maxRadius + 12);
-  ctx.font = "10px sans-serif";
+  ctx.fillText("0°", centerX, centerY + maxRadius + 14);
+  ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Aft", centerX, centerY + maxRadius + 25);
+  ctx.fillText("Aft", centerX, centerY + maxRadius + 28);
   
   // RIGHT (90° - ADVANCING)
-  ctx.font = "bold 12px sans-serif";
+  ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("90°", centerX + maxRadius + 24, centerY - 6);
-  ctx.font = "10px sans-serif";
+  ctx.fillText("90°", centerX + maxRadius + 26, centerY - 8);
+  ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Adv.", centerX + maxRadius + 24, centerY + 8);
+  ctx.fillText("Adv.", centerX + maxRadius + 26, centerY + 10);
   
   // LEFT (270° - RETREATING: generous clearance from disk and from left canvas edge)
-  ctx.font = "bold 12px sans-serif";
+  ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("270°", centerX - maxRadius - 24, centerY - 6);
-  ctx.font = "10px sans-serif";
+  ctx.fillText("270°", centerX - maxRadius - 26, centerY - 8);
+  ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Ret.", centerX - maxRadius - 24, centerY + 8);
+  ctx.fillText("Ret.", centerX - maxRadius - 26, centerY + 10);
   
-  // Vertical Colorbar on Right (positioned with ample margin so numbers never clip)
-  const cbX = width - 68;
-  const cbY = centerY - maxRadius;
-  const cbWidth = 10;
-  const cbHeight = 2 * maxRadius;
+  // Prominent Horizontal Colorbar underneath the disk
+  const cbWidth = Math.round(width * 0.82); // 410px on 500px canvas
+  const cbHeight = 16;
+  const cbX = Math.round((width - cbWidth) / 2);
+  const cbY = centerY + maxRadius + 44;
   
-  const gradient = ctx.createLinearGradient(0, cbY + cbHeight, 0, cbY);
+  const gradient = ctx.createLinearGradient(cbX, 0, cbX + cbWidth, 0);
   gradient.addColorStop(0, getJetColor(0));
   gradient.addColorStop(0.25, getJetColor(0.25));
   gradient.addColorStop(0.5, getJetColor(0.5));
@@ -361,25 +417,41 @@ export function drawDiskContour(
   ctx.lineWidth = 1;
   ctx.strokeRect(cbX, cbY, cbWidth, cbHeight);
   
-  // Colorbar tick labels
+  // Draw subtle vertical tick marks across the bar at 0%, 25%, 50%, 75%, 100%
+  ctx.strokeStyle = "rgba(0,0,0,0.5)";
+  ctx.lineWidth = 1;
+  [0, 0.25, 0.5, 0.75, 1.0].forEach(frac => {
+    const tx = Math.round(cbX + frac * cbWidth);
+    ctx.beginPath();
+    ctx.moveTo(tx, cbY);
+    ctx.lineTo(tx, cbY + cbHeight);
+    ctx.stroke();
+  });
+
+  // Colorbar tick labels: 2 significant figures (min on left, mid in center, max on right)
+  const tickY = cbY + cbHeight + 6;
   ctx.fillStyle = textColor;
-  ctx.font = "10px monospace";
-  ctx.textAlign = "left";
+  ctx.font = "bold 12px monospace";
   ctx.textBaseline = "top";
-  ctx.fillText(formatColorbarValue(maxVal), cbX + cbWidth + 4, cbY - 4);
+
+  // Min tick (left)
+  ctx.textAlign = "left";
+  ctx.fillText(formatColorbarValue(minVal), cbX, tickY);
   
-  ctx.textBaseline = "middle";
-  ctx.fillText(formatColorbarValue((maxVal + minVal) / 2), cbX + cbWidth + 4, cbY + cbHeight / 2);
+  // Mid tick (center)
+  ctx.textAlign = "center";
+  ctx.fillText(formatColorbarValue((maxVal + minVal) / 2), centerX, tickY);
   
-  ctx.textBaseline = "bottom";
-  ctx.fillText(formatColorbarValue(minVal), cbX + cbWidth + 4, cbY + cbHeight + 4);
+  // Max tick (right)
+  ctx.textAlign = "right";
+  ctx.fillText(formatColorbarValue(maxVal), cbX + cbWidth, tickY);
   
   // Title on canvas: only displayed when requested (e.g. for standalone exported PNG)
   if (includeTitle) {
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.font = "bold 13px sans-serif";
+    ctx.font = "bold 14px sans-serif";
     ctx.fillStyle = textColor;
-    ctx.fillText(`${variableLabel} [${variableUnit}]`, width / 2, 14);
+    ctx.fillText(`${variableLabel} [${variableUnit}]`, width / 2, 12);
   }
 }
