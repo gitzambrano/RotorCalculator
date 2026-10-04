@@ -859,7 +859,7 @@ def test_coeff_word_only_for_dynamic_pressure_coefficients():
         has = "Coeff " in (m.group(2) + " ") or (m.group(3) + " ").find("Coeff ") >= 0
         assert has == (m.group(1) in allowed), m.group(1)
     assert '"Dynamic Thrust Coeff"' in src and '"Dyn Power Coeff"' in src
-    assert "T_c = T / (½ρV_∞²A)" in src or "T_c = T / (½ρV∞²A)" in src
+    assert "T_c = T / (½ρV_∞²A_DISK)" in src or "T_c = T / (½ρV∞²A_DISK)" in src
 
 
 def test_apk_results_preserve_name_symbol_order_and_speed_caption():

@@ -10,7 +10,7 @@ Geometry,sigmaRef,Canônico,Reference Solidity σ_REF,Reference Solidity σ_REF,
 Geometry,sigmaAct,Canônico,Actual Solidity σ_act,Actual Solidity σ_act,Act. Solidity σ_act,Act. Solidity σ_act,σ_act,RotorNames.bas
 Geometry,sigmaT,Canônico,Thrust-Weighted Solidity σ_TR,Thrust Solidity σ_TR,Thr. Solidity σ_TR,Thr. Solidity σ_TR,σ_TR,RotorNames.bas
 Geometry,AR,Canônico,Aspect Ratio AR,Aspect Ratio AR,Aspect AR,Aspect AR,AR,RotorNames.bas
-Geometry,A,Canônico,Disk Area A,Disk Area A,Disk Area A,Disk Area A,A,RotorNames.bas
+Geometry,A,Canônico,Disk Area A_DISK,Disk Area A_DISK,Disk Area A_DISK,Disk Area A_DISK,A_DISK,RotorNames.bas
 Geometry,Ab,Canônico,Reference Blade Area A_REF,Reference Area A_REF,Ref. Area A_REF,Ref. Area A_REF,A_REF,RotorNames.bas
 Geometry,Aact,Canônico,Actual Blade Area A_act,Actual Area A_act,Act. Area A_act,Act. Area A_act,A_act,RotorNames.bas
 Geometry,thRoot,Canônico,Root Pitch θ_R,Root Pitch θ_R,Root Pitch θ_R,Root Pitch θ_R,θ_R,RotorNames.bas
@@ -48,7 +48,7 @@ Results,H,Canônico,In-Plane Force H,In-Plane Force H,In-Plane Force H,In-Plane 
 Results,Y,Canônico,Side Force Y,Side Force Y,Side Force Y,Side Force Y,Y,RotorNames.bas
 Results,Mx,Canônico,Roll Moment M_x,Roll Moment M_x,Roll Moment M_x,Roll Moment M_x,M_x,RotorNames.bas
 Results,My,Canônico,Pitch Moment M_y,Pitch Moment M_y,Pitch Moment M_y,Pitch Moment M_y,M_y,RotorNames.bas
-Results,DL,Canônico,Disk Loading T/A,Disk Loading T/A,Disk Loading T/A,Disk Loading T/A,T/A,RotorNames.bas
+Results,DL,Canônico,Disk Loading T/A_DISK,Disk Loading T/A_DISK,Disk Loading T/A_DISK,Disk Loading T/A_DISK,T/A_DISK,RotorNames.bas
 Results,PL,Canônico,Power Loading T/P,Power Loading T/P,Power Loading T/P,Power Loading T/P,T/P,RotorNames.bas
 Results,Vztot,Canônico,"Total Axial Speed V_{z,tot}","Total Axial Speed V_{z,tot}","Axial Speed V_{z,tot}","Axial Speed V_{z,tot}","V_{z,tot}",RotorNames.bas
 Results,Vadv,Canônico,Advancing Speed V_adv,Advancing Speed V_adv,Adv. Speed V_adv,Adv. Speed V_adv,V_adv,RotorNames.bas
@@ -169,123 +169,123 @@ pnlMenuAnchor_Click,Option,Fixo,Privacy,Privacy,Privacy,Não usado,Privacy,Rotor
 pnlMenuAnchor_Click,Option Help,Fixo,Privacy policy,Privacy policy,Privacy policy,Não usado,Privacy policy,RotorCalculator.b4a:674
 pnlMenuAnchor_Click,Dialog Title,Fixo,Menu,Menu,Menu,Não usado,Menu,RotorCalculator.b4a:675
 HandleMenuItem,Dialog Title,Fixo,About RotorCalculator,About RotorCalculator,About RotorCalculator,Não usado,About RotorCalculator,RotorCalculator.b4a:694
-OpenSettingsPopup,lblTitle,Fixo,SETTINGS,SETTINGS,SETTINGS,Não usado,SETTINGS,RotorCalculator.b4a:919
-OpenSettingsPopup,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:928
-Settings,btnSettingTheme title,Fixo,Theme,Theme,Theme,Não usado,Theme,RotorCalculator.b4a:940
-Settings,btnSettingTheme subtitle,Fixo,"Dark, Light or Midnight Blue","Dark, Light or Midnight Blue","Dark, Light or Midnight Blue",Não usado,"Dark, Light or Midnight Blue",RotorCalculator.b4a:940
-Settings,btnSettingUnits title,Fixo,Result Units (Outputs Only),Result Units (Outputs Only),Result Units (Outputs Only),Não usado,Result Units (Outputs Only),RotorCalculator.b4a:942
-Settings,btnSettingUnits subtitle,Fixo,SI or Imperial for results; input rows keep their own units,SI or Imperial for results; input rows keep their own units,SI or Imperial for results; input rows keep their own units,Não usado,SI or Imperial for results; input rows keep their own units,RotorCalculator.b4a:942
-Settings,btnSettingPrecision title,Fixo,Number Format,Number Format,Number Format,Não usado,Number Format,RotorCalculator.b4a:944
-Settings,btnSettingPrecision subtitle,Fixo,"Cycle between -1 decimal, standard, and +1 decimal","Cycle between -1 decimal, standard, and +1 decimal","Cycle between -1 decimal, standard, and +1 decimal",Não usado,"Cycle between -1 decimal, standard, and +1 decimal",RotorCalculator.b4a:944
-Settings,btnSettingPalette title,Fixo,Palette,Palette,Palette,Não usado,Palette,RotorCalculator.b4a:947
-Settings,btnSettingPalette subtitle,Fixo,Sweep curve colors,Sweep curve colors,Sweep curve colors,Não usado,Sweep curve colors,RotorCalculator.b4a:947
-Settings,btnSettingImportGeometries title,Fixo,Import Geometries,Import Geometries,Import Geometries,Não usado,Import Geometries,RotorCalculator.b4a:950
-Settings,btnSettingImportGeometries subtitle,Fixo,Restore or merge a shared backup,Restore or merge a shared backup,Restore or merge a shared backup,Não usado,Restore or merge a shared backup,RotorCalculator.b4a:950
-Settings,btnSettingExportGeometries title,Fixo,Export Geometries,Export Geometries,Export Geometries,Não usado,Export Geometries,RotorCalculator.b4a:952
-Settings,btnSettingExportGeometries subtitle,Fixo,Backup all saved rotor geometries,Backup all saved rotor geometries,Backup all saved rotor geometries,Não usado,Backup all saved rotor geometries,RotorCalculator.b4a:952
-Settings,btnSettingRestore title,Fixo,Restore Factory Presets,Restore Factory Presets,Restore Factory Presets,Não usado,Restore Factory Presets,RotorCalculator.b4a:954
-Settings,btnSettingRestore subtitle,Fixo,Custom rotors are preserved,Custom rotors are preserved,Custom rotors are preserved,Não usado,Custom rotors are preserved,RotorCalculator.b4a:954
-AddSettingsRow,b,Fixo,RESTORE,RESTORE,RESTORE,Não usado,RESTORE,RotorCalculator.b4a:1013
-RefreshSettingsButtons,btnSettingPrecision,Fixo,+1 DECIMAL,+1 DECIMAL,+1 DECIMAL,Não usado,+1 DECIMAL,RotorCalculator.b4a:1042
-RefreshSettingsButtons,btnSettingPrecision,Fixo,-1 DECIMAL,-1 DECIMAL,-1 DECIMAL,Não usado,-1 DECIMAL,RotorCalculator.b4a:1044
-RefreshSettingsButtons,btnSettingPrecision,Fixo,STANDARD,STANDARD,STANDARD,Não usado,STANDARD,RotorCalculator.b4a:1046
-btnSettingTheme_Click,Option,Fixo,Dark,Dark,Dark,Não usado,Dark,RotorCalculator.b4a:1060
-btnSettingTheme_Click,Option Help,Fixo,"Cockpit stealth, high contrast","Cockpit stealth, high contrast","Cockpit stealth, high contrast",Não usado,"Cockpit stealth, high contrast",RotorCalculator.b4a:1060
-btnSettingTheme_Click,Option,Fixo,Light,Light,Light,Não usado,Light,RotorCalculator.b4a:1061
-btnSettingTheme_Click,Option Help,Fixo,"Daylight, contrast tuned to 4.5:1 or better","Daylight, contrast tuned to 4.5:1 or better","Daylight, contrast tuned to 4.5:1 or better",Não usado,"Daylight, contrast tuned to 4.5:1 or better",RotorCalculator.b4a:1061
-btnSettingTheme_Click,Option,Fixo,Midnight Blue,Midnight Blue,Midnight Blue,Não usado,Midnight Blue,RotorCalculator.b4a:1062
-btnSettingTheme_Click,Option Help,Fixo,"Navy surfaces, cyan and amber accents","Navy surfaces, cyan and amber accents","Navy surfaces, cyan and amber accents",Não usado,"Navy surfaces, cyan and amber accents",RotorCalculator.b4a:1062
-btnSettingTheme_Click,Option,Fixo,Sepia,Sepia,Sepia,Não usado,Sepia,RotorCalculator.b4a:1063
-btnSettingTheme_Click,Option Help,Fixo,"Warm parchment, sober pastel tones","Warm parchment, sober pastel tones","Warm parchment, sober pastel tones",Não usado,"Warm parchment, sober pastel tones",RotorCalculator.b4a:1063
-btnSettingTheme_Click,Dialog Title,Fixo,Theme,Theme,Theme,Não usado,Theme,RotorCalculator.b4a:1064
-btnSettingRestore_Click,Dialog Title,Fixo,Restore Factory Presets,Restore Factory Presets,Restore Factory Presets,Não usado,Restore Factory Presets,RotorCalculator.b4a:1119
-btnSettingExportGeometries_Click,Dialog Title,Fixo,Export Geometries,Export Geometries,Export Geometries,Não usado,Export Geometries,RotorCalculator.b4a:1133
-btnSettingImportGeometries_Click,Dialog Title,Fixo,Import Geometries,Import Geometries,Import Geometries,Não usado,Import Geometries,RotorCalculator.b4a:1173
-btnSettingImportGeometries_Click,Option,Fixo,Rename imported duplicates,Rename imported duplicates,Rename imported duplicates,Não usado,Rename imported duplicates,RotorCalculator.b4a:1192
-btnSettingImportGeometries_Click,Option Help,Fixo,Keep both rotors,Keep both rotors,Keep both rotors,Não usado,Keep both rotors,RotorCalculator.b4a:1192
-btnSettingImportGeometries_Click,Option,Fixo,Replace same-name local geometries,Replace same-name local geometries,Replace same-name local geometries,Não usado,Replace same-name local geometries,RotorCalculator.b4a:1193
-btnSettingImportGeometries_Click,Option Help,Fixo,Overwrite the local rotors,Overwrite the local rotors,Overwrite the local rotors,Não usado,Overwrite the local rotors,RotorCalculator.b4a:1193
-btnSettingImportGeometries_Click,Option,Fixo,Skip same-name imported geometries,Skip same-name imported geometries,Skip same-name imported geometries,Não usado,Skip same-name imported geometries,RotorCalculator.b4a:1194
-btnSettingImportGeometries_Click,Option Help,Fixo,Keep the local rotors,Keep the local rotors,Keep the local rotors,Não usado,Keep the local rotors,RotorCalculator.b4a:1194
-btnSettingImportGeometries_Click,Dialog Title,Fixo,Name Conflicts,Name Conflicts,Name Conflicts,Não usado,Name Conflicts,RotorCalculator.b4a:1195
-OpenHelpAsset,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:1309
-OpenUnitConverter,lblTitle,Fixo,QUICK UNIT CONVERTER,QUICK UNIT CONVERTER,QUICK UNIT CONVERTER,Não usado,QUICK UNIT CONVERTER,RotorCalculator.b4a:1378
-OpenUnitConverter,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:1387
-OpenUnitConverter,lblMode,Fixo,CONVERSION,CONVERSION,CONVERSION,Não usado,CONVERSION,RotorCalculator.b4a:1395
-btnUnitMode_Click,Dialog Title,Fixo,Quick Unit Converter,Quick Unit Converter,Quick Unit Converter,Não usado,Quick Unit Converter,RotorCalculator.b4a:1450
-UpdateUnitConversion,lblUnitFrom,Template,VALUE IN  ⟨conteúdo variável⟩,VALUE IN  ⟨conteúdo variável⟩,VALUE IN  ⟨conteúdo variável⟩,Não usado,VALUE IN  ⟨conteúdo variável⟩,RotorCalculator.b4a:1485
-BuildGeometryEditorContent,Section Header,Fixo,ROTOR,ROTOR,ROTOR,Não usado,ROTOR,RotorCalculator.b4a:2117
-BuildGeometryEditorContent,Section Header,Fixo,PLANFORM,PLANFORM,PLANFORM,Não usado,PLANFORM,RotorCalculator.b4a:2119
-BuildGeometryEditorContent,Section Header,Fixo,SOLIDITY & AREAS,SOLIDITY & AREAS,SOLIDITY & AREAS,Não usado,SOLIDITY & AREAS,RotorCalculator.b4a:2123
-BuildGeometryEditorContent,Section Header,Fixo,BLADE PITCH,BLADE PITCH,BLADE PITCH,Não usado,BLADE PITCH,RotorCalculator.b4a:2127
-BuildGeometryEditorContent,Section Header,Fixo,AERODYNAMICS,AERODYNAMICS,AERODYNAMICS,Não usado,AERODYNAMICS,RotorCalculator.b4a:2131
-AddActiveBar,lblUnsaved,Fixo,UNSAVED,UNSAVED,UNSAVED,Não usado,UNSAVED,RotorCalculator.b4a:2171
-Geometry,btnGeometrySave,Fixo,SAVE,SAVE,SAVE,Não usado,SAVE,RotorCalculator.b4a:2199
-Geometry,btnGeometryCopy,Fixo,COPY,COPY,COPY,Não usado,COPY,RotorCalculator.b4a:2200
-Geometry,btnGeometryDelete,Fixo,DELETE,DELETE,DELETE,Não usado,DELETE,RotorCalculator.b4a:2201
-RefreshCompressibilityButton,btnCompressibility,Fixo,On,On,On,Não usado,On,RotorCalculator.b4a:2295
-RefreshCompressibilityButton,btnCompressibility,Fixo,Off,Off,Off,Não usado,Off,RotorCalculator.b4a:2297
-btnSelectAirfoil_Click,Option,Fixo,Custom,Custom,Custom,Não usado,Custom,RotorCalculator.b4a:2422
-btnSelectAirfoil_Click,Option Help,Fixo,Keep a_0 and C_d0 as entered,Keep a_0 and C_d0 as entered,Keep a_0 and C_d0 as entered,Não usado,Keep a_0 and C_d0 as entered,RotorCalculator.b4a:2422
-btnCompressibility_Click,Option,Fixo,Off,Off,Off,Não usado,Off,RotorCalculator.b4a:2466
-btnCompressibility_Click,Option Help,Fixo,No compressibility correction,No compressibility correction,No compressibility correction,Não usado,No compressibility correction,RotorCalculator.b4a:2466
-btnCompressibility_Click,Option,Fixo,On,On,On,Não usado,On,RotorCalculator.b4a:2467
-btnCompressibility_Click,Option Help,Fixo,Prandtl-Glauert linear compressibility correction,Prandtl-Glauert linear compressibility correction,Prandtl-Glauert linear compressibility correction,Não usado,Prandtl-Glauert linear compressibility correction,RotorCalculator.b4a:2467
-RenameCurrentRotor,Dialog Title,Fixo,Rename Rotor,Rename Rotor,Rename Rotor,Não usado,Rename Rotor,RotorCalculator.b4a:2526
-ResolveUnsavedGeometry,Dialog Title,Fixo,Unsaved Geometry,Unsaved Geometry,Unsaved Geometry,Não usado,Unsaved Geometry,RotorCalculator.b4a:2573
-btnGeometryCopy_Click,Dialog Title,Fixo,Copy Rotor,Copy Rotor,Copy Rotor,Não usado,Copy Rotor,RotorCalculator.b4a:2597
-btnGeometryDelete_Click,Dialog Title,Fixo,Delete Rotor,Delete Rotor,Delete Rotor,Não usado,Delete Rotor,RotorCalculator.b4a:2612
-BuildPageCond,Section Header,Fixo,ATMOSPHERE & FLOW,ATMOSPHERE & FLOW,ATMOSPHERE & FLOW,Não usado,ATMOSPHERE & FLOW,RotorCalculator.b4a:2647
-BuildPageCond,Section Header,Fixo,OPERATING CONSTRAINTS,OPERATING CONSTRAINTS,OPERATING CONSTRAINTS,Não usado,OPERATING CONSTRAINTS,RotorCalculator.b4a:2660
-BuildPageCond,Section Header,Fixo,AERODYNAMIC MODEL,AERODYNAMIC MODEL,AERODYNAMIC MODEL,Não usado,AERODYNAMIC MODEL,RotorCalculator.b4a:2671
-BuildPageRes,btnViewPolarPlot,Fixo,OPEN PARAMETER SWEEP,OPEN PARAMETER SWEEP,OPEN PARAMETER SWEEP,Não usado,OPEN PARAMETER SWEEP,RotorCalculator.b4a:2698
-BuildPageRes,Section Header,Fixo,MODEL STATUS,MODEL STATUS,MODEL STATUS,Não usado,MODEL STATUS,RotorCalculator.b4a:2778
-lblResultStatus_Click,Dialog Title,Fixo,Prandtl-Glauert Invalid,Prandtl-Glauert Invalid,Prandtl-Glauert Invalid,Não usado,Prandtl-Glauert Invalid,RotorCalculator.b4a:2876
-lblResultStatus_Click,Dialog Title,Fixo,Model Status,Model Status,Model Status,Não usado,Model Status,RotorCalculator.b4a:2879
-lblResultStatus_Click,Dialog Title,Fixo,Compressibility Caution,Compressibility Caution,Compressibility Caution,Não usado,Compressibility Caution,RotorCalculator.b4a:2881
-btnOperatingPair_Click,Option,Fixo,Rotor Speed Ω + Collective Δθ,Rotor Speed Ω + Collective Δθ,Rotor Speed Ω + Collective Δθ,Não usado,Rotor Speed Ω + Collective Δθ,RotorCalculator.b4a:3691
-btnOperatingPair_Click,Option Help,Fixo,Solves C_T and T,Solves C_T and T,Solves C_T and T,Não usado,Solves C_T and T,RotorCalculator.b4a:3691
-btnOperatingPair_Click,Option,Fixo,Rotor Speed Ω + Target C_T,Rotor Speed Ω + Target C_T,Rotor Speed Ω + Target C_T,Não usado,Rotor Speed Ω + Target C_T,RotorCalculator.b4a:3692
-btnOperatingPair_Click,Option Help,Fixo,Solves Δθ and T,Solves Δθ and T,Solves Δθ and T,Não usado,Solves Δθ and T,RotorCalculator.b4a:3692
-btnOperatingPair_Click,Option,Fixo,Rotor Speed Ω + Target Thrust T,Rotor Speed Ω + Target Thrust T,Rotor Speed Ω + Target Thrust T,Não usado,Rotor Speed Ω + Target Thrust T,RotorCalculator.b4a:3693
-btnOperatingPair_Click,Option Help,Fixo,Solves Δθ and C_T,Solves Δθ and C_T,Solves Δθ and C_T,Não usado,Solves Δθ and C_T,RotorCalculator.b4a:3693
-btnOperatingPair_Click,Option,Fixo,Collective Δθ + Target C_T,Collective Δθ + Target C_T,Collective Δθ + Target C_T,Não usado,Collective Δθ + Target C_T,RotorCalculator.b4a:3694
-btnOperatingPair_Click,Option Help,Fixo,Solves Ω and T,Solves Ω and T,Solves Ω and T,Não usado,Solves Ω and T,RotorCalculator.b4a:3694
-btnOperatingPair_Click,Option,Fixo,Collective Δθ + Target Thrust T,Collective Δθ + Target Thrust T,Collective Δθ + Target Thrust T,Não usado,Collective Δθ + Target Thrust T,RotorCalculator.b4a:3695
-btnOperatingPair_Click,Option Help,Fixo,Solves Ω and C_T,Solves Ω and C_T,Solves Ω and C_T,Não usado,Solves Ω and C_T,RotorCalculator.b4a:3695
-btnOperatingPair_Click,Option,Fixo,Target C_T + Target Thrust T,Target C_T + Target Thrust T,Target C_T + Target Thrust T,Não usado,Target C_T + Target Thrust T,RotorCalculator.b4a:3696
-btnOperatingPair_Click,Option Help,Fixo,Solves Ω and Δθ,Solves Ω and Δθ,Solves Ω and Δθ,Não usado,Solves Ω and Δθ,RotorCalculator.b4a:3696
-btnHorizontalInput_Click,Dialog Title,Fixo,Horizontal Flow Input,Horizontal Flow Input,Horizontal Flow Input,Não usado,Horizontal Flow Input,RotorCalculator.b4a:3726
-btnAxialInput_Click,Dialog Title,Fixo,Axial Flow Input,Axial Flow Input,Axial Flow Input,Não usado,Axial Flow Input,RotorCalculator.b4a:3757
-btnViewPolarPlot_Click,lblTitle,Fixo,PARAMETER SWEEP,PARAMETER SWEEP,PARAMETER SWEEP,Não usado,PARAMETER SWEEP,RotorCalculator.b4a:3838
-btnViewPolarPlot_Click,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:3847
-btnViewPolarPlot_Click,btnTable,Fixo,TABLE,TABLE,TABLE,Não usado,TABLE,RotorCalculator.b4a:3914
-btnViewPolarPlot_Click,btnCsv,Fixo,CSV,CSV,CSV,Não usado,CSV,RotorCalculator.b4a:3916
-btnViewPolarPlot_Click,btnPng,Fixo,PNG,PNG,PNG,Não usado,PNG,RotorCalculator.b4a:3919
-btnSweepParam_Click,Dialog Title,Fixo,Y-Axis Result,Y-Axis Result,Y-Axis Result,Não usado,Y-Axis Result,RotorCalculator.b4a:3952
-btnSweepMultiModel_Click,Option,Fixo,Inflow Models,Inflow Models,Inflow Models,Não usado,Inflow Models,RotorCalculator.b4a:4007
-btnSweepMultiModel_Click,Option Help,Fixo,"All four inflow models, active settings","All four inflow models, active settings","All four inflow models, active settings",Não usado,"All four inflow models, active settings",RotorCalculator.b4a:4007
-btnSweepMultiModel_Click,Option,Fixo,Rotor α Family,Rotor α Family,Rotor α Family,Não usado,Rotor α Family,RotorCalculator.b4a:4008
-btnSweepMultiModel_Click,Option Help,Fixo,Several disk angles of attack,Several disk angles of attack,Several disk angles of attack,Não usado,Several disk angles of attack,RotorCalculator.b4a:4008
-btnSweepMultiModel_Click,Option,Fixo,Axial Vz Family,Axial Vz Family,Axial Vz Family,Não usado,Axial Vz Family,RotorCalculator.b4a:4009
-btnSweepMultiModel_Click,Option Help,Fixo,Several climb speeds,Several climb speeds,Several climb speeds,Não usado,Several climb speeds,RotorCalculator.b4a:4009
-btnSweepMultiModel_Click,Option,Fixo,Axial μz Family,Axial μz Family,Axial μz Family,Não usado,Axial μz Family,RotorCalculator.b4a:4010
-btnSweepMultiModel_Click,Option Help,Fixo,Several axial flow ratios,Several axial flow ratios,Several axial flow ratios,Não usado,Several axial flow ratios,RotorCalculator.b4a:4010
-btnSweepMultiModel_Click,Option,Fixo,Active Only,Active Only,Active Only,Não usado,Active Only,RotorCalculator.b4a:4011
-btnSweepMultiModel_Click,Option Help,Fixo,Only the current condition,Only the current condition,Only the current condition,Não usado,Only the current condition,RotorCalculator.b4a:4011
-btnSweepMultiModel_Click,Option,Fixo,Edit Family Values…,Edit Family Values…,Edit Family Values…,Não usado,Edit Family Values…,RotorCalculator.b4a:4013
-btnSweepMultiModel_Click,Option Help,Fixo,Comma-separated list for the selected family,Comma-separated list for the selected family,Comma-separated list for the selected family,Não usado,Comma-separated list for the selected family,RotorCalculator.b4a:4013
-btnSweepValues_Click,hint,Fixo,"Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05","Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05","Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05",Não usado,"Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05",RotorCalculator.b4a:4102
-btnSweepValues_Click,hint,Fixo,"Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10","Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10","Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10",Não usado,"Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10",RotorCalculator.b4a:4104
-btnSweepMaxMu_Click,Option,Fixo,μ_x max = ,μ_x max = ,μ_x max = ,Não usado,μ_x max = ,RotorCalculator.b4a:4198
-btnSweepMaxMu_Click,Dialog Title,Fixo,Sweep Range,Sweep Range,Sweep Range,Não usado,Sweep Range,RotorCalculator.b4a:4202
-RedrawSweepPlot,lblSweepCurrentVal,Fixo,Active point: invalid operating point,Active point: invalid operating point,Active point: invalid operating point,Não usado,Active point: invalid operating point,RotorCalculator.b4a:4246
-OpenSweepTablePopup,close,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:4308
-btnSweepExportCsv_Click,Option,Fixo,Current Chart CSV,Current Chart CSV,Current Chart CSV,Não usado,Current Chart CSV,RotorCalculator.b4a:4404
-btnSweepExportCsv_Click,Option Help,Fixo,Table of plotted curve values vs advance ratio,Table of plotted curve values vs advance ratio,Table of plotted curve values vs advance ratio,Não usado,Table of plotted curve values vs advance ratio,RotorCalculator.b4a:4404
-btnSweepExportCsv_Click,Option,Fixo,Full Dataset CSV,Full Dataset CSV,Full Dataset CSV,Não usado,Full Dataset CSV,RotorCalculator.b4a:4405
-btnSweepExportCsv_Click,Option Help,Fixo,"Complete inputs, baseline operating point, and all aerodynamic variables","Complete inputs, baseline operating point, and all aerodynamic variables","Complete inputs, baseline operating point, and all aerodynamic variables",Não usado,"Complete inputs, baseline operating point, and all aerodynamic variables",RotorCalculator.b4a:4405
-btnSweepExportCsv_Click,Dialog Title,Fixo,Export CSV,Export CSV,Export CSV,Não usado,Export CSV,RotorCalculator.b4a:4406
+OpenSettingsPopup,lblTitle,Fixo,SETTINGS,SETTINGS,SETTINGS,Não usado,SETTINGS,RotorCalculator.b4a:918
+OpenSettingsPopup,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:927
+Settings,btnSettingTheme title,Fixo,Theme,Theme,Theme,Não usado,Theme,RotorCalculator.b4a:939
+Settings,btnSettingTheme subtitle,Fixo,"Dark, Light or Midnight Blue","Dark, Light or Midnight Blue","Dark, Light or Midnight Blue",Não usado,"Dark, Light or Midnight Blue",RotorCalculator.b4a:939
+Settings,btnSettingUnits title,Fixo,Result Units (Outputs Only),Result Units (Outputs Only),Result Units (Outputs Only),Não usado,Result Units (Outputs Only),RotorCalculator.b4a:941
+Settings,btnSettingUnits subtitle,Fixo,SI or Imperial for results; input rows keep their own units,SI or Imperial for results; input rows keep their own units,SI or Imperial for results; input rows keep their own units,Não usado,SI or Imperial for results; input rows keep their own units,RotorCalculator.b4a:941
+Settings,btnSettingPrecision title,Fixo,Number Format,Number Format,Number Format,Não usado,Number Format,RotorCalculator.b4a:943
+Settings,btnSettingPrecision subtitle,Fixo,"Cycle between -1 decimal, standard, and +1 decimal","Cycle between -1 decimal, standard, and +1 decimal","Cycle between -1 decimal, standard, and +1 decimal",Não usado,"Cycle between -1 decimal, standard, and +1 decimal",RotorCalculator.b4a:943
+Settings,btnSettingPalette title,Fixo,Palette,Palette,Palette,Não usado,Palette,RotorCalculator.b4a:946
+Settings,btnSettingPalette subtitle,Fixo,Sweep curve colors,Sweep curve colors,Sweep curve colors,Não usado,Sweep curve colors,RotorCalculator.b4a:946
+Settings,btnSettingImportGeometries title,Fixo,Import Geometries,Import Geometries,Import Geometries,Não usado,Import Geometries,RotorCalculator.b4a:949
+Settings,btnSettingImportGeometries subtitle,Fixo,Restore or merge a shared backup,Restore or merge a shared backup,Restore or merge a shared backup,Não usado,Restore or merge a shared backup,RotorCalculator.b4a:949
+Settings,btnSettingExportGeometries title,Fixo,Export Geometries,Export Geometries,Export Geometries,Não usado,Export Geometries,RotorCalculator.b4a:951
+Settings,btnSettingExportGeometries subtitle,Fixo,Backup all saved rotor geometries,Backup all saved rotor geometries,Backup all saved rotor geometries,Não usado,Backup all saved rotor geometries,RotorCalculator.b4a:951
+Settings,btnSettingRestore title,Fixo,Restore Factory Presets,Restore Factory Presets,Restore Factory Presets,Não usado,Restore Factory Presets,RotorCalculator.b4a:953
+Settings,btnSettingRestore subtitle,Fixo,Custom rotors are preserved,Custom rotors are preserved,Custom rotors are preserved,Não usado,Custom rotors are preserved,RotorCalculator.b4a:953
+AddSettingsRow,b,Fixo,RESTORE,RESTORE,RESTORE,Não usado,RESTORE,RotorCalculator.b4a:1012
+RefreshSettingsButtons,btnSettingPrecision,Fixo,+1 DECIMAL,+1 DECIMAL,+1 DECIMAL,Não usado,+1 DECIMAL,RotorCalculator.b4a:1041
+RefreshSettingsButtons,btnSettingPrecision,Fixo,-1 DECIMAL,-1 DECIMAL,-1 DECIMAL,Não usado,-1 DECIMAL,RotorCalculator.b4a:1043
+RefreshSettingsButtons,btnSettingPrecision,Fixo,STANDARD,STANDARD,STANDARD,Não usado,STANDARD,RotorCalculator.b4a:1045
+btnSettingTheme_Click,Option,Fixo,Dark,Dark,Dark,Não usado,Dark,RotorCalculator.b4a:1059
+btnSettingTheme_Click,Option Help,Fixo,"Cockpit stealth, high contrast","Cockpit stealth, high contrast","Cockpit stealth, high contrast",Não usado,"Cockpit stealth, high contrast",RotorCalculator.b4a:1059
+btnSettingTheme_Click,Option,Fixo,Light,Light,Light,Não usado,Light,RotorCalculator.b4a:1060
+btnSettingTheme_Click,Option Help,Fixo,"Daylight, contrast tuned to 4.5:1 or better","Daylight, contrast tuned to 4.5:1 or better","Daylight, contrast tuned to 4.5:1 or better",Não usado,"Daylight, contrast tuned to 4.5:1 or better",RotorCalculator.b4a:1060
+btnSettingTheme_Click,Option,Fixo,Midnight Blue,Midnight Blue,Midnight Blue,Não usado,Midnight Blue,RotorCalculator.b4a:1061
+btnSettingTheme_Click,Option Help,Fixo,"Navy surfaces, cyan and amber accents","Navy surfaces, cyan and amber accents","Navy surfaces, cyan and amber accents",Não usado,"Navy surfaces, cyan and amber accents",RotorCalculator.b4a:1061
+btnSettingTheme_Click,Option,Fixo,Sepia,Sepia,Sepia,Não usado,Sepia,RotorCalculator.b4a:1062
+btnSettingTheme_Click,Option Help,Fixo,"Warm parchment, sober pastel tones","Warm parchment, sober pastel tones","Warm parchment, sober pastel tones",Não usado,"Warm parchment, sober pastel tones",RotorCalculator.b4a:1062
+btnSettingTheme_Click,Dialog Title,Fixo,Theme,Theme,Theme,Não usado,Theme,RotorCalculator.b4a:1063
+btnSettingRestore_Click,Dialog Title,Fixo,Restore Factory Presets,Restore Factory Presets,Restore Factory Presets,Não usado,Restore Factory Presets,RotorCalculator.b4a:1118
+btnSettingExportGeometries_Click,Dialog Title,Fixo,Export Geometries,Export Geometries,Export Geometries,Não usado,Export Geometries,RotorCalculator.b4a:1132
+btnSettingImportGeometries_Click,Dialog Title,Fixo,Import Geometries,Import Geometries,Import Geometries,Não usado,Import Geometries,RotorCalculator.b4a:1172
+btnSettingImportGeometries_Click,Option,Fixo,Rename imported duplicates,Rename imported duplicates,Rename imported duplicates,Não usado,Rename imported duplicates,RotorCalculator.b4a:1191
+btnSettingImportGeometries_Click,Option Help,Fixo,Keep both rotors,Keep both rotors,Keep both rotors,Não usado,Keep both rotors,RotorCalculator.b4a:1191
+btnSettingImportGeometries_Click,Option,Fixo,Replace same-name local geometries,Replace same-name local geometries,Replace same-name local geometries,Não usado,Replace same-name local geometries,RotorCalculator.b4a:1192
+btnSettingImportGeometries_Click,Option Help,Fixo,Overwrite the local rotors,Overwrite the local rotors,Overwrite the local rotors,Não usado,Overwrite the local rotors,RotorCalculator.b4a:1192
+btnSettingImportGeometries_Click,Option,Fixo,Skip same-name imported geometries,Skip same-name imported geometries,Skip same-name imported geometries,Não usado,Skip same-name imported geometries,RotorCalculator.b4a:1193
+btnSettingImportGeometries_Click,Option Help,Fixo,Keep the local rotors,Keep the local rotors,Keep the local rotors,Não usado,Keep the local rotors,RotorCalculator.b4a:1193
+btnSettingImportGeometries_Click,Dialog Title,Fixo,Name Conflicts,Name Conflicts,Name Conflicts,Não usado,Name Conflicts,RotorCalculator.b4a:1194
+OpenHelpAsset,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:1308
+OpenUnitConverter,lblTitle,Fixo,QUICK UNIT CONVERTER,QUICK UNIT CONVERTER,QUICK UNIT CONVERTER,Não usado,QUICK UNIT CONVERTER,RotorCalculator.b4a:1377
+OpenUnitConverter,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:1386
+OpenUnitConverter,lblMode,Fixo,CONVERSION,CONVERSION,CONVERSION,Não usado,CONVERSION,RotorCalculator.b4a:1394
+btnUnitMode_Click,Dialog Title,Fixo,Quick Unit Converter,Quick Unit Converter,Quick Unit Converter,Não usado,Quick Unit Converter,RotorCalculator.b4a:1449
+UpdateUnitConversion,lblUnitFrom,Template,VALUE IN  ⟨conteúdo variável⟩,VALUE IN  ⟨conteúdo variável⟩,VALUE IN  ⟨conteúdo variável⟩,Não usado,VALUE IN  ⟨conteúdo variável⟩,RotorCalculator.b4a:1484
+BuildGeometryEditorContent,Section Header,Fixo,ROTOR,ROTOR,ROTOR,Não usado,ROTOR,RotorCalculator.b4a:2116
+BuildGeometryEditorContent,Section Header,Fixo,PLANFORM,PLANFORM,PLANFORM,Não usado,PLANFORM,RotorCalculator.b4a:2118
+BuildGeometryEditorContent,Section Header,Fixo,SOLIDITY & AREAS,SOLIDITY & AREAS,SOLIDITY & AREAS,Não usado,SOLIDITY & AREAS,RotorCalculator.b4a:2122
+BuildGeometryEditorContent,Section Header,Fixo,BLADE PITCH,BLADE PITCH,BLADE PITCH,Não usado,BLADE PITCH,RotorCalculator.b4a:2126
+BuildGeometryEditorContent,Section Header,Fixo,AERODYNAMICS,AERODYNAMICS,AERODYNAMICS,Não usado,AERODYNAMICS,RotorCalculator.b4a:2130
+AddActiveBar,lblUnsaved,Fixo,UNSAVED,UNSAVED,UNSAVED,Não usado,UNSAVED,RotorCalculator.b4a:2170
+Geometry,btnGeometrySave,Fixo,SAVE,SAVE,SAVE,Não usado,SAVE,RotorCalculator.b4a:2198
+Geometry,btnGeometryCopy,Fixo,COPY,COPY,COPY,Não usado,COPY,RotorCalculator.b4a:2199
+Geometry,btnGeometryDelete,Fixo,DELETE,DELETE,DELETE,Não usado,DELETE,RotorCalculator.b4a:2200
+RefreshCompressibilityButton,btnCompressibility,Fixo,On,On,On,Não usado,On,RotorCalculator.b4a:2294
+RefreshCompressibilityButton,btnCompressibility,Fixo,Off,Off,Off,Não usado,Off,RotorCalculator.b4a:2296
+btnSelectAirfoil_Click,Option,Fixo,Custom,Custom,Custom,Não usado,Custom,RotorCalculator.b4a:2421
+btnSelectAirfoil_Click,Option Help,Fixo,Keep a_0 and C_d0 as entered,Keep a_0 and C_d0 as entered,Keep a_0 and C_d0 as entered,Não usado,Keep a_0 and C_d0 as entered,RotorCalculator.b4a:2421
+btnCompressibility_Click,Option,Fixo,Off,Off,Off,Não usado,Off,RotorCalculator.b4a:2465
+btnCompressibility_Click,Option Help,Fixo,No compressibility correction,No compressibility correction,No compressibility correction,Não usado,No compressibility correction,RotorCalculator.b4a:2465
+btnCompressibility_Click,Option,Fixo,On,On,On,Não usado,On,RotorCalculator.b4a:2466
+btnCompressibility_Click,Option Help,Fixo,Prandtl-Glauert linear compressibility correction,Prandtl-Glauert linear compressibility correction,Prandtl-Glauert linear compressibility correction,Não usado,Prandtl-Glauert linear compressibility correction,RotorCalculator.b4a:2466
+RenameCurrentRotor,Dialog Title,Fixo,Rename Rotor,Rename Rotor,Rename Rotor,Não usado,Rename Rotor,RotorCalculator.b4a:2525
+ResolveUnsavedGeometry,Dialog Title,Fixo,Unsaved Geometry,Unsaved Geometry,Unsaved Geometry,Não usado,Unsaved Geometry,RotorCalculator.b4a:2572
+btnGeometryCopy_Click,Dialog Title,Fixo,Copy Rotor,Copy Rotor,Copy Rotor,Não usado,Copy Rotor,RotorCalculator.b4a:2596
+btnGeometryDelete_Click,Dialog Title,Fixo,Delete Rotor,Delete Rotor,Delete Rotor,Não usado,Delete Rotor,RotorCalculator.b4a:2611
+BuildPageCond,Section Header,Fixo,ATMOSPHERE & FLOW,ATMOSPHERE & FLOW,ATMOSPHERE & FLOW,Não usado,ATMOSPHERE & FLOW,RotorCalculator.b4a:2646
+BuildPageCond,Section Header,Fixo,OPERATING CONSTRAINTS,OPERATING CONSTRAINTS,OPERATING CONSTRAINTS,Não usado,OPERATING CONSTRAINTS,RotorCalculator.b4a:2659
+BuildPageCond,Section Header,Fixo,AERODYNAMIC MODEL,AERODYNAMIC MODEL,AERODYNAMIC MODEL,Não usado,AERODYNAMIC MODEL,RotorCalculator.b4a:2670
+BuildPageRes,btnViewPolarPlot,Fixo,OPEN PARAMETER SWEEP,OPEN PARAMETER SWEEP,OPEN PARAMETER SWEEP,Não usado,OPEN PARAMETER SWEEP,RotorCalculator.b4a:2697
+BuildPageRes,Section Header,Fixo,MODEL STATUS,MODEL STATUS,MODEL STATUS,Não usado,MODEL STATUS,RotorCalculator.b4a:2777
+lblResultStatus_Click,Dialog Title,Fixo,Prandtl-Glauert Invalid,Prandtl-Glauert Invalid,Prandtl-Glauert Invalid,Não usado,Prandtl-Glauert Invalid,RotorCalculator.b4a:2875
+lblResultStatus_Click,Dialog Title,Fixo,Model Status,Model Status,Model Status,Não usado,Model Status,RotorCalculator.b4a:2878
+lblResultStatus_Click,Dialog Title,Fixo,Compressibility Caution,Compressibility Caution,Compressibility Caution,Não usado,Compressibility Caution,RotorCalculator.b4a:2880
+btnOperatingPair_Click,Option,Fixo,Rotor Speed Ω + Collective Δθ,Rotor Speed Ω + Collective Δθ,Rotor Speed Ω + Collective Δθ,Não usado,Rotor Speed Ω + Collective Δθ,RotorCalculator.b4a:3690
+btnOperatingPair_Click,Option Help,Fixo,Solves C_T and T,Solves C_T and T,Solves C_T and T,Não usado,Solves C_T and T,RotorCalculator.b4a:3690
+btnOperatingPair_Click,Option,Fixo,Rotor Speed Ω + Target C_T,Rotor Speed Ω + Target C_T,Rotor Speed Ω + Target C_T,Não usado,Rotor Speed Ω + Target C_T,RotorCalculator.b4a:3691
+btnOperatingPair_Click,Option Help,Fixo,Solves Δθ and T,Solves Δθ and T,Solves Δθ and T,Não usado,Solves Δθ and T,RotorCalculator.b4a:3691
+btnOperatingPair_Click,Option,Fixo,Rotor Speed Ω + Target Thrust T,Rotor Speed Ω + Target Thrust T,Rotor Speed Ω + Target Thrust T,Não usado,Rotor Speed Ω + Target Thrust T,RotorCalculator.b4a:3692
+btnOperatingPair_Click,Option Help,Fixo,Solves Δθ and C_T,Solves Δθ and C_T,Solves Δθ and C_T,Não usado,Solves Δθ and C_T,RotorCalculator.b4a:3692
+btnOperatingPair_Click,Option,Fixo,Collective Δθ + Target C_T,Collective Δθ + Target C_T,Collective Δθ + Target C_T,Não usado,Collective Δθ + Target C_T,RotorCalculator.b4a:3693
+btnOperatingPair_Click,Option Help,Fixo,Solves Ω and T,Solves Ω and T,Solves Ω and T,Não usado,Solves Ω and T,RotorCalculator.b4a:3693
+btnOperatingPair_Click,Option,Fixo,Collective Δθ + Target Thrust T,Collective Δθ + Target Thrust T,Collective Δθ + Target Thrust T,Não usado,Collective Δθ + Target Thrust T,RotorCalculator.b4a:3694
+btnOperatingPair_Click,Option Help,Fixo,Solves Ω and C_T,Solves Ω and C_T,Solves Ω and C_T,Não usado,Solves Ω and C_T,RotorCalculator.b4a:3694
+btnOperatingPair_Click,Option,Fixo,Target C_T + Target Thrust T,Target C_T + Target Thrust T,Target C_T + Target Thrust T,Não usado,Target C_T + Target Thrust T,RotorCalculator.b4a:3695
+btnOperatingPair_Click,Option Help,Fixo,Solves Ω and Δθ,Solves Ω and Δθ,Solves Ω and Δθ,Não usado,Solves Ω and Δθ,RotorCalculator.b4a:3695
+btnHorizontalInput_Click,Dialog Title,Fixo,Horizontal Flow Input,Horizontal Flow Input,Horizontal Flow Input,Não usado,Horizontal Flow Input,RotorCalculator.b4a:3725
+btnAxialInput_Click,Dialog Title,Fixo,Axial Flow Input,Axial Flow Input,Axial Flow Input,Não usado,Axial Flow Input,RotorCalculator.b4a:3756
+btnViewPolarPlot_Click,lblTitle,Fixo,PARAMETER SWEEP,PARAMETER SWEEP,PARAMETER SWEEP,Não usado,PARAMETER SWEEP,RotorCalculator.b4a:3837
+btnViewPolarPlot_Click,btnClose,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:3846
+btnViewPolarPlot_Click,btnTable,Fixo,TABLE,TABLE,TABLE,Não usado,TABLE,RotorCalculator.b4a:3913
+btnViewPolarPlot_Click,btnCsv,Fixo,CSV,CSV,CSV,Não usado,CSV,RotorCalculator.b4a:3915
+btnViewPolarPlot_Click,btnPng,Fixo,PNG,PNG,PNG,Não usado,PNG,RotorCalculator.b4a:3918
+btnSweepParam_Click,Dialog Title,Fixo,Y-Axis Result,Y-Axis Result,Y-Axis Result,Não usado,Y-Axis Result,RotorCalculator.b4a:3951
+btnSweepMultiModel_Click,Option,Fixo,Inflow Models,Inflow Models,Inflow Models,Não usado,Inflow Models,RotorCalculator.b4a:4006
+btnSweepMultiModel_Click,Option Help,Fixo,"All four inflow models, active settings","All four inflow models, active settings","All four inflow models, active settings",Não usado,"All four inflow models, active settings",RotorCalculator.b4a:4006
+btnSweepMultiModel_Click,Option,Fixo,Rotor α Family,Rotor α Family,Rotor α Family,Não usado,Rotor α Family,RotorCalculator.b4a:4007
+btnSweepMultiModel_Click,Option Help,Fixo,Several disk angles of attack,Several disk angles of attack,Several disk angles of attack,Não usado,Several disk angles of attack,RotorCalculator.b4a:4007
+btnSweepMultiModel_Click,Option,Fixo,Axial Vz Family,Axial Vz Family,Axial Vz Family,Não usado,Axial Vz Family,RotorCalculator.b4a:4008
+btnSweepMultiModel_Click,Option Help,Fixo,Several climb speeds,Several climb speeds,Several climb speeds,Não usado,Several climb speeds,RotorCalculator.b4a:4008
+btnSweepMultiModel_Click,Option,Fixo,Axial μz Family,Axial μz Family,Axial μz Family,Não usado,Axial μz Family,RotorCalculator.b4a:4009
+btnSweepMultiModel_Click,Option Help,Fixo,Several axial flow ratios,Several axial flow ratios,Several axial flow ratios,Não usado,Several axial flow ratios,RotorCalculator.b4a:4009
+btnSweepMultiModel_Click,Option,Fixo,Active Only,Active Only,Active Only,Não usado,Active Only,RotorCalculator.b4a:4010
+btnSweepMultiModel_Click,Option Help,Fixo,Only the current condition,Only the current condition,Only the current condition,Não usado,Only the current condition,RotorCalculator.b4a:4010
+btnSweepMultiModel_Click,Option,Fixo,Edit Family Values…,Edit Family Values…,Edit Family Values…,Não usado,Edit Family Values…,RotorCalculator.b4a:4012
+btnSweepMultiModel_Click,Option Help,Fixo,Comma-separated list for the selected family,Comma-separated list for the selected family,Comma-separated list for the selected family,Não usado,Comma-separated list for the selected family,RotorCalculator.b4a:4012
+btnSweepValues_Click,hint,Fixo,"Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05","Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05","Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05",Não usado,"Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05",RotorCalculator.b4a:4101
+btnSweepValues_Click,hint,Fixo,"Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10","Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10","Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10",Não usado,"Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10",RotorCalculator.b4a:4103
+btnSweepMaxMu_Click,Option,Fixo,μ_x max = ,μ_x max = ,μ_x max = ,Não usado,μ_x max = ,RotorCalculator.b4a:4197
+btnSweepMaxMu_Click,Dialog Title,Fixo,Sweep Range,Sweep Range,Sweep Range,Não usado,Sweep Range,RotorCalculator.b4a:4201
+RedrawSweepPlot,lblSweepCurrentVal,Fixo,Active point: invalid operating point,Active point: invalid operating point,Active point: invalid operating point,Não usado,Active point: invalid operating point,RotorCalculator.b4a:4245
+OpenSweepTablePopup,close,Fixo,×,×,×,Não usado,×,RotorCalculator.b4a:4307
+btnSweepExportCsv_Click,Option,Fixo,Current Chart CSV,Current Chart CSV,Current Chart CSV,Não usado,Current Chart CSV,RotorCalculator.b4a:4403
+btnSweepExportCsv_Click,Option Help,Fixo,Table of plotted curve values vs advance ratio,Table of plotted curve values vs advance ratio,Table of plotted curve values vs advance ratio,Não usado,Table of plotted curve values vs advance ratio,RotorCalculator.b4a:4403
+btnSweepExportCsv_Click,Option,Fixo,Full Dataset CSV,Full Dataset CSV,Full Dataset CSV,Não usado,Full Dataset CSV,RotorCalculator.b4a:4404
+btnSweepExportCsv_Click,Option Help,Fixo,"Complete inputs, baseline operating point, and all aerodynamic variables","Complete inputs, baseline operating point, and all aerodynamic variables","Complete inputs, baseline operating point, and all aerodynamic variables",Não usado,"Complete inputs, baseline operating point, and all aerodynamic variables",RotorCalculator.b4a:4404
+btnSweepExportCsv_Click,Dialog Title,Fixo,Export CSV,Export CSV,Export CSV,Não usado,Export CSV,RotorCalculator.b4a:4405
 ,Dialog Title,Fixo,Inflow Model,Inflow Model,Inflow Model,Não usado,Inflow Model,clsSheet.bas:13
 ,Dialog Title,Fixo,Delete,Delete,Delete,Não usado,Delete,clsSheet.bas:14
 Settings,Theme,Fixo / variável,DARK / LIGHT / MIDNIGHT BLUE,DARK / LIGHT / MIDNIGHT BLUE,DARK / LIGHT / MIDNIGHT BLUE,Não usado,DARK / LIGHT / MIDNIGHT BLUE,RotorCalculator.b4a

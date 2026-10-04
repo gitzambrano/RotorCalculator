@@ -692,8 +692,7 @@ Sub HandleMenuItem(ItemId As Int)
 			Catch
 			End Try
 			sheet.ShowMessage("About RotorCalculator", "RotorCalculator v" & ver & CRLF & CRLF & _
-				"Rotor performance calculator based on analytical blade-element theory." & CRLF & _
-				"Notation follows Johnson and Leishman." & CRLF & CRLF & _
+				"Rotor performance calculator based on analytical blade-element theory." & CRLF & CRLF & _
 				"Developed by Gustavo Zambrano")
 		Case 4
 			Dim privacyAsset As String = "privacy_policy.html"

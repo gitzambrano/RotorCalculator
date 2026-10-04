@@ -75,7 +75,7 @@ Read-only outputs shall include:
 - reference solidity **σREF**;
 - thrust-weighted solidity **σthrust**;
 - taper ratio **c1/c0**;
-- disk area **A = πR²**;
+- disk area **A_DISK = πR²**;
 - reference blade area **A_REF**;
 - actual blade area;
 - total twist **θtip − θroot**.

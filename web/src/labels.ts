@@ -142,10 +142,10 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "A",
     full: "Disk Area",
     short: "Disk Area",
-    sym: "A",
+    sym: "A_DISK",
     unit: "m²",
-    body: "Area swept by the blades. Derived from R. Editing it changes R to the square root of A/π and scales the chords with R.",
-    eq: "A = πR²",
+    body: "Area swept by the blades. Derived from R. Editing it changes R to the square root of A_DISK/π and scales the chords with R.",
+    eq: "A_DISK = πR²",
     range: "",
   },
   Ab: {
@@ -556,10 +556,10 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "DL",
     full: "Disk Loading",
     short: "Disk Loading",
-    sym: "T/A",
+    sym: "T/A_DISK",
     unit: "N/m²",
     body: "Thrust per unit disk area. Low disk loading means efficient hover.",
-    eq: "DL = T / A",
+    eq: "DL = T / A_DISK",
     range: "50 to 500 N/m² (helicopters)",
   },
   PL: {
@@ -1153,7 +1153,7 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Geom. Solidity": return "Ref. Solidity";
       case "Actual Solidity": return "Actual Solidity";
       case "Thrust Solidity": return "Thrust Solidity";
-      case "Disk Area": return "A";
+      case "Disk Area": return "A_DISK";
       case "Reference Blade Area":
       case "Reference Area":
       case "Ref. Area":

@@ -310,7 +310,7 @@ app.innerHTML = `
           <button class="row-unit-btn" disabled>–</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-key="A" data-tip="Total rotor disk swept area A = pi * R^2." data-canonical="Disk Area">Disk Area</button>
+          <button class="row-label-btn" data-key="A" data-tip="Total swept disk area of the rotor: A_DISK = pi * R^2." data-canonical="Disk Area">Disk Area</button>
           <input class="row-input" type="number" step="any" id="drv-disk-area" />
           <button class="row-unit-btn" id="unit-disk-area">m²</button>
         </div>
@@ -911,7 +911,7 @@ app.innerHTML = `
         </div>
         <div class="modal-body about-body">
           <p>RotorCalculator v1.27</p>
-          <p>Rotor performance calculator based on analytical blade-element theory.<br>Notation follows Johnson and Leishman.</p>
+          <p>Rotor performance calculator based on analytical blade-element theory.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
         </div>

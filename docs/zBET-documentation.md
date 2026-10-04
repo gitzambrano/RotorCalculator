@@ -142,33 +142,33 @@ At $V_x = 0$, use $V_z$ or $\mu_z$ to specify a nonzero axial condition, because
 The nondimensional coefficients are
 
 $$
-C_T = \frac{T}{\rho A (\Omega R)^2},
+C_T = \frac{T}{\rho A_{\text{DISK}} (\Omega R)^2},
 $$
 
 $$
-C_H = \frac{H}{\rho A (\Omega R)^2},
+C_H = \frac{H}{\rho A_{\text{DISK}} (\Omega R)^2},
 $$
 
 $$
-C_Y = \frac{Y}{\rho A (\Omega R)^2},
+C_Y = \frac{Y}{\rho A_{\text{DISK}} (\Omega R)^2},
 $$
 
 $$
-C_Q = \frac{Q}{\rho A (\Omega R)^2 R},
+C_Q = \frac{Q}{\rho A_{\text{DISK}} (\Omega R)^2 R},
 $$
 
 $$
-C_{Mx} = \frac{M_x}{\rho A (\Omega R)^2 R},
+C_{Mx} = \frac{M_x}{\rho A_{\text{DISK}} (\Omega R)^2 R},
 $$
 
 $$
-C_{My} = \frac{M_y}{\rho A (\Omega R)^2 R},
+C_{My} = \frac{M_y}{\rho A_{\text{DISK}} (\Omega R)^2 R},
 $$
 
 with
 
 $$
-A = \pi R^2.
+A_{\text{DISK}} = \pi R^2.
 $$
 
 Sign conventions:
@@ -396,7 +396,7 @@ With fixed RPM, the pitch distribution is shifted until the requested hover $C_T
 With fixed pitch, RPM is adjusted using
 
 $$
-T = C_T \rho A (\Omega R)^2.
+T = C_T \rho A_{\text{DISK}} (\Omega R)^2.
 $$
 
 Therefore
@@ -405,7 +405,7 @@ $$
 \Omega
 =
 \frac{1}{R}
-\sqrt{\frac{T}{\rho A C_T}}.
+\sqrt{\frac{T}{\rho A_{\text{DISK}} C_T}}.
 $$
 
 ### 5.3 No trim

@@ -36,7 +36,7 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | sigmaAct | Actual Solidity | Actual Solidity | σ_act |
 | sigmaT | Thrust-Weighted Solidity | Thrust Solidity | σ_TR |
 | AR | Aspect Ratio | Aspect Ratio | AR |
-| A | Disk Area | Disk Area | A |
+| A | Disk Area | Disk Area | A_DISK |
 | Ab | Reference Blade Area | Reference Area | A_REF |
 | Aact | Actual Blade Area | Actual Area | A_act |
 | thRoot | Root Pitch | Root Pitch | θ_R |
@@ -82,7 +82,7 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | Y | Side Force | Side Force | Y |
 | Mx | Roll Moment | Roll Moment | M_x |
 | My | Pitch Moment | Pitch Moment | M_y |
-| DL | Disk Loading | Disk Loading | T/A |
+| DL | Disk Loading | Disk Loading | T/A_DISK |
 | PL | Power Loading | Power Loading | T/P |
 | vi | Induced Speed | Induced Speed | V_i |
 | CT | Thrust Coefficient | Thrust Coeff. | C_T |
