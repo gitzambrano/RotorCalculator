@@ -1,0 +1,12 @@
+<en-US>
+Refined aerodynamic sign conventions and flow terminology across documentation and helpers.
+Optimized mathematical delimiter sizing and dynamic bracket stretching in MathML equations.
+Enhanced physics manual layout with separated wake skew and non-uniform inflow figures.
+Updated cross-platform nomenclature synchronization between Android APK and Web application.
+</en-US>
+<pt-BR>
+Refinadas as convenções de sinais aerodinâmicos e terminologia de escoamento nos helpers e manual.
+Otimizado o dimensionamento e expansão de parênteses e colchetes em equações MathML.
+Aprimorado o layout do manual de física com figuras separadas de ângulo de esteira e influxo harmônico.
+Sincronização rigorosa de nomenclatura e paridade entre o aplicativo Android e a versão Web.
+</pt-BR>

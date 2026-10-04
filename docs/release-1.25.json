@@ -1,9 +1,0 @@
-{
-  "version": "1.25",
-  "versionCode": 8,
-  "package": "flightdyn.rotorcalculator",
-  "androidSourceCommit": "96de3fa3bd498df2796f06b35f47fbfe11744f07",
-  "apkSha256": "4e134786bd2b5aca4122fe64afe70e979e09a790973dd6571be4fec56d040f62",
-  "verification": "Release 1.25 (versionCode 8). Warm Sepia theme, simplified Coleman inflow model naming, refined Target C_T input formatting, hair-space thousands separators, and parameter sweep multi-line legend layout.",
-  "qaReport": "web-parity-audit.md"
-}

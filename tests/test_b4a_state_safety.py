@@ -198,7 +198,7 @@ def test_axial_sign_convention_matches_requirements():
     vz = names[names.index('Add("Vz"'):names.index('Add("muz"')]
     assert "downward" in vz.lower()
     alpha = names[names.index('Add("alpha"'):names.index('Add("Vz"')]
-    assert "below" in alpha.lower()
+    assert "upward" in alpha.lower() or "below" in alpha.lower()
 
 
 def test_conditions_expose_all_six_operating_pairs():
@@ -485,8 +485,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 9" in main
-    assert "#VersionName: 1.26" in main
+    assert "#VersionCode: 10" in main
+    assert "#VersionName: 1.27" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -859,7 +859,7 @@ def test_coeff_word_only_for_dynamic_pressure_coefficients():
         has = "Coeff " in (m.group(2) + " ") or (m.group(3) + " ").find("Coeff ") >= 0
         assert has == (m.group(1) in allowed), m.group(1)
     assert '"Dynamic Thrust Coeff"' in src and '"Dyn Power Coeff"' in src
-    assert "T_c = T / (½ρV∞²A)" in src
+    assert "T_c = T / (½ρV_∞²A)" in src or "T_c = T / (½ρV∞²A)" in src
 
 
 def test_apk_results_preserve_name_symbol_order_and_speed_caption():

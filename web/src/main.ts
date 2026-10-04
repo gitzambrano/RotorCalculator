@@ -198,7 +198,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.26</span>
+            <span class="version-badge">v1.27</span>
           </div>
         </div>
         <div class="header-actions">
@@ -873,8 +873,8 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.26</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.26.apk" download="RotorCalculator-1.26.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.27</div><div class="settings-row-sub">Download the verified Android APK</div></div>
+              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.27.apk" download="RotorCalculator-1.27.apk">APK</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
               <button type="button" class="action-btn" data-close="modal-settings" style="height: 44px; min-width: 120px; font-weight: 700; border-radius: 8px; font-size: 15px;">CLOSE</button>
@@ -910,7 +910,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.26</p>
+          <p>RotorCalculator v1.27</p>
           <p>Rotor performance calculator based on analytical blade-element theory.<br>Notation follows Johnson and Leishman.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>

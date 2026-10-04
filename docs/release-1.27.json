@@ -1,0 +1,8 @@
+{
+  "version": "1.27",
+  "versionCode": 10,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": "23918943bf738acfb46387d70203eaca197bd5145d36c624ba6eb3c46963383f",
+  "verification": "Release 1.27 (versionCode 10). Refined aerodynamic sign conventions and flow terminology across documentation and helpers. Optimized mathematical delimiter sizing and dynamic bracket stretching in MathML equations. Enhanced physics manual layout with separated wake skew and non-uniform inflow figures. Synchronized Android APK and Web application.",
+  "qaReport": "release_notes_1.27.txt"
+}
