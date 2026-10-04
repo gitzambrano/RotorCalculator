@@ -1456,3 +1456,447 @@ End Sub
 Private Sub CsvQPop(value As String) As String
 	Return Chr(34) & value.Replace(Chr(34), Chr(34) & Chr(34)) & Chr(34)
 End Sub
+
+' ===========================================================================
+' ROTOR DISK CONTOUR PLOT
+' ===========================================================================
+
+Public Sub DiskContourParamKeys As List
+	Return Array As String("aoa", "phi", "cl", "cd", "lambda_total", "lambda_i", "vi", "up_vel", "ut_vel", "fn_span", "ft_span", "mach", "dCTdx", "dyn_press")
+End Sub
+
+Public Sub DiskContourParamLabel(key As String) As String
+	Select key
+		Case "aoa": Return "Angle of Attack " & Chr(945) & " [deg]"
+		Case "phi": Return "Inflow Angle " & Chr(966) & " [deg]"
+		Case "cl": Return "Lift Coefficient Cl [–]"
+		Case "cd": Return "Drag Coefficient Cd [–]"
+		Case "lambda_total": Return "Total Inflow Ratio " & Chr(955) & " [–]"
+		Case "lambda_i": Return "Induced Inflow Ratio " & Chr(955) & "i [–]"
+		Case "vi": Return "Induced Velocity vi [m/s]"
+		Case "up_vel": Return "Total Axial Velocity uP [m/s]"
+		Case "ut_vel": Return "Tangential Velocity uT [m/s]"
+		Case "fn_span": Return "Section Normal Force dFN/dr [N/m]"
+		Case "ft_span": Return "Section In-Plane Force dFT/dr [N/m]"
+		Case "mach": Return "Local Mach Number M [–]"
+		Case "dCTdx": Return "Section Thrust Loading dCT/dx [–]"
+		Case "dyn_press": Return "Dynamic Pressure q [Pa]"
+		Case Else: Return key
+	End Select
+End Sub
+
+Private Sub CalcATan2(y As Double, x As Double) As Double
+	Dim piVal As Double
+	piVal = 3.141592653589793
+	If x > 0 Then
+		Return ATan(y / x)
+	Else If x < 0 And y >= 0 Then
+		Return ATan(y / x) + piVal
+	Else If x < 0 And y < 0 Then
+		Return ATan(y / x) - piVal
+	Else If x = 0 And y > 0 Then
+		Return piVal / 2.0
+	Else If x = 0 And y < 0 Then
+		Return -piVal / 2.0
+	Else
+		Return 0
+	End If
+End Sub
+
+Private Sub GetJetColor(t As Double) As Int
+	t = Max(0, Min(1, t))
+	Dim r As Double
+	Dim g As Double
+	Dim b As Double
+	If t < 0.125 Then
+		r = 0: g = 0: b = 0.5 + 4.0 * t
+	Else If t < 0.375 Then
+		r = 0: g = 4.0 * (t - 0.125): b = 1.0
+	Else If t < 0.625 Then
+		r = 4.0 * (t - 0.375): g = 1.0: b = 1.0 - 4.0 * (t - 0.375)
+	Else If t < 0.875 Then
+		r = 1.0: g = 1.0 - 4.0 * (t - 0.625): b = 0
+	Else
+		r = 1.0 - 4.0 * (t - 0.875): g = 0: b = 0
+	End If
+	Dim ir As Int
+	ir = Round(r * 255)
+	Dim ig As Int
+	ig = Round(g * 255)
+	Dim ib As Int
+	ib = Round(b * 255)
+	Return Colors.ARGB(255, ir, ig, ib)
+End Sub
+
+Private Sub FmtColorbarValue(v As Double) As String
+	If Abs(v) < 0.000001 Then Return "0"
+	If Abs(v) >= 1000 Or (Abs(v) < 0.01 And Abs(v) > 0) Then
+		Dim expVal As Int
+		expVal = Floor(Logarithm(Abs(v), 10))
+		Dim mant As Double
+		mant = v / Power(10, expVal)
+		Dim signStr As String
+		signStr = "+"
+		If expVal < 0 Then signStr = ""
+		Return NumberFormat2(mant, 1, 2, 2, False) & "e" & signStr & expVal
+	End If
+	If Abs(v) >= 10 Then Return NumberFormat2(v, 1, 1, 1, False)
+	Return NumberFormat2(v, 1, 3, 3, False)
+End Sub
+
+Public Sub DrawDiskContourPlot( _
+	widthPx As Int, _
+	heightPx As Int, _
+	geom As RotorGeometry, _
+	cond As FlightCondition, _
+	res As RotorResults, _
+	paramKey As String, _
+	lightTheme As Boolean, _
+	includeTitle As Boolean _
+) As Bitmap
+	Dim bmp As Bitmap
+	bmp.InitializeMutable(widthPx, heightPx)
+	Dim cvs As Canvas
+	cvs.Initialize2(bmp)
+
+	Dim colBg As Int
+	Dim colGrid As Int
+	Dim colText As Int
+	Dim colMuted As Int
+	Dim isSepia As Boolean
+	isSepia = (plotThemeIdx = 3)
+	Dim isMid As Boolean
+	isMid = (plotThemeIdx = 2)
+	If plotThemeIdx = 1 Or isSepia Then lightTheme = True
+	If plotThemeIdx = 0 Or isMid Then lightTheme = False
+
+	If isSepia Then
+		colBg = 0xFFFAF6EE
+		colGrid = 0xFFDDD2C0
+		colText = 0xFF2D2319
+		colMuted = 0xFF7D6B58
+	Else If lightTheme Then
+		colBg = 0xFFFFFFFF
+		colGrid = 0xFFD9E1EA
+		colText = 0xFF344054
+		colMuted = 0xFF64748B
+	Else
+		colBg = 0xFF10141C
+		colGrid = 0xFF2A3544
+		colText = 0xFFB4BFCE
+		colMuted = 0xFF64748B
+		If isMid Then
+			colBg = 0xFF0D1B2A
+			colGrid = 0xFF2A4361
+			colText = 0xFFB9CBE0
+			colMuted = 0xFF7D95B3
+		End If
+	End If
+	cvs.DrawColor(colBg)
+
+	Dim piVal As Double
+	piVal = 3.141592653589793
+	Dim numR As Int
+	numR = 30
+	Dim numPsi As Int
+	numPsi = 72
+	Dim rMin As Double
+	rMin = Max(geom.RootCutout, 0.05)
+	Dim rMax As Double
+	rMax = 1.0
+
+	Dim rStations(30) As Double
+	For i = 0 To numR - 1
+		rStations(i) = rMin + (rMax - rMin) * i / (numR - 1)
+	Next
+
+	Dim psiStations(72) As Double
+	For j = 0 To numPsi - 1
+		psiStations(j) = (2.0 * piVal * j) / numPsi
+	Next
+
+	Dim mu As Double
+	mu = res.OperatingMu
+	Dim lambda_total As Double
+	lambda_total = res.InflowLambda
+	Dim lambda_i As Double
+	lambda_i = res.InflowLambdaI
+	Dim Kx As Double
+	Kx = res.InflowKx
+	Dim Ky As Double
+	Ky = res.InflowKy
+	Dim a As Double
+	a = res.EffectiveLiftSlope
+	If a <= 0.001 Then a = 5.73
+	Dim vtip As Double
+	vtip = Max(1.0, res.TipSpeed)
+	Dim rho As Double
+	rho = cond.Rho
+	If rho <= 0.001 Then rho = 1.225
+	Dim speedOfSound As Double
+	speedOfSound = Max(1.0, cond.SpeedOfSound)
+	If speedOfSound <= 10.0 Then speedOfSound = 340.0
+
+	Dim trimmedGeom As RotorGeometry
+	trimmedGeom = zBETEngine.CloneGeometry(geom)
+	Dim delta As Double
+	delta = res.TrimmedCollectiveDeg * piVal / 180.0
+	trimmedGeom.ThetaRoot = trimmedGeom.ThetaRoot + delta
+	trimmedGeom.ThetaTip = trimmedGeom.ThetaTip + delta
+	trimmedGeom.Theta0 = trimmedGeom.Theta0 + delta
+
+	Dim values(30, 72) As Double
+	Dim minVal As Double
+	minVal = 1e30
+	Dim maxVal As Double
+	maxVal = -1e30
+
+	For i = 0 To numR - 1
+		Dim r As Double
+		r = rStations(i)
+		Dim sigma As Double
+		sigma = zBETEngine.LocalSolidity(trimmedGeom, r)
+		Dim theta_rad As Double
+		theta_rad = zBETEngine.LocalPitch(trimmedGeom, r)
+		Dim theta_deg As Double
+		theta_deg = theta_rad * 180.0 / piVal
+
+		Dim spanFrac As Double
+		spanFrac = (r - geom.RootCutout) / Max(0.000001, 1.0 - geom.RootCutout)
+		spanFrac = Max(0, Min(1, spanFrac))
+		Dim chord As Double
+		chord = geom.ChordRoot + (geom.ChordTip - geom.ChordRoot) * spanFrac
+
+		For j = 0 To numPsi - 1
+			Dim psi As Double
+			psi = psiStations(j)
+			Dim uT As Double
+			uT = r + mu * Sin(psi)
+			Dim uP As Double
+			uP = lambda_total + r * (Kx * Cos(psi) + Ky * Sin(psi)) * lambda_i
+			Dim uR As Double
+			uR = mu * Cos(psi)
+
+			Dim lambda_i_local As Double
+			lambda_i_local = lambda_i * (1.0 + r * (Kx * Cos(psi) + Ky * Sin(psi)))
+			Dim vi_dim As Double
+			vi_dim = lambda_i_local * vtip
+			Dim ut_dim As Double
+			ut_dim = uT * vtip
+			Dim up_dim As Double
+			up_dim = uP * vtip
+			Dim W_dim As Double
+			W_dim = Sqrt(uT * uT + uR * uR + uP * uP) * vtip
+			Dim q As Double
+			q = 0.5 * rho * W_dim * W_dim
+			Dim mach As Double
+			mach = W_dim / speedOfSound
+
+			Dim phi_rad As Double
+			Dim phi_deg As Double
+			Dim alpha_deg As Double
+			Dim cl As Double
+
+			If uT > 0 Then
+				phi_rad = CalcATan2(uP, uT)
+				phi_deg = Max(-10, Min(25, phi_rad * 180.0 / piVal))
+				alpha_deg = theta_deg - (phi_rad * 180.0 / piVal)
+				Dim alpha_rad As Double
+				alpha_rad = alpha_deg * piVal / 180.0
+				cl = Max(-1.2, Min(1.4, a * alpha_rad))
+			Else
+				Dim phi_rev As Double
+				phi_rev = CalcATan2(uP, Max(0.0001, -uT))
+				phi_deg = Max(-10, Min(25, phi_rev * 180.0 / piVal))
+				phi_rad = phi_rev
+				alpha_deg = -(theta_deg + phi_deg)
+				alpha_deg = Max(-15, Min(25, alpha_deg))
+				Dim alpha_rad As Double
+				alpha_rad = alpha_deg * piVal / 180.0
+				cl = Max(-0.8, Min(0.8, -Sin(2.0 * alpha_rad)))
+			End If
+			alpha_deg = Max(-15, Min(25, alpha_deg))
+			Dim cd As Double
+			cd = geom.Cd0
+
+			Dim dL As Double
+			dL = q * chord * cl
+			Dim dD As Double
+			dD = q * chord * cd
+			Dim dFn As Double
+			dFn = dL * Cos(phi_rad) - dD * Sin(phi_rad)
+			Dim dFt As Double
+			dFt = dL * Sin(phi_rad) + dD * Cos(phi_rad)
+			Dim dCTdx As Double
+			dCTdx = 0.5 * sigma * (cl * Cos(phi_rad) - cd * Sin(phi_rad)) * (uT * uT + uR * uR + uP * uP)
+
+			Dim val As Double
+			val = 0
+			Select paramKey
+				Case "aoa": val = alpha_deg
+				Case "phi": val = phi_deg
+				Case "cl": val = cl
+				Case "cd": val = cd
+				Case "lambda_total": val = uP
+				Case "lambda_i": val = lambda_i_local
+				Case "vi": val = vi_dim
+				Case "up_vel": val = up_dim
+				Case "ut_vel": val = ut_dim
+				Case "fn_span": val = dFn
+				Case "ft_span": val = dFt
+				Case "mach": val = mach
+				Case "dCTdx": val = dCTdx
+				Case "dyn_press": val = q
+			End Select
+
+			values(i, j) = val
+			If val < minVal Then minVal = val
+			If val > maxVal Then maxVal = val
+		Next
+	Next
+
+	If minVal = maxVal Then maxVal = minVal + 1.0
+
+	Dim centerX As Float
+	centerX = Round(widthPx * 0.44)
+	Dim centerY As Float
+	centerY = Round(heightPx * 0.50)
+	Dim maxRadius As Float
+	maxRadius = Round(Min(155dip, (heightPx - 110dip) / 2))
+
+	For i = 0 To numR - 2
+		Dim r1Px As Float
+		r1Px = rStations(i) * maxRadius
+		Dim r2Px As Float
+		r2Px = rStations(i + 1) * maxRadius
+
+		For j = 0 To numPsi - 1
+			Dim jNext As Int
+			jNext = (j + 1) Mod numPsi
+			Dim v1 As Double
+			v1 = values(i, j)
+			Dim v2 As Double
+			v2 = values(i, jNext)
+			Dim v3 As Double
+			v3 = values(i + 1, j)
+			Dim v4 As Double
+			v4 = values(i + 1, jNext)
+			Dim vAvg As Double
+			vAvg = (v1 + v2 + v3 + v4) / 4.0
+			Dim normV As Double
+			normV = (vAvg - minVal) / (maxVal - minVal)
+			Dim wedgeCol As Int
+			wedgeCol = GetJetColor(normV)
+
+			Dim a1 As Double
+			a1 = piVal / 2.0 - psiStations(j)
+			Dim a2 As Double
+			a2 = piVal / 2.0 - psiStations(jNext)
+
+			Dim x1a As Float
+			x1a = centerX + r1Px * Cos(a1)
+			Dim y1a As Float
+			y1a = centerY - r1Px * Sin(a1)
+			Dim x2a As Float
+			x2a = centerX + r2Px * Cos(a1)
+			Dim y2a As Float
+			y2a = centerY - r2Px * Sin(a1)
+			Dim x2b As Float
+			x2b = centerX + r2Px * Cos(a2)
+			Dim y2b As Float
+			y2b = centerY - r2Px * Sin(a2)
+			Dim x1b As Float
+			x1b = centerX + r1Px * Cos(a2)
+			Dim y1b As Float
+			y1b = centerY - r1Px * Sin(a2)
+
+			Dim poly As Path
+			poly.Initialize(x1a, y1a)
+			poly.LineTo(x2a, y2a)
+			poly.LineTo(x2b, y2b)
+			poly.LineTo(x1b, y1b)
+			poly.LineTo(x1a, y1a)
+			cvs.DrawPath(poly, wedgeCol, True, 1)
+		Next
+	Next
+
+	Dim colGuide As Int
+	colGuide = 0x99000000
+	Dim dashPat() As Float = Array As Float(4dip, 3dip)
+	Dim rNorms() As Float = Array As Float(0.25, 0.50, 0.75)
+	For Each rn As Float In rNorms
+		Dim rGuide As Float
+		rGuide = rn * maxRadius
+		Dim steps As Int
+		steps = 48
+		For k = 0 To steps - 1 Step 2
+			Dim an1 As Double
+			an1 = (2.0 * piVal * k) / steps
+			Dim an2 As Double
+			an2 = (2.0 * piVal * (k + 1)) / steps
+			cvs.DrawLine(centerX + rGuide * Cos(an1), centerY - rGuide * Sin(an1), _
+				centerX + rGuide * Cos(an2), centerY - rGuide * Sin(an2), colGuide, 1.2dip)
+		Next
+	Next
+
+	DrawPatterned(cvs, centerX - maxRadius, centerY, centerX + maxRadius, centerY, colGuide, 1.2dip, dashPat)
+	DrawPatterned(cvs, centerX, centerY - maxRadius, centerX, centerY + maxRadius, colGuide, 1.2dip, dashPat)
+
+	cvs.DrawCircle(centerX, centerY, maxRadius, 0xFF000000, False, 1dip)
+
+	Dim rootRPx As Float
+	rootRPx = rStations(0) * maxRadius
+	cvs.DrawCircle(centerX, centerY, rootRPx, colBg, True, 1dip)
+	cvs.DrawCircle(centerX, centerY, rootRPx, 0xFF000000, False, 1dip)
+
+	cvs.DrawText("Fore", centerX, centerY - maxRadius - 20dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+	cvs.DrawText("180°", centerX, centerY - maxRadius - 6dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
+
+	cvs.DrawText("0°", centerX, centerY + maxRadius + 14dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
+	cvs.DrawText("Aft", centerX, centerY + maxRadius + 26dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+
+	cvs.DrawText("90°", centerX + maxRadius + 24dip, centerY - 2dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
+	cvs.DrawText("Adv.", centerX + maxRadius + 24dip, centerY + 12dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+
+	cvs.DrawText("270°", centerX - maxRadius - 24dip, centerY - 2dip, Typeface.DEFAULT_BOLD, 12, colText, "CENTER")
+	cvs.DrawText("Ret.", centerX - maxRadius - 24dip, centerY + 12dip, Typeface.DEFAULT, 10, colMuted, "CENTER")
+
+	Dim cbX As Float
+	cbX = widthPx - 68dip
+	Dim cbY As Float
+	cbY = centerY - maxRadius
+	Dim cbW As Float
+	cbW = 10dip
+	Dim cbH As Float
+	cbH = 2 * maxRadius
+	Dim cbSteps As Int
+	cbSteps = 50
+	For s = 0 To cbSteps - 1
+		Dim sy1 As Float
+		sy1 = cbY + cbH - (cbH * (s + 1) / cbSteps)
+		Dim sy2 As Float
+		sy2 = cbY + cbH - (cbH * s / cbSteps)
+		Dim sNorm As Double
+		sNorm = (s + 0.5) / cbSteps
+		Dim segCol As Int
+		segCol = GetJetColor(sNorm)
+		Dim segRect As Rect
+		segRect.Initialize(cbX, sy1, cbX + cbW, sy2)
+		cvs.DrawRect(segRect, segCol, True, 1)
+	Next
+	Dim cbBorder As Rect
+	cbBorder.Initialize(cbX, cbY, cbX + cbW, cbY + cbH)
+	cvs.DrawRect(cbBorder, colGrid, False, 1dip)
+
+	cvs.DrawText(FmtColorbarValue(maxVal), cbX + cbW + 4dip, cbY + 8dip, Typeface.MONOSPACE, 10, colText, "LEFT")
+	cvs.DrawText(FmtColorbarValue((maxVal + minVal) / 2.0), cbX + cbW + 4dip, cbY + cbH / 2.0 + 4dip, Typeface.MONOSPACE, 10, colText, "LEFT")
+	cvs.DrawText(FmtColorbarValue(minVal), cbX + cbW + 4dip, cbY + cbH, Typeface.MONOSPACE, 10, colText, "LEFT")
+
+	If includeTitle Then
+		Dim tTitle As String
+		tTitle = DiskContourParamLabel(paramKey)
+		cvs.DrawText(tTitle, widthPx / 2.0, 20dip, Typeface.DEFAULT_BOLD, 13, colText, "CENTER")
+	End If
+
+	Return bmp
+End Sub

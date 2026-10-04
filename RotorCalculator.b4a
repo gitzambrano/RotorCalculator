@@ -70,8 +70,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 11
-	#VersionName: 1.28
+	#VersionCode: 12
+	#VersionName: 1.29
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -271,6 +271,16 @@ Sub Globals
 	Private ivSweepPlot As ImageView
 	Private lblSweepCurrentVal As Label
 	
+	' Rotor Disk Contour Popup
+	Private btnViewDiskContour As Button
+	Private pnlDiskContourPopup As Panel
+	Private DiskContourPopupOpen As Boolean = False
+	Private btnDiskContourVar As Button
+	Private ivDiskContourPlot As ImageView
+	Private lblDiskContourCurrentVal As Label
+	Private svDiskContour As ScrollView
+	Private DiskContourParamSelectedKey As String = "aoa"
+	
 	Private UpdatingUI As Boolean = False
 	
 	' Responsive layout metrics
@@ -448,6 +458,10 @@ Sub Activity_KeyPress (KeyCode As Int) As Boolean
 		End If
 		If SweepPopupOpen Then
 			CloseSweepPopup
+			Return True
+		End If
+		If DiskContourPopupOpen Then
+			CloseDiskContourPopup
 			Return True
 		End If
 		If CurrentPage = 2 Then
@@ -1252,6 +1266,7 @@ Private Sub RebuildApplicationUI
 	If sheet.IsInitialized Then sheet.CloseAll
 	If HelpPopupOpen Then ClosePhysicsHelp
 	If SweepPopupOpen Then CloseSweepPopup
+	If DiskContourPopupOpen Then CloseDiskContourPopup
 	If UnitPopupOpen Then CloseUnitConverter
 	root.RemoveAllViews
 	root.Color = ColorPnlInput5
@@ -2691,16 +2706,29 @@ Private Sub BuildPageRes
 	scvRes.Initialize(4800)
 	pnlBack2.AddView(scvRes, 0, 0, root.Width, root.Height - HeaderHeight)
 
+	Dim btnTotalW As Int = UiContentW*94/100
+	Dim btnW As Int = (btnTotalW - 8dip) / 2
 	btnViewPolarPlot.Initialize("btnViewPolarPlot")
 	btnViewPolarPlot.Tag = "sweep"
 	AttachHelp(btnViewPolarPlot)
-	btnViewPolarPlot.Text = "OPEN PARAMETER SWEEP"
+	btnViewPolarPlot.Text = "PARAMETER SWEEP"
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
 	btnViewPolarPlot.TextSize = TextSp
 	btnViewPolarPlot.Gravity = Gravity.CENTER
 	btnViewPolarPlot.SingleLine = True
 	StyleCta(btnViewPolarPlot, ColorAccentCyan)
-	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW*3/100, 10dip, UiContentW*94/100, 52dip)
+	scvRes.Panel.AddView(btnViewPolarPlot, UiContentLeft + UiContentW*3/100, 10dip, btnW, 52dip)
+
+	btnViewDiskContour.Initialize("btnViewDiskContour")
+	btnViewDiskContour.Tag = "diskContour"
+	AttachHelp(btnViewDiskContour)
+	btnViewDiskContour.Text = "DISK CONTOUR"
+	btnViewDiskContour.Typeface = Typeface.DEFAULT_BOLD
+	btnViewDiskContour.TextSize = TextSp
+	btnViewDiskContour.Gravity = Gravity.CENTER
+	btnViewDiskContour.SingleLine = True
+	StyleCta(btnViewDiskContour, ColorAccentCyan)
+	scvRes.Panel.AddView(btnViewDiskContour, UiContentLeft + UiContentW*3/100 + btnW + 8dip, 10dip, btnW, 52dip)
 
 	Dim y As Int = 76dip
 
@@ -3010,7 +3038,7 @@ End Sub
 ' ====================================================================
 
 Sub tab_swipe(direction As Int)
-	If sheet.IsOpen Or UnitPopupOpen Or SettingsPopupOpen Or SweepPopupOpen Or SweepTablePopupOpen Or HelpPopupOpen Or SweepValuesPopupOpen Then Return
+	If sheet.IsOpen Or UnitPopupOpen Or SettingsPopupOpen Or SweepPopupOpen Or SweepTablePopupOpen Or HelpPopupOpen Or SweepValuesPopupOpen Or DiskContourPopupOpen Then Return
 	Tick
 	If direction > 0 Then
 		If CurrentPage < 2 Then ShowPage(CurrentPage + 1, True)
@@ -4473,6 +4501,202 @@ End Sub
 
 Private Sub CsvQ(value As String) As String
 	Return Chr(34) & value.Replace(Chr(34), Chr(34) & Chr(34)) & Chr(34)
+End Sub
+
+' ====================================================================
+' ROTOR DISK CONTOUR POPUP
+' ====================================================================
+
+Sub btnViewDiskContour_Click
+	Tick
+	OpenDiskContourPopup
+End Sub
+
+Private Sub OpenDiskContourPopup
+	If DiskContourPopupOpen Then CloseDiskContourPopup
+	pnlDiskContourPopup.Initialize("")
+	pnlDiskContourPopup.Color = ColorPnlInput5
+	root.AddView(pnlDiskContourPopup, 0, 0, root.Width, root.Height)
+	DiskContourPopupOpen = True
+	pnlDiskContourPopup.BringToFront
+
+	Dim topBarH As Int = 52dip
+	Dim gap As Int = 6dip
+	Dim btnH As Int = 52dip
+	Dim footerH As Int = 58dip
+	Dim btnFooterH As Int = 48dip
+	Dim btnFooterTop As Int = 5dip
+	Dim curLines As Int = 3
+	If ld = 1 Then
+		topBarH = 40dip
+		gap = 4dip
+		btnH = 36dip
+		footerH = 42dip
+		btnFooterH = 34dip
+		btnFooterTop = 4dip
+		curLines = 2
+	End If
+
+	' Header
+	Dim pnlHeader As Panel
+	pnlHeader.Initialize("")
+	pnlHeader.Color = ColorPnlTitle
+	pnlDiskContourPopup.AddView(pnlHeader, 0, 0, root.Width, topBarH)
+	Dim lblTitle As Label
+	lblTitle.Initialize("")
+	lblTitle.Text = "ROTOR DISK CONTOUR"
+	lblTitle.TextColor = ColorAccentCyan
+	lblTitle.Typeface = Typeface.DEFAULT_BOLD
+	lblTitle.TextSize = 15 * sc
+	lblTitle.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	Dim headerBtnH As Int = topBarH - 4dip
+	pnlHeader.AddView(lblTitle, 12dip, 2dip, root.Width - 64dip, headerBtnH)
+	Dim btnClose As Button
+	btnClose.Initialize("btnCloseDiskContourPlot")
+	btnClose.Text = "×"
+	btnClose.TextColor = ColorAccentRed
+	btnClose.TextSize = 20
+	btnClose.Color = Colors.Transparent
+	pnlHeader.AddView(btnClose, root.Width - headerBtnH - 4dip, 2dip, headerBtnH, headerBtnH)
+
+	' Control bar with variable selector
+	Dim pnlControls As Panel
+	pnlControls.Initialize("")
+	pnlControls.Color = ColorPnlInput2
+	Dim controlsH As Int = btnH + 2 * gap
+	pnlDiskContourPopup.AddView(pnlControls, 0, topBarH, root.Width, controlsH)
+	btnDiskContourVar = NewSweepButton("btnDiskContourVar")
+	btnDiskContourVar.TextSize = 14 * sc
+	btnDiskContourVar.Text = RotorPopups.DiskContourParamLabel(DiskContourParamSelectedKey)
+	pnlControls.AddView(btnDiskContourVar, 12dip, gap, root.Width - 24dip, btnH)
+
+	' Body scroll view
+	Dim bodyTop As Int = topBarH + controlsH
+	Dim bodyH As Int = root.Height - bodyTop - footerH
+	svDiskContour.Initialize(bodyH)
+	pnlDiskContourPopup.AddView(svDiskContour, 0, bodyTop, root.Width, bodyH)
+
+	Dim plotW As Int = Min(root.Width - 16dip, 450dip)
+	Dim plotH As Int = plotW
+	If ld = 1 Then
+		plotH = Min(bodyH - 60dip, 320dip)
+		plotW = plotH
+	End If
+	Dim plotX As Int = (root.Width - plotW) / 2
+	Dim plotY As Int = 10dip
+	ivDiskContourPlot.Initialize("")
+	svDiskContour.Panel.AddView(ivDiskContourPlot, plotX, plotY, plotW, plotH)
+
+	Dim infoW As Int = root.Width - 24dip
+	Dim curH As Int = curLines * MeasuredTextHeight("Ag", 14 * sc, infoW) + 6dip
+	Dim curY As Int = plotY + plotH + 8dip
+	lblDiskContourCurrentVal.Initialize("")
+	lblDiskContourCurrentVal.Typeface = Typeface.DEFAULT_BOLD
+	lblDiskContourCurrentVal.TextSize = 13 * sc
+	lblDiskContourCurrentVal.TextColor = ColorAccentCyan
+	lblDiskContourCurrentVal.SingleLine = False
+	SetTextLines(lblDiskContourCurrentVal, curLines)
+	svDiskContour.Panel.AddView(lblDiskContourCurrentVal, 12dip, curY, infoW, curH)
+	svDiskContour.Panel.Height = Max(bodyH, curY + curH + 20dip)
+
+	' Footer with EXPORT PNG and EXPORT ALL PNG
+	Dim pnlFooter As Panel
+	pnlFooter.Initialize("")
+	pnlFooter.Color = ColorPnlTitle
+	pnlDiskContourPopup.AddView(pnlFooter, 0, root.Height - footerH, root.Width, footerH)
+	Dim btnExportPng As Button = NewSweepButton("btnDiskContourExportPng")
+	btnExportPng.Text = "EXPORT PNG"
+	btnExportPng.TextColor = ColorAccentGreen
+	btnExportPng.TextSize = 14 * sc
+	Dim btnExportAll As Button = NewSweepButton("btnDiskContourExportAllPng")
+	btnExportAll.Text = "EXPORT ALL PNG"
+	btnExportAll.TextColor = ColorAccentGreen
+	btnExportAll.TextSize = 14 * sc
+	Dim fw As Int = (root.Width - 24dip - gap) / 2
+	pnlFooter.AddView(btnExportPng, 12dip, btnFooterTop, fw, btnFooterH)
+	pnlFooter.AddView(btnExportAll, 12dip + fw + gap, btnFooterTop, fw, btnFooterH)
+
+	UpdateDiskContourPlotView
+End Sub
+
+Sub btnCloseDiskContourPlot_Click
+	CloseDiskContourPopup
+End Sub
+
+Private Sub CloseDiskContourPopup
+	If DiskContourPopupOpen Then
+		pnlDiskContourPopup.RemoveView
+		DiskContourPopupOpen = False
+	End If
+End Sub
+
+Sub btnDiskContourVar_Click
+	Tick
+	Dim keys As List = RotorPopups.DiskContourParamKeys
+	Dim options As List
+	options.Initialize
+	For Each k As String In keys
+		options.Add(RotorPopups.DiskContourParamLabel(k))
+	Next
+	Dim curIdx As Int = keys.IndexOf(DiskContourParamSelectedKey)
+	If curIdx < 0 Then curIdx = 0
+	Wait For (sheet.ShowChoice("Contour Variable", options, curIdx)) Complete (idx As Int)
+	If idx >= 0 And idx < keys.Size Then
+		DiskContourParamSelectedKey = keys.Get(idx)
+		btnDiskContourVar.Text = RotorPopups.DiskContourParamLabel(DiskContourParamSelectedKey)
+		UpdateDiskContourPlotView
+	End If
+End Sub
+
+Sub UpdateDiskContourPlotView
+	If ivDiskContourPlot.IsInitialized = False Then Return
+	Dim plotW As Int = ivDiskContourPlot.Width
+	Dim plotH As Int = ivDiskContourPlot.Height
+	If plotW <= 0 Or plotH <= 0 Then Return
+
+	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(plotW, plotH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, ThemeMode = 1, False)
+	ivDiskContourPlot.Bitmap = bmp
+
+	If ActiveRes.SolutionValid Then
+		lblDiskContourCurrentVal.Text = RotorNames.RichText("Active point: μ_x = " & FormatSig(ActiveRes.OperatingMu, 3) & " · V_x = " & FormatSig(ActiveRes.OperatingVx, 3) & " m/s · μ_z = " & FormatSig(ActiveRes.OperatingMuZ, 3))
+	Else
+		lblDiskContourCurrentVal.Text = "Active point: invalid operating point"
+	End If
+End Sub
+
+Sub btnDiskContourExportPng_Click
+	Tick
+	Dim exportW As Int = 600dip
+	Dim exportH As Int = 600dip
+	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, ThemeMode = 1, True)
+	Dim tempName As String = "rotor_contour_export.png"
+	Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
+	bmp.WriteToStream(out, 100, "PNG")
+	out.Close
+	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
+	Dim fileName As String = "contour_" & DiskContourParamSelectedKey & ".png"
+	Wait For (SaveAs(input, "image/png", fileName)) Complete (Success As Boolean)
+	If Success Then
+		ToastMessageShow("Contour PNG exported: " & fileName, False)
+	End If
+End Sub
+
+Sub btnDiskContourExportAllPng_Click
+	Tick
+	Dim keys As List = RotorPopups.DiskContourParamKeys
+	Dim exportW As Int = 600dip
+	Dim exportH As Int = 600dip
+	Dim count As Int = 0
+	For Each k As String In keys
+		Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, k, ThemeMode = 1, True)
+		Dim tempName As String = "rotor_contour_" & k & ".png"
+		Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
+		bmp.WriteToStream(out, 100, "PNG")
+		out.Close
+		count = count + 1
+	Next
+	ToastMessageShow(count & " contour plots generated in internal storage.", False)
+	btnDiskContourExportPng_Click
 End Sub
 
 Private Sub SaveAs(Source As InputStream, MimeType As String, Title As String) As ResumableSub

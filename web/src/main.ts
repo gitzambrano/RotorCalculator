@@ -9,6 +9,8 @@ export function triggerHapticFeedback(): void {
 
 import { QUICK_CONVERSIONS, quickConvert } from "./quick-converter";
 import { renderEquationMathML } from "./math-renderer";
+import { getHelpSvg } from "./help-illustrations";
+import { computeDiskContourData, drawDiskContour, DISK_CONTOUR_PARAMS } from "./disk-contour";
 import "./style.css";
 import iconUrl from "./assets/icon.png";
 import headerIconUrl from "./assets/icon_header.png";
@@ -198,7 +200,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.28</span>
+            <span class="version-badge">v1.29</span>
           </div>
         </div>
         <div class="header-actions">
@@ -445,9 +447,12 @@ app.innerHTML = `
 
       <!-- PAGE 2: RESULTS -->
       <section class="page" id="page-results">
-        <div class="results-header-actions" style="margin-bottom: 8px;">
-          <button class="btn-open-sweep" id="btn-open-sweep" style="width: 100%; height: 48px; font-weight: 700; font-size: 15px; border-radius: 4px;">
-            OPEN PARAMETER SWEEP
+        <div class="results-header-actions" style="display: flex; flex-direction: row; gap: 8px; margin: 0 12px 8px;">
+          <button class="btn-open-sweep" id="btn-open-sweep" style="flex: 1; height: 40px; font-weight: 700; font-size: 13px; border-radius: 4px;">
+            PARAMETER SWEEP
+          </button>
+          <button class="btn-open-sweep" id="btn-open-disk-contour" style="flex: 1; height: 40px; font-weight: 700; font-size: 13px; border-radius: 4px;">
+            DISK CONTOUR
           </button>
         </div>
 
@@ -659,6 +664,7 @@ app.innerHTML = `
             <button class="action-btn" id="btn-sweep-toggle-table" style="height: 38px;">SHOW TABLE</button>
             <button class="action-btn" id="btn-sweep-export-csv" style="height: 38px;">EXPORT CSV</button>
             <button class="action-btn" id="btn-sweep-export-png" style="height: 38px;">EXPORT PNG</button>
+            <button class="action-btn" id="btn-sweep-export-all-png" style="height: 38px;">EXPORT ALL PNG</button>
           </div>
       </div>
     </div>
@@ -677,6 +683,36 @@ app.innerHTML = `
             <button class="action-btn" id="btn-sweep-values-save" style="flex: 1; height: 42px; color: var(--accent); font-weight: 700;">APPLY VALUES</button>
             <button class="action-btn" id="btn-sweep-values-cancel" style="height: 42px;">CANCEL</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DISK CONTOUR -->
+    <div class="modal-overlay" id="modal-disk-contour">
+      <div class="modal-card sweep-modal-card">
+        <div class="modal-header">
+          <div class="modal-title">ROTOR DISK CONTOUR</div>
+          <button class="modal-close-btn" data-close="modal-disk-contour">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="sweep-controls-grid" style="grid-template-columns: 1fr;">
+            <div class="sweep-control-group">
+              <label>Parameter</label>
+              <select class="sweep-select" id="disk-contour-variable"></select>
+            </div>
+          </div>
+
+          <div class="disk-contour-canvas-wrapper" style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 6px 0;">
+            <canvas id="disk-contour-canvas" width="500" height="500" style="width: 100%; max-width: 500px; height: auto; aspect-ratio: 1 / 1; border: 1px solid var(--border); border-radius: 4px; background-color: var(--card-bg);"></canvas>
+          </div>
+
+          <div class="sweep-info-cards" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px; margin-bottom: 8px;">
+            <div id="disk-contour-val" style="padding: 8px 12px; background: var(--bg-input-card, var(--card-bg)); border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--accent); border: 1px solid var(--border);">Active condition summary</div>
+          </div>
+        </div>
+        <div class="sweep-footer-actions">
+          <button class="action-btn" id="btn-disk-contour-export-png">EXPORT PNG</button>
+          <button class="action-btn" id="btn-disk-contour-export-all-png">EXPORT ALL PNG</button>
         </div>
       </div>
     </div>
@@ -727,6 +763,7 @@ app.innerHTML = `
         </div>
         <div class="modal-body" style="padding: 16px 20px;">
           <div id="result-tooltip-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 14px;"></div>
+          <div id="result-tooltip-svg-box" style="display: none;"></div>
           <div id="result-tooltip-eq-box" style="display: none; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.25); border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 13.5px; color: var(--accent); margin-bottom: 12px; word-break: break-all;"></div>
           <div id="result-tooltip-range-box" style="display: none; font-size: 13.5px; margin-bottom: 10px;">
             <span style="font-weight: 700; color: var(--accent-green);">Typical range: </span>
@@ -873,8 +910,8 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.28</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.28.apk" download="RotorCalculator-1.28.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.29</div><div class="settings-row-sub">Download the verified Android APK</div></div>
+              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.29.apk" download="RotorCalculator-1.29.apk">APK</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
               <button type="button" class="action-btn" data-close="modal-settings" style="height: 44px; min-width: 120px; font-weight: 700; border-radius: 8px; font-size: 15px;">CLOSE</button>
@@ -910,7 +947,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.28</p>
+          <p>RotorCalculator v1.29</p>
           <p>Rotor performance calculator based on analytical blade-element theory.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
@@ -1614,6 +1651,16 @@ export function showContextualHelp(key: string): void {
   byId("result-tooltip-title").innerHTML = title;
   byId("result-tooltip-desc").innerHTML = (nom.body || `Engineering quantity for ${nom.full}.`).replace(/\n/g, "<br>");
 
+  const svgBox = byId("result-tooltip-svg-box");
+  const svgContent = getHelpSvg(key);
+  if (svgContent) {
+    svgBox.innerHTML = svgContent;
+    svgBox.style.display = "block";
+  } else {
+    svgBox.innerHTML = "";
+    svgBox.style.display = "none";
+  }
+
   const eqBox = byId("result-tooltip-eq-box");
   if (nom.eq) {
     eqBox.innerHTML = renderEquationMathML(key, nom.eq);
@@ -1646,6 +1693,11 @@ export function showContextualHelp(key: string): void {
 export function showContextualHelpCustom(title: string, message: string): void {
   byId("result-tooltip-title").innerHTML = title;
   byId("result-tooltip-desc").innerHTML = message.replace(/\n/g, "<br>");
+  const svgBox = byId("result-tooltip-svg-box");
+  if (svgBox) {
+    svgBox.innerHTML = "";
+    svgBox.style.display = "none";
+  }
   byId("result-tooltip-eq-box").style.display = "none";
   byId("result-tooltip-range-box").style.display = "none";
   byId("result-tooltip-unit-box").style.display = "none";
@@ -2303,6 +2355,8 @@ function bindModalListeners(): void {
     initSweepModal();
     openModal("modal-sweep");
   });
+  
+  byId("btn-open-disk-contour").addEventListener("click", openDiskContour);
 }
 
 // Selector Dropdown Buttons (Modal Option Selectors)
@@ -3352,7 +3406,113 @@ function initSweepModal(): void {
     a.click();
   };
 
+  byId("btn-sweep-export-all-png").onclick = () => {
+    triggerHapticFeedback();
+    for (const p of SWEEP_PARAMS) {
+      const { curves, currentOpPoint } = runParameterSweep(
+        activeGeom, activeCond, p.key, sweepMultiMode, sweepMaxMu, 25,
+        sweepCustomValues[sweepMultiMode], sweepTrimMode, plotPaletteIndex, currentTheme
+      );
+      drawSweepCanvas(canvas, curves, currentOpPoint, sweepXAxisMode, p, currentTheme, null, -1, extraPrecision);
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rotorcalculator_sweep_${p.key}.png`;
+      a.click();
+    }
+    // Restore original plot
+    updateSweepPlot();
+  };
+
   updateSweepPlot();
+}
+
+function openDiskContour() {
+  triggerHapticFeedback();
+  if (!activeResults.solutionValid) {
+    alert("Please calculate a valid operating point first.");
+    return;
+  }
+  
+  const select = byId<HTMLSelectElement>("disk-contour-variable");
+  select.innerHTML = "";
+  DISK_CONTOUR_PARAMS.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.key;
+    opt.textContent = `${p.label} [${p.unit}]`;
+    select.appendChild(opt);
+  });
+  
+  let button = select.closest(".sweep-control-group")!.querySelector<HTMLButtonElement>(".sweep-mobile-selector");
+  if (!button) {
+    button = document.createElement("button");
+    button.type = "button";
+    button.className = "sweep-mobile-selector";
+    select.closest(".sweep-control-group")!.append(button);
+  }
+  
+  const updateMobileBtn = () => {
+    const p = DISK_CONTOUR_PARAMS.find(item => item.key === select.value) || DISK_CONTOUR_PARAMS[0];
+    if (button) button.innerHTML = formatSubscripts(`${p.label} [${p.unit}] ▾`);
+  };
+  
+  button.onclick = () => {
+    const options: OptionItem[] = DISK_CONTOUR_PARAMS.map(p => ({
+      id: p.key,
+      label: `${p.label} [${p.unit}]`
+    }));
+    showOptionPicker("Select Variable", options, select.value, value => {
+      select.value = value;
+      select.dispatchEvent(new Event("change"));
+    });
+  };
+  
+  const updateContour = () => {
+    updateMobileBtn();
+    const varKey = select.value;
+    const meta = DISK_CONTOUR_PARAMS.find(p => p.key === varKey) || DISK_CONTOUR_PARAMS[0];
+    const data = computeDiskContourData(activeGeom, activeCond, activeResults, varKey);
+    const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
+    drawDiskContour(canvas, data, meta.label, meta.unit, false);
+    
+    byId("disk-contour-val").innerHTML = `<span>${formatSubscripts(`Active point: μ_x = ${formatSig(activeResults.operatingMu, 3)} · V_x = ${formatSig(activeResults.operatingVx, 3)} m/s · μ_z = ${formatSig(activeResults.operatingMuZ, 3)}`)}</span>`;
+  };
+  
+  select.onchange = updateContour;
+  
+  byId("btn-disk-contour-export-png").onclick = () => {
+    triggerHapticFeedback();
+    const varKey = select.value;
+    const meta = DISK_CONTOUR_PARAMS.find(p => p.key === varKey) || DISK_CONTOUR_PARAMS[0];
+    const data = computeDiskContourData(activeGeom, activeCond, activeResults, varKey);
+    const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
+    drawDiskContour(canvas, data, meta.label, meta.unit, true);
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rotorcalculator_contour_${select.value}.png`;
+    a.click();
+    updateContour();
+  };
+  
+  byId("btn-disk-contour-export-all-png").onclick = () => {
+    triggerHapticFeedback();
+    const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
+    for (const p of DISK_CONTOUR_PARAMS) {
+      const data = computeDiskContourData(activeGeom, activeCond, activeResults, p.key);
+      drawDiskContour(canvas, data, p.label, p.unit, true);
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rotorcalculator_contour_${p.key}.png`;
+      a.click();
+    }
+    updateContour(); // restore
+  };
+  
+  openModal("modal-disk-contour");
+  // Small delay to ensure modal is visible for canvas drawing
+  setTimeout(updateContour, 50);
 }
 
 function renderSweepTable(curves: any[], meta: any): void {

@@ -1,0 +1,8 @@
+{
+  "version": "1.29",
+  "versionCode": 12,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": "3be79f07c1825416fe8da3fba561ad6bce8701d0a7f078c654f6d39bbb7cdec8",
+  "verification": "Release 1.29 (versionCode 12). Interactive rotor disk contour plot with 14 aerodynamic distributions across azimuth and span. Full-screen contour modal with jet colormap, concentric dashed radial rings, quadrant axes, and PNG export. Rich inline SVG diagram illustrations for contextual parameter help dialogs. Full UI synchronization and aerodynamic formula parity across Android APK and Web application.",
+  "qaReport": "release_notes_1.29.txt"
+}

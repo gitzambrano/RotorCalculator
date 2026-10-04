@@ -1,0 +1,12 @@
+<en-US>
+Interactive rotor disk contour plot with 14 aerodynamic distributions across azimuth and span.
+Full-screen contour viewer with jet colormap, concentric dashed radial rings, quadrant axes, and PNG export.
+Rich inline SVG diagram illustrations for contextual parameter help dialogs.
+Full UI synchronization and aerodynamic parity across Android APK and Web.
+</en-US>
+<pt-BR>
+Gráfico de contorno do disco do rotor com 14 distribuições aerodinâmicas por azimute e raio.
+Visualizador em tela cheia com mapa de cores jet, anéis radiais tracejados, eixos e exportação PNG.
+Ilustrações vetoriais SVG incorporadas aos diálogos de ajuda contextual de parâmetros.
+Sincronização total de interface e paridade aerodinâmica entre o app Android e a versão Web.
+</pt-BR>

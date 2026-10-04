@@ -1,6 +1,6 @@
 # APK and Web Parity Requirements and Verification
 
-Audit baseline: **RotorCalculator 1.28 (versionCode 11)**.
+Audit baseline: **RotorCalculator 1.29 (versionCode 12)**.
 The Android source implementation consists of `RotorCalculator.b4a`, `RotorPopups.bas`, `RotorStorage.bas`, `RotorNames.bas`, and `zBETEngine.bas`.
 The Web application implementation resides in `web/src/` (`engine.ts`, `storage.ts`, `names.ts`, `app.ts`, `popups.ts`).
 Both platforms maintain 1:1 functional, mathematical, and interaction parity.
