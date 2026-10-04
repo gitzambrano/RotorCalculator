@@ -149,7 +149,7 @@ def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
         assert f'"{full}"' in names
 
 
-def test_geometry_and_conditions_use_aerocalculator_row_contract():
+def test_geometry_and_conditions_use_canonical_row_contract():
     main = text("RotorCalculator.b4a")
     assert "Private Sub BuildRow(" in main
     assert "Private Sub CreateRowLabel(rowId As String, key As String, level As Int) As Button" in main

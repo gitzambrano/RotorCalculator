@@ -204,58 +204,72 @@ $$
 \sigma(x) = \frac{N c(x)}{\pi R} = s_0 + s_1 x.
 $$
 
-### 3.1 Reference solidity
+### 3.1 Reference solidity and reference blade area
 
 The reference solidity extrapolates the chord line to the hub:
 
 $$
-\sigma_{\mathrm{ref}}
+\sigma_{\mathrm{REF}}
 =
 \int_0^1 \sigma(x)\,dx
 =
 s_0 + \frac{s_1}{2}.
 $$
 
+The reference blade area is:
+
+$$
+A_{\mathrm{REF}} = \sigma_{\mathrm{REF}} A_{\mathrm{DISK}} = \sigma_{\mathrm{REF}} \pi R^2.
+$$
+
 For a rectangular blade:
 
 $$
-\sigma_{\mathrm{ref}} = \frac{Nc}{\pi R}.
+\sigma_{\mathrm{REF}} = \frac{N_b c}{\pi R}, \quad A_{\mathrm{REF}} = N_b c R.
 $$
 
-### 3.2 Physical geometric solidity
+### 3.2 Actual solidity and actual blade area
 
-The actual blade area begins at the root cutout:
+The actual blade area begins at the root cutout $x_0$:
 
 $$
-\sigma_{\mathrm{geom}}
+\sigma_{\mathrm{act}}
 =
 \int_{x_0}^1 \sigma(x)\,dx.
 $$
 
+In internal code and scripts, this quantity is represented by `sigma_geom`.
+The actual physical blade area is:
+
+$$
+A_{\mathrm{act}} = \sigma_{\mathrm{act}} A_{\mathrm{DISK}} = \sigma_{\mathrm{act}} \pi R^2.
+$$
+
 For a rectangular blade:
 
 $$
-\sigma_{\mathrm{geom}}
+\sigma_{\mathrm{act}}
 =
-(1 - x_0)\,\sigma_{\mathrm{ref}}.
+(1 - x_0)\,\sigma_{\mathrm{REF}}, \quad A_{\mathrm{act}} = N_b c R (1 - x_0).
 $$
 
 ### 3.3 Thrust-weighted solidity
 
-Rotor Calculator also reports
+RotorCalculator also reports the thrust-weighted solidity:
 
 $$
-\sigma_{\mathrm{thrust}}
+\sigma_{\mathrm{TR}}
 =
 3\int_{x_0}^1 \sigma(x)\,x^2\,dx.
 $$
 
+In internal code and scripts, this quantity is represented by `sigma_thrust`.
 For a rectangular blade:
 
 $$
-\sigma_{\mathrm{thrust}}
+\sigma_{\mathrm{TR}}
 =
-(1 - x_0^3)\,\sigma_{\mathrm{ref}}.
+(1 - x_0^3)\,\sigma_{\mathrm{REF}}.
 $$
 
 ### 3.4 Why the BET equations use local solidity

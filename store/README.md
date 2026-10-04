@@ -1,32 +1,51 @@
-# RotorCalculator Play release materials
+# RotorCalculator Google Play Release Materials
 
-The publication script is adapted from AeroCalculator's `tools/upload_playstore.py` and uses the official Android Publisher v3 API. It defaults to a draft and validation only.
+The automated publication script `tools/upload_playstore.py` interacts directly with the Google Play Developer Publishing API (Android Publisher v3). By default, the script validates bundle integrity and metadata in draft mode without committing changes.
 
-## Assets
+---
 
-- `icon.png`: the application's actual 512 × 512 icon.
-- `feature-graphic.png`: opaque 1024 × 500 graphic, reproducible with `python tools/generate_store_feature.py`.
-- `listing-en-US.json`: title and descriptions matching the Android app.
-- `phone-screenshots/`: actual Android captures, not web mockups.
-- `tablet-screenshots/`: actual Android tablet captures.
-- Release notes: `docs/release_notes_1.21.txt`.
+## 1. Store Listing Assets
 
-Public privacy policy: https://gist.github.com/gitzambrano/d7a25b22e7132295bd1386b3cea4b0fe
+- `icon.png`: Official 512 × 512 high-resolution application icon.
+- `feature-graphic.png`: Official 1024 × 500 feature graphic, generated via `python tools/generate_store_feature.py`.
+- `listing-en-US.json`: Production title, short description, and full description matching application capabilities.
+- `phone-screenshots/`: Real native Android device captures across standard phone form factors.
+- `tablet-screenshots/`: Real native Android tablet captures (7-inch and 10-inch layouts).
+- `docs/release_notes_1.28.txt`: User-facing release notes for production deployment.
 
-The same policy is available offline from the app's global menu. Public support contact is `flightdyn@gmail.com`, matching Flight Dyn's existing store contact.
+Public Privacy Policy URL: https://gist.github.com/gitzambrano/d7a25b22e7132295bd1386b3cea4b0fe
 
-## Local release gates
+The privacy policy is also bundled offline inside the application (`docs/privacy_policy.html`).
+Official support contact email: `flightdyn@gmail.com`.
 
-Run the offline verifier, pytest, the compiled-engine verifier, a real B4A build, and the complete Android UI/functional matrix. Open the real screenshots and inspect them before publication. Record the tested source revision and evidence in release documentation; Python reference tests alone are not a compiled-engine equivalence gate.
+---
 
-Signing and API credentials remain outside Git. Supply the keystore through `B4A_KEY_FILE`, `B4A_KEY_PASSWORD`, and `B4A_KEY_ALIAS`, and the service account through `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`.
+## 2. Local Release Verification Gates
 
-Validate a prepared signed bundle and listing:
+Before publishing to the Google Play Store, execute the verification workflow:
 
+1. Execute the physics engine verifier: `python tools/verify_engine.py`.
+2. Execute the test suite: `pytest tests`.
+3. Verify compiled engine parity: `python tools/verify_compiled_engine.py`.
+4. Compile the release App Bundle (`.aab`) targeting Android 16 (API 36).
+5. Inspect visual screenshots in `scratch/screenshots/` to confirm that no layout defects exist.
+
+---
+
+## 3. Deployment Workflow
+
+Signing credentials and service account JSON files remain outside version control. Pass credentials via environment variables:
+- `B4A_KEY_FILE`: Path to `Key/rotorcalculator.keystore`.
+- `B4A_KEY_PASSWORD`: Keystore and key password.
+- `B4A_KEY_ALIAS`: Keystore key alias (`rotorcalculator`).
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`: Path to Google Cloud service account JSON key.
+
+### Validation Mode:
 ```powershell
 python tools/upload_playstore.py --listing-dir store --contact-email flightdyn@gmail.com --validate-only
 ```
 
-After all local gates and Console setup have passed, publishing requires the explicit `--no-validate-only` option and intended track/status. An API commit is a submission to Google Play; public availability must be verified in the Console after Google's review.
-
-The Console still handles declarations, content rating, app signing setup, privacy URL, category, availability, and review status.
+### Production Submission:
+```powershell
+python tools/upload_playstore.py --listing-dir store --contact-email flightdyn@gmail.com --status completed --no-validate-only
+```

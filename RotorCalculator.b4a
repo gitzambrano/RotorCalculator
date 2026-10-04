@@ -86,7 +86,7 @@ Version=13
 #End Region
 Sub Process_Globals
 	
-	' Theme Colors (AeroCalculator Cockpit Stealth Palette)
+	' Theme Colors (Cockpit Stealth Palette)
 	Public ColorPnlTitle As Int = 0xFF0D121B     ' Dark Stealth Cockpit Header
 	Public ColorTitleText As Int = 0xFFFFFFFF    ' Crisp White Title
 	Public ColorPnlLine As Int = 0xFF00E5FF      ' Active Aero Cyan Indicator
@@ -131,7 +131,7 @@ Sub Process_Globals
 	Public CurrentPage As Int = 0
 	Public UnitSystem As Int = 0 ' 0=Metric (SI), 1=Imperial
 	Public ThemeMode As Int = 0 ' 0=Dark, 1=Light, 2=Midnight Blue, 3=Sepia
-	Public ExtraPrecision As Int = 0 ' AeroCalculator-compatible +1 decimal
+	Public ExtraPrecision As Int = 0 ' User setting for +1 decimal precision option
 	Public ConditionAltitudeM As Double = 0.0
 	Public ConditionTemperatureC As Double = 15.0
 	Public HorizontalInputMode As String = "mu"   ' mu | vx
@@ -379,7 +379,7 @@ Private Sub BuildMainUi
 		typeK = 1.0
 	End If
 	
-	' Compact landscape header; portrait preserves the AeroCalculator proportions.
+	' Compact landscape header; portrait preserves canonical proportions.
 	If ld = 1 Then
 		sc = 1
 		HeaderTopH = 38dip
@@ -554,7 +554,7 @@ Private Sub RestoreSessionState
 End Sub
 
 ' ====================================================================
-' UNIFIED HEADER (AeroCalculator Style)
+' UNIFIED HEADER
 ' ====================================================================
 Private Sub BuildUnifiedHeader
 	pnltitle.Initialize("pnltitle")
@@ -795,7 +795,7 @@ Private Sub ApplyThemePalette
 			ColorCtaFill = 0xFF006978
 			ColorCtaText = 0xFFFFFFFF
 		Case 2
-			' Midnight Blue: AeroCalculator-like navy surfaces, cyan and amber accents.
+			' Midnight Blue: Navy surfaces, cyan and amber accents.
 			ColorPnlTitle = 0xFF0B1730
 			ColorTitleText = 0xFFFFFFFF
 			ColorPnlLine = 0xFF22D3EE
@@ -1517,7 +1517,7 @@ End Sub
 
 
 ' ====================================================================
-' AEROCALCULATOR-STYLE INPUT UNITS
+' CANONICAL INPUT UNITS
 ' ====================================================================
 ' ====================================================================
 ' CANONICAL KEYS, UNITS AND FORMATTING (engine stays SI; docs/nomenclature.md)
@@ -2683,7 +2683,7 @@ Sub btnDragInfo_Click
 End Sub
 
 ' ====================================================================
-' PAGE 2: RESULTS / OUTPUTS (AeroCalculator scvMain2 Architecture)
+' PAGE 2: RESULTS / OUTPUTS (scvMain2 Architecture)
 ' ====================================================================
 Private Sub BuildPageRes
 	pnlBack2.Initialize("")
@@ -2889,7 +2889,7 @@ Sub lblTrimSummary_Click
 End Sub
 
 ' ====================================================================
-' AEROCALCULATOR GRADIENTS & DRAWABLES
+' GRADIENTS & DRAWABLES
 ' ====================================================================
 ' Applies a state-list background and layers a RippleDrawable (API 21+) over it.
 Private Sub SetBtnBg(v As View, d As StateListDrawable)

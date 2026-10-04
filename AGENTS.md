@@ -54,8 +54,8 @@ $$\text{GUI / Input Controls} \longrightarrow \text{Validation \& SI Conversion}
 
 ## 3. Human Interface and Visual Design System
 
-1. **AeroCalculator Interaction Reference**:
-   - RotorCalculator inherits the disciplined engineering grammar of AeroCalculator: aligned columns, high-contrast themes, explicit unit surfaces, and immediate recalculation upon input change.
+1. **Engineering Visual Grammar and Design Principles**:
+   - RotorCalculator implements a disciplined, self-contained rotary-wing engineering grammar: rigid aligned columns, high-contrast themes, explicit unit surfaces, and immediate recalculation upon input change.
 2. **Canonical Three-Column Grid**:
    - Geometry and Conditions share one rigid three-column row structure:
      $$\textbf{Column 1 (Label Button)} \quad\vert\quad \textbf{Column 2 (Value / Selector)} \quad\vert\quad \textbf{Column 3 (Unit Button)}$$
@@ -67,8 +67,8 @@ $$\text{GUI / Input Controls} \longrightarrow \text{Validation \& SI Conversion}
    - Results use a dedicated three-column format: **symbol-first quantity | numerical value | unit**.
    - Numerical values and unit strings remain strictly separated.
 4. **Theme Support**:
-   - Support three complete themes with equal hierarchy and contrast: **Default Dark**, **Light**, and **Midnight**.
-   - Theme changes preserve the entire calculation state and navigation history.
+   - Support four complete themes with equal hierarchy, contrast compliance, and state preservation: **Default Dark**, **Light**, **Midnight Blue**, and **Sepia**.
+   - Theme changes preserve the entire calculation state, navigation history, scroll position, and parameter sweep configuration.
 5. **Universal Responsiveness**:
    - The interface operates reliably across compact phones (320dp), standard phones (360dp to 412dp), landscape orientations, and tablets (600dp to 768dp), including 130% system font scale.
    - Minimum interactive touch targets are approximately 48dp. The interface prefers vertical scrolling over shrinking fonts or compressing touch controls.
