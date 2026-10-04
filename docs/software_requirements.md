@@ -4,312 +4,425 @@
 > **Physics reference:** `tools/zBET.py` and rotary-wing blade-element momentum theory.  
 > **UI reference:** Disciplined, self-contained rotary-wing engineering visual design system.
 
-Each requirement has a stable identifier. Screens are specified positively by the data and actions they present.
+Every requirement in this specification has a unique alphanumeric identifier. Requirements do not use bullet points. Each requirement statement is direct, concise, and written in Simplified Technical English (ASD-STE100).
 
-## 1. Product structure
+---
 
-- **ARCH-1** — RotorCalculator shall provide three primary tabs: **Geometry**, **Conditions**, and **Results**.
-- **ARCH-2** — Geometry shall define the rotor/blade geometry and rotor aerodynamic definition.
-- **ARCH-3** — Conditions shall define atmosphere, flight state, operating constraints, inflow model, and induced-power factor.
-- **ARCH-4** — Results shall present dimensional performance, all aerodynamic coefficients, efficiency, inflow/wake, atmosphere, sectional flow diagnostics, and the complete solved operating state.
-- **ARCH-5** — Normal calculator edits shall update dependent values and results immediately.
-- **ARCH-6** — Symbols, signs, equations, and equivalent-input conversions shall follow standard rotary-wing Blade Element Theory (BET).
-- **ARCH-7** — The UI shall use structured engineering rows with readable typography, explicit selectors, large mobile touch targets (minimum 48 dp), persistent settings, immediate recalculation feedback, tap-accessible contextual help, and a consistent aligned label/value/unit grid.
+## 1. Product Structure and Architecture
 
-## 2. Geometry
+**ARCH-1** — RotorCalculator shall provide three primary tabs: **Geometry**, **Conditions**, and **Results**.
 
-### 2.1 Direct Geometry editor and active rotor
+**ARCH-2** — Geometry shall define the rotor geometry, blade planform, and airfoil aerodynamic parameters.
 
-- **GEO-1** — Opening **Geometry** shall immediately show the complete editable rotor definition as a direct in-page rotor editor; editing shall not require opening a rotor row or a modal Geometry popup.
-- **GEO-2** — Geometry shall reserve the top selector position for a persistent **Active Rotor** bar. The bar shall identify the current rotor at all times and visually indicate unsaved changes.
-- **GEO-3** — Tapping the Active Rotor bar shall open the saved-rotor selector and shall also expose **NEW ROTOR**.
-- **GEO-4** — NEW ROTOR shall create a uniquely named user rotor and make it the current inline geometry without changing tabs.
-- **GEO-5** — The in-page editor shall contain **Blade Geometry**, **Planform Metrics**, and **Rotor Aerodynamics**.
-- **GEO-6** — Geometry shall expose **SAVE**, **COPY**, and **DELETE** directly on the page. SAVE shall keep the editor open and shall immediately refresh the **Active Rotor** bar so the saved current rotor remains unambiguous.
-- **GEO-7** — SAVE shall update the active rotor; COPY shall clone the current edited geometry under a unique name; DELETE shall require confirmation and shall be disabled when only one rotor remains.
-- **GEO-8** — Selecting another rotor with unsaved edits or leaving the application shall offer Save, Discard, or Cancel. Unsaved edited values shall survive normal Activity recreation/orientation within the current app process.
-- **GEO-9** — Restore Factory Presets shall restore shipped preset values while preserving unrelated user rotors.
+**ARCH-3** — Conditions shall define atmospheric parameters, flight flow states, operating constraints, inflow model, and induced power factors.
 
-### 2.2 Synchronized reference planform
+**ARCH-4** — Results shall report dimensional performance, aerodynamic coefficients, rotor efficiency, wake state, sectional flow diagnostics, and solved operating trim states.
 
-All geometric parameters represent mutually coupled physical quantities. The fundamental basis consists of:
-- rotor radius **R** [m];
-- blade count **Nb** [–];
-- root cutout **x0 = r0/R** [–];
-- reference root chord **c_R** [m] at $x = r/R = 0$;
-- tip chord **c_T** [m] at $x = 1$;
-- taper ratio **c_T/c_R** [–];
-- reference solidity **σ_REF** [–];
-- actual solidity **σ_act** [–];
-- thrust-weighted solidity **σ_TR** [–];
-- blade reference aspect ratio **AR** [–];
-- swept disk area **A_DISK = πR²** [m²];
-- reference single-blade area **A_REF** [m²];
-- actual single-blade area **A_act** [m²];
-- root pitch **θ_R** [deg];
-- tip pitch **θ_T** [deg];
-- total blade twist **θ_twist = θ_T − θ_R** [deg];
-- three-quarter pitch **θ_75** [deg].
+**ARCH-5** — Edits to any geometry or condition parameter shall recalculate dependent variables and aerodynamic results immediately.
+
+**ARCH-6** — Aerodynamic equations, coordinate systems, and sign conventions shall follow standard rotary-wing Blade Element Theory (BET) and Momentum Theory.
+
+**ARCH-7** — The user interface shall use structured engineering rows with high-contrast typography, explicit selectors, minimum 48 dp touch targets, persistent settings, tap-accessible contextual help, and an aligned label / value / unit grid.
+
+**ARCH-8** — Both Android APK and Web application targets shall provide identical computational results, nomenclature, and interaction capabilities.
+
+---
+
+## 2. Geometry and Coupled Planform Controls
+
+### 2.1 Direct In-Page Rotor Editor and Management
+
+**GEO-1** — Opening the Geometry tab shall display the complete editable rotor definition immediately as a direct in-page rotor editor without opening intermediate dialogs.
+
+**GEO-2** — Geometry shall present an active rotor selection bar at the top of the page. The bar shall identify the current rotor and show an unsaved modification indicator.
+
+**GEO-3** — Tapping the active rotor bar shall open the saved-rotor selection modal and shall expose the **NEW ROTOR** action.
+
+**GEO-4** — NEW ROTOR shall prompt for a unique rotor name, create a new rotor definition, and load it into the editor immediately.
+
+**GEO-5** — The in-page editor shall organize parameters into four sections: Planform, Solidity & Areas, Blade Pitch, and Aerodynamics.
+
+**GEO-6** — Geometry shall expose **SAVE**, **COPY**, and **DELETE** action buttons directly on the page.
+
+**GEO-7** — SAVE shall persist current edits to internal application storage and clear the unsaved indicator. COPY shall duplicate the current geometry under an auto-generated unique name. DELETE shall remove the current rotor after user confirmation and shall be disabled when only one rotor exists.
+
+**GEO-8** — Selecting another rotor or exiting the screen with unsaved edits shall display an unsaved changes modal offering Save, Discard, and Cancel options.
+
+**GEO-9** — Restore Factory Presets shall restore all default rotor geometries while preserving user-created custom rotors.
+
+### 2.2 Synchronized Planform Physics
+
+All 14 geometric parameters represent mutually coupled physical quantities:
+Rotor Radius $R$ [m], Blade Count $N_b$ [–], Root Cutout $x_0 = r_0 / R$ [–], Reference Root Chord $c_R$ [m], Tip Chord $c_T$ [m], Taper Ratio $c_T/c_R$ [–], Reference Solidity $\sigma_{\text{REF}}$ [–], Actual Solidity $\sigma_{\text{act}}$ [–], Thrust-Weighted Solidity $\sigma_{\text{TR}}$ [–], Aspect Ratio $AR$ [–], Swept Disk Area $A_{\text{DISK}} = \pi R^2$ [m²], Reference Blade Area $A_{\text{REF}}$ [m²], Actual Blade Area $A_{\text{act}}$ [m²], Root Pitch $\theta_R$ [deg], Tip Pitch $\theta_T$ [deg], Total Blade Twist $\theta_{\text{twist}}$ [deg], and Three-Quarter Pitch $\theta_{75}$ [deg].
 
 The reference linear chord law is:
-
 $$c(x) = c_R + (c_T - c_R)\,x, \quad 0 \le x \le 1$$
 
 Reference single-blade area:
-
 $$A_{\text{REF}} = \frac{R\,(c_R + c_T)}{2}$$
 
 Reference aspect ratio:
-
 $$AR = \frac{R^2}{A_{\text{REF}}} = \frac{2R}{c_R + c_T}$$
 
 Reference solidity:
-
 $$\sigma_{\text{REF}} = \frac{N_b\,A_{\text{REF}}}{\pi R^2} = \frac{N_b}{\pi\,AR}$$
 
 Actual single-blade area:
-
 $$A_{\text{act}} = R \int_{x_0}^1 c(x)\,dx = R\,(1 - x_0)\,\left[c_R + \frac{c_T - c_R}{2}\,(1 + x_0)\right]$$
 
 Actual solidity:
-
 $$\sigma_{\text{act}} = \frac{N_b\,A_{\text{act}}}{\pi R^2} = \frac{N_b}{\pi R} \int_{x_0}^1 c(x)\,dx$$
 
 Thrust-weighted solidity:
-
 $$\sigma_{\text{TR}} = 3 \int_{x_0}^1 x^2\,\sigma(x)\,dx = \frac{3 N_b}{\pi R} \int_{x_0}^1 x^2\,c(x)\,dx$$
 
-Synchronization and cross-scaling rules:
-- **GEO-10** — Editing root chord $c_R$ or tip chord $c_T$ shall recompute taper ratio $c_T/c_R$, aspect ratio $AR$, areas ($A_{\text{REF}}, A_{\text{act}}$), and solidities ($\sigma_{\text{REF}}, \sigma_{\text{act}}, \sigma_{\text{TR}}$).
-- **GEO-11** — Editing rotor radius $R$ shall scale $c_R$ and $c_T$ in direct proportion to $R$, preserving $\sigma_{\text{REF}}, \sigma_{\text{act}}, \sigma_{\text{TR}}$, taper ratio, aspect ratio $AR$, and chord-to-radius ratios.
-- **GEO-11a** — Editing swept disk area $A_{\text{DISK}}$ shall update rotor radius $R = \sqrt{A_{\text{DISK}} / \pi}$ and scale root and tip chords proportionally, preserving solidity, taper ratio, and aspect ratio.
-- **GEO-12** — Editing reference solidity $\sigma_{\text{REF}}$ shall scale both chords by one common factor, preserve taper ratio and aspect ratio $AR$, and recompute blade areas.
-- **GEO-12a** — Editing actual solidity $\sigma_{\text{act}}$ shall scale root and tip chords uniformly, preserving taper ratio and root cutout.
-- **GEO-12b** — Editing thrust-weighted solidity $\sigma_{\text{TR}}$ shall scale root and tip chords by a common factor, preserving taper ratio.
-- **GEO-13** — Editing aspect ratio $AR$ shall scale both chords by one common factor, preserve taper ratio, and recompute solidities and blade areas.
-- **GEO-13a** — Editing reference blade area $A_{\text{REF}}$ shall scale both chords by the same factor, preserving taper ratio and aspect ratio.
-- **GEO-13b** — Editing actual blade area $A_{\text{act}}$ shall scale root and tip chords uniformly, preserving taper ratio and root cutout.
-- **GEO-13c** — Editing taper ratio $c_T/c_R$ shall hold root chord $c_R$ constant and update tip chord $c_T = \text{taper} \cdot c_R$, recomputing aspect ratio, solidities, and blade areas.
-- **GEO-14** — Editing blade count $N_b$ shall update solidities ($\sigma_{\text{REF}}, \sigma_{\text{act}}, \sigma_{\text{TR}}$) while preserving $AR$, radius $R$, and chord dimensions.
-- **GEO-15** — Editing root cutout $x_0$ shall preserve reference planform metrics ($c_R, c_T, \sigma_{\text{REF}}, AR, A_{\text{REF}}$) and update actual-blade metrics ($\sigma_{\text{act}}, A_{\text{act}}, \sigma_{\text{TR}}$) and BET radial integration limits.
-- **GEO-16** — Root pitch $\theta_R$ and tip pitch $\theta_T$ define the baseline linear pitch law. Operating collective is one uniform increment $\Delta\theta$:
-  $$\theta_{R,\text{op}} = \theta_R + \Delta\theta$$
-  $$\theta_{T,\text{op}} = \theta_T + \Delta\theta$$
-- **GEO-16a** — Editing total blade twist $\theta_{\text{twist}}$ shall update tip pitch $\theta_T = \theta_R + \theta_{\text{twist}}$, holding root pitch $\theta_R$ constant.
-- **GEO-16b** — Editing three-quarter pitch $\theta_{75}$ shall adjust both root pitch $\theta_R$ and tip pitch $\theta_T$ by a uniform constant offset, preserving total blade twist $\theta_{\text{twist}}$.
+**GEO-10** — Editing root chord $c_R$ or tip chord $c_T$ shall recalculate taper ratio $c_T/c_R$, aspect ratio $AR$, areas $A_{\text{REF}}$ and $A_{\text{act}}$, and solidities $\sigma_{\text{REF}}, \sigma_{\text{act}}, \sigma_{\text{TR}}$.
 
-### 2.3 Bidirectionally Coupled Geometric Controls
+**GEO-11** — Editing rotor radius $R$ shall scale root chord $c_R$ and tip chord $c_T$ in direct proportion to $R$, preserving $\sigma_{\text{REF}}, \sigma_{\text{act}}, \sigma_{\text{TR}}$, taper ratio, aspect ratio $AR$, and chord-to-radius ratios.
 
-- **GEO-17** — There are no passive read-only geometric outputs; every geometric parameter displayed in Geometry (radius, chords, solidities, areas, twist, pitch angles) shall be an interactive, editable control that propagates updates bidirectionally in real time.
-- **GEO-18** — Any direct input modification shall immediately refresh all dependent geometric quantities and trigger real-time recalculation of the aerodynamic solution and Results.
+**GEO-11a** — Editing swept disk area $A_{\text{DISK}}$ shall update rotor radius $R = \sqrt{A_{\text{DISK}} / \pi}$ and scale root and tip chords proportionally, preserving solidity, taper ratio, and aspect ratio.
+
+**GEO-12** — Editing reference solidity $\sigma_{\text{REF}}$ shall scale both chords by a common factor, preserve taper ratio and aspect ratio $AR$, and recalculate blade areas.
+
+**GEO-12a** — Editing actual solidity $\sigma_{\text{act}}$ shall scale root and tip chords uniformly, preserving taper ratio and root cutout.
+
+**GEO-12b** — Editing thrust-weighted solidity $\sigma_{\text{TR}}$ shall scale root and tip chords by a common factor, preserving taper ratio.
+
+**GEO-13** — Editing aspect ratio $AR$ shall scale both chords by a common factor, preserve taper ratio, and recalculate solidities and blade areas.
+
+**GEO-13a** — Editing reference blade area $A_{\text{REF}}$ shall scale both chords by a common factor, preserving taper ratio and aspect ratio.
+
+**GEO-13b** — Editing actual blade area $A_{\text{act}}$ shall scale root and tip chords uniformly, preserving taper ratio and root cutout.
+
+**GEO-13c** — Editing taper ratio $c_T/c_R$ shall hold root chord $c_R$ constant and adjust tip chord $c_T = \text{taper} \cdot c_R$, recalculating aspect ratio, solidities, and blade areas.
+
+**GEO-14** — Editing blade count $N_b$ shall recalculate solidities $\sigma_{\text{REF}}, \sigma_{\text{act}}, \sigma_{\text{TR}}$ while preserving aspect ratio, radius, and chord dimensions.
+
+**GEO-15** — Editing root cutout $x_0$ shall preserve reference metrics ($c_R, c_T, \sigma_{\text{REF}}, AR, A_{\text{REF}}$) and update actual blade metrics ($\sigma_{\text{act}}, A_{\text{act}}, \sigma_{\text{TR}}$) and radial integration boundaries.
+
+**GEO-16** — Root pitch $\theta_R$ and tip pitch $\theta_T$ shall define the baseline blade pitch law. Operating collective pitch shall apply a uniform angular increment $\Delta\theta$ across the blade:
+$$\theta_{R,\text{op}} = \theta_R + \Delta\theta, \quad \theta_{T,\text{op}} = \theta_T + \Delta\theta$$
+
+**GEO-16a** — Editing total blade twist $\theta_{\text{twist}}$ shall update tip pitch $\theta_T = \theta_R + \theta_{\text{twist}}$, holding root pitch $\theta_R$ constant.
+
+**GEO-16b** — Editing three-quarter pitch $\theta_{75}$ shall adjust root pitch $\theta_R$ and tip pitch $\theta_T$ by a uniform offset, preserving total blade twist $\theta_{\text{twist}}$.
+
+### 2.3 Interactive Input Controls
+
+**GEO-17** — Geometry shall contain zero passive read-only outputs. Every displayed geometric parameter shall be an interactive input control that updates bidirectionally.
+
+**GEO-18** — Any parameter modification shall update dependent values and recalculate aerodynamic performance in real time.
 
 ### 2.4 Rotor Aerodynamics
 
-- **GEO-19** — Rotor Aerodynamics shall use the same canonical three-column row structure as Blade Geometry.
-- **GEO-20** — Inputs shall include airfoil preset, lift-curve slope $a_0$ [rad⁻¹], profile drag coefficient $C_{d0}$ [–], tip-loss model, fixed tip factor $B$ when applicable, and Prandtl-Glauert compressibility toggle.
-- **GEO-21** — Tip-loss choices shall be **None**, **Fixed B**, and **Sissingh**.
-- **GEO-22** — Selecting an airfoil preset may populate $a_0$ and $C_{d0}$ while leaving both values fully visible and editable.
-- **GEO-23** — Every Geometry label shall be rendered as a clickable button control, not passive text. Pressing it shall open comprehensive contextual help or the relevant parameter selector. Every displayed Geometry unit shall also be rendered as a button control; when alternate units exist it shall open the unit selector, and when the quantity is dimensionless or has only one valid unit it shall retain the same button alignment and style. Unit changes shall preserve the canonical SI value.
+**GEO-19** — Rotor Aerodynamics shall follow the canonical three-column row structure: Column 1 (Label Button), Column 2 (Value / Selector), and Column 3 (Unit Button).
 
-### 2.5 Persistence and Storage
+**GEO-20** — Aerodynamic inputs shall include Airfoil preset, Lift-curve slope $a_0$ [rad⁻¹], Profile drag coefficient $C_{d0}$ [–], Tip-loss model, Tip factor $B$ [–], and Prandtl-Glauert compressibility toggle.
 
-- **GEO-24** — Saved rotor data shall carry an explicit schema version (currently `SCHEMA_VERSION = 3`).
-- **GEO-28** — Geometry input display precision shall reflect the physical scale: ordinarily two decimals for rotor radius and aspect ratio, one for pitch angles, up to three for ordinary chords and root cutout, with additional places for small radii/chords and small dimensionless coefficients where rounding would hide useful variation. Formatting shall never round the stored SI geometry.
-- **GEO-29** — Chord inputs retain millimeter-scale display detail where needed without forcing trailing third/fourth decimal zeros; display formatting never rounds or changes the canonical geometry.
+**GEO-21** — Tip-loss choices shall include **None** ($B = 1.0$), **Fixed B** ($B = 0.97$), and **Sissingh** ($B = 1 - \sqrt{2 C_T}/N_b$).
 
-## 3. Conditions
+**GEO-22** — Selecting an airfoil preset shall update lift-curve slope $a_0$ and profile drag $C_{d0}$ to standard literature values while allowing custom user overrides.
 
-### 3.1 Atmosphere
+**GEO-23** — Tapping Column 1 shall open contextual physics documentation. Tapping Column 2 shall edit numeric values or open selection modals. Tapping Column 3 shall open unit conversion pickers.
 
-- **COND-1** — Conditions shall contain **Altitude** [m] and **Temperature** [°C].
-- **COND-2** — Density $\rho$, ambient pressure $p$, and speed of sound $a$ shall be derived via the 1976 US Standard Atmosphere / ISA formulation and reported in Results.
+### 2.5 Storage and Formatting
 
-### 3.2 Horizontal flow
+**GEO-24** — Saved rotor geometries shall use schema version 3 (`SCHEMA_VERSION = 3`) with backward compatibility for legacy geometry definitions.
 
-- **COND-3** — Horizontal Flow shall provide an explicit **μ_x / Vx** representation selector.
-- **COND-4** — The selected representation shall be editable. Equivalent $\mu_x$ / $V_x$ values shall be consolidated in Results, without a small secondary line under the input.
-- **COND-5** — $\mu_x = V_x / (\Omega R)$.
+**GEO-25** — Rotor names shall contain a maximum of 32 characters and shall reject duplicate names.
 
-### 3.3 Axial flow
+**GEO-26** — Display formatting shall not round stored SI values. Precision settings shall apply only to presented text strings.
 
-- **COND-6** — Axial Flow shall provide an explicit **α / Vz / μz** representation selector.
-- **COND-7** — The selected representation shall be editable. Equivalent $\alpha / V_z / \mu_z$ values shall be consolidated in Results when mathematically defined, without a small secondary line under the input.
-- **COND-8** — **+Vz** means positive climb rate; the relative wind arrives from above and flows downward through the disk.
-- **COND-9** — **+μz** is the corresponding positive downward relative-flow ratio: $\mu_z = V_z / (\Omega R)$.
-- **COND-10** — **+α** means disk angle of attack with relative wind arriving from below the rotor disk.
-- **COND-11** — $\mu_z = - \mu_x \tan\alpha$.
-- **COND-12** — At zero forward speed ($\mu_x = 0$), nonzero axial flow shall be entered through $V_z$ or $\mu_z$.
+**GEO-27** — The application shall persist unsaved drafts during screen orientation changes or theme modifications.
 
-### 3.4 Operating constraints
+---
 
-The operating state contains four linked quantities:
-**Rotor Speed Ω (RPM)**, **collective increment Δθ**, **Thrust Coefficient CT**, and **Dimensional Thrust T**.
+## 3. Flight Conditions and Operating Constraints
 
-The user prescribes any two; RotorCalculator solves the remaining two at the current atmosphere and flight state.
+### 3.1 Atmospheric Conditions
 
-- **COND-13** — Operating Inputs shall expose six operating pairs:
-  1. **RPM + Collective**
-  2. **RPM + CT**
-  3. **RPM + Thrust**
-  4. **Collective + CT**
-  5. **Collective + Thrust**
-  6. **CT + Thrust**
-- **COND-14** — Only the selected pair shall be editable.
-- **COND-15** — RPM + Collective directly prescribes the operating rotor.
-- **COND-16** — RPM + CT solves collective $\Delta\theta$ via bisection.
-- **COND-17** — RPM + Thrust solves collective $\Delta\theta$ via bisection.
-- **COND-18** — Collective + CT solves RPM when the selected flight/model state provides a unique dimensional solution; otherwise Results shall report a clear non-unique/no-solution status.
-- **COND-19** — Collective + Thrust solves RPM via analytical scaling and bisection.
-- **COND-20** — CT + Thrust solves RPM analytically via tip speed $\Omega R = \sqrt{T / (\rho\,A_{\text{DISK}}\,C_T)}$ and collective $\Delta\theta$ from the aerodynamic target.
-- **COND-21** — Trimming shall occur at the current flight condition, including forward flight, climb, descent, and hover.
-- **COND-22** — Results shall report solved RPM, collective $\Delta\theta$, $C_T$, and thrust $T$.
-- **COND-23** — Conversions between $V_x \leftrightarrow \mu_x$, $V_z \leftrightarrow \mu_z$, tip Mach numbers, and dimensional quantities shall strictly use the solved operating RPM.
+**COND-1** — Atmospheric inputs shall include Pressure Altitude $h$ [m] and Ambient Temperature $T_0$ [°C].
 
-### 3.5 Aerodynamic-model inputs
+**COND-2** — Air density $\rho$, ambient pressure $p$, and speed of sound $a$ shall be calculated using the ISA 1976 atmospheric standard.
 
-- **COND-24** — Inflow Model shall offer **Uniform**, **Coleman**, **Coleman-Feingold**, and **Drees**.
-- **COND-25** — Conditions shall include induced-power factor **k_ind**. The same symbol/name shall be used consistently across Conditions, Results, contextual help, plots, and documentation.
-- **COND-26** — Profile drag shall use **Numerical Vectorial** radial/azimuthal integration ($16 \times 24$ quadrature).
-- **COND-27** — Every Conditions label shall be rendered as a clickable button control, not passive text. Every displayed Conditions unit shall also be rendered as a button control; when alternate units exist it shall open the unit selector, and otherwise it shall retain the same aligned button style. Horizontal and axial representation selection shall each use exactly one variable-selector button in the label column.
-- **COND-28** — Collective trim must bracket the target using the residuals of the actual valid candidate states. An invalid-to-valid transition may not create a false sign change or a valid solution that misses its prescribed $C_T$ or thrust.
-- **COND-28a** — When evaluating trial trim candidates, if an intermediate candidate state produces non-physical inflow or divergence, the bisection search shall shrink brackets within physically bracketed bounds without converging to an invalid state.
+### 3.2 Horizontal Flight Flow
 
-## 4. Results
+**COND-3** — Horizontal Flow shall provide an explicit representation selector toggling between Advance Ratio $\mu_x$ and Forward Airspeed $V_x$.
 
-Results shall present quantities organized in exactly nine canonical sections:
+**COND-4** — Editing either $\mu_x$ or $V_x$ shall update the alternate parameter via the relation $\mu_x = V_x / (\Omega R)$.
 
-1. **MAIN PERFORMANCE** — Thrust $T$, Shaft Power $P$, Shaft Torque $Q$.
-2. **IN-PLANE FORCES & MOMENTS** — In-Plane Force $H$, Side Force $Y$, Roll Moment $M_x$, Pitch Moment $M_y$.
-3. **POWER BREAKDOWN** — Shaft Power $P$, Induced Power $P_i$, Profile Power $P_0$, Air Power $P_{\text{air}}$.
-4. **LOADING & EFFICIENCY** — Disk Loading $T/A_{\text{DISK}}$, Power Loading $T/P$, Blade Loading $C_T/\sigma_{\text{TR}}$, Figure of Merit $\text{FM}$, Effective Lift-to-Drag $(L/D)_e$.
-5. **AERODYNAMIC COEFFICIENTS** — Thrust Coefficient $C_T$, Torque Coefficient $C_Q$, Induced Torque $C_{Qi}$, Profile Torque $C_{Q0}$, In-Plane Force $C_H$, Induced In-Plane $C_{Hi}$, Profile In-Plane $C_{H0}$, Side Force $C_Y$, Roll Moment $C_{Mx}$, Pitch Moment $C_{My}$, Air Power $C_{\text{Pair}}$, Mean Lift Coefficient $\overline{C}_L$.
-6. **TIP & FLOW VELOCITIES** — Advance Ratio $\mu_x$, Forward Airspeed $V_x$, Tip Speed $\Omega R$, Tip Mach $M_{\text{tip}}$, Advancing Tip Speed $V_{\text{adv}}$, Advancing Tip Mach $M_{\text{adv}}$, Retreating Tip Speed $V_{\text{ret}}$, Retreating Tip Mach $M_{\text{ret}}$.
-7. **SECTIONAL ANGLE OF ATTACK** — Advancing and retreating angle of attack evaluated at four radial stations ($r/R = 0.25, 0.50, 0.75, 1.0$): $\alpha_{\text{adv},25}, \alpha_{\text{ret},25}, \alpha_{\text{adv},50}, \alpha_{\text{ret},50}, \alpha_{\text{adv},75}, \alpha_{\text{ret},75}, \alpha_{\text{adv,tip}}, \alpha_{\text{ret,tip}}$.
-8. **SECTIONAL INFLOW ANGLE** — Advancing and retreating local inflow angle evaluated at four radial stations ($r/R = 0.25, 0.50, 0.75, 1.0$): $\phi_{\text{adv},25}, \phi_{\text{ret},25}, \phi_{\text{adv},50}, \phi_{\text{ret},50}, \phi_{\text{adv},75}, \phi_{\text{ret},75}, \phi_{\text{adv,tip}}, \phi_{\text{ret,tip}}$.
-9. **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$ (RPM), Collective Pitch $\Delta\theta$, Pressure Altitude $h$, Ambient Temperature $T_{\text{amb}}$, Density $\rho$, Ambient Pressure $p$, Speed of Sound $a$, Induced Velocity $V_i$, Inflow Ratio $\lambda$, Induced Inflow $\lambda_i$, Hover Inflow $\lambda_h$, Advance-Inflow Ratio $\mu_x/\lambda$, Tip Factor $B_{\text{res}}$, Wake Skew Angle $\chi$, Dynamic Thrust Coefficient $T_c$, Dynamic Power Coefficient $P_c$.
+**COND-5** — Forward flight flow shall satisfy $\mu_x \ge 0$ and $V_x \ge 0$.
 
-- **RES-1** — Results shall preserve the dedicated three-column format: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall remain strictly separated.
-- **RES-2** — Aerodynamic Coefficients shall keep all coefficients grouped under their canonical section with consistent symbol-first nomenclature.
-- **RES-3** — Figure of Merit $\text{FM}$ is defined in pure hover ($\mu_x = 0, \mu_z = 0$); in forward flight or climb/descent it shall report zero or a neutral dash (`–`) and state hover-only applicability in contextual help.
-- **RES-4** — Dynamic pressure coefficients $T_c$ and $P_c$ are normalized by free-stream dynamic pressure $\frac{1}{2}\rho V^2 A_{\text{DISK}}$ and are undefined at zero airspeed; in hover they shall display `–`.
-- **RES-5** — Sectional AoA and inflow angles shall evaluate local kinematics using the trimmed collective pitch and the local induced inflow from the active model. Large negative or stalled values on the retreating blade at high advance ratios diagnose blade stall risk.
-- **RES-6** — Baseline output precision shall be quantity-specific (e.g., 1 decimal for dimensional forces/power, 4–6 decimals for dimensionless coefficients).
-- **RES-7** — +1 Decimal toggle in Settings shall add exactly one decimal place across all formatted quantities.
-- **RES-8** — Invalid operating points shall be clearly identified and shall display neutral dashes or status banners rather than false zeros.
-- **RES-9** — Every result row shall expose contextual physics and equation help upon tapping the label button.
-- **RES-12** — In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38 px), compact typography, and neutral secondary styling across all themes.
+### 3.3 Axial Flight Flow
 
-## 5. Universal plots and parameter sweep
+**COND-6** — Axial Flow shall provide an explicit representation selector choosing among Disk AoA $\alpha$, Climb Speed $V_z$, and Axial Flow Ratio $\mu_z$.
 
-The parameter sweep tool shall evaluate rotor performance across advance ratio $\mu_x$ with multi-curve visualization and data export.
+**COND-7** — Selection among $\alpha$, $V_z$, and $\mu_z$ shall be mutually exclusive. The application shall not sum alternate axial flow inputs.
 
-### 5.1 Variables and axes
+**COND-8** — Climb Speed $V_z > 0$ shall define positive climb where relative airflow flows downward through the rotor disk.
 
-- **PLOT-1** — Any scalar numerical Result shall be selectable as the dependent variable (Y-axis).
-- **PLOT-2** — The Y-axis catalog shall remain synchronized with Result metadata.
-- **PLOT-3** — Primary X-axis shall be advance ratio $\mu_x$, with an equivalent airspeed $V_x$ [m/s, km/h, kt] display option.
-- **PLOT-4** — X-axis maximum range shall be user-selectable ($\mu_{\text{max}} = 0.20, 0.35, 0.50$ or custom).
-- **PLOT-5** — The active operating point shall be indicated by an explicit marker when within range.
+**COND-9** — Axial Flow Ratio $\mu_z = V_z / (\Omega R)$ shall define the dimensionless downward relative flow ratio.
 
-### 5.2 Curve families
+**COND-10** — Disk Angle of Attack $\alpha > 0$ shall define positive tilt where free-stream airflow arrives from below the rotor disk.
 
-- **PLOT-6** — Curve Family selector shall support:
-  1. **Active Only** (single curve matching current flight state);
-  2. **Inflow Models** (compares Uniform, Coleman, Coleman-Feingold, and Drees);
-  3. **α Family** (sweeps disk angle of attack: default −10°, −5°, 0°, +5°, +10°);
-  4. **Vz Family** (sweeps climb speed: default −10, −5, 0, +5, +10 m/s);
-  5. **μz Family** (sweeps axial flow ratio: default −0.050, −0.025, 0, +0.025, +0.050).
-- **PLOT-8** — A dedicated **VALUES** button shall allow custom comma-separated family parameters.
-- **PLOT-9** — Custom family values shall be validated and retained for the application session.
-- **PLOT-10** — A family sweep shall vary only its designated parameter, holding all other flight conditions fixed.
+**COND-11** — In forward flight, axial flow ratio shall satisfy $\mu_z = -\mu_x \tan\alpha$.
+
+**COND-12** — At zero forward speed ($\mu_x = 0$), angle of attack $\alpha$ shall be locked, and axial flow shall be entered through $V_z$ or $\mu_z$.
+
+### 3.4 Operating Pairs and Trimming
+
+The operating state couples four core quantities: Rotor Speed $\Omega$ (RPM), Collective Pitch Increment $\Delta\theta$, Target Thrust Coefficient $C_T$, and Target Thrust $T$. The user prescribes two quantities, and RotorCalculator solves the remaining two.
+
+**COND-13** — Conditions shall provide six operating pairs:
+1. **RPM + Collective** ($\Omega + \Delta\theta$)
+2. **RPM + CT** ($\Omega + C_T$)
+3. **RPM + Thrust** ($\Omega + T$)
+4. **Collective + CT** ($\Delta\theta + C_T$)
+5. **Collective + Thrust** ($\Delta\theta + T$)
+6. **CT + Thrust** ($C_T + T$)
+
+**COND-14** — Only the two parameters belonging to the active operating pair shall be editable.
+
+**COND-15** — Operating pair **RPM + Collective** shall prescribe operating rotor speed and collective pitch directly without numerical iteration.
+
+**COND-16** — Operating pair **RPM + CT** shall solve collective pitch $\Delta\theta$ to achieve target $C_T$ via bisection.
+
+**COND-17** — Operating pair **RPM + Thrust** shall solve collective pitch $\Delta\theta$ to achieve target thrust $T$ via bisection.
+
+**COND-18** — Operating pair **Collective + CT** shall solve rotor speed $\Omega$ when a unique aerodynamic solution exists; otherwise it shall display a non-unique state warning.
+
+**COND-19** — Operating pair **Collective + Thrust** shall solve rotor speed $\Omega$ via analytical scaling and bisection.
+
+**COND-20** — Operating pair **CT + Thrust** shall calculate rotor speed analytically via tip speed $\Omega R = \sqrt{T / (\rho\,A_{\text{DISK}}\,C_T)}$ and solve collective pitch $\Delta\theta$ via bisection.
+
+**COND-21** — Aerodynamic trimming shall evaluate at current flight conditions, including hover, axial climb, descent, and forward flight.
+
+**COND-22** — When trimming rotor speed $\Omega$ with forward airspeed $V_x$ specified, candidate iterations shall update advance ratio $\mu_x = V_x / (\Omega R)$ dynamically.
+
+**COND-23** — The trim solver shall bracket candidate solutions within physically valid aerodynamic bounds without converging to divergent states.
+
+### 3.5 Aerodynamic Inflow and Drag Models
+
+**COND-24** — Inflow Model shall support **Uniform**, **Coleman**, **Coleman-Feingold** (NDARC), and **Drees**.
+
+**COND-25** — Conditions shall expose Induced Power Factor $k_{\text{ind}}$ (default $1.15$).
+
+**COND-26** — Profile drag shall be calculated using 2D Gauss-Legendre quadrature ($16 \times 24$ nodes) for numerical-vectorial integration ($C_{H0}, C_{Q0}$).
+
+**COND-27** — Inflow equations shall couple with Momentum Theory and converge to a residual tolerance $|f(\lambda_i)| < 1.0 \times 10^{-12}$.
+
+---
+
+## 4. Results and Diagnostics
+
+Results shall display 65 aerodynamic quantities organized into nine canonical sections:
+
+Section 1: **MAIN PERFORMANCE** — Thrust $T$, Shaft Power $P$, Shaft Torque $Q$.  
+Section 2: **IN-PLANE FORCES & MOMENTS** — In-Plane Force $H$, Side Force $Y$, Roll Moment $M_x$, Pitch Moment $M_y$.  
+Section 3: **POWER BREAKDOWN** — Shaft Power $P$, Induced Power $P_i$, Profile Power $P_0$, Air Power $P_{\text{air}}$.  
+Section 4: **LOADING & EFFICIENCY** — Disk Loading $T/A_{\text{DISK}}$, Power Loading $T/P$, Blade Loading $C_T/\sigma_{\text{TR}}$, Mean Lift Coefficient $\bar{C}_L$, Figure of Merit $\text{FM}$, Effective Lift-to-Drag Ratio $(L/D)_e$.  
+Section 5: **AERODYNAMIC COEFFICIENTS** — Thrust Coefficient $C_T$, Torque Coefficient $C_Q$, Induced Torque $C_{Qi}$, Profile Torque $C_{Q0}$, In-Plane Force $C_H$, Induced In-Plane $C_{Hi}$, Profile In-Plane $C_{H0}$, Side Force $C_Y$, Roll Moment $C_{Mx}$, Pitch Moment $C_{My}$, Air Power $C_{\text{Pair}}$.  
+Section 6: **TIP & FLOW VELOCITIES** — Advance Ratio $\mu_x$, Forward Airspeed $V_x$, Tip Speed $\Omega R$, Tip Mach $M_{\text{tip}}$, Advancing Tip Speed $V_{\text{adv}}$, Advancing Tip Mach $M_{\text{adv}}$, Retreating Tip Speed $V_{\text{ret}}$, Retreating Tip Mach $M_{\text{ret}}$, Total Axial Speed $V_{z,\text{tot}}$.  
+Section 7: **SECTIONAL ANGLE OF ATTACK** — Local angle of attack evaluated on advancing ($\psi = 90^\circ$) and retreating ($\psi = 270^\circ$) blades across four radial stations: $\alpha_{\text{adv},25}, \alpha_{\text{ret},25}, \alpha_{\text{adv},50}, \alpha_{\text{ret},50}, \alpha_{\text{adv},75}, \alpha_{\text{ret},75}, \alpha_{\text{adv,tip}}, \alpha_{\text{ret,tip}}$.  
+Section 8: **SECTIONAL INFLOW ANGLE** — Local inflow angle evaluated on advancing and retreating blades across four radial stations: $\phi_{\text{adv},25}, \phi_{\text{ret},25}, \phi_{\text{adv},50}, \phi_{\text{ret},50}, \phi_{\text{adv},75}, \phi_{\text{ret},75}, \phi_{\text{adv,tip}}, \phi_{\text{ret,tip}}$.  
+Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\Delta\theta$, Altitude $h$, Temperature $T_{\text{amb}}$, Density $\rho$, Pressure $p$, Sound Speed $a$, Induced Velocity $V_i$, Inflow Ratio $\lambda$, Induced Inflow $\lambda_i$, Hover Inflow $\lambda_h$, Advance-to-Inflow Ratio $\mu_x/\lambda$, Dynamic Tip Factor $B$, Wake Skew Angle $\chi$, Dynamic Thrust Coefficient $T_c$, Dynamic Power Coefficient $P_c$.
+
+**RES-1** — Results shall preserve the dedicated three-column format: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall remain strictly separated.
+
+**RES-2** — Sectional Angle of Attack and Sectional Inflow Angle shall provide aerodynamic diagnostics at 25%, 50%, 75%, and 100% blade radius.
+
+**RES-3** — Figure of Merit $\text{FM}$ shall evaluate only in hover ($\mu_x = 0, \mu_z = 0$). Outside hover, $\text{FM}$ shall display a neutral dash (`–`).
+
+**RES-4** — Dynamic pressure coefficients $T_c$ and $P_c$ shall evaluate only with nonzero airspeed. In hover, $T_c$ and $P_c$ shall display `–`.
+
+**RES-5** — Invalid or divergent flight states shall display neutral dashes or status banners rather than false numerical values.
+
+**RES-6** — Output precision shall follow standard engineering resolution: 1–2 decimals for dimensional forces and power, and 4–6 decimals for dimensionless coefficients.
+
+**RES-7** — Activating +1 Decimal in Settings shall append exactly one decimal digit across all formatted output values.
+
+**RES-8** — Tapping any Results label button shall open comprehensive contextual help with mathematical definitions and governing equations.
+
+**RES-9** — In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38 px), compact typography, and neutral styling across all themes.
+
+---
+
+## 5. Universal Plots and Parameter Sweeps
+
+### 5.1 Sweep Variables and Coordinates
+
+**PLOT-1** — The parameter sweep tool shall evaluate universal plots across advance ratio $\mu_x$.
+
+**PLOT-2** — Any of the 61 scalar output quantities shall be selectable as the dependent variable (Y-axis).
+
+**PLOT-3** — The horizontal axis (X-axis) shall support Advance Ratio $\mu_x$, Forward Airspeed $V_x$, and Advance-to-Inflow Ratio $\mu_x/\lambda$.
+
+**PLOT-4** — Maximum sweep range shall provide user choices of $0.30$, $0.40$, $0.50$, and $0.60$.
+
+**PLOT-5** — The active operating point shall be displayed as an interactive marker when within current plot bounds.
+
+### 5.2 Curve Families
+
+**PLOT-6** — The curve family selector shall support five families:
+1. **Active Only** (single curve matching current flight condition)
+2. **Inflow Models** (compares Uniform, Coleman, Coleman-Feingold, and Drees)
+3. **α Family** (sweeps disk angle of attack: default −10°, −5°, 0°, +5°, +10°)
+4. **Vz Family** (sweeps climb speed: default −10, −5, 0, +5, +10 m/s)
+5. **μz Family** (sweeps axial flow ratio: default −0.050, −0.025, 0, +0.025, +0.050)
+
+**PLOT-7** — Tapping **VALUES** shall allow entering custom comma-separated parameter lists (1 to 9 values).
+
+**PLOT-8** — Custom values shall enforce range limits: $\alpha \in [-89^\circ, 89^\circ]$, $V_z \in [-200, 200]$ m/s, and $\mu_z \in [-0.50, 0.50]$.
+
+**PLOT-9** — A curve family sweep shall vary only its selected parameter, holding all other flight conditions constant.
 
 ### 5.3 Sweep Trim Modes
 
-- **PLOT-11** — Whenever CT or Thrust participates in the selected operating pair, the parameter sweep shall support hover-only trim options (**Trim only in hover**) alongside per-point trim and fixed controls:
-  1. **No Trim (Fixed Controls)** — Holds collective $\Delta\theta$ and rotor speed $\Omega$ constant from Conditions. Thrust varies freely with $\mu_x$.
-  2. **Trim Collective Δθ · Every Point** — Solves collective pitch $\Delta\theta$ at every $\mu_x$ sample to maintain the active target ($C_T$ or $T$).
-  3. **Trim Rotor Speed Ω · Every Point** — Solves rotor speed $\Omega$ at every $\mu_x$ sample to maintain the active target.
-  4. **Trim Collective Δθ · Hover Only** — Solves collective pitch $\Delta\theta$ once at $\mu_x = 0$ (**Trim only in hover**) and holds it constant across the sweep.
-  5. **Trim Rotor Speed Ω · Hover Only** — Solves rotor speed $\Omega$ once at $\mu_x = 0$ (**Trim only in hover**) and holds it constant across the sweep.
-- **PLOT-14** — Sweep tables, CSV, TXT, and JSON exports shall clearly state the active trim mode.
+**PLOT-10** — When target thrust or $C_T$ participates in the active operating pair, the parameter sweep shall support five sweep trim modes:
+1. **No Trim (Fixed Controls)** — Holds collective $\Delta\theta$ and rotor speed $\Omega$ fixed.
+2. **Trim Collective Δθ · Every Point** — Solves collective pitch $\Delta\theta$ at every advance ratio sample.
+3. **Trim Rotor Speed Ω · Every Point** — Solves rotor speed $\Omega$ at every advance ratio sample.
+4. **Trim Collective Δθ · Hover Only** — Solves collective pitch $\Delta\theta$ in hover (**Trim only in hover**) and holds it constant across the sweep.
+5. **Trim Rotor Speed Ω · Hover Only** — Solves rotor speed $\Omega$ in hover (**Trim only in hover**) and holds it constant across the sweep.
 
-### 5.4 Presentation and Export
+**PLOT-11** — Operating pairs that prescribe both rotor speed and collective pitch shall lock sweep trim to No Trim.
 
-- **PLOT-15** — Sweep controls shall use explicit button selectors with haptic feedback.
-- **PLOT-16** — Legends shall be complete, readable, responsive, and positioned outside the data grid.
-- **PLOT-17** — Invalid samples shall produce visible curve gaps rather than false zero values.
-- **PLOT-18** — TABLE view shall display all plotted curves with sample values matching the chart.
-- **PLOT-19** — The sweep tool shall provide multi-format export:
-  1. **Current Chart CSV / TXT** — Export of displayed curve values vs advance ratio;
-  2. **Full Dataset CSV / JSON** — Complete rotor geometry, ISA atmospheric state, flight parameters, and all calculated aerodynamic variables per sample;
-  3. **Chart PNG** — High-resolution image export with axes, legend, title, and theme styling.
-- **PLOT-21** — File export shall use Android Storage Access Framework (SAF) on mobile and direct browser downloads on Web.
-- **PLOT-26** — Plotted curves shall render as continuous solid lines with distinct palette colors.
-- **PLOT-27** — Curves shall omit cluttering discrete marker dots along the lines while providing an active interactive touch crosshair probe with live $(X, Y)$ coordinate readout.
-- **PLOT-28** — The plot canvas shall provide proper vertical clearance below buttons, centering the chart title cleanly above the grid.
+### 5.4 Visualization and Data Export
 
-## 6. Geometry backup and sharing
+**PLOT-12** — Plotted curves shall render as continuous solid lines with distinct palette colors.
 
-- **LIB-1** — Settings shall provide **Import Geometries** and **Export Geometries**.
-- **LIB-2** — Export shall write the saved rotor database to a portable file in structured JSON (`.json`) or plain text (`.txt`) format.
-- **LIB-3** — Import shall validate schema, version, and numeric parameter bounds before committing changes.
-- **LIB-4** — Import shall report the count of discovered valid geometries before confirmation.
-- **LIB-5** — Name collisions shall offer interactive conflict resolution: **Rename**, **Replace**, or **Skip**.
-- **LIB-6** — Importing geometries shall preserve unrelated local rotors.
-- **LIB-7** — Storage operations shall use Android `CREATE_DOCUMENT` / `OPEN_DOCUMENT` SAF workflows on mobile and File System API / file pickers on Web.
-- **LIB-8** — Restore Factory Presets shall restore standard rotor definitions (UH-60, Bell 206, Bo 105, R44, DJI Drone) while preserving custom user rotors.
+**PLOT-13** — Invalid sweep points shall produce visible line gaps rather than false zero values.
 
-## 7. Settings and help
+**PLOT-14** — The plot canvas shall support interactive touch crosshair probing with live $(X, Y)$ coordinate readouts.
 
-- **SET-1** — Settings shall provide:
-  - **Theme**: Default Dark, Light, Midnight Blue, Sepia;
-  - **Result Units**: SI Metric / Imperial US Customary;
-  - **Output Format**: Standard / +1 Decimal;
-  - **Import Geometries** and **Export Geometries**.
-- **SET-2** — Theme, unit system, and precision preferences shall persist across application restarts.
-- **SET-3** — The main menu shall provide Settings, Quick Unit Converter, Physics & Equations, Restore Factory Presets, Install App (Web), and About.
-- **SET-4** — Physics & Equations shall operate 100% offline and provide comprehensive technical documentation with interactive MathML equations and SVG diagrams.
-- **SET-5** — The web application shall provide an install icon button in the header adjacent to the main menu and support Progressive Web App (PWA) offline installation.
+**PLOT-15** — Tapping **TABLE** shall display tabulated numerical data corresponding to all plotted curves.
 
-## 8. Visual and interaction design system
+**PLOT-16** — Tapping **CSV** shall export current curve data with column headers, units, and active trim mode.
 
-- **UX-1** — Geometry and Conditions shall share one canonical three-column form grid: **label / value / unit** (Column 1: Label Button | Column 2: Value or Selector | Column 3: Unit Button). Column edges and row baselines shall align across every row on the page.
-- **UX-2** — Minimum interactive touch targets shall be approximately 48 dp high. Typography shall remain comfortably legible (15–16 sp for values and labels, 13–14 sp for units).
-- **UX-3** — Interaction shall be tap-first; no essential information or calculation requires mouse hover.
-- **UX-4** — Conditions shall display only the active representation in each form row; Results shall consolidate the complete equivalent flow state.
-- **UX-5** — The application shall support four complete themes with equal visual hierarchy, contrast compliance, and state preservation: **Default Dark**, **Light**, **Midnight Blue**, and **Sepia**.
-- **UX-6** — No value, unit, legend, label, or action shall clip across supported screen widths (320 dp to 768 dp) or at 130% system font scale.
-- **UX-7** — Current rotor identity shall appear in the Geometry Active Rotor bar; the global header shall display application identity and navigation.
-- **UX-8** — Unsaved inline Geometry edits and sweep configuration shall survive normal Activity recreation, rotation, or theme switches.
-- **UX-9** — Geometry shall open directly as the editable rotor definition without requiring opening a rotor row or modal popup to view or edit parameters.
-- **UX-12** — Column 1 (Label) is a real clickable button that opens comprehensive contextual help. Column 2 (Value) is an editable numeric field or modal selector. Column 3 (Unit) is a clickable unit converter button (displaying `–` for dimensionless quantities).
-- **UX-15** — Horizontal Flow shall use exactly one selector button in Column 1 choosing between **μ_x** and **Vx**.
-- **UX-16** — Axial Flow shall use exactly one selector button in Column 1 choosing between **α**, **Vz**, and **μz**.
-- **UX-19** — Symbols and nomenclature shall strictly follow `docs/nomenclature.md`. Plain-text symbols shall use underscore subscripts (e.g., $A_{\text{DISK}}$ as `A_DISK`, $\sigma_{\text{REF}}$ as `sigmaRef`, $\theta_{\text{twist}}$ as `thTwist`, $T/A_{\text{DISK}}$ as `T/A_DISK`).
-- **UX-21** — Clickable Geometry/Conditions labels and units shall be native actionable button controls with normal pressed and focus feedback; a passive Label styled to imitate a button does not satisfy this requirement.
-- **UX-24** — Results shall use three independently aligned columns: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall never be concatenated.
-- **UX-28** — The UI shall prefer vertical scrolling over shrinking text or touch targets. Normal engineering labels, values, units and Results shall remain approximately 15–16 sp on phone layouts; critical status/section text shall remain comfortably readable and shall not use 10–11 sp caption sizing.
-- **UX-29** — Geometry shall use the same centered maximum content width as Active Rotor, Conditions and Results on screens wider than the phone layout. The form grid shall not expand to full tablet width beneath a narrower Active Rotor or action block.
-- **UX-44** — The application shall support horizontal swipe gestures across the three primary tabs: `GEOMETRY` $\longleftrightarrow$ `CONDITIONS` $\longleftrightarrow$ `RESULTS` with velocity and diagonal angle thresholds to reject vertical scrolling conflicts.
-- **UX-45** — All interactive buttons, label controls, and unit controls shall trigger subtle 15 ms haptic feedback on Android.
-- **UX-53** — Contextual help dialogs shall separate independent facts and editing consequences into distinct paragraphs (`\n\n` in Web, `CRLF & CRLF` in B4A) without semicolons in editing instructions.
-- **UX-54** — The About dialog shall present application version, conceptual description, and author credits without unnecessary literary citations.
+**PLOT-17** — Tapping **PNG** shall generate a high-resolution chart image including axes, labels, legend, and title.
 
-## 9. Verification and Quality Assurance
+**PLOT-18** — File exports shall use Android Storage Access Framework (SAF) on mobile and direct file downloads on Web.
 
-- **QA-1** — Automated tests shall verify bidirectional geometry scaling, area calculations, solidities, and aspect ratio preservation.
-- **QA-2** — All six operating pairs shall be verified in hover, forward flight, and nonzero axial flow against numerical reference matrices.
-- **QA-3** — Tests shall verify collective pitch trim bisection bracketing and non-uniqueness handling.
-- **QA-4** — Parameter sweep tests shall cover every Y variable, every family, custom family values, and all five sweep trim modes.
-- **QA-5** — Chart, TABLE, CSV, TXT, and JSON exports shall share one authoritative sampled dataset.
-- **QA-6** — Geometry import/export shall round-trip without precision loss and reject invalid or out-of-domain schemas.
-- **QA-7** — Factory preset restoration shall preserve custom user rotors.
-- **QA-8** — UI smoke tests shall verify all four themes (Dark, Light, Midnight Blue, Sepia), portrait and landscape orientations, and Activity recreation.
-- **QA-9** — Release APK and AAB binaries shall be built from the main commit with matching version codes and verified before distribution.
-- **QA-10** — Runtime UI QA shall verify the three-column alignment in Geometry and Conditions by checking x-positions and vertical centers across all rows.
-- **QA-11** — Runtime UI QA shall verify that every label and unit control is an actionable button that opens help or unit pickers without altering canonical SI state.
-- **QA-15** — Static QA shall verify that no normal label or unit control is implemented as a passive unclickable element.
-- **QA-19** — Visual inspection shall verify that no text clipping or horizontal overlap occurs at 320 dp width with 130% font scale.
-- **QA-21** — Parameter sweep charts shall be inspected at compact phone, standard phone, and landscape orientations.
-- **QA-26** — First-time engineer walkthroughs shall verify that every parameter label, selector, and unit displays clear contextual documentation.
-- **QA-30** — Physical consistency tests (`python tools/verify_engine.py`) shall maintain 100% pass rate across all golden test cases.
+---
+
+## 6. Rotor Storage, Library, and Data Interchange
+
+**LIB-1** — Settings shall provide **Import Geometries** and **Export Geometries**.
+
+**LIB-2** — Export shall write the saved rotor library to structured JSON (`.json`) or version 3 text (`.txt`) files.
+
+**LIB-3** — Import shall validate file structure, schema version, and parameter boundaries before updating local storage.
+
+**LIB-4** — Import shall display the count of discovered valid geometries before confirmation.
+
+**LIB-5** — Name collisions during import shall provide conflict resolution options: **Rename**, **Replace**, or **Skip**.
+
+**LIB-6** — Importing geometries shall preserve unrelated local rotors.
+
+**LIB-7** — Storage operations shall use Android `CREATE_DOCUMENT` / `OPEN_DOCUMENT` SAF workflows on mobile and standard file dialogs on Web.
+
+**LIB-8** — Factory presets shall include UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, and Generic eVTOL.
+
+**LIB-9** — Restoring factory presets shall reset default definitions while preserving custom user rotors.
+
+---
+
+## 7. Settings and Offline Documentation
+
+**SET-1** — Settings shall provide user preferences for:
+- **Theme**: Default Dark, Light, Midnight Blue, Sepia
+- **Result Units**: Metric (SI) / Imperial (US Customary)
+- **Output Format**: Standard / +1 Decimal
+- **Database Backup**: Import Geometries and Export Geometries
+
+**SET-2** — User preferences shall persist across application restarts.
+
+**SET-3** — The main menu shall provide Settings, Quick Unit Converter, Physics & Equations, Restore Factory Presets, Install App (Web), and About.
+
+**SET-4** — Physics & Equations shall operate completely offline, displaying MathML equations and technical derivations (`physics_help.html`, `physics_help_light.html`, `physics_help_midnight.html`).
+
+**SET-5** — The web application shall provide an install icon button in the header and support Progressive Web App (PWA) offline execution.
+
+**SET-6** — The Quick Unit Converter shall provide 14 physical conversion modes with a Swap button.
+
+---
+
+## 8. Human Interface and Visual Design System
+
+**UX-1** — Geometry and Conditions shall share one canonical three-column form grid: **label / value / unit** (Column 1: Label Button | Column 2: Value or Selector | Column 3: Unit Button). Column boundaries and row heights shall remain aligned across all rows.
+
+**UX-2** — Minimum interactive touch target height shall be approximately 48 dp. Typography shall remain legible (15–16 sp for values and labels, 13–14 sp for units).
+
+**UX-3** — All essential features, settings, and calculations shall be accessible via touch tap. No feature shall require mouse hover.
+
+**UX-4** — Conditions shall display only the active representation in each row. Results shall consolidate complete flow representations.
+
+**UX-5** — The application shall support four complete themes with equal visual hierarchy and high contrast: **Default Dark**, **Light**, **Midnight Blue**, and **Sepia**.
+
+**UX-6** — No label, value, unit, legend, or button shall clip across supported screen widths (320 dp to 768 dp) or at 130% system font scale.
+
+**UX-7** — Active rotor identity shall be displayed in the Geometry active rotor bar. The global header shall display application title and navigation actions.
+
+**UX-8** — Unsaved geometry drafts and sweep settings shall survive Activity recreation, display rotation, or theme changes.
+
+**UX-9** — Geometry shall open directly as the editable rotor definition without requiring opening a rotor row or modal popup to view or edit parameters.
+
+**UX-10** — Column 1 (Label) is a clickable button that opens contextual technical documentation. Column 2 (Value) is an editable text field or modal selector. Column 3 (Unit) is a clickable button that opens unit pickers (or neutral `–` button for dimensionless parameters).
+
+**UX-11** — Horizontal Flow shall use one selector button in Column 1 choosing between **μ_x** and **Vx**.
+
+**UX-12** — Axial Flow shall use one selector button in Column 1 choosing among **α**, **Vz**, and **μz**.
+
+**UX-13** — Symbols and nomenclature shall strictly follow `docs/nomenclature.md` (e.g., $A_{\text{DISK}}$ as `A_DISK`, $\sigma_{\text{REF}}$ as `sigmaRef`, $\theta_{\text{twist}}$ as `thTwist`, $T/A_{\text{DISK}}$ as `T/A_DISK`).
+
+**UX-21** — Clickable Geometry/Conditions labels and units shall be native actionable button controls with pressed and focus feedback; a passive Label styled to imitate a button does not satisfy this requirement.
+
+**UX-24** — Results shall use three aligned columns: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall never be concatenated.
+
+**UX-28** — The UI shall prefer vertical scrolling over shrinking text or touch targets. Normal engineering labels, values, units and Results shall remain approximately 15–16 sp on phone layouts; critical status/section text shall remain comfortably readable and shall not use 10–11 sp caption sizing.
+
+**UX-29** — Geometry shall use the same centered maximum content width as Active Rotor, Conditions and Results on screens wider than the phone layout. The form grid shall not expand to full tablet width beneath a narrower Active Rotor or action block.
+
+**UX-44** — The application shall support horizontal swipe gestures across the three primary tabs (`GEOMETRY` $\longleftrightarrow$ `CONDITIONS` $\longleftrightarrow$ `RESULTS`) with velocity and diagonal angle thresholds to reject vertical scrolling conflicts.
+
+**UX-45** — Interactive button clicks, label taps, and unit selections shall trigger 15 ms haptic feedback on Android devices.
+
+**UX-53** — Contextual help dialogs shall separate independent facts and editing consequences into distinct paragraphs without semicolons in editing instructions.
+
+**UX-54** — The About dialog shall present application version, conceptual description, and author credits.
+
+---
+
+## 9. Verification, Quality Assurance, and Release Gates
+
+**QA-1** — Automated tests shall verify bidirectional geometry scaling, area calculations, solidities, and aspect ratio preservation.
+
+**QA-2** — All six operating pairs shall be verified in hover, forward flight, and axial climb regimes against numerical reference matrices.
+
+**QA-3** — Tests shall verify collective pitch trim bisection bracketing and non-uniqueness detection.
+
+**QA-4** — Parameter sweep tests shall verify all 61 output variables, 5 curve families, custom values, and all 5 sweep trim modes.
+
+**QA-5** — Sweep Chart, TABLE, CSV, and PNG exports shall share one authoritative sampled dataset.
+
+**QA-6** — Geometry import and export workflows shall round-trip without numerical drift and reject invalid schemas.
+
+**QA-7** — Restoring factory presets shall preserve custom user rotors.
+
+**QA-8** — UI test suites shall verify all four themes (Dark, Light, Midnight Blue, Sepia), portrait and landscape orientations, and Activity recreation.
+
+**QA-9** — Release APK and AAB binaries shall be built from the main commit with matching version codes and verified before distribution.
+
+**QA-10** — Runtime QA shall verify the three-column grid alignment in Geometry and Conditions by checking x-positions and vertical centers across all rows.
+
+**QA-11** — Runtime QA shall verify that every label and unit control is an actionable button opening help or unit pickers without modifying canonical SI state.
+
+**QA-15** — Static QA shall verify that no normal label or unit control is implemented as a passive unclickable element.
+
+**QA-19** — Visual inspection shall verify that no text clipping or horizontal overlap occurs at 320 dp width with 130% font scale.
+
+**QA-21** — Parameter sweep charts shall be inspected across compact phone, standard phone, tablet, and landscape layouts.
+
+**QA-26** — Verification walkthroughs shall confirm that every parameter label, selector, and unit displays clear contextual documentation.
+
+**QA-30** — Physical consistency tests (`python tools/verify_engine.py`) shall maintain a 100% pass rate across all golden test cases.
