@@ -174,12 +174,20 @@ function getJetColor(t: number): string {
 
 function formatColorbarValue(v: number): string {
   if (Math.abs(v) < 1e-9) return "0";
-  const prec = v.toPrecision(2);
   const abs = Math.abs(v);
-  if (abs >= 1000 || abs < 0.01) {
-    return Number(prec).toExponential(1);
+  const exp0 = Math.floor(Math.log10(abs));
+  const scale = Math.pow(10, 1 - exp0);
+  const rounded = Math.round(v * scale) / scale;
+  const absR = Math.abs(rounded);
+  if (absR < 1e-9) return "0";
+  const exp = Math.floor(Math.log10(absR));
+  if (absR >= 1000 || absR < 0.01) {
+    return rounded.toExponential(1);
+  } else {
+    const decs = Math.max(0, 1 - exp);
+    const s = rounded.toFixed(decs);
+    return s === "-0" || s === "-0.0" ? "0" : s;
   }
-  return Number(prec).toString();
 }
 
 export function drawDiskContour(
@@ -223,15 +231,15 @@ export function drawDiskContour(
     maxVal = minVal + 1;
   }
   
-  // Layout geometry: centered disk with horizontal colorbar below to maximize lateral disk size
+  // Layout geometry: centered enlarged disk with horizontal colorbar below
   const centerX = Math.round(width / 2);
-  const topSpace = includeTitle ? 56 : 42;
-  const bottomSpace = 84; // space for 0°/Aft + horizontal colorbar + ticks + bottom margin
-  const sideSpace = 52; // space for 270°/Ret. and 90°/Adv. labels with generous breathing room
+  const topSpace = includeTitle ? 54 : 36;
+  const bottomSpace = 76;
+  const sideSpace = 34;
 
   const availRadiusH = (width - 2 * sideSpace) / 2;
   const availRadiusV = (height - topSpace - bottomSpace) / 2;
-  const maxRadius = Math.floor(Math.min(availRadiusH, availRadiusV, 178));
+  const maxRadius = Math.floor(Math.min(availRadiusH, availRadiusV, 195));
   const centerY = topSpace + maxRadius;
   
   // 1. Smooth continuous bilinear interpolation onto canvas pixel buffer
@@ -323,9 +331,9 @@ export function drawDiskContour(
   
   ctx.putImageData(imgData, 0, 0);
   
-  // Faint dashed black concentric radial circles: 0.25R, 0.50R, 0.75R (clearly visible black dashes)
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.60)";
-  ctx.lineWidth = 1.2;
+  // Faint dashed black concentric radial circles: 0.25R, 0.50R, 0.75R (clear, subtle and discreet)
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+  ctx.lineWidth = 1;
   ctx.setLineDash([4, 3]);
   [0.25, 0.5, 0.75].forEach(rNorm => {
     ctx.beginPath();
@@ -364,45 +372,45 @@ export function drawDiskContour(
   // Azimuth labels & flight orientation annotations:
   // Degrees: bold 14px textColor | Sub-label: bold 12px mutedColor ("Fore", "Aft", "Adv.", "Ret.")
 
-  // TOP (180° - FORE: Fore placed cleanly ABOVE 180°, well clear of outer perimeter)
+  // TOP (180° - FORE)
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Fore", centerX, centerY - maxRadius - 26);
+  ctx.fillText("Fore", centerX, centerY - maxRadius - 22);
   ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("180°", centerX, centerY - maxRadius - 10);
+  ctx.fillText("180°", centerX, centerY - maxRadius - 8);
   
-  // BOTTOM (0° - AFT: 0° first, then Aft below)
+  // BOTTOM (0° - AFT)
   ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("0°", centerX, centerY + maxRadius + 14);
+  ctx.fillText("0°", centerX, centerY + maxRadius + 12);
   ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Aft", centerX, centerY + maxRadius + 28);
+  ctx.fillText("Aft", centerX, centerY + maxRadius + 24);
   
   // RIGHT (90° - ADVANCING)
   ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("90°", centerX + maxRadius + 26, centerY - 8);
+  ctx.fillText("90°", centerX + maxRadius + 17, centerY - 8);
   ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Adv.", centerX + maxRadius + 26, centerY + 10);
+  ctx.fillText("Adv.", centerX + maxRadius + 17, centerY + 10);
   
-  // LEFT (270° - RETREATING: generous clearance from disk and from left canvas edge)
+  // LEFT (270° - RETREATING: clean margins without clipping)
   ctx.font = "bold 14px sans-serif";
   ctx.fillStyle = textColor;
-  ctx.fillText("270°", centerX - maxRadius - 26, centerY - 8);
+  ctx.fillText("270°", centerX - maxRadius - 17, centerY - 8);
   ctx.font = "bold 12px sans-serif";
   ctx.fillStyle = mutedColor;
-  ctx.fillText("Ret.", centerX - maxRadius - 26, centerY + 10);
+  ctx.fillText("Ret.", centerX - maxRadius - 17, centerY + 10);
   
   // Prominent Horizontal Colorbar underneath the disk
-  const cbWidth = Math.round(width * 0.82); // 410px on 500px canvas
+  const cbWidth = Math.round(width * 0.84);
   const cbHeight = 16;
   const cbX = Math.round((width - cbWidth) / 2);
-  const cbY = centerY + maxRadius + 44;
+  const cbY = centerY + maxRadius + 38;
   
   const gradient = ctx.createLinearGradient(cbX, 0, cbX + cbWidth, 0);
   gradient.addColorStop(0, getJetColor(0));
@@ -418,7 +426,7 @@ export function drawDiskContour(
   ctx.strokeRect(cbX, cbY, cbWidth, cbHeight);
   
   // Draw subtle vertical tick marks across the bar at 0%, 25%, 50%, 75%, 100%
-  ctx.strokeStyle = "rgba(0,0,0,0.5)";
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
   ctx.lineWidth = 1;
   [0, 0.25, 0.5, 0.75, 1.0].forEach(frac => {
     const tx = Math.round(cbX + frac * cbWidth);
@@ -428,8 +436,8 @@ export function drawDiskContour(
     ctx.stroke();
   });
 
-  // Colorbar tick labels: 2 significant figures (min on left, mid in center, max on right)
-  const tickY = cbY + cbHeight + 6;
+  // Colorbar tick labels: strictly 2 significant figures (min on left, mid in center, max on right)
+  const tickY = cbY + cbHeight + 4;
   ctx.fillStyle = textColor;
   ctx.font = "bold 12px monospace";
   ctx.textBaseline = "top";

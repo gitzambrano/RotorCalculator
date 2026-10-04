@@ -1530,13 +1530,26 @@ End Sub
 
 Private Sub FmtColorbarValue(v As Double) As String
 	If Abs(v) < 0.000000001 Then Return "0"
+	Dim absV As Double
+	absV = Abs(v)
+	Dim exp0 As Double
+	exp0 = Floor(Logarithm(absV, 10))
+	Dim expInt0 As Int
+	expInt0 = exp0
+	Dim scaleVal As Double
+	scaleVal = Power(10, 1 - expInt0)
+	Dim rounded As Double
+	rounded = Round(v * scaleVal) / scaleVal
+	Dim absR As Double
+	absR = Abs(rounded)
+	If absR < 0.000000001 Then Return "0"
 	Dim expVal As Double
-	expVal = Floor(Logarithm(Abs(v), 10))
+	expVal = Floor(Logarithm(absR, 10))
 	Dim expInt As Int
 	expInt = expVal
-	If Abs(v) >= 1000 Or Abs(v) < 0.01 Then
+	If absR >= 1000 Or absR < 0.01 Then
 		Dim mant As Double
-		mant = v / Power(10, expInt)
+		mant = rounded / Power(10, expInt)
 		Dim signStr As String
 		signStr = "+"
 		If expInt < 0 Then signStr = ""
@@ -1544,7 +1557,10 @@ Private Sub FmtColorbarValue(v As Double) As String
 	Else
 		Dim decs As Int
 		decs = Max(0, 1 - expInt)
-		Return NumberFormat2(v, 1, decs, decs, False)
+		Dim resStr As String
+		resStr = NumberFormat2(rounded, 1, decs, decs, False)
+		If resStr = "-0" Or resStr = "-0.0" Then resStr = "0"
+		Return resStr
 	End If
 End Sub
 
@@ -1764,17 +1780,17 @@ Public Sub DrawDiskContourPlot( _
 	Dim centerX As Float
 	centerX = widthPx / 2.0
 	Dim topSpace As Float
-	If includeTitle Then topSpace = 60dip Else topSpace = 46dip
+	If includeTitle Then topSpace = 54dip Else topSpace = 36dip
 	Dim bottomSpace As Float
-	bottomSpace = 86dip
+	bottomSpace = 76dip
 	Dim sideSpace As Float
-	sideSpace = 54dip
+	sideSpace = 34dip
 	Dim availRadiusH As Float
 	availRadiusH = (widthPx - 2 * sideSpace) / 2.0
 	Dim availRadiusV As Float
 	availRadiusV = (heightPx - topSpace - bottomSpace) / 2.0
 	Dim maxRadius As Float
-	maxRadius = Round(Min(availRadiusH, Min(availRadiusV, 185dip)))
+	maxRadius = Round(Min(availRadiusH, Min(availRadiusV, 195dip)))
 	Dim centerY As Float
 	centerY = topSpace + maxRadius
 
@@ -1890,26 +1906,34 @@ Public Sub DrawDiskContourPlot( _
 	joBmp.RunMethod("setPixels", Array(diskPixels, 0, boxW, x0, y0, boxW, boxH))
 
 	Dim colGuide As Int
-	colGuide = 0x99000000
+	colGuide = 0x55000000
 	Dim dashPat() As Float = Array As Float(4dip, 3dip)
 	Dim rNorms() As Float = Array As Float(0.25, 0.50, 0.75)
 	For Each rn As Float In rNorms
 		Dim rGuide As Float
 		rGuide = rn * maxRadius
-		Dim steps As Int
-		steps = 48
-		For k = 0 To steps - 1 Step 2
+		Dim numDashes As Int
+		numDashes = Max(12, Round(2.0 * piVal * rGuide / 7dip))
+		Dim dAngle As Double
+		dAngle = 2.0 * piVal / numDashes
+		Dim dashAngle As Double
+		dashAngle = dAngle * (4.0 / 7.0)
+		For k = 0 To numDashes - 1
 			Dim an1 As Double
-			an1 = (2.0 * piVal * k) / steps
+			an1 = k * dAngle
 			Dim an2 As Double
-			an2 = (2.0 * piVal * (k + 1)) / steps
+			an2 = an1 + dashAngle
 			cvs.DrawLine(centerX + rGuide * Cos(an1), centerY - rGuide * Sin(an1), _
-				centerX + rGuide * Cos(an2), centerY - rGuide * Sin(an2), colGuide, 1.2dip)
+				centerX + rGuide * Cos(an2), centerY - rGuide * Sin(an2), colGuide, 1dip)
 		Next
 	Next
 
-	DrawPatterned(cvs, centerX - maxRadius, centerY, centerX + maxRadius, centerY, colGuide, 1.2dip, dashPat)
-	DrawPatterned(cvs, centerX, centerY - maxRadius, centerX, centerY + maxRadius, colGuide, 1.2dip, dashPat)
+	dpIdx = 0
+	dpRem = dashPat(0)
+	DrawPatterned(cvs, centerX - maxRadius, centerY, centerX + maxRadius, centerY, colGuide, 1dip, dashPat)
+	dpIdx = 0
+	dpRem = dashPat(0)
+	DrawPatterned(cvs, centerX, centerY - maxRadius, centerX, centerY + maxRadius, colGuide, 1dip, dashPat)
 
 	cvs.DrawCircle(centerX, centerY, maxRadius, 0xFF000000, False, 1dip)
 
@@ -1918,26 +1942,26 @@ Public Sub DrawDiskContourPlot( _
 	cvs.DrawCircle(centerX, centerY, rootRPx, colBg, True, 1dip)
 	cvs.DrawCircle(centerX, centerY, rootRPx, 0xFF000000, False, 1dip)
 
-	cvs.DrawText("Fore", centerX, centerY - maxRadius - 26dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
-	cvs.DrawText("180°", centerX, centerY - maxRadius - 10dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Fore", centerX, centerY - maxRadius - 22dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
+	cvs.DrawText("180°", centerX, centerY - maxRadius - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
 
-	cvs.DrawText("0°", centerX, centerY + maxRadius + 14dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
-	cvs.DrawText("Aft", centerX, centerY + maxRadius + 28dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
+	cvs.DrawText("0°", centerX, centerY + maxRadius + 12dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Aft", centerX, centerY + maxRadius + 24dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
 
-	cvs.DrawText("90°", centerX + maxRadius + 26dip, centerY - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
-	cvs.DrawText("Adv.", centerX + maxRadius + 26dip, centerY + 10dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
+	cvs.DrawText("90°", centerX + maxRadius + 17dip, centerY - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Adv.", centerX + maxRadius + 17dip, centerY + 10dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
 
-	cvs.DrawText("270°", centerX - maxRadius - 26dip, centerY - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
-	cvs.DrawText("Ret.", centerX - maxRadius - 26dip, centerY + 10dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
+	cvs.DrawText("270°", centerX - maxRadius - 17dip, centerY - 8dip, Typeface.DEFAULT_BOLD, 14, colText, "CENTER")
+	cvs.DrawText("Ret.", centerX - maxRadius - 17dip, centerY + 10dip, Typeface.DEFAULT_BOLD, 12, colMuted, "CENTER")
 
 	Dim cbW As Float
-	cbW = Round(widthPx * 0.82)
+	cbW = Round(widthPx * 0.84)
 	Dim cbH As Float
 	cbH = 16dip
 	Dim cbX As Float
 	cbX = Round((widthPx - cbW) / 2.0)
 	Dim cbY As Float
-	cbY = centerY + maxRadius + 44dip
+	cbY = centerY + maxRadius + 38dip
 	Dim cbSteps As Int
 	cbSteps = 100
 	For s = 0 To cbSteps - 1
@@ -1959,7 +1983,7 @@ Public Sub DrawDiskContourPlot( _
 
 	' Subtle vertical tick division marks across the bar at 0%, 25%, 50%, 75%, 100%
 	Dim colBarTick As Int
-	colBarTick = 0x80000000
+	colBarTick = 0x66000000
 	Dim tickFracs() As Float = Array As Float(0.0, 0.25, 0.50, 0.75, 1.0)
 	For Each tf As Float In tickFracs
 		Dim tx As Float
@@ -1967,9 +1991,9 @@ Public Sub DrawDiskContourPlot( _
 		cvs.DrawLine(tx, cbY, tx, cbY + cbH, colBarTick, 1dip)
 	Next
 
-	' Colorbar tick labels: 2 significant figures (min on left, mid in center, max on right)
+	' Colorbar tick labels: strictly 2 significant figures (min on left, mid in center, max on right)
 	Dim tickY As Float
-	tickY = cbY + cbH + 6dip
+	tickY = cbY + cbH + 4dip
 	cvs.DrawText(FmtColorbarValue(minVal), cbX, tickY + 8dip, Typeface.MONOSPACE, 12, colText, "LEFT")
 	cvs.DrawText(FmtColorbarValue((maxVal + minVal) / 2.0), centerX, tickY + 8dip, Typeface.MONOSPACE, 12, colText, "CENTER")
 	cvs.DrawText(FmtColorbarValue(maxVal), cbX + cbW, tickY + 8dip, Typeface.MONOSPACE, 12, colText, "RIGHT")

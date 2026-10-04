@@ -70,7 +70,7 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 13
+	#VersionCode: 14
 	#VersionName: 1.29
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
