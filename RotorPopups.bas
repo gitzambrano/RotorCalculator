@@ -1382,7 +1382,7 @@ Public Sub BuildFullSweepCsv(geom As RotorGeometry, cond As FlightCondition, sam
 	sb.Append("# Root Cutout (r/R): ").Append(geom.RootCutout).Append(CRLF)
 	sb.Append("# Root Chord c0 [m]: ").Append(geom.ChordRoot).Append(CRLF)
 	sb.Append("# Tip Chord c_tip [m]: ").Append(geom.ChordTip).Append(CRLF)
-	sb.Append("# Solidity sigma: ").Append(geom.SigmaRef).Append(CRLF)
+	sb.Append("# Reference Solidity sigma_REF: ").Append(geom.SigmaRef).Append(CRLF)
 	sb.Append("# Linear Twist Root [deg]: ").Append(geom.ThetaRoot * 180.0 / cPI).Append(CRLF)
 	sb.Append("# Linear Twist Tip [deg]: ").Append(geom.ThetaTip * 180.0 / cPI).Append(CRLF)
 	sb.Append("# Lift Curve Slope a0 [1/rad]: ").Append(geom.LiftSlope0).Append(CRLF)

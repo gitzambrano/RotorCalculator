@@ -37,7 +37,7 @@ Editable inputs:
 - root cutout **x0 = r0/R**;
 - reference root chord **c0** [m] at x = r/R = 0;
 - tip chord **c1** [m] at x = 1;
-- geometric solidity **σgeom**;
+- reference solidity **σREF**;
 - blade reference aspect ratio **AR**;
 - root incidence **θroot** [deg];
 - tip incidence **θtip** [deg].
@@ -56,14 +56,14 @@ Reference aspect ratio:
 
 Reference solidity:
 
-`σgeom = Nb Sref,b / (πR²) = Nb / (π AR)`
+`σREF = Nb Sref,b / (πR²) = Nb / (π AR)`
 
 Synchronization rules:
-- **GEO-10** — Editing c0 or c1 shall recompute AR and σgeom.
-- **GEO-11** — Editing radius shall scale c0 and c1 in direct proportion to R, preserving σgeom, AR, taper ratio, and c/R.
-- **GEO-12** — Editing σgeom shall scale both chords by one common factor, preserve taper ratio, and recompute AR.
-- **GEO-13** — Editing AR shall scale both chords by one common factor, preserve taper ratio, and recompute σgeom.
-- **GEO-14** — Editing Nb shall update σgeom while preserving AR and both chords.
+- **GEO-10** — Editing c0 or c1 shall recompute AR and σREF.
+- **GEO-11** — Editing radius shall scale c0 and c1 in direct proportion to R, preserving σREF, AR, taper ratio, and c/R.
+- **GEO-12** — Editing σREF shall scale both chords by one common factor, preserve taper ratio, and recompute AR.
+- **GEO-13** — Editing AR shall scale both chords by one common factor, preserve taper ratio, and recompute σREF.
+- **GEO-14** — Editing Nb shall update σREF while preserving AR and both chords.
 - **GEO-15** — Editing x0 shall preserve reference planform metrics and update actual-blade metrics and BET integration limits.
 - **GEO-16** — Root and tip incidence define the baseline linear pitch law. Operating collective is one uniform increment Δθ:
   `θroot,op = θroot + Δθ`
@@ -72,11 +72,11 @@ Synchronization rules:
 ### 2.3 Derived geometry
 
 Read-only outputs shall include:
-- geometric solidity **σgeom**;
+- reference solidity **σREF**;
 - thrust-weighted solidity **σthrust**;
 - taper ratio **c1/c0**;
 - disk area **A = πR²**;
-- reference single-blade area;
+- reference blade area **A_REF**;
 - actual blade area;
 - total twist **θtip − θroot**.
 
@@ -286,7 +286,7 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-16** — **Axial Flow shall use one and only one variable-selector button** in the label column. Pressing it shall choose between **α**, **Vz**, and **μz**; the selected variable shall remain in that same button, with its value in the common value column and its unit in the common unit-button column.
 - **UX-17** — Every label in Geometry and Conditions shall be a visible button/control as in AeroCalculator. It shall provide field help or, where the label represents a selectable variable/model, open the relevant selector. Passive text styled differently from the other label controls shall not be used for normal form rows.
 - **UX-18** — Every unit in Geometry and Conditions shall occupy the unit-button column and use the same button/control styling as AeroCalculator. Pressing a unit with valid alternatives shall open a unit selector and convert only the displayed value; the canonical calculation value shall remain unchanged. Dimensionless/single-unit quantities shall retain the same aligned unit-control footprint.
-- **UX-19** — Input and output nomenclature shall use the zBET/zBEMT symbols consistently across Geometry, Conditions, Results, plots, help, and exported tables, as fixed by `docs/nomenclature.md`. The **collective pitch symbol is Δθ** and the **blade twist symbol is θ_twist**. Established symbols such as **R, Nb, x0, c0, c1, σgeom, AR, θroot, θtip, θ_twist, a0, Cd0, k_ind, μx, Vx, α, Vz, μz, Δθ, CT, CQ, CQi, CQ0, CH, CY, CMx, CMy, CPair, λ, λi, Kx, Ky, χ, B** shall not be replaced by inconsistent ad-hoc abbreviations. Naming rules: labels are **Description Symbol** (symbol after description), Title Case, no periods, no unit inside label or value; three levels (Full, Short, Narrow without symbol) chosen once per page, never per row; dimensionless unit column shows `–`; plain-text symbols use `_` (C_T, θ_twist).
+- **UX-19** — Input and output nomenclature shall use the zBET/zBEMT symbols consistently across Geometry, Conditions, Results, plots, help, and exported tables, as fixed by `docs/nomenclature.md`. The **collective pitch symbol is Δθ** and the **blade twist symbol is θ_twist**. Established symbols such as **R, Nb, x0, c0, c1, σREF, AR, θroot, θtip, θ_twist, a0, Cd0, k_ind, μx, Vx, α, Vz, μz, Δθ, CT, CQ, CQi, CQ0, CH, CY, CMx, CMy, CPair, λ, λi, Kx, Ky, χ, B** shall not be replaced by inconsistent ad-hoc abbreviations. Naming rules: labels are **Description Symbol** (symbol after description), Title Case, no periods, no unit inside label or value; three levels (Full, Short, Narrow without symbol) chosen once per page, never per row; dimensionless unit column shows `–`; plain-text symbols use `_` (C_T, θ_twist).
 - **UX-19a** — Geometry action buttons (SAVE / COPY / DELETE) sit at the end of the Geometry page, after the editor rows.
 - **UX-19b** — Sweep trim is one dropdown: No Trim (Fixed Controls), Trim Collective Δθ · Every Point, Trim Rotor Speed Ω · Every Point, Trim Collective Δθ · Hover Only, Trim Rotor Speed Ω · Hover Only. The trim target is the Conditions target (CT or T).
 - **UX-19c** — Sweep plots offer three selectable colour palettes; plots are static with a tap readout.
@@ -304,7 +304,7 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-31** — At 320 dp width with Android font scale 130%, status and Sweep controls shall use responsive compact wording/reflow rather than clipped text or smaller fonts. Result status shall remain single-line and Sweep range, hover-trim and active-state text shall fit their assigned controls.
 - **UX-32** — Normal label and unit controls shall remain visibly actionable but shall be visually subordinate to editable values and model/action selectors. Derived Geometry shall use a quieter read-only treatment while retaining aligned actionable help/unit controls.
 - **UX-33** — Rotor Name is textual metadata rather than a physical scalar. On the narrowest phone layouts its editable row shall grow vertically and wrap the full name at a legible size while retaining the same column grid and touch geometry.
-- **UX-34** — Every input, result and action shall be understandable to an engineer opening the app for the first time. Compact on-screen wording may use established symbols, but shall not make a quantity or action ambiguous. Symbols including σgeom, K_ind, μz, CPair and χ shall have short, accessible contextual explanations stating the physical meaning and the convention used here.
+- **UX-34** — Every input, result and action shall be understandable to an engineer opening the app for the first time. Compact on-screen wording may use established symbols, but shall not make a quantity or action ambiguous. Symbols including σREF, K_ind, μz, CPair and χ shall have short, accessible contextual explanations stating the physical meaning and the convention used here.
 - **UX-35** — Tapping any row label in Column 1 shall open comprehensive contextual help. Tapping a selectable parameter in Column 2 (Airfoil, Tip Loss, Compressibility, Trim Condition, Inflow Model) shall open the dedicated selection modal sheet. Tapping a unit control in Column 3 with alternatives shall open its unit selector. A single-unit or dimensionless unit button retains the grid footprint, displaying an invariant dash (`–`).
 - **UX-36** — Main screens shall favor short rows and contextual help over permanent descriptive paragraphs. Important actions shall be visible in the app, without requiring external documentation or trial and error to discover them.
 - **UX-37** — Every popup/dialog shall have a contextual title, self-explanatory options, a clear indication of the current selection where applicable, and a working Cancel path. A popup shall exist only when it serves a current user action; obsolete popup flows shall be removed.
@@ -321,12 +321,12 @@ The following requirements are mandatory and take precedence over older Geometry
 - **UX-48** — Column 1 (Label Button) touches shall strictly route to comprehensive contextual help (`ShowHelpFor` / `showContextualHelp`). Column 2 (Value Button) touches for discrete parameters shall open the parameter selection modal sheet (Airfoil, Tip Loss, Compressibility, Inflow Model, Trim Condition).
 - **UX-49 / THEME-1** — The application shall provide Default Dark, Light, and Midnight themes with identical visual hierarchy, contrast compliance, and state preservation across all screens and offline manuals.
 - **UX-50** — Responsive nomenclature shall use a four-level fallback hierarchy when display width is constrained: Full Name $\rightarrow$ Medium Name $\rightarrow$ Abbreviated / Short Name $\rightarrow$ Symbol Only. The nomenclature level shall be evaluated uniformly per section/page to prevent mixing discordant abbreviation levels within the same block. Symbols shall always follow the descriptive title and preserve mathematical subscripts.
-- **UX-51** — Standardized engineering abbreviations shall use trailing periods consistently: `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.`, and `Eff.`. Dimensionless acronyms `Coeff` and `Dyn` shall not take trailing periods.
+- **UX-51** — Standardized engineering abbreviations shall use trailing periods consistently: `Ref.`, `Adv.`, `Act.`, `Thr.`, `Prof.`, `Ind.`, `Rot.`, and `Eff.`. Dimensionless acronyms `Coeff` and `Dyn` shall not take trailing periods.
 - **UX-52** — In-plane force labels shall step down cleanly: Full `Induced In-Plane Force H_ind` $\rightarrow$ Medium `Induced In-Plane Force H_ind` $\rightarrow$ Abbreviated `Ind. In-Plane Force H_ind` $\rightarrow$ Short `Ind. In-Plane H_ind` $\rightarrow$ Symbol `H_ind`. The word "Force" shall be omitted at the narrowest multi-word level before falling back to symbol-only.
 
 ## 9. Verification and Quality Assurance
 
-- **QA-1** — Geometry tests shall verify radius scaling, AR, σgeom, σact, σthrust, and taper preservation.
+- **QA-1** — Geometry tests shall verify radius scaling, AR, σREF, σact, σthrust, and taper preservation.
 - **QA-2** — All six operating pairs shall be tested in hover, forward flight, and nonzero axial flow.
 - **QA-3** — Tests shall verify uniform collective Δθ and preserved twist.
 - **QA-4** — Plot tests shall cover every Y variable, every family, custom family values, and both hover-only trim states.

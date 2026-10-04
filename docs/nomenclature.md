@@ -32,12 +32,12 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 | c0 | Root Chord | Root Chord | c_R |
 | c1 | Tip Chord | Tip Chord | c_T |
 | taper | Taper Ratio | Taper | c_T/c_R |
-| sigmaRef | Geometric Solidity | Geometric Solidity | σ_geom |
+| sigmaRef | Reference Solidity | Reference Solidity | σ_REF |
 | sigmaAct | Actual Solidity | Actual Solidity | σ_act |
 | sigmaT | Thrust-Weighted Solidity | Thrust Solidity | σ_TR |
 | AR | Aspect Ratio | Aspect Ratio | AR |
 | A | Disk Area | Disk Area | A |
-| Ab | Geometric Blade Area | Geometric Area | A_geom |
+| Ab | Reference Blade Area | Reference Area | A_REF |
 | Aact | Actual Blade Area | Actual Area | A_act |
 | thRoot | Root Pitch | Root Pitch | θ_R |
 | thTip | Tip Pitch | Tip Pitch | θ_T |
@@ -223,12 +223,12 @@ The effective APK abbreviation map includes its responsive overrides. Each capti
 - `c0`: Root Chord
 - `c1`: Tip Chord
 - `taper`: Taper
-- `sigmaRef`: Geom. Solidity
+- `sigmaRef`: Ref. Solidity
 - `sigmaAct`: Act. Solidity
 - `sigmaT`: Thr. Solidity
 - `AR`: Aspect
 - `A`: Disk Area
-- `Ab`: Geom. Area
+- `Ab`: Ref. Area
 - `Aact`: Act. Area
 - `thRoot`: Root Pitch
 - `thTip`: Tip Pitch
@@ -364,4 +364,4 @@ Regenerate using python tools/export_apk_label_catalog.py.
 
 ### Abbreviation Punctuation Rules
 
-Use `Adv.`, `Act.`, `Geom.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` and `Eff.` across all abbreviated levels. The acronyms `Coeff` and `Dyn` do not take trailing periods. Full names and mathematical symbols do not change. The intermediate level omitting "Force" precedes symbol-only fallback.
+Use `Ref.`, `Adv.`, `Act.`, `Thr.`, `Prof.`, `Ind.`, `Rot.` and `Eff.` across all abbreviated levels. The acronyms `Coeff` and `Dyn` do not take trailing periods. Full names and mathematical symbols do not change. The intermediate level omitting "Force" precedes symbol-only fallback.

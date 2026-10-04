@@ -295,7 +295,7 @@ app.innerHTML = `
 
         <div class="section-header">SOLIDITY &amp; AREAS</div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-key="sigmaRef" data-tip="Blade area of the fictitious planform extended to rotation axis (x=0) over disk area." data-canonical="Geometric Solidity">Geom. Solidity</button>
+          <button class="row-label-btn" data-key="sigmaRef" data-tip="Blade area of the fictitious planform extended to rotation axis (x=0) over disk area. Reference solidity used by the analytical equations." data-canonical="Reference Solidity">Ref. Solidity</button>
           <input class="row-input" type="number" step="0.0001" id="inp-sigma-ref" value="0.0825" />
           <button class="row-unit-btn" disabled>–</button>
         </div>
@@ -315,7 +315,7 @@ app.innerHTML = `
           <button class="row-unit-btn" id="unit-disk-area">m²</button>
         </div>
         <div class="engineering-row">
-          <button class="row-label-btn" data-key="Ab" data-tip="Planform area of one blade of the fictitious planform extended to rotation axis." data-canonical="Geometric Blade Area">Geometric Area</button>
+          <button class="row-label-btn" data-key="Ab" data-tip="Planform area of one blade of the fictitious planform extended to rotation axis (x=0). Reference blade area derived from chords." data-canonical="Reference Blade Area">Reference Area</button>
           <input class="row-input" type="number" step="any" id="drv-blade-area-ref" />
           <button class="row-unit-btn" id="unit-blade-area-ref">m²</button>
         </div>

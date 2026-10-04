@@ -55,7 +55,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     sym: "N_b",
     unit: "–",
     body: "Number of identical blades. Input. Chords are not changed, so adding a blade raises every solidity in proportion. Also enters the Sissingh tip factor.",
-    eq: "σ_geom = N_b·(c_R + c_T) / (2πR)",
+    eq: "σ_REF = N_b·(c_R + c_T) / (2πR)",
     range: "2 to 8",
   },
   x0: {
@@ -64,7 +64,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     short: "Root Cutout",
     sym: "x_0",
     unit: "–",
-    body: "Inboard radial station x = r/R where aerodynamic loading starts. Input. The load integrals run from x_0 to the tip, so no lift or drag is produced inboard. Changing it keeps chords and σ_geom; the active area, σ_act and σ_TR change. The pitch law is anchored at x_0.",
+    body: "Inboard radial station x = r/R where aerodynamic loading starts. Input. The load integrals run from x_0 to the tip, so no lift or drag is produced inboard. Changing it keeps chords and σ_REF; the active area, σ_act and σ_TR change. The pitch law is anchored at x_0.",
     eq: "x_0 = r_root / R",
     range: "0.05 to 0.30",
   },
@@ -74,7 +74,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     short: "Root Chord",
     sym: "c_R",
     unit: "m",
-    body: "Chord of the fictitious planform at the rotation axis (x = 0), found by extending the linear chord law inward. The real blade starts at the cutout, so this is not the chord there. Input; changing it changes σ_geom, A_geom, AR and taper.",
+    body: "Chord of the fictitious planform at the rotation axis (x = 0), found by extending the linear chord law inward. The real blade starts at the cutout, so this is not the chord there. Input; changing it changes σ_REF, A_REF, AR and taper.",
     eq: "c(x) = c_R + (c_T − c_R)·x",
     range: "0.02 to 0.8 m",
   },
@@ -84,7 +84,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     short: "Tip Chord",
     sym: "c_T",
     unit: "m",
-    body: "Chord at the blade tip (x = 1). Equal to c_R for a rectangular blade. Input; changing it changes σ_geom, A_geom, AR and taper.",
+    body: "Chord at the blade tip (x = 1). Equal to c_R for a rectangular blade. Input; changing it changes σ_REF, A_REF, AR and taper.",
     eq: "c(x) = c_R + (c_T − c_R)·x",
     range: "0.02 to 0.8 m",
   },
@@ -94,18 +94,18 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     short: "Taper",
     sym: "c_T/c_R",
     unit: "–",
-    body: "Tip chord over axis chord. Derived from c_R and c_T; 1 is a rectangular blade. Editing it keeps the mean chord, hence σ_geom: c_R = 2c_m / (1 + taper) and c_T = taper·c_R, with c_m = (c_R + c_T)/2.",
+    body: "Tip chord over axis chord. Derived from c_R and c_T; 1 is a rectangular blade. Editing it keeps the mean chord, hence σ_REF: c_R = 2c_m / (1 + taper) and c_T = taper·c_R, with c_m = (c_R + c_T)/2.",
     eq: "taper = c_T / c_R",
     range: "0.3 to 1.0",
   },
   sigmaRef: {
     key: "sigmaRef",
-    full: "Geometric Solidity",
-    short: "Geometric Solidity",
-    sym: "σ_geom",
+    full: "Reference Solidity",
+    short: "Reference Solidity",
+    sym: "σ_REF",
     unit: "–",
-    body: "Blade area of the fictitious planform extended to the rotation axis (x = 0), over disk area. This is the solidity the analytical equations use. Derived from N_b, c_R, c_T and R; editing it scales both chords by the same factor and keeps taper.",
-    eq: "σ_geom = N_b·A_geom / A",
+    body: "Blade area of the fictitious planform extended to the rotation axis (x = 0), over disk area. This is the reference solidity the analytical equations use. Derived from N_b, c_R, c_T and R; editing it scales both chords by the same factor and keeps taper.",
+    eq: "σ_REF = N_b·A_REF / A",
     range: "0.05 to 0.15",
   },
   sigmaAct: {
@@ -134,8 +134,8 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     short: "Aspect Ratio",
     sym: "AR",
     unit: "–",
-    body: "Blade radius squared over geometric blade area, which equals R over the mean chord. Derived. Editing it scales both chords by AR_old / AR_new, keeping R and taper.",
-    eq: "AR = R² / A_geom = 2R / (c_R + c_T)",
+    body: "Blade radius squared over reference blade area, which equals R over the mean chord. Derived. Editing it scales both chords by AR_old / AR_new, keeping R and taper.",
+    eq: "AR = R² / A_REF = 2R / (c_R + c_T)",
     range: "6 to 25",
   },
   A: {
@@ -150,12 +150,12 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
   },
   Ab: {
     key: "Ab",
-    full: "Geometric Blade Area",
-    short: "Geometric Area",
-    sym: "A_geom",
+    full: "Reference Blade Area",
+    short: "Reference Area",
+    sym: "A_REF",
     unit: "m²",
-    body: "Planform area of one blade of the fictitious planform extended to the rotation axis (x = 0), not only the real blade. Derived from the chords; editing it scales both chords.",
-    eq: "A_geom = ∫ c dr, 0 to R = R·(c_R + c_T)/2",
+    body: "Planform area of one blade of the fictitious planform extended to the rotation axis (x = 0), not only the real blade. Reference blade area derived from the chords; editing it scales both chords.",
+    eq: "A_REF = ∫ c dr, 0 to R = R·(c_R + c_T)/2",
     range: "",
   },
   Aact: {
@@ -1148,25 +1148,23 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Tip Chord":
       case "Tip Chord c1": return "Chord c₁";
       case "Reference Solidity":
-      case "Ref. Solidity": return "Ref. Solidity";
-      case "Aspect Ratio": return "AR";
-      case "Root Pitch":
-      case "Root Incidence": return "Root Pitch";
-      case "Tip Pitch":
-      case "Tip Incidence": return "Tip Pitch";
+      case "Ref. Solidity":
       case "Geometric Solidity":
-      case "Geom. Solidity": return "Geom. Solidity";
+      case "Geom. Solidity": return "Ref. Solidity";
       case "Actual Solidity": return "Actual Solidity";
       case "Thrust Solidity": return "Thrust Solidity";
       case "Disk Area": return "A";
+      case "Reference Blade Area":
+      case "Reference Area":
+      case "Ref. Area":
       case "Geometric Blade Area":
-      case "Geometric Area":
-      case "Reference Blade Area": return "Ab";
+      case "Geometric Area": return "Ab";
       case "Actual Blade Area":
       case "Actual Area":
       case "Active Blade Area": return "Aact";
       case "Total Twist": return "Δθ";
       case "Taper Ratio": return "c₁/c₀";
+      case "Aspect Ratio": return "AR";
       case "Lift Slope a0": return "a₀";
       case "Profile cd0":
       case "Profile Cd0": return "cd₀";
@@ -1203,19 +1201,21 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Tip Chord":
       case "Tip Chord c1": return "Tip Chord c₁";
       case "Reference Solidity":
-      case "Ref. Solidity": return "Ref. Solidity";
+      case "Ref. Solidity":
+      case "Geometric Solidity":
+      case "Geom. Solidity": return "Ref. Solidity";
       case "Aspect Ratio": return "AR";
       case "Root Pitch":
       case "Root Incidence": return "Root Pitch";
       case "Tip Pitch":
       case "Tip Incidence": return "Tip Pitch";
-      case "Geometric Solidity":
-      case "Geom. Solidity": return "Geom. Solidity";
       case "Actual Solidity": return "Actual Solidity";
       case "Thrust Solidity": return "Thrust Solidity";
+      case "Reference Blade Area":
+      case "Reference Area":
+      case "Ref. Area":
       case "Geometric Blade Area":
-      case "Geometric Area":
-      case "Reference Blade Area": return "Ref Blade Ab";
+      case "Geometric Area": return "Ref Blade Ab";
       case "Actual Blade Area":
       case "Actual Area":
       case "Active Blade Area": return "Active Aact";
@@ -1300,12 +1300,12 @@ export const ABBREVIATIONS: Record<string, string> = {
   "c0": "Root Chord",
   "c1": "Tip Chord",
   "taper": "Taper",
-  "sigmaRef": "Geom. Solidity",
+  "sigmaRef": "Ref. Solidity",
   "sigmaAct": "Act. Solidity",
   "sigmaT": "Thr. Solidity",
   "AR": "Aspect",
   "A": "Disk Area",
-  "Ab": "Geom. Area",
+  "Ab": "Ref. Area",
   "Aact": "Act. Area",
   "thRoot": "Root Pitch",
   "thTip": "Tip Pitch",

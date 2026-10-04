@@ -106,27 +106,31 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getPlainLabel("R", 0)).toBe("Rotor Radius R");
       expect(getPlainLabel("Nb", 0)).toBe("Blade Count N_b");
       expect(getPlainLabel("c0", 0)).toBe("Root Chord c_R");
-      expect(getPlainLabel("sigmaRef", 0)).toBe("Geometric Solidity σ_geom");
+      expect(getPlainLabel("sigmaRef", 0)).toBe("Reference Solidity σ_REF");
+      expect(getPlainLabel("Ab", 0)).toBe("Reference Blade Area A_REF");
       expect(getPlainLabel("T", 0)).toBe("Thrust T");
 
       // Level 1: Short + Symbol
       expect(getPlainLabel("R", 1)).toBe("Radius R");
       expect(getPlainLabel("Nb", 1)).toBe("Blades N_b");
       expect(getPlainLabel("c0", 1)).toBe("Root Chord c_R");
-      expect(getPlainLabel("sigmaRef", 1)).toBe("Geometric Solidity σ_geom");
+      expect(getPlainLabel("sigmaRef", 1)).toBe("Reference Solidity σ_REF");
+      expect(getPlainLabel("Ab", 1)).toBe("Reference Area A_REF");
       expect(getPlainLabel("T", 1)).toBe("Thrust T");
 
       // Level 2: Narrow caption + retained symbol
       expect(getPlainLabel("R", 2)).toBe("Radius R");
       expect(getPlainLabel("Nb", 2)).toBe("Blades N_b");
       expect(getPlainLabel("c0", 2)).toBe("Root Chord c_R");
-      expect(getPlainLabel("sigmaRef", 2)).toBe("Geom. Solidity σ_geom");
+      expect(getPlainLabel("sigmaRef", 2)).toBe("Ref. Solidity σ_REF");
+      expect(getPlainLabel("Ab", 2)).toBe("Ref. Area A_REF");
 
       // Level 3: Abbreviation + Symbol
       expect(getPlainLabel("R", 3)).toBe("Radius R");
       expect(getPlainLabel("Nb", 3)).toBe("Blades N_b");
       expect(getPlainLabel("c0", 3)).toBe("Root Chord c_R");
-      expect(getPlainLabel("sigmaRef", 3)).toBe("Geom. Solidity σ_geom");
+      expect(getPlainLabel("sigmaRef", 3)).toBe("Ref. Solidity σ_REF");
+      expect(getPlainLabel("Ab", 3)).toBe("Ref. Area A_REF");
       expect(getPlainLabel("AR", 3)).toBe("Aspect AR"); // distinct narrow caption
 
       // Level 4: Symbol only
@@ -134,7 +138,8 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getPlainLabel("Nb", 4)).toBe("N_b");
       expect(getPlainLabel("c0", 4)).toBe("c_R");
       expect(getPlainLabel("c1", 4)).toBe("c_T");
-      expect(getPlainLabel("sigmaRef", 4)).toBe("σ_geom");
+      expect(getPlainLabel("sigmaRef", 4)).toBe("σ_REF");
+      expect(getPlainLabel("Ab", 4)).toBe("A_REF");
       expect(getPlainLabel("T", 4)).toBe("T");
       expect(getPlainLabel("CT", 4)).toBe("C_T");
     });
@@ -143,6 +148,8 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getRichLabelHtml("c0", 4)).toBe("c<sub>R</sub>");
       expect(getRichLabelHtml("Nb", 4)).toBe("N<sub>b</sub>");
       expect(getRichLabelHtml("CT", 4)).toBe("C<sub>T</sub>");
+      expect(getRichLabelHtml("sigmaRef", 4)).toBe("σ<sub>REF</sub>");
+      expect(getRichLabelHtml("Ab", 4)).toBe("A<sub>REF</sub>");
       expect(getRichLabelHtml("c0", 3)).toBe("Root Chord c<sub>R</sub>");
       expect(getRichLabelHtml("mu", 4, " ⇄")).toBe("μ<sub>x</sub><span class=\"label-suffix\"> ⇄</span>");
     });

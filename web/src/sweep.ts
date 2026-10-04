@@ -1194,7 +1194,7 @@ export function generateFullSweepCSV(
     `# Root Cutout (r/R): ${geom.rootCutout.toFixed(3)}`,
     `# Root Chord c0 [m]: ${geom.chordRoot.toFixed(3)}`,
     `# Tip Chord c_tip [m]: ${geom.chordTip.toFixed(3)}`,
-    `# Solidity sigma: ${geom.sigmaRef.toFixed(4)}`,
+    `# Reference Solidity sigma_REF: ${geom.sigmaRef.toFixed(4)}`,
     `# Aspect Ratio: ${referenceAspectRatio(geom).toFixed(2)}`,
     `# Linear Twist Root [deg]: ${((geom.thetaRoot * 180) / Math.PI).toFixed(2)}`,
     `# Linear Twist Tip [deg]: ${((geom.thetaTip * 180) / Math.PI).toFixed(2)}`,

@@ -41,7 +41,7 @@ def test_geometry_exposes_all_authoritative_inputs():
     # The Name row is gone: the active-rotor bar shows the name and the rotor sheet renames it.
     assert 'Add("name"' in names and '"name"' not in editor
     for full in ("Rotor Radius", "Blade Count", "Root Cutout", "Root Chord", "Tip Chord",
-                 "Geometric Solidity", "Aspect Ratio", "Root Pitch", "Tip Pitch"):
+                 "Reference Solidity", "Aspect Ratio", "Root Pitch", "Tip Pitch"):
         assert f'"{full}"' in names
 
 
@@ -82,8 +82,8 @@ def test_sigma_and_aspect_ratio_edits_scale_both_chords():
 def test_geometry_derived_metrics_are_visible():
     names = text("RotorNames.bas")
     engine = text("zBETEngine.bas")
-    for full in ("Geometric Solidity", "Actual Solidity", "Thrust-Weighted Solidity", "Taper Ratio",
-                 "Disk Area", "Geometric Blade Area", "Actual Blade Area", "Total Blade Twist"):
+    for full in ("Reference Solidity", "Actual Solidity", "Thrust-Weighted Solidity", "Taper Ratio",
+                 "Disk Area", "Reference Blade Area", "Actual Blade Area", "Total Blade Twist"):
         assert f'"{full}"' in names
     for sub in ("ReferenceBladeArea", "ActiveBladeArea", "TaperRatio"):
         assert f"Public Sub {sub}" in engine
@@ -780,7 +780,7 @@ def test_abbreviations_documented_and_labels_single_line():
     effective.update(re.findall(r'abbr\.Put\("([^"]+)", "([^"]+)"\)', names))
     for k, v in effective.items():
         assert f"- `{k}`: {v}" in doc
-        assert "." not in re.sub(r"\b(?:Adv|Act|Geom|Thr|Prof|Ind|Rot|Eff|Compres|Ret)\.", "", v)
+        assert "." not in re.sub(r"\b(?:Adv|Act|Geom|Ref|Thr|Prof|Ind|Rot|Eff|Compres|Ret)\.", "", v)
     main = text("RotorCalculator.b4a")
     row = main.split("Private Sub CreateRowLabel", 1)[1].split("End Sub", 1)[0]
     assert "btn.SingleLine = True" in row and "SetTextLines(btn, 1)" in row
