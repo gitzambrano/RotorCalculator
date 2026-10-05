@@ -301,7 +301,54 @@ Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\
 
 **PLOT-17** — Tapping **PNG** shall generate a high-resolution chart image including axes, labels, legend, and title.
 
+**PLOT-17a** — Tapping **EXPORT ALL PNG** in parameter sweeps shall generate and export high-resolution chart images for all active curve variations.
+
 **PLOT-18** — File exports shall use Android Storage Access Framework (SAF) on mobile and direct file downloads on Web.
+
+### 5.5 Interactive Rotor Disk Contour Plots
+
+**PLOT-19** — Results shall provide a prominent **DISK CONTOUR** action button opening the interactive full-screen rotor disk contour modal.
+
+**PLOT-20** — The rotor disk contour plot shall evaluate 14 aerodynamic distributions across azimuth $\psi \in [0, 2\pi]$ and normalized radius $r/R \in [x_0, 1]$:
+1. Angle of Attack $\alpha$ [deg]
+2. Inflow Angle $\phi$ [deg]
+3. Lift Coefficient $C_l$ [–]
+4. Drag Coefficient $C_d$ [–]
+5. Total Inflow Ratio $\lambda$ [–]
+6. Induced Inflow Ratio $\lambda_i$ [–]
+7. Induced Velocity $v_i$ [m/s]
+8. Total Axial Velocity $u_P$ [m/s]
+9. Tangential Velocity $u_T$ [m/s]
+10. Section Normal Force $dF_N/dr$ [N/m]
+11. Section In-Plane Force $dF_T/dr$ [N/m]
+12. Local Mach Number $M$ [–]
+13. Dynamic Pressure $q$ [Pa]
+14. Section Reynolds Number $Re$ [–]
+
+**PLOT-21** — The contour renderer shall use continuous bilinear interpolation over the canvas pixel buffer to prevent discrete grid block artifacts.
+
+**PLOT-22** — The disk canvas shall draw subtle dashed concentric radial guides at $0.25R$, $0.50R$, and $0.75R$ using a 4 dip dash and 3 dip gap pattern with low visual opacity.
+
+**PLOT-23** — The disk canvas shall draw subtle dashed orthogonal quadrant axes ($0^\circ$–$180^\circ$ and $90^\circ$–$270^\circ$).
+
+**PLOT-24** — The disk perimeter shall draw a crisp boundary circle at exactly $R = 1.0$ and an inner cutout circle at $r = x_0 R$.
+
+**PLOT-25** — The disk canvas shall display cardinal flight orientation azimuth labels:
+- Top: $180^\circ$ with **Fore** placed cleanly above the angle label.
+- Bottom: $0^\circ$ with **Aft** placed below the angle label.
+- Right: $90^\circ$ with **Adv.** (Advancing blade).
+- Left: $270^\circ$ with **Ret.** (Retreating blade).
+All azimuth annotations shall maintain safe clearances preventing edge clipping across mobile viewports.
+
+**PLOT-26** — The contour viewer shall display a prominent horizontal Jet colormap bar beneath the rotor disk spanning 84% of canvas width with vertical percentile ticks at 0%, 25%, 50%, 75%, and 100%.
+
+**PLOT-27** — The colorbar legend shall format min, mid, and max numeric values with strictly two significant figures, preserving trailing significant zeros and switching to scientific notation for numbers $\ge 1000$ or $< 0.01$.
+
+**PLOT-28** — The contour modal shall provide an active flight condition banner indicating $\mu_x$, $V_x$, and $\mu_z$.
+
+**PLOT-29** — The contour modal shall provide an **EXPORT PNG** button generating a standalone high-resolution image of the currently displayed variable with title, legend, and flight state banner.
+
+**PLOT-30** — The contour modal shall provide an **EXPORT ALL PNG** button generating and downloading all 14 aerodynamic distribution images sequentially.
 
 ---
 
@@ -390,6 +437,16 @@ Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\
 **UX-53** — Contextual help dialogs shall separate independent facts and editing consequences into distinct paragraphs without semicolons in editing instructions.
 
 **UX-54** — The About dialog shall present application version, conceptual description, and author credits.
+
+**UX-55** — Contextual help modals shall provide responsive inline vector SVG diagram illustrations when opened for key rotary-wing parameters:
+- Rotor Radius $R$ and blade planform geometry ($R, x_0, c_0, c_1, \text{taper}, A_b$).
+- Blade pitch and linear twist distribution ($\theta_R, \theta_T, \theta_{\text{twist}}$).
+- Rotor disk top view with rotation direction, forward airspeed $V_x$, advance ratio $\mu_x$, advancing ($90^\circ$) and retreating ($270^\circ$) velocities.
+- Shaft coordinate reference frame and disk angle of attack $\alpha$, vertical climb speed $V_z$, and axial ratio $\mu_z$.
+- Inflow distribution, wake skew angle $\chi$, and first-harmonic gradients ($K_x, K_y, \lambda, \lambda_i$).
+- Blade element flow velocities and aerodynamic angles ($\alpha, \phi, u_P, u_T$).
+
+**UX-56** — Inline SVG diagrams shall dynamically adapt their stroke, fill, and text colors to the active color theme (Default Dark, Light, Midnight Blue, Sepia) and scale to mobile screen widths without horizontal scrollbars.
 
 ---
 

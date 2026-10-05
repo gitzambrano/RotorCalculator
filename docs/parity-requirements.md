@@ -1,8 +1,8 @@
 # APK and Web Parity Requirements and Verification
 
-Audit baseline: **RotorCalculator 1.29 (versionCode 12)**.
+Audit baseline: **RotorCalculator 1.29 (versionCode 14)**.
 The Android source implementation consists of `RotorCalculator.b4a`, `RotorPopups.bas`, `RotorStorage.bas`, `RotorNames.bas`, and `zBETEngine.bas`.
-The Web application implementation resides in `web/src/` (`engine.ts`, `storage.ts`, `names.ts`, `app.ts`, `popups.ts`).
+The Web application implementation resides in `web/src/` (`engine.ts`, `storage.ts`, `names.ts`, `app.ts`, `popups.ts`, `disk-contour.ts`, `help-illustrations.ts`).
 Both platforms maintain 1:1 functional, mathematical, and interaction parity.
 
 ---
@@ -24,8 +24,10 @@ Both platforms maintain 1:1 functional, mathematical, and interaction parity.
 | **Operating Trim Pairs** | Six operating modes in `btnOperatingPair_Click` | Six operating modes in trim selector | $\Omega + \Delta\theta$, $\Omega + C_T$, $\Omega + T$, $\Delta\theta + \Omega R$, $T + \Omega R$, and $C_T + \Omega R$ are present. Numerical convergence and trim tolerances match across platforms. |
 | **Inflow Models** | Uniform, Coleman, Coleman-Feingold (NDARC), Drees | Uniform, Coleman, Coleman-Feingold (NDARC), Drees | Harmonic inflow gradients ($K_x, K_y$) and wake skew angle ($\chi$) match to analytical machine precision. |
 | **Results Display** | 65 canonical result rows across 9 sections | 65 canonical result rows across 9 sections | Key-by-key parity across all 65 quantities. Three-column formatting (Symbol-first quantity \| Value \| Unit) is strictly preserved. |
-| **Parameter Sweeps** | Modal sweep dialog with multi-curve canvas | Responsive sweep dialog with Canvas rendering | Full multi-curve parametric sweeps across all 61 output quantities. Plots support tap readouts, three palette modes, and CSV/PNG file export. |
+| **Parameter Sweeps** | Modal sweep dialog with multi-curve canvas | Responsive sweep dialog with Canvas rendering | Full multi-curve parametric sweeps across all 61 output quantities. Plots support tap readouts, three palette modes, CSV export, and single / batch PNG export ("EXPORT ALL PNG"). |
 | **Sweep Trim Strategies** | Five sweep trim modes | Five sweep trim modes | No Trim, Trimmed Collective (Every Point), Trimmed Rotor Speed (Every Point), Fixed Collective (Hover Only), Fixed Rotor Speed (Hover Only). |
+| **Rotor Disk Contour Plots** | `RotorPopups.ShowDiskContour`, `DrawDiskContourPlot` | `showDiskContourModal`, `drawDiskContour` | 14 aerodynamic distributions across azimuth and span. Continuous bilinear pixel buffer interpolation, delicate dashed radial guides ($0.25R, 0.50R, 0.75R$), quadrant axes, cardinal azimuth annotations ($180^\circ$ Fore, $0^\circ$ Aft, $90^\circ$ Adv., $270^\circ$ Ret.), horizontal colorbar with strictly 2 significant figures, active condition banner, and single / batch PNG export. |
+| **Contextual Help Illustrations** | Inline vector diagrams in offline help popups | `getHelpSvg` responsive inline SVG illustrations | Visual SVG schematics for blade planform ($R, x_0, c_0, c_1$), twist/pitch ($\theta_R, \theta_T, \theta_{\text{twist}}$), rotor disk orientation, shaft reference frame ($\alpha, V_z$), inflow distribution, and velocity triangle. |
 | **Visual Themes** | 4 complete themes: Default Dark, Light, Midnight Blue, Sepia | 4 complete themes: Default Dark, Light, Midnight Blue, Sepia | Full color-palette parity. Theme changes preserve calculations, inputs, and navigation state. |
 | **Engineering Unit Converter**| 14 physical conversion modes with Swap button | 14 physical conversion modes with Swap button | Exact mathematical conversion factors across length, velocity, rotational speed, mass, force, pressure, torque, power, and disk loading. |
 | **Offline Physics Manual** | Embedded MathML HTML (`physics_help*.html`) | Bundled offline MathML HTML pages | Matches equation for equation, symbol for symbol, and sign rule for sign rule. |
@@ -41,8 +43,8 @@ Both platforms maintain 1:1 functional, mathematical, and interaction parity.
    - All 76 Python integration tests passed via `pytest tests`.
 
 2. **TypeScript Web Test Suite:**
-   - 53 automated tests executed via `npm --prefix web test`.
-   - 100% of tests passed, confirming numerical equivalence, storage schema migrations, and unit conversion algorithms.
+   - 61 automated tests executed via `npm --prefix web test`.
+   - 100% of tests passed, confirming numerical equivalence, storage schema migrations, unit conversion algorithms, and SVG illustration generation.
    - Production bundle compiled cleanly via `npm --prefix web run build`.
 
 3. **Compiled Engine Equivalence:**

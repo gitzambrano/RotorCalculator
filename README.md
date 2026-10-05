@@ -6,7 +6,7 @@ Developed by Gustavo José Zambrano.
 
 - **Web Application:** [Open RotorCalculator](https://gitzambrano.github.io/RotorCalculator/)
 - **Google Play:** [RotorCalculator on Google Play](https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator)
-- **Production Target:** Version 1.28 (versionCode 11)
+- **Production Target:** Version 1.29 (versionCode 14)
 
 ---
 
@@ -34,7 +34,7 @@ Developed by Gustavo José Zambrano.
 
 - **Canonical Three-Column Grid:** Maintains a disciplined layout across Geometry, Conditions, and Results:
   $$\textbf{Column 1 (Label Button)} \quad\vert\quad \textbf{Column 2 (Value / Selector)} \quad\vert\quad \textbf{Column 3 (Unit Button)}$$
-- **Contextual Technical Help:** Tapping Column 1 opens an in-depth contextual help dialog with definitions, governing equations, typical ranges, and derivation details.
+- **Contextual Technical Help & Vector Illustrations:** Tapping Column 1 opens an in-depth contextual help dialog with definitions, governing equations, typical ranges, and clean inline SVG vector illustrations for blade planform, twist & pitch, advancing/retreating disk conventions, shaft reference frame, inflow distribution, and blade element velocity triangles.
 - **Bidirectionally Coupled Geometry:** All 14 geometric parameters are editable inputs in real time:
   - Changing Rotor Radius $R$ scales root and tip chords, preserving Reference Solidity $\sigma_{\text{REF}}$ and Aspect Ratio $\text{AR}$.
   - Changing Reference Solidity $\sigma_{\text{REF}}$, Actual Solidity $\sigma_{\text{act}}$, or Thrust-Weighted Solidity $\sigma_{\text{TR}}$ rescales chords while preserving Taper Ratio $c_T/c_R$.
@@ -52,10 +52,17 @@ Developed by Gustavo José Zambrano.
   7. Section Diagnostics: 25% Radius ($\alpha_{\text{adv},25}, \alpha_{\text{ret},25}, \phi_{\text{adv},25}, \phi_{\text{ret},25}$)
   8. Section Diagnostics: 50% Radius ($\alpha_{\text{adv},50}, \alpha_{\text{ret},50}, \phi_{\text{adv},50}, \phi_{\text{ret},50}$)
   9. Section Diagnostics: 75% Radius and Tip ($\alpha_{\text{adv},75}, \alpha_{\text{ret},75}, \phi_{\text{adv},75}, \phi_{\text{ret},75}, \alpha_{\text{adv,tip}}, \alpha_{\text{ret,tip}}, \phi_{\text{adv,tip}}, \phi_{\text{ret,tip}}$)
+- **Interactive Rotor Disk Contour Plots:**
+  - Evaluates 14 azimuthal and radial aerodynamic distributions across the full rotor disk: Angle of Attack $\alpha$, Inflow Angle $\phi$, Lift Coefficient $C_l$, Drag Coefficient $C_d$, Total Inflow Ratio $\lambda$, Induced Inflow Ratio $\lambda_i$, Induced Velocity $v_i$, Total Axial Velocity $u_P$, Tangential Velocity $u_T$, Section Normal Force $dF_N/dr$, Section In-Plane Force $dF_T/dr$, Local Mach Number $M$, Dynamic Pressure $q$, and Reynolds Number $Re$.
+  - Smooth continuous bilinear interpolation over the rotor disk area without pixelation artifacts.
+  - Large rotor disk rendering with delicate dashed concentric radius guides ($0.25R, 0.50R, 0.75R$), cutout boundary, outer perimeter at $R=1$, and quadrant lines.
+  - Cardinal flight orientation azimuth labels ($180^\circ$ Fore, $0^\circ$ Aft, $90^\circ$ Adv., $270^\circ$ Ret.) with safe viewport clearances.
+  - Prominent horizontal Jet colorbar with strictly 2 significant figures across min, mid, and max legend values.
+  - Real-time active operating point banner ($\mu_x, V_x, \mu_z$) and single/batch PNG export ("EXPORT PNG", "EXPORT ALL PNG").
 - **Universal Parameter Sweeps:** Generates multi-curve parametric sweeps vs advance ratio ($\mu_x$) across all 61 output quantities:
   - Five curve families: Inflow Models, Constant $\alpha$ set, Constant $V_z$ set, Constant $\mu_z$ set, and Active Rotor.
   - Five trim modes: No Trim (Fixed Controls), Trimmed Collective (Every Point), Trimmed Rotor Speed (Every Point), Fixed Collective (Hover Only), Fixed Rotor Speed (Hover Only).
-  - Interactive static plots with tap readouts, multi-theme palettes, and full CSV/PNG export.
+  - Interactive static plots with tap readouts, multi-theme palettes, and single/batch PNG export ("EXPORT PNG", "EXPORT ALL PNG") plus CSV export.
 - **Rotor Management and Storage:**
   - Built-in factory presets: UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, and Generic eVTOL.
   - Full CRUD operations: Create, Read, Update, Duplicate, and Delete custom rotors.
