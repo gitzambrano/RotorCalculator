@@ -3980,6 +3980,83 @@ input[type="number"] {
   #modal-disk-contour .sweep-footer-actions .action-btn { height: 34px !important; font-size: 12px !important; }
 }
 
+/* Low-height landscape includes wide phones (for example 915x412) and
+   landscape tablets (1024x600). Width-only mobile breakpoints do not catch
+   these viewports. Keep the complete contour, active point and export footer
+   visible without vertical clipping. */
+@media (orientation: landscape) and (max-height: 600px) {
+  #modal-disk-contour {
+    padding: 4px;
+  }
+
+  #modal-disk-contour .sweep-modal-card {
+    height: calc(100dvh - 8px);
+    max-height: calc(100dvh - 8px);
+  }
+
+  #modal-disk-contour .modal-header {
+    height: 40px;
+    min-height: 40px;
+  }
+
+  #modal-disk-contour .modal-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding: 4px 12px 0;
+  }
+
+  #modal-disk-contour .sweep-controls-grid {
+    flex: 0 0 auto;
+    gap: 4px;
+    margin: 0;
+    padding: 0 0 4px;
+  }
+
+  #modal-disk-contour .sweep-select,
+  #modal-disk-contour .sweep-mobile-selector {
+    height: 36px;
+    min-height: 36px;
+  }
+
+  #modal-disk-contour .disk-contour-canvas-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    height: calc(100dvh - 176px);
+    margin: 2px auto;
+  }
+
+  #modal-disk-contour #disk-contour-canvas {
+    width: min(500px, calc(100dvh - 176px), calc(100vw - 48px)) !important;
+    max-width: min(500px, calc(100dvh - 176px), calc(100vw - 48px)) !important;
+    height: auto !important;
+  }
+
+  #modal-disk-contour .sweep-info-cards {
+    flex: 0 0 auto;
+    margin: 0 0 2px !important;
+    padding-bottom: 0;
+  }
+
+  #modal-disk-contour #disk-contour-val {
+    min-height: 28px;
+    font-size: 12px !important;
+  }
+
+  #modal-disk-contour .sweep-footer-actions {
+    flex: 0 0 42px;
+    min-height: 42px;
+    padding: 4px 12px;
+  }
+
+  #modal-disk-contour .sweep-footer-actions .action-btn {
+    height: 34px !important;
+    font-size: 12px !important;
+  }
+}
+
 
 
 /* Keep engineering subscripts on the text baseline inside label buttons. */
