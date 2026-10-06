@@ -357,7 +357,7 @@ Compressibility effects start near 0.8 to 0.9. Prandtl-Glauert is not valid at o
           <img class="brand-icon" src="${Po}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.29</span>
+            <span class="version-badge">v1.30</span>
           </div>
         </div>
         <div class="header-actions">
@@ -1067,8 +1067,8 @@ Compressibility effects start near 0.8 to 0.9. Prandtl-Glauert is not valid at o
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.29</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.29.apk" download="RotorCalculator-1.29.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.30</div><div class="settings-row-sub">Install the verified production Android build</div></div>
+              <a class="settings-btn" href="https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator" target="_blank" rel="noopener">PLAY</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
               <button type="button" class="action-btn" data-close="modal-settings" style="height: 44px; min-width: 120px; font-weight: 700; border-radius: 8px; font-size: 15px;">CLOSE</button>
@@ -1104,7 +1104,7 @@ Compressibility effects start near 0.8 to 0.9. Prandtl-Glauert is not valid at o
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.29</p>
+          <p>RotorCalculator v1.30</p>
           <p>Rotor performance calculator based on analytical blade-element theory.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
