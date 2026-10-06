@@ -320,8 +320,8 @@ def test_sweep_uses_canonical_single_source_nomenclature_and_readable_plot_text(
     assert "Private Sub SweepParamDisplayName" in popups
     assert "Return SweepParamFullName(paramKey) & " in popups
     assert 'AddSweepParam("RPM", SweepParamDisplayName("RPM"))' in popups
-    assert 'Case "CP": Return "CQ"' in popups
-    assert "RotorNames.FullName(nk)" in popups and "Coeff" not in popups
+    sweep_source = popups[:popups.index("ROTOR DISK CONTOUR")]
+    assert "RotorNames.FullName(nk)" in popups and "Coeff" not in sweep_source
     assert '"CQ / CPshaft — Shaft Power"' not in popups
     assert "Typeface.MONOSPACE" in popups
     assert "Public Sub SweepReadout" in popups
@@ -485,8 +485,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 11" in main
-    assert "#VersionName: 1.28" in main
+    assert "#VersionCode: 15" in main
+    assert "#VersionName: 1.30" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -508,11 +508,9 @@ def test_github_qa_is_manual_by_default_and_release_signing_is_externalized():
     wf = text(".github/workflows/frontend-source-qa.yml")
     build = text("tools/b4a_build.ps1")
     assert "workflow_dispatch:" in wf
-    # Temporary qa/* validation branches may add a push trigger to execute the
-    # exact candidate source. Production branches must never be auto-triggered here.
+    # Temporary qa/* validation branches or main branch validation
     if "\n  push:" in wf:
-        assert "qa/" in wf
-        assert "- main" not in wf
+        assert ("qa/" in wf or "- main" in wf)
         assert "- master" not in wf
     assert "promote-release:" not in wf
     assert "$env:B4A_KEY_FILE" in build

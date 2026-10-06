@@ -2824,6 +2824,14 @@ button.result-label:hover {
 
   }
 
+  .btn-open-sweep {
+
+    font-size: 13px;
+
+    letter-spacing: 0;
+
+  }
+
   .engineering-row {
 
     grid-template-columns: minmax(0, 1fr) minmax(0, calc(32% - 2.56px)) max(56px, calc(19% - 1.52px));

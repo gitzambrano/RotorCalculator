@@ -3429,10 +3429,7 @@ function initSweepModal(): void {
 
 function openDiskContour() {
   triggerHapticFeedback();
-  if (!activeResults.solutionValid) {
-    alert("Please calculate a valid operating point first.");
-    return;
-  }
+
   
   const select = byId<HTMLSelectElement>("disk-contour-variable");
   select.innerHTML = "";

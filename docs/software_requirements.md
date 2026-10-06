@@ -485,7 +485,7 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 **QA-30** — Physical consistency tests (`python tools/verify_engine.py`) shall maintain a 100% pass rate across all golden test cases.
 
 
-**QA-31** — Disk Contour tests shall verify the exact 14-variable catalog, including Section Thrust Loading $dC_T/dx$ and excluding Reynolds number.
+**QA-31** — Disk Contour tests shall verify the exact 14-variable catalog, including Section Thrust Loading $dC_T/dx$.
 
 **QA-32** — Disk Contour shall not render aerodynamic colors or enable PNG export when the operating solution is invalid.
 

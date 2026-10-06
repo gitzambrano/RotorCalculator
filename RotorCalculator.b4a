@@ -2713,7 +2713,10 @@ Private Sub BuildPageRes
 	AttachHelp(btnViewPolarPlot)
 	btnViewPolarPlot.Text = "PARAMETER SWEEP"
 	btnViewPolarPlot.Typeface = Typeface.DEFAULT_BOLD
-	btnViewPolarPlot.TextSize = TextSp
+	btnViewPolarPlot.Padding = Array As Int(4dip, 0, 4dip, 0)
+	Dim ctaTextSp As Float = TextSp
+	If root.Width <= 340dip Then ctaTextSp = 12
+	btnViewPolarPlot.TextSize = RotorNames.FitTextSize(btnViewPolarPlot.Text, ctaTextSp, 10, btnW - 12dip)
 	btnViewPolarPlot.Gravity = Gravity.CENTER
 	btnViewPolarPlot.SingleLine = True
 	StyleCta(btnViewPolarPlot, ColorAccentCyan)
@@ -2724,7 +2727,8 @@ Private Sub BuildPageRes
 	AttachHelp(btnViewDiskContour)
 	btnViewDiskContour.Text = "DISK CONTOUR"
 	btnViewDiskContour.Typeface = Typeface.DEFAULT_BOLD
-	btnViewDiskContour.TextSize = TextSp
+	btnViewDiskContour.Padding = Array As Int(4dip, 0, 4dip, 0)
+	btnViewDiskContour.TextSize = RotorNames.FitTextSize(btnViewDiskContour.Text, ctaTextSp, 10, btnW - 12dip)
 	btnViewDiskContour.Gravity = Gravity.CENTER
 	btnViewDiskContour.SingleLine = True
 	StyleCta(btnViewDiskContour, ColorAccentCyan)
