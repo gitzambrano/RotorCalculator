@@ -1614,6 +1614,11 @@ Public Sub DrawDiskContourPlot( _
 	End If
 	cvs.DrawColor(colBg)
 
+	If res.SolutionValid = False Then
+		cvs.DrawText("INVALID OPERATING POINT", widthPx / 2, heightPx / 2, Typeface.DEFAULT_BOLD, 16, colText, "CENTER")
+		Return bmp
+	End If
+
 	Dim piVal As Double
 	piVal = 3.141592653589793
 	Dim numR As Int

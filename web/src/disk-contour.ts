@@ -33,6 +33,10 @@ export function computeDiskContourData(
   res: RotorResults,
   variable: string
 ): DiskContourData {
+  if (!res.solutionValid) {
+    throw new Error("Disk contour requires a valid operating point");
+  }
+
   const numR = 30;
   const numPsi = 72;
   

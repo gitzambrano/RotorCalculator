@@ -70,8 +70,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 14
-	#VersionName: 1.29
+	#VersionCode: 15
+	#VersionName: 1.30
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -4658,14 +4658,20 @@ Sub UpdateDiskContourPlotView
 	ivDiskContourPlot.Bitmap = bmp
 
 	If ActiveRes.SolutionValid Then
+		lblDiskContourCurrentVal.TextColor = ColorAccentCyan
 		lblDiskContourCurrentVal.Text = RotorNames.RichText("Active point: μ_x = " & FormatSig(ActiveRes.OperatingMu, 3) & " · V_x = " & FormatSig(ActiveRes.OperatingVx, 3) & " m/s · μ_z = " & FormatSig(ActiveRes.OperatingMuZ, 3))
 	Else
+		lblDiskContourCurrentVal.TextColor = ColorAccentRed
 		lblDiskContourCurrentVal.Text = "Active point: invalid operating point"
 	End If
 End Sub
 
 Sub btnDiskContourExportPng_Click
 	Tick
+	If ActiveRes.SolutionValid = False Then
+		ToastMessageShow("Disk contour unavailable: invalid operating point.", False)
+		Return
+	End If
 	Dim exportW As Int = 600dip
 	Dim exportH As Int = 600dip
 	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, ThemeMode = 1, True)
@@ -4674,7 +4680,7 @@ Sub btnDiskContourExportPng_Click
 	bmp.WriteToStream(out, 100, "PNG")
 	out.Close
 	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
-	Dim fileName As String = "contour_" & DiskContourParamSelectedKey & ".png"
+	Dim fileName As String = "rotorcalculator_contour_" & DiskContourParamSelectedKey & ".png"
 	Wait For (SaveAs(input, "image/png", fileName)) Complete (Success As Boolean)
 	If Success Then
 		ToastMessageShow("Contour PNG exported: " & fileName, False)
@@ -4683,20 +4689,69 @@ End Sub
 
 Sub btnDiskContourExportAllPng_Click
 	Tick
-	Dim keys As List = RotorPopups.DiskContourParamKeys
-	Dim exportW As Int = 600dip
-	Dim exportH As Int = 600dip
-	Dim count As Int = 0
-	For Each k As String In keys
-		Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, k, ThemeMode = 1, True)
-		Dim tempName As String = "rotor_contour_" & k & ".png"
-		Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
-		bmp.WriteToStream(out, 100, "PNG")
-		out.Close
-		count = count + 1
-	Next
-	ToastMessageShow(count & " contour plots generated in internal storage.", False)
-	btnDiskContourExportPng_Click
+	If ActiveRes.SolutionValid = False Then
+		ToastMessageShow("Disk contour unavailable: invalid operating point.", False)
+		Return
+	End If
+
+	' Select one destination folder, then write all 14 PNG files into it.
+	Dim intent As Intent
+	intent.Initialize("android.intent.action.OPEN_DOCUMENT_TREE", "")
+	Dim intentJO As JavaObject = intent
+	intentJO.RunMethod("addFlags", Array(1 + 2 + 64 + 128))
+	Try
+		StartActivityForResult(intent)
+		Wait For ion_Event (MethodName As String, Args() As Object)
+		If Args.Length <= 1 Or -1 <> Args(0) Then Return
+
+		Dim result As Intent = Args(1)
+		Dim resultJO As JavaObject = result
+		Dim treeUri As Object = resultJO.RunMethod("getData", Null)
+		If treeUri = Null Then Return
+
+		Dim ctxt As JavaObject
+		ctxt.InitializeContext
+		Dim resolver As JavaObject = ctxt.RunMethodJO("getContentResolver", Null)
+		Dim docs As JavaObject
+		docs.InitializeStatic("android.provider.DocumentsContract")
+		Dim treeId As String = docs.RunMethod("getTreeDocumentId", Array(treeUri))
+		Dim parentUri As Object = docs.RunMethod("buildDocumentUriUsingTree", Array(treeUri, treeId))
+
+		Dim keys As List = RotorPopups.DiskContourParamKeys
+		Dim exportW As Int = 600dip
+		Dim exportH As Int = 600dip
+		Dim count As Int = 0
+		For Each k As String In keys
+			Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, k, ThemeMode = 1, True)
+			Dim tempName As String = "rotor_contour_" & k & ".png"
+			Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
+			bmp.WriteToStream(out, 100, "PNG")
+			out.Close
+
+			Dim fileName As String = "rotorcalculator_contour_" & k & ".png"
+			Dim childUri As Object = docs.RunMethod("createDocument", Array(resolver, parentUri, "image/png", fileName))
+			If childUri <> Null Then
+				Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
+				Dim target As OutputStream = resolver.RunMethod("openOutputStream", Array(childUri, "wt"))
+				If target.IsInitialized Then
+					File.Copy2(input, target)
+					target.Close
+					count = count + 1
+				End If
+				input.Close
+			End If
+			File.Delete(File.DirInternal, tempName)
+		Next
+
+		If count = keys.Size Then
+			ToastMessageShow(count & " contour PNG files exported.", False)
+		Else
+			ToastMessageShow("Exported " & count & " of " & keys.Size & " contour PNG files.", True)
+		End If
+	Catch
+		Log("Batch contour export failed: " & LastException.Message)
+		ToastMessageShow("Contour PNG batch export failed.", True)
+	End Try
 End Sub
 
 Private Sub SaveAs(Source As InputStream, MimeType As String, Title As String) As ResumableSub

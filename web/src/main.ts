@@ -200,7 +200,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.29</span>
+            <span class="version-badge">v1.30</span>
           </div>
         </div>
         <div class="header-actions">
@@ -448,10 +448,10 @@ app.innerHTML = `
       <!-- PAGE 2: RESULTS -->
       <section class="page" id="page-results">
         <div class="results-header-actions" style="display: flex; flex-direction: row; gap: 8px; margin: 0 12px 8px;">
-          <button class="btn-open-sweep" id="btn-open-sweep" style="flex: 1; height: 40px; font-weight: 700; font-size: 13px; border-radius: 4px;">
+          <button class="btn-open-sweep" id="btn-open-sweep" style="flex: 1;">
             PARAMETER SWEEP
           </button>
-          <button class="btn-open-sweep" id="btn-open-disk-contour" style="flex: 1; height: 40px; font-weight: 700; font-size: 13px; border-radius: 4px;">
+          <button class="btn-open-sweep" id="btn-open-disk-contour" style="flex: 1;">
             DISK CONTOUR
           </button>
         </div>
@@ -910,8 +910,8 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.29</div><div class="settings-row-sub">Download the verified Android APK</div></div>
-              <a class="settings-btn" href="https://gitzambrano.github.io/RotorCalculator/RotorCalculator-1.29.apk" download="RotorCalculator-1.29.apk">APK</a>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.30</div><div class="settings-row-sub">Install the verified production Android build</div></div>
+              <a class="settings-btn" href="https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator" target="_blank" rel="noopener">PLAY</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
               <button type="button" class="action-btn" data-close="modal-settings" style="height: 44px; min-width: 120px; font-weight: 700; border-radius: 8px; font-size: 15px;">CLOSE</button>
@@ -947,7 +947,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.29</p>
+          <p>RotorCalculator v1.30</p>
           <p>Rotor performance calculator based on analytical blade-element theory.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 42px;">OK</button>
@@ -3469,12 +3469,37 @@ function openDiskContour() {
   
   const updateContour = () => {
     updateMobileBtn();
+    const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
+    const exportPng = byId<HTMLButtonElement>("btn-disk-contour-export-png");
+    const exportAll = byId<HTMLButtonElement>("btn-disk-contour-export-all-png");
+
+    if (!activeResults.solutionValid) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const style = getComputedStyle(document.documentElement);
+        const bg = style.getPropertyValue("--card-bg").trim() || "#1e1e1e";
+        const text = style.getPropertyValue("--text-main").trim() || "#ffffff";
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = text;
+        ctx.font = "700 16px RotorRoboto, Roboto, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("INVALID OPERATING POINT", canvas.width / 2, canvas.height / 2);
+      }
+      byId("disk-contour-val").textContent = "Active point: invalid operating point";
+      exportPng.disabled = true;
+      exportAll.disabled = true;
+      return;
+    }
+
+    exportPng.disabled = false;
+    exportAll.disabled = false;
     const varKey = select.value;
     const meta = DISK_CONTOUR_PARAMS.find(p => p.key === varKey) || DISK_CONTOUR_PARAMS[0];
     const data = computeDiskContourData(activeGeom, activeCond, activeResults, varKey);
-    const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
     drawDiskContour(canvas, data, meta.label, meta.unit, false);
-    
+
     byId("disk-contour-val").innerHTML = `<span>${formatSubscripts(`Active point: μ_x = ${formatSig(activeResults.operatingMu, 3)} · V_x = ${formatSig(activeResults.operatingVx, 3)} m/s · μ_z = ${formatSig(activeResults.operatingMuZ, 3)}`)}</span>`;
   };
   
@@ -3482,6 +3507,7 @@ function openDiskContour() {
   
   byId("btn-disk-contour-export-png").onclick = () => {
     triggerHapticFeedback();
+    if (!activeResults.solutionValid) return;
     const varKey = select.value;
     const meta = DISK_CONTOUR_PARAMS.find(p => p.key === varKey) || DISK_CONTOUR_PARAMS[0];
     const data = computeDiskContourData(activeGeom, activeCond, activeResults, varKey);
@@ -3497,6 +3523,7 @@ function openDiskContour() {
   
   byId("btn-disk-contour-export-all-png").onclick = () => {
     triggerHapticFeedback();
+    if (!activeResults.solutionValid) return;
     const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
     for (const p of DISK_CONTOUR_PARAMS) {
       const data = computeDiskContourData(activeGeom, activeCond, activeResults, p.key);

@@ -2050,6 +2050,12 @@ button.result-label:hover {
   border-radius: 4px;
 }
 
+#modal-disk-contour .sweep-footer-actions .action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+}
+
 
 
 .sweep-mobile-selector { display: none; }
