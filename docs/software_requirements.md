@@ -322,8 +322,8 @@ Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\
 10. Section Normal Force $dF_N/dr$ [N/m]
 11. Section In-Plane Force $dF_T/dr$ [N/m]
 12. Local Mach Number $M$ [–]
-13. Dynamic Pressure $q$ [Pa]
-14. Section Reynolds Number $Re$ [–]
+13. Section Thrust Loading $dC_T/dx$ [–]
+14. Dynamic Pressure $q$ [Pa]
 
 **PLOT-21** — The contour renderer shall use continuous bilinear interpolation over the canvas pixel buffer to prevent discrete grid block artifacts.
 
@@ -348,7 +348,7 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 
 **PLOT-29** — The contour modal shall provide an **EXPORT PNG** button generating a standalone high-resolution image of the currently displayed variable with title, legend, and flight state banner.
 
-**PLOT-30** — The contour modal shall provide an **EXPORT ALL PNG** button generating and downloading all 14 aerodynamic distribution images sequentially.
+**PLOT-30** — The contour modal shall provide an **EXPORT ALL PNG** action that exports all 14 aerodynamic distribution images in one batch operation. Android shall request one destination directory and write all 14 PNG files through SAF. Web shall download all 14 PNG files.
 
 ---
 
@@ -483,3 +483,10 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 **QA-26** — Verification walkthroughs shall confirm that every parameter label, selector, and unit displays clear contextual documentation.
 
 **QA-30** — Physical consistency tests (`python tools/verify_engine.py`) shall maintain a 100% pass rate across all golden test cases.
+
+
+**QA-31** — Disk Contour tests shall verify the exact 14-variable catalog, including Section Thrust Loading $dC_T/dx$ and excluding Reynolds number.
+
+**QA-32** — Disk Contour shall not render aerodynamic colors or enable PNG export when the operating solution is invalid.
+
+**QA-33** — Disk Contour batch export shall verify that all 14 PNG files are produced. Android shall use one destination-directory selection for the complete batch.

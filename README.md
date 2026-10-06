@@ -6,7 +6,7 @@ Developed by Gustavo José Zambrano.
 
 - **Web Application:** [Open RotorCalculator](https://gitzambrano.github.io/RotorCalculator/)
 - **Google Play:** [RotorCalculator on Google Play](https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator)
-- **Production Target:** Version 1.29 (versionCode 14)
+- **Production Target:** Version 1.30 (versionCode 15)
 
 ---
 
@@ -53,7 +53,7 @@ Developed by Gustavo José Zambrano.
   8. Section Diagnostics: 50% Radius ($\alpha_{\text{adv},50}, \alpha_{\text{ret},50}, \phi_{\text{adv},50}, \phi_{\text{ret},50}$)
   9. Section Diagnostics: 75% Radius and Tip ($\alpha_{\text{adv},75}, \alpha_{\text{ret},75}, \phi_{\text{adv},75}, \phi_{\text{ret},75}, \alpha_{\text{adv,tip}}, \alpha_{\text{ret,tip}}, \phi_{\text{adv,tip}}, \phi_{\text{ret,tip}}$)
 - **Interactive Rotor Disk Contour Plots:**
-  - Evaluates 14 azimuthal and radial aerodynamic distributions across the full rotor disk: Angle of Attack $\alpha$, Inflow Angle $\phi$, Lift Coefficient $C_l$, Drag Coefficient $C_d$, Total Inflow Ratio $\lambda$, Induced Inflow Ratio $\lambda_i$, Induced Velocity $v_i$, Total Axial Velocity $u_P$, Tangential Velocity $u_T$, Section Normal Force $dF_N/dr$, Section In-Plane Force $dF_T/dr$, Local Mach Number $M$, Dynamic Pressure $q$, and Reynolds Number $Re$.
+  - Evaluates 14 azimuthal and radial aerodynamic distributions across the full rotor disk: Angle of Attack $\alpha$, Inflow Angle $\phi$, Lift Coefficient $C_l$, Drag Coefficient $C_d$, Total Inflow Ratio $\lambda$, Induced Inflow Ratio $\lambda_i$, Induced Velocity $v_i$, Total Axial Velocity $u_P$, Tangential Velocity $u_T$, Section Normal Force $dF_N/dr$, Section In-Plane Force $dF_T/dr$, Local Mach Number $M$, Section Thrust Loading $dC_T/dx$, and Dynamic Pressure $q$.
   - Smooth continuous bilinear interpolation over the rotor disk area without pixelation artifacts.
   - Large rotor disk rendering with delicate dashed concentric radius guides ($0.25R, 0.50R, 0.75R$), cutout boundary, outer perimeter at $R=1$, and quadrant lines.
   - Cardinal flight orientation azimuth labels ($180^\circ$ Fore, $0^\circ$ Aft, $90^\circ$ Adv., $270^\circ$ Ret.) with safe viewport clearances.

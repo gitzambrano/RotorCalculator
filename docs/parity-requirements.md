@@ -1,9 +1,9 @@
 # APK and Web Parity Requirements and Verification
 
-Audit baseline: **RotorCalculator 1.29 (versionCode 14)**.
+Audit baseline: **RotorCalculator 1.30 (versionCode 15)**.
 The Android source implementation consists of `RotorCalculator.b4a`, `RotorPopups.bas`, `RotorStorage.bas`, `RotorNames.bas`, and `zBETEngine.bas`.
-The Web application implementation resides in `web/src/` (`engine.ts`, `storage.ts`, `names.ts`, `app.ts`, `popups.ts`, `disk-contour.ts`, `help-illustrations.ts`).
-Both platforms maintain 1:1 functional, mathematical, and interaction parity.
+The Web application implementation resides in `web/src/` (`engine.ts`, `storage.ts`, `labels.ts`, `main.ts`, `sweep.ts`, `disk-contour.ts`, `help-illustrations.ts`).
+Both platforms target 1:1 functional, mathematical, and interaction parity. Release claims require the automated source gates and source-matched runtime QA defined below.
 
 ---
 
@@ -26,7 +26,7 @@ Both platforms maintain 1:1 functional, mathematical, and interaction parity.
 | **Results Display** | 65 canonical result rows across 9 sections | 65 canonical result rows across 9 sections | Key-by-key parity across all 65 quantities. Three-column formatting (Symbol-first quantity \| Value \| Unit) is strictly preserved. |
 | **Parameter Sweeps** | Modal sweep dialog with multi-curve canvas | Responsive sweep dialog with Canvas rendering | Full multi-curve parametric sweeps across all 61 output quantities. Plots support tap readouts, three palette modes, CSV export, and single / batch PNG export ("EXPORT ALL PNG"). |
 | **Sweep Trim Strategies** | Five sweep trim modes | Five sweep trim modes | No Trim, Trimmed Collective (Every Point), Trimmed Rotor Speed (Every Point), Fixed Collective (Hover Only), Fixed Rotor Speed (Hover Only). |
-| **Rotor Disk Contour Plots** | `RotorPopups.ShowDiskContour`, `DrawDiskContourPlot` | `showDiskContourModal`, `drawDiskContour` | 14 aerodynamic distributions across azimuth and span. Continuous bilinear pixel buffer interpolation, delicate dashed radial guides ($0.25R, 0.50R, 0.75R$), quadrant axes, cardinal azimuth annotations ($180^\circ$ Fore, $0^\circ$ Aft, $90^\circ$ Adv., $270^\circ$ Ret.), horizontal colorbar with strictly 2 significant figures, active condition banner, and single / batch PNG export. |
+| **Rotor Disk Contour Plots** | `OpenDiskContourPopup`, `DrawDiskContourPlot` | `showDiskContourModal`, `drawDiskContour` | 14 aerodynamic distributions across azimuth and span, including $dC_T/dx$ and dynamic pressure $q$. Invalid operating points display a neutral invalid-state canvas and disable export. Continuous bilinear interpolation, radial guides, quadrant axes, cardinal azimuth annotations, two-significant-figure colorbar labels, single PNG export, and true 14-file batch export are required on both platforms. Android uses one SAF destination-directory selection for the batch. |
 | **Contextual Help Illustrations** | Inline vector diagrams in offline help popups | `getHelpSvg` responsive inline SVG illustrations | Visual SVG schematics for blade planform ($R, x_0, c_0, c_1$), twist/pitch ($\theta_R, \theta_T, \theta_{\text{twist}}$), rotor disk orientation, shaft reference frame ($\alpha, V_z$), inflow distribution, and velocity triangle. |
 | **Visual Themes** | 4 complete themes: Default Dark, Light, Midnight Blue, Sepia | 4 complete themes: Default Dark, Light, Midnight Blue, Sepia | Full color-palette parity. Theme changes preserve calculations, inputs, and navigation state. |
 | **Engineering Unit Converter**| 14 physical conversion modes with Swap button | 14 physical conversion modes with Swap button | Exact mathematical conversion factors across length, velocity, rotational speed, mass, force, pressure, torque, power, and disk loading. |
@@ -40,11 +40,11 @@ Both platforms maintain 1:1 functional, mathematical, and interaction parity.
 1. **Python Golden Reference Matrix:**
    - 100 benchmark flight cases executed via `python tools/verify_engine.py`.
    - 100% of cases passed with closed-form momentum balance closure ($|f(\lambda_i)| < 10^{-13}$).
-   - All 76 Python integration tests passed via `pytest tests`.
+   - The Python integration and static source-safety suites must pass via `pytest tests`.
 
 2. **TypeScript Web Test Suite:**
-   - 61 automated tests executed via `npm --prefix web test`.
-   - 100% of tests passed, confirming numerical equivalence, storage schema migrations, unit conversion algorithms, and SVG illustration generation.
+   - The complete Vitest suite must pass via `npm --prefix web test`, including dedicated Disk Contour catalog, numerical-grid, and invalid-state coverage.
+   - The suite verifies numerical equivalence, storage schema migrations, unit conversion algorithms, SVG illustration generation, and contour behavior.
    - Production bundle compiled cleanly via `npm --prefix web run build`.
 
 3. **Compiled Engine Equivalence:**
