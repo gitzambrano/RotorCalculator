@@ -881,3 +881,55 @@ def test_apk_results_preserve_name_symbol_order_and_speed_caption():
     assert 'abbr.Put("phiAdv75", "Adv. Inflow 75")' in src
     assert 'abbr.Put("phiRet75", "Ret. Inflow 75")' in src
     assert '"Advancing Section AoA 75%"' not in src
+
+
+def test_release_version_is_130_everywhere():
+    main = text("RotorCalculator.b4a")
+    agents = text("AGENTS.md")
+    readme = text("README.md")
+    package = text("web/package.json")
+    assert "#VersionCode: 15" in main
+    assert "#VersionName: 1.30" in main
+    assert "RotorCalculator 1.30 (versionCode 15)" in agents
+    assert "Version 1.30 (versionCode 15)" in readme
+    assert '"version": "1.30.0"' in package
+
+
+def test_disk_contour_catalog_uses_section_thrust_loading_not_reynolds():
+    popups = text("RotorPopups.bas")
+    web = text("web/src/disk-contour.ts")
+    requirements = text("docs/software_requirements.md")
+    expected = ('"aoa"', '"phi"', '"cl"', '"cd"', '"lambda_total"', '"lambda_i"',
+                '"vi"', '"up_vel"', '"ut_vel"', '"fn_span"', '"ft_span"', '"mach"',
+                '"dCTdx"', '"dyn_press"')
+    start = popups.index("Public Sub DiskContourParamKeys")
+    catalog = popups[start:popups.index("End Sub", start)]
+    for key in expected:
+        assert key in catalog
+    assert "Reynolds" not in requirements
+    assert "Section Thrust Loading $dC_T/dx$" in requirements
+    assert '{ key: "dCTdx"' in web
+
+
+def test_disk_contour_invalid_state_is_neutral_and_not_exportable():
+    main = text("RotorCalculator.b4a")
+    popups = text("RotorPopups.bas")
+    web_main = text("web/src/main.ts")
+    web_contour = text("web/src/disk-contour.ts")
+    assert 'If ActiveRes.SolutionValid = False Then' in main
+    assert 'cvs.DrawText("INVALID OPERATING POINT"' in popups
+    assert 'if (!activeResults.solutionValid)' in web_main
+    assert 'exportPng.disabled = true' in web_main
+    assert 'exportAll.disabled = true' in web_main
+    assert 'throw new Error("Disk contour requires a valid operating point")' in web_contour
+
+
+def test_android_disk_contour_batch_export_writes_all_files_to_one_selected_folder():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Sub btnDiskContourExportAllPng_Click")
+    batch = main[start:main.index("End Sub", start)]
+    assert 'intent.Initialize("android.intent.action.OPEN_DOCUMENT_TREE", "")' in batch
+    assert 'docs.InitializeStatic("android.provider.DocumentsContract")' in batch
+    assert 'docs.RunMethod("createDocument"' in batch
+    assert 'For Each k As String In keys' in batch
+    assert 'btnDiskContourExportPng_Click' not in batch

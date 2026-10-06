@@ -1,0 +1,14 @@
+<en-US>
+RotorCalculator 1.30.
+Disk Contour catalog corrected to include section thrust loading dCT/dx; Reynolds number is not a contour requirement.
+Invalid operating points now show a neutral contour state and block PNG export.
+Android EXPORT ALL PNG now writes all 14 contour images after one destination-folder selection.
+APK/Web Results actions and Disk Contour behavior are synchronized, with dedicated automated contour tests.
+</en-US>
+<pt-BR>
+RotorCalculator 1.30.
+O catálogo de Disk Contour foi corrigido para incluir a carga seccional de empuxo dCT/dx; número de Reynolds não é requisito do contour.
+Pontos de operação inválidos agora mostram estado neutro e bloqueiam a exportação PNG.
+No Android, EXPORT ALL PNG agora grava os 14 contours após uma única seleção da pasta de destino.
+As ações de Results e o comportamento do Disk Contour foram sincronizados entre APK e Web, com testes automatizados dedicados.
+</pt-BR>

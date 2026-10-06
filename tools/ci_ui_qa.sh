@@ -344,7 +344,7 @@ scroll_to_top() {
   # instead of assuming a fixed swipe count is sufficient.
   for attempt in $(seq 0 32); do
     python3 /tmp/ui_node.py /tmp/results-top-check.xml > /tmp/results-top-check.json
-    if grep -Fqi 'OPEN PARAMETER SWEEP' /tmp/results-top-check.json; then return 0; fi
+    if grep -Fqi 'PARAMETER SWEEP' /tmp/results-top-check.json; then return 0; fi
     if (( attempt == 32 )); then break; fi
     python3 /tmp/scroll_step.py "$W" "$H" up
     sleep 0.12
@@ -476,7 +476,7 @@ capture_screen() {
   python3 /tmp/tap_text.py RESULTS || true
   sleep 0.3
   scroll_to_top "$W" "$H"
-  tap_text_scrolling "OPEN PARAMETER SWEEP" "$W" "$H"
+  tap_text_scrolling "PARAMETER SWEEP" "$W" "$H"
   sleep 1
   safe_screencap "$OUT/10-sweep.png"
   python3 /tmp/ui_node.py "$OUT/10-sweep.xml" > "$OUT/10-sweep.json"
@@ -484,6 +484,21 @@ capture_screen() {
   grep -qi "TABLE" "$OUT/10-sweep.json"
   grep -qi "CSV" "$OUT/10-sweep.json"
   grep -qi "PNG" "$OUT/10-sweep.json"
+  adb shell input keyevent 4
+  sleep 0.5
+  assert_app_alive
+
+  # Inspect the 1.30 rotor-disk contour modal on every viewport.
+  python3 /tmp/tap_text.py RESULTS || true
+  sleep 0.3
+  scroll_to_top "$W" "$H"
+  tap_text_scrolling "DISK CONTOUR" "$W" "$H"
+  sleep 0.8
+  safe_screencap "$OUT/11-disk-contour.png"
+  python3 /tmp/ui_node.py "$OUT/11-disk-contour.xml" > "$OUT/11-disk-contour.json"
+  grep -qi "ROTOR DISK CONTOUR" "$OUT/11-disk-contour.json"
+  grep -qi "EXPORT PNG" "$OUT/11-disk-contour.json"
+  grep -qi "EXPORT ALL PNG" "$OUT/11-disk-contour.json"
   adb shell input keyevent 4
   sleep 0.5
   assert_app_alive
@@ -867,7 +882,7 @@ functional_smoke() {
   python3 /tmp/tap_text.py RESULTS
   sleep 0.3
   scroll_to_top 393 873
-  tap_text_scrolling "OPEN PARAMETER SWEEP" 393 873
+  tap_text_scrolling "PARAMETER SWEEP" 393 873
   sleep 1
   python3 /tmp/ui_node.py "$OUT/15-sweep.xml" > "$OUT/15-sweep.json"
   grep -qi "VALUES" "$OUT/15-sweep.json"

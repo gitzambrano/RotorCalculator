@@ -28,6 +28,17 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Python QA dependencies
+        working-directory: ${{ github.workspace }}
+        run: python -m pip install --disable-pip-version-check numpy pandas matplotlib pytest
+      - name: Run Python and static source QA
+        working-directory: ${{ github.workspace }}
+        run: |
+          python tools/verify_engine.py
+          python -m pytest -q tests
       - uses: actions/setup-node@v4
         with:
           node-version: 22
