@@ -3949,6 +3949,30 @@ input[type="number"] {
 
   #modal-sweep .sweep-canvas-wrapper { height: max(140px, calc(100dvh - 264px)); min-height: 140px; }
 
+  /* Keep the square rotor disk fully visible between the compact landscape
+     header/selector and the fixed export footer. */
+  #modal-disk-contour .modal-body { overflow: hidden; }
+  #modal-disk-contour .disk-contour-canvas-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: calc(100dvh - 176px);
+    margin: 2px auto;
+  }
+  #modal-disk-contour #disk-contour-canvas {
+    width: min(500px, calc(100dvh - 176px), calc(100vw - 32px)) !important;
+    max-width: min(500px, calc(100dvh - 176px), calc(100vw - 32px)) !important;
+    height: auto !important;
+  }
+  #modal-disk-contour .sweep-info-cards {
+    flex: 0 0 auto;
+    margin: 0 12px 2px !important;
+    padding-bottom: 0;
+  }
+  #modal-disk-contour #disk-contour-val {
+    min-height: 28px;
+    font-size: 12px !important;
+  }
+
   #modal-sweep .sweep-footer-actions,
   #modal-disk-contour .sweep-footer-actions { min-height: 42px; padding: 4px 12px; }
 
