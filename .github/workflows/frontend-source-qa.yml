@@ -2,6 +2,20 @@ name: Frontend Source QA
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "RotorCalculator.b4a"
+      - "RotorPopups.bas"
+      - "RotorStorage.bas"
+      - "RotorNames.bas"
+      - "zBETEngine.bas"
+      - "clsSheet.bas"
+      - "web/**"
+      - "tests/**"
+      - "tools/ci_ui_qa.sh"
+      - ".github/workflows/frontend-source-qa.yml"
 
 concurrency:
   group: rotor-frontend-source-qa-${{ github.ref }}
