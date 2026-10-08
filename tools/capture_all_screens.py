@@ -20,7 +20,7 @@ OUT_DIR = Path(__file__).resolve().parent.parent / "scratch" / "eval_screens"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def run_adb(*args, check=True):
-    cmd = [ADB, "-s", "emulator-5554", *args]
+    cmd = [ADB, "-s", os.environ.get("ANDROID_SERIAL", "emulator-5554"), *args]
     res = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", check=check)
     return (res.stdout or "").strip()
 
@@ -113,7 +113,7 @@ def tap_text(text_exact=None, text_contains=None):
 def screencap(save_name):
     collapse_statusbar()
     target = OUT_DIR / save_name
-    cmd = [ADB, "-s", "emulator-5554", "exec-out", "screencap", "-p"]
+    cmd = [ADB, "-s", os.environ.get("ANDROID_SERIAL", "emulator-5554"), "exec-out", "screencap", "-p"]
     res = subprocess.run(cmd, capture_output=True)
     target.write_bytes(res.stdout)
     print(f"Captured: {save_name} ({len(res.stdout)} bytes)")

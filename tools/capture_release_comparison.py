@@ -5,9 +5,9 @@ from PIL import Image
 from playwright.async_api import async_playwright
 
 ADB='C:/Android/platform-tools/adb.exe'; PACKAGE='flightdyn.rotorcalculator'
-OUT=Path('qa-results/release-1.23/comparison');OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path('scratch/qa-results/release-1.23/comparison');OUT.mkdir(parents=True,exist_ok=True)
 def adb(*args):
-    return subprocess.run([ADB,'-s','emulator-5554',*args],capture_output=True,check=True).stdout
+    return subprocess.run([ADB,'-s',os.environ.get("ANDROID_SERIAL", "emulator-5554"),*args],capture_output=True,check=True).stdout
 def nodes():
     for attempt in range(5):
         adb('shell','rm','-f','/data/local/tmp/release-ui.xml')

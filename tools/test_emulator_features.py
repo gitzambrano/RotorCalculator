@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 import time
@@ -5,7 +6,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ADB = r"C:\Android\platform-tools\adb.exe"
-DEVICE = "emulator-5554"
+DEVICE = os.environ.get("ANDROID_SERIAL", "emulator-5554")
 
 def adb(*args, check=True):
     cmd = [ADB, "-s", DEVICE, *args]

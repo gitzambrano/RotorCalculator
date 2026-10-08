@@ -11,7 +11,7 @@ The automated publication script `tools/upload_playstore.py` interacts directly 
 - `listing-en-US.json`: Production title, short description, and full description matching application capabilities.
 - `phone-screenshots/`: Real native Android device captures across standard phone form factors.
 - `tablet-screenshots/`: Real native Android tablet captures (7-inch and 10-inch layouts).
-- `docs/release_notes_1.28.txt`: User-facing release notes for production deployment.
+- `docs/release_notes_<version>.txt`: User-facing release notes per release (en-US and pt-BR, 500 characters maximum per language).
 
 Public Privacy Policy URL: https://gist.github.com/gitzambrano/d7a25b22e7132295bd1386b3cea4b0fe
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
-OUT = Path('qa-results/release-1.23/popups-final')
+OUT = Path('scratch/qa-results/release-1.23/popups-final')
 URL = os.environ.get('ROTOR_WEB_URL', 'http://127.0.0.1:8080/')
 with sync_playwright() as p:
     browser = p.chromium.launch()

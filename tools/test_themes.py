@@ -10,7 +10,7 @@ OUT_DIR = Path(__file__).resolve().parent.parent / "scratch" / "human_eval"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def adb(*args):
-    return subprocess.run([ADB, "-s", "emulator-5554", *args], capture_output=True, text=True, errors="replace").stdout.strip()
+    return subprocess.run([ADB, "-s", os.environ.get("ANDROID_SERIAL", "emulator-5554"), *args], capture_output=True, text=True, errors="replace").stdout.strip()
 
 def tap(x, y):
     adb("shell", "input", "tap", str(int(x)), str(int(y)))

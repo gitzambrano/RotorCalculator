@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from playwright.async_api import async_playwright
 
-OUT_DIR = Path("qa-results/full-audit")
+OUT_DIR = Path("scratch/qa-results/full-audit")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 TARGET_URL = "https://gitzambrano.github.io/RotorCalculator/"

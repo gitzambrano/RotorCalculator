@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from playwright.async_api import async_playwright
 
-OUT_DIR = Path("qa-results/web-screens")
+OUT_DIR = Path("scratch/qa-results/web-screens")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 async def run_visual_audit():

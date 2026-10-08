@@ -1,8 +1,0 @@
-{
-  "version": "1.30",
-  "versionCode": 15,
-  "package": "flightdyn.rotorcalculator",
-  "apkSha256": null,
-  "verification": "RotorCalculator 1.30 source baseline. Disk Contour uses the canonical 14-variable catalog with section thrust loading dCT/dx, rejects invalid operating solutions, and provides true batch export on Android and Web. The production APK hash shall be populated only after a source-matched signed build passes the release gate.",
-  "qaReport": "release_notes_1.30.txt"
-}

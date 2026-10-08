@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from playwright.async_api import async_playwright
 
-OUT_DIR = Path("qa-results/parity-audit")
+OUT_DIR = Path("scratch/qa-results/parity-audit")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 INDEX_PATH = Path("docs/index.html").resolve()

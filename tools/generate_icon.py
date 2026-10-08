@@ -1,7 +1,7 @@
 """RotorCalculator icon generator (PIL, 4x supersampling).
 
 Outputs Icons/*, Objects/res adaptive + legacy resources, store/icon.png and
-qa-results/icon_preview.png.  Run: python tools/generate_icon.py
+scratch/icon_preview.png.  Run: python tools/generate_icon.py
 """
 from __future__ import annotations
 
@@ -220,8 +220,8 @@ def main():
     mm = Image.new("RGBA", (432, 432), (60, 60, 70, 255))
     mm.alpha_composite(layers["mono"])
     sheet.paste(mm.convert("RGB").resize((200, 200)), (980, 400))
-    (ROOT / "qa-results").mkdir(exist_ok=True)
-    sheet.save(ROOT / "qa-results" / "icon_preview.png")
+    (ROOT / "scratch").mkdir(exist_ok=True)
+    sheet.save(ROOT / "scratch" / "icon_preview.png")
 
 
 if __name__ == "__main__":

@@ -92,6 +92,7 @@ zBETEngine.bas              Pure numerical zBET aerodynamic calculation engine
 RotorStorage.bas            Rotor geometry database and file interchange
 RotorPopups.bas             Airfoil database, technical popups, and sweep plotting
 RotorNames.bas              Canonical nomenclature, symbol definitions, and help texts
+clsSheet.bas                Themed bottom sheets for help, choices, confirmations, and input
 Files/                      Android runtime assets, layouts, and offline manuals
 
 web/                        TypeScript / Vite responsive browser application
@@ -123,6 +124,8 @@ All modifications must pass formal automated test suites:
 
 3. **Android B4A Compilation:**
    Validates error-free compilation of `RotorCalculator.b4a` targeting Android 16 (API 36).
+
+GitHub Actions runs only the lightweight checks of steps 1 and 2 (`verify_engine.py`, `pytest`, `tsc --noEmit`, `npm test`). B4A compilation, emulator UI QA (`tools/ci_ui_qa.sh`) and visual verification run offline. `python tools/play_status.py` shows the Google Play bundles and tracks without changing anything.
 
 ---
 

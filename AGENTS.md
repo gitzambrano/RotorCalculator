@@ -42,7 +42,7 @@ $$\text{GUI / Input Controls} \longrightarrow \text{Validation \& SI Conversion}
 
 ### 2.2 Storage Layer (`RotorStorage.bas` & `web/src/storage.ts`):
 - Manage saved geometries autonomously within internal application storage (`File.DirInternal` or `localStorage`), without requiring external runtime permissions.
-- Support standard factory presets (UH-60, Bell 206, Bo 105, R44, DJI Drone) and custom rotor definitions with full CRUD operations (Create, Read, Update, Duplicate, Delete).
+- Support standard factory presets (UH-60, Bell 206, Bo 105, R44, DJI Matrice 300, eVTOL) and custom rotor definitions with full CRUD operations (Create, Read, Update, Duplicate, Delete).
 - Support portable backup and sharing via both text files (`.txt`) and structured JSON (`.json`) with validation of rotor counts and conflict-resolution workflows (Rename, Replace, Skip).
 
 ### 2.3 Cross-Platform Parity (APK & Web):
@@ -90,6 +90,9 @@ $$\text{GUI / Input Controls} \longrightarrow \text{Validation \& SI Conversion}
    - Increment `#VersionCode` (strictly increasing integer) and update `#VersionName` before building release packages.
    - Generate signed Android App Bundles (`.aab`) targeting Android 16 (API 36) with backward compatibility to Android 7.0+ (API 24+).
    - Use `tools/upload_playstore.py` with the service account key to validate and publish releases to the Google Play Developer API.
+   - AI agents run `--validate-only` and give the exact upload command to the maintainer. The maintainer runs the production upload.
+   - Release notes (`docs/release_notes_<version>.txt`) hold en-US and pt-BR text. Each language has a maximum of 500 characters.
+   - Use `python tools/play_status.py` to read the uploaded bundles and track releases. The script does not publish.
 
 ---
 
@@ -105,6 +108,8 @@ Validation requirements are separated into two distinct operational gates:
 
 ### Gate 2: Visual Layout Changes and Formal Release Candidates
 - Execute local emulator or physical device installation (`adb install`).
+- Other agents can use the shared emulators at the same time. Use a dedicated AVD and port (for example `rc_gate2` on `emulator-5590`). Put `-s <serial>` on every adb command, or set `ANDROID_SERIAL` for the scripts in `tools/`.
+- Build test packages in a copy of the project under `scratch/`. Do not build into the shared `Objects/` folder while another agent can use it.
 - Validate the 9 target screen configurations: 320dp, 360dp, 393dp, 412dp, 600dp, 768dp, landscape orientations, and 130% font scale.
 - Perform interactive smoke tests: swipe navigation, modal pickers, theme switching, parameter sweeps, and file export via Storage Access Framework.
 - Capture and visually inspect real PNG screenshots saved to `scratch/screenshots/` to verify that no clipping, misalignment, or font wrapping defects exist.
@@ -135,4 +140,5 @@ Validation requirements are separated into two distinct operational gates:
 3. **Diagnostic Scripts**:
    - Diagnostic, evaluation, and test capture scripts must write output to `scratch/` by default.
    - Do not commit local test captures or scratch artifacts to version control.
+   - Examine `git status` before each commit. Stage only the intended files. Do not stage folders that agents or scripts created during tests.
 

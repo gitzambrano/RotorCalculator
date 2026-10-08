@@ -19,7 +19,7 @@ OUT_DIR = Path(__file__).resolve().parent.parent / "scratch" / "human_eval"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def adb(*args, check=True):
-    cmd = [ADB, "-s", "emulator-5554", *args]
+    cmd = [ADB, "-s", os.environ.get("ANDROID_SERIAL", "emulator-5554"), *args]
     res = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", check=check)
     return (res.stdout or "").strip()
 
@@ -48,8 +48,8 @@ def scroll_up():
 
 def dump_ui():
     adb("shell", "uiautomator", "dump", "/data/local/tmp/ui.xml")
-    adb("pull", "/data/local/tmp/ui.xml", "temp_ui.xml")
-    tree = ET.parse("temp_ui.xml")
+    adb("pull", "/data/local/tmp/ui.xml", "scratch/temp_ui.xml")
+    tree = ET.parse("scratch/temp_ui.xml")
     nodes = []
     for elem in tree.iter("node"):
         bounds_str = elem.attrib.get("bounds", "")

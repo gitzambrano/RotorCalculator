@@ -2,7 +2,7 @@
 import json, os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-OUT = Path('qa-results/release-1.23/complete-flows'); OUT.mkdir(parents=True, exist_ok=True)
+OUT = Path('scratch/qa-results/release-1.23/complete-flows'); OUT.mkdir(parents=True, exist_ok=True)
 URL = os.environ.get('ROTOR_WEB_URL', 'http://127.0.0.1:8080/')
 KEY = 'rotorcalculator_rotors_v2'
 with sync_playwright() as p:

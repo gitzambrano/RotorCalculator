@@ -3,7 +3,7 @@ import asyncio, zipfile
 from pathlib import Path
 from playwright.async_api import async_playwright
 
-OUT=Path('output/playwright'); OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path('scratch/output/playwright'); OUT.mkdir(parents=True,exist_ok=True)
 async def main():
   async with async_playwright() as p:
     browser=await p.chromium.launch()

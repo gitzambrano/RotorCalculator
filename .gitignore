@@ -3,6 +3,7 @@ scratch/*
 !scratch/.gitkeep
 output/
 qa-results/
+qa-results-*/
 eval-screenshots/
 screenshots_mobile/
 temp_eval_screens/

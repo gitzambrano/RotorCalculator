@@ -6,7 +6,8 @@ APK="${1:-${APK:-ci-apk/RotorCalculator-ci.apk}}"
 command -v adb >/dev/null
 command -v python3 >/dev/null
 test -f "$APK"
-mkdir -p qa-results
+QA_ROOT="${QA_ROOT:-scratch/qa-results}"
+mkdir -p "$QA_ROOT"
 
 cat > /tmp/ui_node.py <<'PY'
 import subprocess, sys, xml.etree.ElementTree as ET, re, json, os, time
@@ -437,7 +438,7 @@ assert_text_scrolling_down() {
 
 capture_screen() {
   local NAME="$1" SIZE="$2" ROT="$3" FONT="$4"
-  local OUT="qa-results/${QA_THEME:-dark}/$NAME"
+  local OUT="$QA_ROOT/${QA_THEME:-dark}/$NAME"
   mkdir -p "$OUT"
   local W="${SIZE%x*}"
   local H="${SIZE#*x}"
@@ -585,7 +586,7 @@ capture_screen() {
 }
 
 functional_smoke() {
-  local OUT="qa-results/functional-smoke"
+  local OUT="$QA_ROOT/functional-smoke"
   mkdir -p "$OUT"
   adb shell pm clear flightdyn.rotorcalculator >/dev/null
   adb shell wm size 393x873
