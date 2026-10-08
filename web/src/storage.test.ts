@@ -123,6 +123,25 @@ describe("Storage preservation and import validation", () => {
 
 
 describe("Factory geometry matches Android definitions", () => {
+  it("uses published R44 chords, consistent helicopter compressibility, and DJI 2110 pitch", () => {
+    const presets = getFactoryPresets();
+    const r44 = presets.find((r) => r.id === "preset-r44")!.geom;
+    expect(r44.chordRoot).toBeCloseTo(0.254, 10);
+    expect(r44.chordTip).toBeCloseTo(0.269, 10);
+    for (const id of ["preset-uh60", "preset-b206", "preset-bo105", "preset-r44"]) {
+      expect(presets.find((r) => r.id === id)!.geom.usePrandtlGlauert).toBe(true);
+    }
+    const drone = presets.find((r) => r.id === "preset-dji")!.geom;
+    expect(drone.radius).toBeCloseTo(0.267, 10);
+    expect(drone.tipLossMode).toBe("sissingh");
+    const x75 = 0.75;
+    const theta75 = drone.thetaRoot + (drone.thetaTip - drone.thetaRoot) * (x75 - drone.rootCutout) / (1 - drone.rootCutout);
+    const equivalentPitchM = 2 * Math.PI * x75 * drone.radius * Math.tan(theta75);
+    expect(equivalentPitchM).toBeCloseTo(0.254, 2);
+    expect(drone.liftSlope0).toBe(5.65);
+    expect(drone.cd0).toBe(0.012);
+  });
+
   it("preserves the original DJI and eVTOL active-span chord law through an APK-compatible backup", () => {
     const presets = getFactoryPresets();
     const imported = parseDatabaseText(exportRotorsDatabaseText(presets))!;
