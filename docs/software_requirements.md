@@ -159,7 +159,7 @@ $$\theta_{R,\text{op}} = \theta_R + \Delta\theta, \quad \theta_{T,\text{op}} = \
 
 **COND-7** — Selection among $\alpha$, $V_z$, and $\mu_z$ shall be mutually exclusive. The application shall not sum alternate axial flow inputs.
 
-**COND-8** — Climb Speed $V_z > 0$ shall define positive climb where relative airflow flows downward through the rotor disk.
+**COND-8** — Climb Speed $V_z > 0$ shall define positive climb where relative airflow flows downward through the rotor disk. Positive climb shall not be described as upflow or negative $V_z$; positive disk angle of attack $\alpha$ separately produces upflow for positive $V_x$.
 
 **COND-9** — Axial Flow Ratio $\mu_z = V_z / (\Omega R)$ shall define the dimensionless downward relative flow ratio.
 
@@ -368,7 +368,7 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 
 **LIB-7** — Storage operations shall use Android `CREATE_DOCUMENT` / `OPEN_DOCUMENT` SAF workflows on mobile and standard file dialogs on Web.
 
-**LIB-8** — Factory presets shall include UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, and Generic eVTOL.
+**LIB-8** — Factory presets shall include UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, and Generic eVTOL. Bell 206 and R44 shall enable the same compressibility model as the other helicopter examples. R44 chord shall follow published inboard/outboard values. The DJI 2110 example shall approximate its nominal 21 × 10 in pitch at the 75% radial station, include finite-blade tip loss, and select RPM + fixed collective (Δθ = 0) on activation. The default CT target (0.0065) and existing aerodynamic profile parameters shall remain unchanged. Restoring factory values shall preserve custom rotors.
 
 **LIB-9** — Restoring factory presets shall reset default definitions while preserving custom user rotors.
 
