@@ -1,0 +1,218 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sikorsky UH-60 Black Hawk",
+    "desc": "",
+    "bounds": [
+      155,
+      88,
+      759,
+      140
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      715,
+      88,
+      755,
+      140
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "ROTOR",
+    "desc": "",
+    "bounds": [
+      159,
+      152,
+      755,
+      186
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Speed Ωnom",
+    "desc": "",
+    "bounds": [
+      155,
+      191,
+      448,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      452,
+      191,
+      642,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      646,
+      191,
+      759,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "PLANFORM",
+    "desc": "",
+    "bounds": [
+      159,
+      252,
+      755,
+      286
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Radius R",
+    "desc": "",
+    "bounds": [
+      155,
+      291,
+      448,
+      343
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "8.18",
+    "desc": "",
+    "bounds": [
+      452,
+      291,
+      642,
+      343
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      646,
+      291,
+      759,
+      343
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Blade Count Nb",
+    "desc": "",
+    "bounds": [
+      155,
+      349,
+      448,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4",
+    "desc": "",
+    "bounds": [
+      452,
+      349,
+      642,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      349,
+      759,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

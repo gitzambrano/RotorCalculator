@@ -1,0 +1,410 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Torque Q0",
+    "desc": "",
+    "bounds": [
+      212,
+      76,
+      487,
+      114
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "9 331.4",
+    "desc": "",
+    "bounds": [
+      487,
+      76,
+      673,
+      114
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      76,
+      820,
+      114
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Roll Moment Mx",
+    "desc": "",
+    "bounds": [
+      212,
+      114,
+      487,
+      168
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      114,
+      673,
+      168
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      114,
+      820,
+      168
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Pitch Moment My",
+    "desc": "",
+    "bounds": [
+      212,
+      168,
+      487,
+      222
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      168,
+      673,
+      222
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      168,
+      820,
+      222
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "POWER",
+    "desc": "",
+    "bounds": [
+      214,
+      222,
+      810,
+      256
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Shaft Power P",
+    "desc": "",
+    "bounds": [
+      212,
+      258,
+      487,
+      312
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 471.4",
+    "desc": "",
+    "bounds": [
+      487,
+      258,
+      673,
+      312
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      675,
+      258,
+      820,
+      312
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Power Pi",
+    "desc": "",
+    "bounds": [
+      212,
+      312,
+      487,
+      366
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 219.3",
+    "desc": "",
+    "bounds": [
+      487,
+      312,
+      673,
+      366
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      675,
+      312,
+      820,
+      366
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Power P0",
+    "desc": "",
+    "bounds": [
+      212,
+      366,
+      487,
+      420
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "252.1",
+    "desc": "",
+    "bounds": [
+      487,
+      366,
+      673,
+      420
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      675,
+      366,
+      820,
+      420
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Air Power Pair",
+    "desc": "",
+    "bounds": [
+      212,
+      420,
+      487,
+      474
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 471.4",
+    "desc": "",
+    "bounds": [
+      487,
+      420,
+      673,
+      474
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      675,
+      420,
+      820,
+      474
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "LOADING & EFFICIENCY",
+    "desc": "",
+    "bounds": [
+      214,
+      474,
+      810,
+      508
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Loading T/ADISK",
+    "desc": "",
+    "bounds": [
+      212,
+      510,
+      487,
+      564
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "388.9",
+    "desc": "",
+    "bounds": [
+      487,
+      510,
+      673,
+      564
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N/m²",
+    "desc": "",
+    "bounds": [
+      675,
+      510,
+      820,
+      564
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Power Loading T/P",
+    "desc": "",
+    "bounds": [
+      212,
+      564,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "55.56",
+    "desc": "",
+    "bounds": [
+      487,
+      564,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N/kW",
+    "desc": "",
+    "bounds": [
+      675,
+      564,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

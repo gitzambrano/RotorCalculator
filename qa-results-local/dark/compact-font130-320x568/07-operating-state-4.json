@@ -1,0 +1,386 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Vadv",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      165
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      165
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      165
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Madv",
+    "desc": "",
+    "bounds": [
+      10,
+      165,
+      147,
+      219
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      147,
+      165,
+      243,
+      219
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      165,
+      318,
+      219
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vret",
+    "desc": "",
+    "bounds": [
+      10,
+      219,
+      147,
+      273
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      147,
+      219,
+      243,
+      273
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      219,
+      318,
+      273
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Mret",
+    "desc": "",
+    "bounds": [
+      10,
+      273,
+      147,
+      327
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      147,
+      273,
+      243,
+      327
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      273,
+      318,
+      327
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αadv,25",
+    "desc": "",
+    "bounds": [
+      10,
+      327,
+      147,
+      381
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.58",
+    "desc": "",
+    "bounds": [
+      147,
+      327,
+      243,
+      381
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      327,
+      318,
+      381
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αret,25",
+    "desc": "",
+    "bounds": [
+      10,
+      381,
+      147,
+      435
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.58",
+    "desc": "",
+    "bounds": [
+      147,
+      381,
+      243,
+      435
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      381,
+      318,
+      435
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αadv,50",
+    "desc": "",
+    "bounds": [
+      10,
+      435,
+      147,
+      489
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      147,
+      435,
+      243,
+      489
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      435,
+      318,
+      489
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αret,50",
+    "desc": "",
+    "bounds": [
+      10,
+      489,
+      147,
+      543
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      147,
+      489,
+      243,
+      543
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      489,
+      318,
+      543
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αadv,75",
+    "desc": "",
+    "bounds": [
+      10,
+      543,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      147,
+      543,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      543,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

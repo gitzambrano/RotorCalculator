@@ -1,0 +1,362 @@
+[
+  {
+    "text": "ROTOR DISK CONTOUR",
+    "desc": "",
+    "bounds": [
+      12,
+      26,
+      268,
+      74
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "×",
+    "desc": "",
+    "bounds": [
+      268,
+      26,
+      316,
+      74
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Angle of Attack α [deg]",
+    "desc": "",
+    "bounds": [
+      12,
+      82,
+      308,
+      134
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Active point: μx = 0 · Vx = 0 m/s · μz = 0",
+    "desc": "",
+    "bounds": [
+      12,
+      462,
+      308,
+      486
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "EXPORT PNG",
+    "desc": "",
+    "bounds": [
+      12,
+      491,
+      157,
+      539
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "EXPORT ALL PNG",
+    "desc": "",
+    "bounds": [
+      163,
+      491,
+      308,
+      539
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "PARAMETER SWEEP",
+    "desc": "",
+    "bounds": [
+      9,
+      139,
+      155,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "DISK CONTOUR",
+    "desc": "",
+    "bounds": [
+      163,
+      139,
+      309,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "FORCES",
+    "desc": "",
+    "bounds": [
+      12,
+      205,
+      308,
+      239
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust T",
+    "desc": "",
+    "bounds": [
+      10,
+      241,
+      147,
+      295
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "81 752.6",
+    "desc": "",
+    "bounds": [
+      147,
+      241,
+      243,
+      295
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      241,
+      318,
+      295
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "H",
+    "desc": "",
+    "bounds": [
+      10,
+      295,
+      147,
+      349
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      295,
+      243,
+      349
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      295,
+      318,
+      349
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Hi",
+    "desc": "",
+    "bounds": [
+      10,
+      349,
+      147,
+      403
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      349,
+      243,
+      403
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      349,
+      318,
+      403
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "H0",
+    "desc": "",
+    "bounds": [
+      10,
+      403,
+      147,
+      457
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      403,
+      243,
+      457
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      403,
+      318,
+      457
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Side Force Y",
+    "desc": "",
+    "bounds": [
+      10,
+      457,
+      147,
+      511
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      457,
+      243,
+      511
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      457,
+      318,
+      511
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "TORQUES & MOMENTS",
+    "desc": "",
+    "bounds": [
+      12,
+      511,
+      308,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,326 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "cT",
+    "desc": "",
+    "bounds": [
+      8,
+      129,
+      154,
+      164
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      158,
+      129,
+      252,
+      164
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      256,
+      129,
+      312,
+      164
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "cT/cR",
+    "desc": "",
+    "bounds": [
+      8,
+      170,
+      154,
+      222
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.000",
+    "desc": "",
+    "bounds": [
+      158,
+      170,
+      252,
+      222
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      170,
+      312,
+      222
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AR",
+    "desc": "",
+    "bounds": [
+      8,
+      228,
+      154,
+      280
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.43",
+    "desc": "",
+    "bounds": [
+      158,
+      228,
+      252,
+      280
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      228,
+      312,
+      280
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SOLIDITY & AREAS",
+    "desc": "",
+    "bounds": [
+      12,
+      289,
+      308,
+      323
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "σREF",
+    "desc": "",
+    "bounds": [
+      8,
+      328,
+      154,
+      380
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0825",
+    "desc": "",
+    "bounds": [
+      158,
+      328,
+      252,
+      380
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      328,
+      312,
+      380
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "σact",
+    "desc": "",
+    "bounds": [
+      8,
+      386,
+      154,
+      438
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      158,
+      386,
+      252,
+      438
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      386,
+      312,
+      438
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "σTR",
+    "desc": "",
+    "bounds": [
+      8,
+      444,
+      154,
+      496
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      158,
+      444,
+      252,
+      496
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      444,
+      312,
+      496
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "ADISK",
+    "desc": "",
+    "bounds": [
+      8,
+      502,
+      154,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      158,
+      502,
+      252,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      256,
+      502,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

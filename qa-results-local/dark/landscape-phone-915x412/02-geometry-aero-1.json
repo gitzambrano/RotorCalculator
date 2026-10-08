@@ -1,0 +1,254 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Blade Area AREF",
+    "desc": "",
+    "bounds": [
+      155,
+      81,
+      448,
+      133
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      452,
+      81,
+      642,
+      133
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      646,
+      81,
+      759,
+      133
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Blade Area Aact",
+    "desc": "",
+    "bounds": [
+      155,
+      139,
+      448,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      452,
+      139,
+      642,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      646,
+      139,
+      759,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      159,
+      200,
+      755,
+      234
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Pitch θR",
+    "desc": "",
+    "bounds": [
+      155,
+      239,
+      448,
+      291
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      452,
+      239,
+      642,
+      291
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      646,
+      239,
+      759,
+      291
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Pitch θT",
+    "desc": "",
+    "bounds": [
+      155,
+      297,
+      448,
+      349
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      452,
+      297,
+      642,
+      349
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      646,
+      297,
+      759,
+      349
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Blade Twist θtwist",
+    "desc": "",
+    "bounds": [
+      155,
+      355,
+      448,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      452,
+      355,
+      642,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      646,
+      355,
+      759,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

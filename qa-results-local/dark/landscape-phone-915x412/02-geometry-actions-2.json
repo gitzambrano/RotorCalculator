@@ -1,0 +1,278 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMICS",
+    "desc": "",
+    "bounds": [
+      159,
+      82,
+      755,
+      116
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Airfoil Section",
+    "desc": "",
+    "bounds": [
+      155,
+      121,
+      448,
+      173
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Custom",
+    "desc": "",
+    "bounds": [
+      452,
+      121,
+      642,
+      173
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      626,
+      121,
+      640,
+      173
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      121,
+      759,
+      173
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Lift-Curve Slope a0",
+    "desc": "",
+    "bounds": [
+      155,
+      179,
+      448,
+      231
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "5.73",
+    "desc": "",
+    "bounds": [
+      452,
+      179,
+      642,
+      231
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rad⁻¹",
+    "desc": "",
+    "bounds": [
+      646,
+      179,
+      759,
+      231
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Drag Coefficient Cd0",
+    "desc": "",
+    "bounds": [
+      155,
+      237,
+      448,
+      289
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0088",
+    "desc": "",
+    "bounds": [
+      452,
+      237,
+      642,
+      289
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      237,
+      759,
+      289
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Model",
+    "desc": "",
+    "bounds": [
+      155,
+      295,
+      448,
+      347
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sissingh",
+    "desc": "",
+    "bounds": [
+      452,
+      295,
+      642,
+      347
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      626,
+      295,
+      640,
+      347
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      295,
+      759,
+      347
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Factor B",
+    "desc": "",
+    "bounds": [
+      155,
+      353,
+      448,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.971",
+    "desc": "",
+    "bounds": [
+      452,
+      353,
+      642,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      353,
+      759,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

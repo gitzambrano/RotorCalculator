@@ -1,0 +1,626 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Blade Count Nb",
+    "desc": "",
+    "bounds": [
+      82,
+      138,
+      375,
+      147
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4",
+    "desc": "",
+    "bounds": [
+      379,
+      138,
+      569,
+      147
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      138,
+      686,
+      147
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Cutout x0",
+    "desc": "",
+    "bounds": [
+      82,
+      153,
+      375,
+      205
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.150",
+    "desc": "",
+    "bounds": [
+      379,
+      153,
+      569,
+      205
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      153,
+      686,
+      205
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Chord cR",
+    "desc": "",
+    "bounds": [
+      82,
+      211,
+      375,
+      263
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      379,
+      211,
+      569,
+      263
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      573,
+      211,
+      686,
+      263
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Chord cT",
+    "desc": "",
+    "bounds": [
+      82,
+      269,
+      375,
+      321
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      379,
+      269,
+      569,
+      321
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      573,
+      269,
+      686,
+      321
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Taper Ratio cT/cR",
+    "desc": "",
+    "bounds": [
+      82,
+      327,
+      375,
+      379
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.000",
+    "desc": "",
+    "bounds": [
+      379,
+      327,
+      569,
+      379
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      327,
+      686,
+      379
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Aspect Ratio AR",
+    "desc": "",
+    "bounds": [
+      82,
+      385,
+      375,
+      437
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.43",
+    "desc": "",
+    "bounds": [
+      379,
+      385,
+      569,
+      437
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      385,
+      686,
+      437
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SOLIDITY & AREAS",
+    "desc": "",
+    "bounds": [
+      86,
+      446,
+      682,
+      480
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Solidity σREF",
+    "desc": "",
+    "bounds": [
+      82,
+      485,
+      375,
+      537
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0825",
+    "desc": "",
+    "bounds": [
+      379,
+      485,
+      569,
+      537
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      485,
+      686,
+      537
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Solidity σact",
+    "desc": "",
+    "bounds": [
+      82,
+      543,
+      375,
+      595
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      379,
+      543,
+      569,
+      595
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      543,
+      686,
+      595
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust-Weighted Solidity σTR",
+    "desc": "",
+    "bounds": [
+      82,
+      601,
+      375,
+      653
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      379,
+      601,
+      569,
+      653
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      601,
+      686,
+      653
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Area ADISK",
+    "desc": "",
+    "bounds": [
+      82,
+      659,
+      375,
+      711
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      379,
+      659,
+      569,
+      711
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      659,
+      686,
+      711
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Blade Area AREF",
+    "desc": "",
+    "bounds": [
+      82,
+      717,
+      375,
+      769
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      379,
+      717,
+      569,
+      769
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      717,
+      686,
+      769
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Blade Area Aact",
+    "desc": "",
+    "bounds": [
+      82,
+      775,
+      375,
+      827
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      379,
+      775,
+      569,
+      827
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      775,
+      686,
+      827
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      86,
+      836,
+      682,
+      870
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Pitch θR",
+    "desc": "",
+    "bounds": [
+      82,
+      875,
+      375,
+      927
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      379,
+      875,
+      569,
+      927
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      875,
+      686,
+      927
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Pitch θT",
+    "desc": "",
+    "bounds": [
+      82,
+      933,
+      375,
+      985
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      379,
+      933,
+      569,
+      985
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      933,
+      686,
+      985
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Blade Twist θtwist",
+    "desc": "",
+    "bounds": [
+      82,
+      991,
+      375,
+      1000
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      379,
+      991,
+      569,
+      1000
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      991,
+      686,
+      1000
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

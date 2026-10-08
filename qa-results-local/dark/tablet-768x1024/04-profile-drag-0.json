@@ -1,0 +1,494 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "ATMOSPHERE & FLOW",
+    "desc": "",
+    "bounds": [
+      86,
+      146,
+      682,
+      180
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Pressure Altitude Hp",
+    "desc": "",
+    "bounds": [
+      82,
+      185,
+      375,
+      237
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      379,
+      185,
+      569,
+      237
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      573,
+      185,
+      686,
+      237
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Outside Air Temperature OAT",
+    "desc": "",
+    "bounds": [
+      82,
+      243,
+      375,
+      295
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.0",
+    "desc": "",
+    "bounds": [
+      379,
+      243,
+      569,
+      295
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "°C",
+    "desc": "",
+    "bounds": [
+      573,
+      243,
+      686,
+      295
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Advance Ratio μx ⇄",
+    "desc": "",
+    "bounds": [
+      82,
+      301,
+      375,
+      353
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      379,
+      301,
+      569,
+      353
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      301,
+      686,
+      353
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Angle of Attack α ⇄",
+    "desc": "",
+    "bounds": [
+      82,
+      359,
+      375,
+      411
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      379,
+      359,
+      569,
+      411
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      359,
+      686,
+      411
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "OPERATING CONSTRAINTS",
+    "desc": "",
+    "bounds": [
+      86,
+      420,
+      682,
+      454
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Trim Mode",
+    "desc": "",
+    "bounds": [
+      82,
+      459,
+      375,
+      511
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Ω + CT",
+    "desc": "",
+    "bounds": [
+      379,
+      459,
+      569,
+      511
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      459,
+      567,
+      511
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      459,
+      686,
+      511
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Speed Ω",
+    "desc": "",
+    "bounds": [
+      82,
+      517,
+      375,
+      569
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      379,
+      517,
+      569,
+      569
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      573,
+      517,
+      686,
+      569
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Target Thrust Coefficient CT",
+    "desc": "",
+    "bounds": [
+      82,
+      575,
+      375,
+      627
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00650",
+    "desc": "",
+    "bounds": [
+      379,
+      575,
+      569,
+      627
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      575,
+      686,
+      627
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMIC MODEL",
+    "desc": "",
+    "bounds": [
+      86,
+      636,
+      682,
+      670
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Inflow Model",
+    "desc": "",
+    "bounds": [
+      82,
+      675,
+      375,
+      727
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Coleman FG",
+    "desc": "",
+    "bounds": [
+      379,
+      675,
+      569,
+      727
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      675,
+      567,
+      727
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      675,
+      686,
+      727
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Power Factor kind",
+    "desc": "",
+    "bounds": [
+      82,
+      733,
+      375,
+      785
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.150",
+    "desc": "",
+    "bounds": [
+      379,
+      733,
+      569,
+      785
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      733,
+      686,
+      785
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Drag Integration",
+    "desc": "",
+    "bounds": [
+      82,
+      791,
+      375,
+      843
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Num. Vec.",
+    "desc": "",
+    "bounds": [
+      379,
+      791,
+      569,
+      843
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      791,
+      567,
+      843
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      791,
+      686,
+      843
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

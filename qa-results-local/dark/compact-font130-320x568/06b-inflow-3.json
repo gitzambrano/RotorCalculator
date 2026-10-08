@@ -1,0 +1,386 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "In-Plane CH",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      162
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      162
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      162
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CHi",
+    "desc": "",
+    "bounds": [
+      10,
+      162,
+      147,
+      216
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      162,
+      243,
+      216
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      162,
+      318,
+      216
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CH0",
+    "desc": "",
+    "bounds": [
+      10,
+      216,
+      147,
+      270
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      216,
+      243,
+      270
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      216,
+      318,
+      270
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CY",
+    "desc": "",
+    "bounds": [
+      10,
+      270,
+      147,
+      324
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      270,
+      243,
+      324
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      270,
+      318,
+      324
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CMx",
+    "desc": "",
+    "bounds": [
+      10,
+      324,
+      147,
+      378
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000000",
+    "desc": "",
+    "bounds": [
+      147,
+      324,
+      243,
+      378
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      324,
+      318,
+      378
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CMy",
+    "desc": "",
+    "bounds": [
+      10,
+      378,
+      147,
+      432
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000000",
+    "desc": "",
+    "bounds": [
+      147,
+      378,
+      243,
+      432
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      378,
+      318,
+      432
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CPair",
+    "desc": "",
+    "bounds": [
+      10,
+      432,
+      147,
+      486
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0005293",
+    "desc": "",
+    "bounds": [
+      147,
+      432,
+      243,
+      486
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      432,
+      318,
+      486
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Mean Lift C̄L",
+    "desc": "",
+    "bounds": [
+      10,
+      486,
+      147,
+      540
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.4744",
+    "desc": "",
+    "bounds": [
+      147,
+      486,
+      243,
+      540
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      486,
+      318,
+      540
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Tc",
+    "desc": "",
+    "bounds": [
+      10,
+      540,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      147,
+      540,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      540,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

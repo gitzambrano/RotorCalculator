@@ -1,0 +1,398 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "In-Plane Force H",
+    "desc": "",
+    "bounds": [
+      212,
+      76,
+      487,
+      112
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      76,
+      673,
+      112
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      76,
+      820,
+      112
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced In-Plane Force Hi",
+    "desc": "",
+    "bounds": [
+      212,
+      112,
+      487,
+      166
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      112,
+      673,
+      166
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      112,
+      820,
+      166
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile In-Plane Force H0",
+    "desc": "",
+    "bounds": [
+      212,
+      166,
+      487,
+      220
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      166,
+      673,
+      220
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      166,
+      820,
+      220
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Side Force Y",
+    "desc": "",
+    "bounds": [
+      212,
+      220,
+      487,
+      274
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      220,
+      673,
+      274
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      220,
+      820,
+      274
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "TORQUES & MOMENTS",
+    "desc": "",
+    "bounds": [
+      214,
+      274,
+      810,
+      308
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Shaft Torque Q",
+    "desc": "",
+    "bounds": [
+      212,
+      310,
+      487,
+      364
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "54 460.2",
+    "desc": "",
+    "bounds": [
+      487,
+      310,
+      673,
+      364
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      310,
+      820,
+      364
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Torque Qi",
+    "desc": "",
+    "bounds": [
+      212,
+      364,
+      487,
+      418
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "45 128.8",
+    "desc": "",
+    "bounds": [
+      487,
+      364,
+      673,
+      418
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      364,
+      820,
+      418
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Torque Q0",
+    "desc": "",
+    "bounds": [
+      212,
+      418,
+      487,
+      472
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "9 331.4",
+    "desc": "",
+    "bounds": [
+      487,
+      418,
+      673,
+      472
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      418,
+      820,
+      472
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Roll Moment Mx",
+    "desc": "",
+    "bounds": [
+      212,
+      472,
+      487,
+      526
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      472,
+      673,
+      526
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      472,
+      820,
+      526
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Pitch Moment My",
+    "desc": "",
+    "bounds": [
+      212,
+      526,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      526,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      526,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

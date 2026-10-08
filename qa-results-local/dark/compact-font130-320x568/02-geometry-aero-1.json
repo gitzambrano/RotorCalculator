@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "σact",
+    "desc": "",
+    "bounds": [
+      8,
+      129,
+      154,
+      133
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      158,
+      129,
+      252,
+      133
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      129,
+      312,
+      133
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "σTR",
+    "desc": "",
+    "bounds": [
+      8,
+      139,
+      154,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      158,
+      139,
+      252,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      139,
+      312,
+      191
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "ADISK",
+    "desc": "",
+    "bounds": [
+      8,
+      197,
+      154,
+      249
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      158,
+      197,
+      252,
+      249
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      256,
+      197,
+      312,
+      249
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AREF",
+    "desc": "",
+    "bounds": [
+      8,
+      255,
+      154,
+      307
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      158,
+      255,
+      252,
+      307
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      256,
+      255,
+      312,
+      307
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Aact",
+    "desc": "",
+    "bounds": [
+      8,
+      313,
+      154,
+      365
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      158,
+      313,
+      252,
+      365
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      256,
+      313,
+      312,
+      365
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      12,
+      374,
+      308,
+      408
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "θR",
+    "desc": "",
+    "bounds": [
+      8,
+      413,
+      154,
+      465
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      158,
+      413,
+      252,
+      465
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      413,
+      312,
+      465
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "θT",
+    "desc": "",
+    "bounds": [
+      8,
+      471,
+      154,
+      523
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      158,
+      471,
+      252,
+      523
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      471,
+      312,
+      523
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "θtwist",
+    "desc": "",
+    "bounds": [
+      8,
+      529,
+      154,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      158,
+      529,
+      252,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      529,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,542 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 50% φret,50",
+    "desc": "",
+    "bounds": [
+      84,
+      138,
+      359,
+      184
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      359,
+      138,
+      545,
+      184
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      138,
+      692,
+      184
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 75% φadv,75",
+    "desc": "",
+    "bounds": [
+      84,
+      184,
+      359,
+      238
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      359,
+      184,
+      545,
+      238
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      184,
+      692,
+      238
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 75% φret,75",
+    "desc": "",
+    "bounds": [
+      84,
+      238,
+      359,
+      292
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      359,
+      238,
+      545,
+      292
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      238,
+      692,
+      292
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle Tip φadv,tip",
+    "desc": "",
+    "bounds": [
+      84,
+      292,
+      359,
+      346
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      359,
+      292,
+      545,
+      346
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      292,
+      692,
+      346
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle Tip φret,tip",
+    "desc": "",
+    "bounds": [
+      84,
+      346,
+      359,
+      400
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      359,
+      346,
+      545,
+      400
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      346,
+      692,
+      400
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "STATE & ATMOSPHERE",
+    "desc": "",
+    "bounds": [
+      86,
+      400,
+      682,
+      434
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Speed Ω",
+    "desc": "",
+    "bounds": [
+      84,
+      436,
+      359,
+      490
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "258.0",
+    "desc": "",
+    "bounds": [
+      359,
+      436,
+      545,
+      490
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      547,
+      436,
+      692,
+      490
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Collective Pitch Δθ",
+    "desc": "",
+    "bounds": [
+      84,
+      490,
+      359,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.91",
+    "desc": "",
+    "bounds": [
+      359,
+      490,
+      545,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      490,
+      692,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Pressure Altitude Hp",
+    "desc": "",
+    "bounds": [
+      84,
+      544,
+      359,
+      598
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      359,
+      544,
+      545,
+      598
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      547,
+      544,
+      692,
+      598
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Outside Air Temperature OAT",
+    "desc": "",
+    "bounds": [
+      84,
+      598,
+      359,
+      652
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "15.00",
+    "desc": "",
+    "bounds": [
+      359,
+      598,
+      545,
+      652
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "°C",
+    "desc": "",
+    "bounds": [
+      547,
+      598,
+      692,
+      652
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Air Density ρ",
+    "desc": "",
+    "bounds": [
+      84,
+      652,
+      359,
+      706
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1.225",
+    "desc": "",
+    "bounds": [
+      359,
+      652,
+      545,
+      706
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kg/m³",
+    "desc": "",
+    "bounds": [
+      547,
+      652,
+      692,
+      706
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Ambient Pressure p",
+    "desc": "",
+    "bounds": [
+      84,
+      706,
+      359,
+      760
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 013",
+    "desc": "",
+    "bounds": [
+      359,
+      706,
+      545,
+      760
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "hPa",
+    "desc": "",
+    "bounds": [
+      547,
+      706,
+      692,
+      760
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Speed of Sound a",
+    "desc": "",
+    "bounds": [
+      84,
+      760,
+      359,
+      814
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "340.30",
+    "desc": "",
+    "bounds": [
+      359,
+      760,
+      545,
+      814
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      547,
+      760,
+      692,
+      814
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "MODEL STATUS",
+    "desc": "",
+    "bounds": [
+      86,
+      814,
+      682,
+      848
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Trim: Ω + CT",
+    "desc": "",
+    "bounds": [
+      82,
+      854,
+      686,
+      902
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Model Valid: Mtip = 0.649, Madv = 0.649",
+    "desc": "",
+    "bounds": [
+      82,
+      912,
+      686,
+      960
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

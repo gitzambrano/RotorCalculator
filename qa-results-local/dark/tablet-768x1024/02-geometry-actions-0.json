@@ -1,0 +1,614 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Solidity σREF",
+    "desc": "",
+    "bounds": [
+      82,
+      138,
+      375,
+      168
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0825",
+    "desc": "",
+    "bounds": [
+      379,
+      138,
+      569,
+      168
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      138,
+      686,
+      168
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Solidity σact",
+    "desc": "",
+    "bounds": [
+      82,
+      174,
+      375,
+      226
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      379,
+      174,
+      569,
+      226
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      174,
+      686,
+      226
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust-Weighted Solidity σTR",
+    "desc": "",
+    "bounds": [
+      82,
+      232,
+      375,
+      284
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      379,
+      232,
+      569,
+      284
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      232,
+      686,
+      284
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Area ADISK",
+    "desc": "",
+    "bounds": [
+      82,
+      290,
+      375,
+      342
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      379,
+      290,
+      569,
+      342
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      290,
+      686,
+      342
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Blade Area AREF",
+    "desc": "",
+    "bounds": [
+      82,
+      348,
+      375,
+      400
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      379,
+      348,
+      569,
+      400
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      348,
+      686,
+      400
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Blade Area Aact",
+    "desc": "",
+    "bounds": [
+      82,
+      406,
+      375,
+      458
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      379,
+      406,
+      569,
+      458
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      406,
+      686,
+      458
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      86,
+      467,
+      682,
+      501
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Pitch θR",
+    "desc": "",
+    "bounds": [
+      82,
+      506,
+      375,
+      558
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      379,
+      506,
+      569,
+      558
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      506,
+      686,
+      558
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Pitch θT",
+    "desc": "",
+    "bounds": [
+      82,
+      564,
+      375,
+      616
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      379,
+      564,
+      569,
+      616
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      564,
+      686,
+      616
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Blade Twist θtwist",
+    "desc": "",
+    "bounds": [
+      82,
+      622,
+      375,
+      674
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      379,
+      622,
+      569,
+      674
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      622,
+      686,
+      674
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMICS",
+    "desc": "",
+    "bounds": [
+      86,
+      683,
+      682,
+      717
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Airfoil Section",
+    "desc": "",
+    "bounds": [
+      82,
+      722,
+      375,
+      774
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Custom",
+    "desc": "",
+    "bounds": [
+      379,
+      722,
+      569,
+      774
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      722,
+      567,
+      774
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      722,
+      686,
+      774
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Lift-Curve Slope a0",
+    "desc": "",
+    "bounds": [
+      82,
+      780,
+      375,
+      832
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "5.73",
+    "desc": "",
+    "bounds": [
+      379,
+      780,
+      569,
+      832
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rad⁻¹",
+    "desc": "",
+    "bounds": [
+      573,
+      780,
+      686,
+      832
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Drag Coefficient Cd0",
+    "desc": "",
+    "bounds": [
+      82,
+      838,
+      375,
+      890
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0088",
+    "desc": "",
+    "bounds": [
+      379,
+      838,
+      569,
+      890
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      838,
+      686,
+      890
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Model",
+    "desc": "",
+    "bounds": [
+      82,
+      896,
+      375,
+      948
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sissingh",
+    "desc": "",
+    "bounds": [
+      379,
+      896,
+      569,
+      948
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      896,
+      567,
+      948
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      896,
+      686,
+      948
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Factor B",
+    "desc": "",
+    "bounds": [
+      82,
+      954,
+      375,
+      1000
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.971",
+    "desc": "",
+    "bounds": [
+      379,
+      954,
+      569,
+      1000
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      954,
+      686,
+      1000
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,326 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sikorsky UH-60 Black Hawk",
+    "desc": "",
+    "bounds": [
+      210,
+      88,
+      814,
+      140
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      770,
+      88,
+      810,
+      140
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "ROTOR",
+    "desc": "",
+    "bounds": [
+      214,
+      152,
+      810,
+      186
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Speed Ωnom",
+    "desc": "",
+    "bounds": [
+      210,
+      191,
+      503,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      507,
+      191,
+      697,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      701,
+      191,
+      814,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "PLANFORM",
+    "desc": "",
+    "bounds": [
+      214,
+      252,
+      810,
+      286
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Radius R",
+    "desc": "",
+    "bounds": [
+      210,
+      291,
+      503,
+      343
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "8.18",
+    "desc": "",
+    "bounds": [
+      507,
+      291,
+      697,
+      343
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      701,
+      291,
+      814,
+      343
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Blade Count Nb",
+    "desc": "",
+    "bounds": [
+      210,
+      349,
+      503,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4",
+    "desc": "",
+    "bounds": [
+      507,
+      349,
+      697,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      349,
+      814,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Cutout x0",
+    "desc": "",
+    "bounds": [
+      210,
+      407,
+      503,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.150",
+    "desc": "",
+    "bounds": [
+      507,
+      407,
+      697,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      407,
+      814,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Chord cR",
+    "desc": "",
+    "bounds": [
+      210,
+      465,
+      503,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      507,
+      465,
+      697,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      701,
+      465,
+      814,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Chord cT",
+    "desc": "",
+    "bounds": [
+      210,
+      523,
+      503,
+      568
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      507,
+      523,
+      697,
+      568
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      701,
+      523,
+      814,
+      568
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

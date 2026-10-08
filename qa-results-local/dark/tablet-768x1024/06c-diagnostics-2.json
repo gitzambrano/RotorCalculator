@@ -1,0 +1,650 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Inflow Ratio λi",
+    "desc": "",
+    "bounds": [
+      84,
+      138,
+      359,
+      169
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      359,
+      138,
+      545,
+      169
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      138,
+      692,
+      169
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Hover Inflow Ratio λh",
+    "desc": "",
+    "bounds": [
+      84,
+      169,
+      359,
+      223
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05701",
+    "desc": "",
+    "bounds": [
+      359,
+      169,
+      545,
+      223
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      169,
+      692,
+      223
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Speed Vi",
+    "desc": "",
+    "bounds": [
+      84,
+      223,
+      359,
+      277
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      359,
+      223,
+      545,
+      277
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      547,
+      223,
+      692,
+      277
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Axial Speed Vz,tot",
+    "desc": "",
+    "bounds": [
+      84,
+      277,
+      359,
+      331
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      359,
+      277,
+      545,
+      331
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      547,
+      277,
+      692,
+      331
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Axial Flow Ratio μz",
+    "desc": "",
+    "bounds": [
+      84,
+      331,
+      359,
+      385
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      359,
+      331,
+      545,
+      385
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      331,
+      692,
+      385
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Climb Speed Vz",
+    "desc": "",
+    "bounds": [
+      84,
+      385,
+      359,
+      439
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      359,
+      385,
+      545,
+      439
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      547,
+      385,
+      692,
+      439
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Angle of Attack α",
+    "desc": "",
+    "bounds": [
+      84,
+      439,
+      359,
+      493
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      359,
+      439,
+      545,
+      493
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      439,
+      692,
+      493
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advance-to-Inflow Ratio μ/λ",
+    "desc": "",
+    "bounds": [
+      84,
+      493,
+      359,
+      547
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      359,
+      493,
+      545,
+      547
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      493,
+      692,
+      547
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Longitudinal Inflow Gradient Kx",
+    "desc": "",
+    "bounds": [
+      84,
+      547,
+      359,
+      601
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      359,
+      547,
+      545,
+      601
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      547,
+      692,
+      601
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Lateral Inflow Gradient Ky",
+    "desc": "",
+    "bounds": [
+      84,
+      601,
+      359,
+      655
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      359,
+      601,
+      545,
+      655
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      601,
+      692,
+      655
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Wake Skew Angle χ",
+    "desc": "",
+    "bounds": [
+      84,
+      655,
+      359,
+      709
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      359,
+      655,
+      545,
+      709
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      655,
+      692,
+      709
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Factor B",
+    "desc": "",
+    "bounds": [
+      84,
+      709,
+      359,
+      763
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.9715",
+    "desc": "",
+    "bounds": [
+      359,
+      709,
+      545,
+      763
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      709,
+      692,
+      763
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "FLOW & BLADE DIAGNOSTICS",
+    "desc": "",
+    "bounds": [
+      86,
+      763,
+      682,
+      797
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advance Ratio μx",
+    "desc": "",
+    "bounds": [
+      84,
+      799,
+      359,
+      853
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      359,
+      799,
+      545,
+      853
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      799,
+      692,
+      853
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Forward Airspeed Vx",
+    "desc": "",
+    "bounds": [
+      84,
+      853,
+      359,
+      907
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      359,
+      853,
+      545,
+      907
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      547,
+      853,
+      692,
+      907
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Speed ΩR",
+    "desc": "",
+    "bounds": [
+      84,
+      907,
+      359,
+      961
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      359,
+      907,
+      545,
+      961
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      547,
+      907,
+      692,
+      961
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Mach Mtip",
+    "desc": "",
+    "bounds": [
+      84,
+      961,
+      359,
+      1000
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      359,
+      961,
+      545,
+      1000
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      961,
+      692,
+      1000
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

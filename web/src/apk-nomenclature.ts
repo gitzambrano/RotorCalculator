@@ -1153,7 +1153,7 @@ export const APK_NOMENCLATURE = {
   "inflow_coleman_feingold": {
     "key": "inflow_coleman_feingold",
     "full": "Coleman-Feingold (NDARC)",
-    "short": "Coleman-FG",
+    "short": "Coleman FG",
     "sym": "",
     "unit": "",
     "body": "Coleman-Feingold harmonic inflow model (NDARC standard). Longitudinal gradient K_x = (15π/32)·tan(χ/2) and lateral gradient K_y = −2μ.",

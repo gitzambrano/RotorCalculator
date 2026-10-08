@@ -1,0 +1,326 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Trim",
+    "desc": "",
+    "bounds": [
+      8,
+      133,
+      154,
+      185
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Ω + CT",
+    "desc": "",
+    "bounds": [
+      158,
+      133,
+      252,
+      185
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      236,
+      133,
+      250,
+      185
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      133,
+      312,
+      185
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Ω",
+    "desc": "",
+    "bounds": [
+      8,
+      191,
+      154,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      158,
+      191,
+      252,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      256,
+      191,
+      312,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CT",
+    "desc": "",
+    "bounds": [
+      8,
+      249,
+      154,
+      301
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00650",
+    "desc": "",
+    "bounds": [
+      158,
+      249,
+      252,
+      301
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      249,
+      312,
+      301
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMIC MODEL",
+    "desc": "",
+    "bounds": [
+      12,
+      310,
+      308,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Inflow",
+    "desc": "",
+    "bounds": [
+      8,
+      349,
+      154,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Coleman FG",
+    "desc": "",
+    "bounds": [
+      158,
+      349,
+      252,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      236,
+      349,
+      250,
+      401
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      349,
+      312,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "kind",
+    "desc": "",
+    "bounds": [
+      8,
+      407,
+      154,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.150",
+    "desc": "",
+    "bounds": [
+      158,
+      407,
+      252,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      407,
+      312,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Integ.",
+    "desc": "",
+    "bounds": [
+      8,
+      465,
+      154,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Num. Vec.",
+    "desc": "",
+    "bounds": [
+      158,
+      465,
+      252,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      236,
+      465,
+      250,
+      517
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      465,
+      312,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,386 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Torque CQ",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      152
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0005293",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      152
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      152
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CQi",
+    "desc": "",
+    "bounds": [
+      10,
+      152,
+      147,
+      206
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0004386",
+    "desc": "",
+    "bounds": [
+      147,
+      152,
+      243,
+      206
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      152,
+      318,
+      206
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CQ0",
+    "desc": "",
+    "bounds": [
+      10,
+      206,
+      147,
+      260
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000907",
+    "desc": "",
+    "bounds": [
+      147,
+      206,
+      243,
+      260
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      206,
+      318,
+      260
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "In-Plane CH",
+    "desc": "",
+    "bounds": [
+      10,
+      260,
+      147,
+      314
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      260,
+      243,
+      314
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      260,
+      318,
+      314
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CHi",
+    "desc": "",
+    "bounds": [
+      10,
+      314,
+      147,
+      368
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      314,
+      243,
+      368
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      314,
+      318,
+      368
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CH0",
+    "desc": "",
+    "bounds": [
+      10,
+      368,
+      147,
+      422
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      368,
+      243,
+      422
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      368,
+      318,
+      422
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CY",
+    "desc": "",
+    "bounds": [
+      10,
+      422,
+      147,
+      476
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0000000",
+    "desc": "",
+    "bounds": [
+      147,
+      422,
+      243,
+      476
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      422,
+      318,
+      476
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CMx",
+    "desc": "",
+    "bounds": [
+      10,
+      476,
+      147,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000000",
+    "desc": "",
+    "bounds": [
+      147,
+      476,
+      243,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      476,
+      318,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CMy",
+    "desc": "",
+    "bounds": [
+      10,
+      530,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000000",
+    "desc": "",
+    "bounds": [
+      147,
+      530,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      530,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

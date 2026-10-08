@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "φadv,50",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      170
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      170
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      170
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φret,50",
+    "desc": "",
+    "bounds": [
+      10,
+      170,
+      147,
+      224
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      147,
+      170,
+      243,
+      224
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      170,
+      318,
+      224
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φadv,75",
+    "desc": "",
+    "bounds": [
+      10,
+      224,
+      147,
+      278
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      147,
+      224,
+      243,
+      278
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      224,
+      318,
+      278
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φret,75",
+    "desc": "",
+    "bounds": [
+      10,
+      278,
+      147,
+      332
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      147,
+      278,
+      243,
+      332
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      278,
+      318,
+      332
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φadv,tip",
+    "desc": "",
+    "bounds": [
+      10,
+      332,
+      147,
+      386
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      147,
+      332,
+      243,
+      386
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      332,
+      318,
+      386
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φret,tip",
+    "desc": "",
+    "bounds": [
+      10,
+      386,
+      147,
+      440
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      147,
+      386,
+      243,
+      440
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      386,
+      318,
+      440
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "STATE & ATMOSPHERE",
+    "desc": "",
+    "bounds": [
+      12,
+      440,
+      308,
+      474
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Ω",
+    "desc": "",
+    "bounds": [
+      10,
+      476,
+      147,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "258.0",
+    "desc": "",
+    "bounds": [
+      147,
+      476,
+      243,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      245,
+      476,
+      318,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Δθ",
+    "desc": "",
+    "bounds": [
+      10,
+      530,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.91",
+    "desc": "",
+    "bounds": [
+      147,
+      530,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      530,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

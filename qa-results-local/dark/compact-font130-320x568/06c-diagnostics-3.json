@@ -1,0 +1,386 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "λ",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      130
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      130
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      130
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "λi",
+    "desc": "",
+    "bounds": [
+      10,
+      130,
+      147,
+      184
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      147,
+      130,
+      243,
+      184
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      130,
+      318,
+      184
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "λh",
+    "desc": "",
+    "bounds": [
+      10,
+      184,
+      147,
+      238
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05701",
+    "desc": "",
+    "bounds": [
+      147,
+      184,
+      243,
+      238
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      184,
+      318,
+      238
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vi",
+    "desc": "",
+    "bounds": [
+      10,
+      238,
+      147,
+      292
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      147,
+      238,
+      243,
+      292
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      238,
+      318,
+      292
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vz,tot",
+    "desc": "",
+    "bounds": [
+      10,
+      292,
+      147,
+      346
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      147,
+      292,
+      243,
+      346
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      292,
+      318,
+      346
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μz",
+    "desc": "",
+    "bounds": [
+      10,
+      346,
+      147,
+      400
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      346,
+      243,
+      400
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      346,
+      318,
+      400
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vz",
+    "desc": "",
+    "bounds": [
+      10,
+      400,
+      147,
+      454
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      400,
+      243,
+      454
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      400,
+      318,
+      454
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk AoA α",
+    "desc": "",
+    "bounds": [
+      10,
+      454,
+      147,
+      508
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      454,
+      243,
+      508
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      454,
+      318,
+      508
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μ/λ",
+    "desc": "",
+    "bounds": [
+      10,
+      508,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      508,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      508,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

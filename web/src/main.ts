@@ -1066,7 +1066,7 @@ function refreshSelectorCaptions(): void {
     collective_ct: "Δθ + C_T", collective_thrust: "Δθ + T", ct_thrust: "C_T + T",
   };
   byId("btn-trim-mode").innerHTML = formatSubscripts(pairs[activeCond.operatingPair] || "Ω + C_T");
-  const inflows: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman", coleman_feingold: mobile ? "Coleman-FG" : "Coleman-Feingold", drees: "Drees" };
+  const inflows: Record<string, string> = { uniform: "Uniform", coleman_simple: "Coleman", coleman_feingold: mobile ? "Coleman FG" : "Coleman-Feingold", drees: "Drees" };
   byId("btn-inflow-model").textContent = inflows[activeCond.inflowModel];
   byId("btn-drag-info").textContent = mobile ? "Num. Vec." : "Numerical Vectorial";
   document.querySelectorAll<HTMLElement>(".engineering-row > .action-btn").forEach(el => {

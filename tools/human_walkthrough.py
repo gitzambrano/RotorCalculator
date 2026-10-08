@@ -142,7 +142,7 @@ click_node("CONDITIONS")
 screenshot("05_modern_cond_top")
 
 # 1.5 Change Inflow Model
-if click_node("Coleman-FG") or click_node("Inflow"):
+if click_node("Coleman FG") or click_node("Inflow"):
     screenshot("06_modern_inflow_picker")
     click_node("Drees")
     time.sleep(0.5)

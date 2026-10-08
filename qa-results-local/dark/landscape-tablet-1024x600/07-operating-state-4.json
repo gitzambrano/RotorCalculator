@@ -1,0 +1,422 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Tip Mach Madv",
+    "desc": "",
+    "bounds": [
+      212,
+      76,
+      487,
+      95
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      487,
+      76,
+      673,
+      95
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      76,
+      820,
+      95
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Speed Vret",
+    "desc": "",
+    "bounds": [
+      212,
+      95,
+      487,
+      149
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      487,
+      95,
+      673,
+      149
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      675,
+      95,
+      820,
+      149
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Mach Mret",
+    "desc": "",
+    "bounds": [
+      212,
+      149,
+      487,
+      203
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      487,
+      149,
+      673,
+      203
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      149,
+      820,
+      203
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA 25% αadv,25",
+    "desc": "",
+    "bounds": [
+      212,
+      203,
+      487,
+      257
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.58",
+    "desc": "",
+    "bounds": [
+      487,
+      203,
+      673,
+      257
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      203,
+      820,
+      257
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA 25% αret,25",
+    "desc": "",
+    "bounds": [
+      212,
+      257,
+      487,
+      311
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.58",
+    "desc": "",
+    "bounds": [
+      487,
+      257,
+      673,
+      311
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      257,
+      820,
+      311
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA 50% αadv,50",
+    "desc": "",
+    "bounds": [
+      212,
+      311,
+      487,
+      365
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      487,
+      311,
+      673,
+      365
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      311,
+      820,
+      365
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA 50% αret,50",
+    "desc": "",
+    "bounds": [
+      212,
+      365,
+      487,
+      419
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      487,
+      365,
+      673,
+      419
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      365,
+      820,
+      419
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA 75% αadv,75",
+    "desc": "",
+    "bounds": [
+      212,
+      419,
+      487,
+      473
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      487,
+      419,
+      673,
+      473
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      419,
+      820,
+      473
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA 75% αret,75",
+    "desc": "",
+    "bounds": [
+      212,
+      473,
+      487,
+      527
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      487,
+      473,
+      673,
+      527
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      473,
+      820,
+      527
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA Tip αadv,tip",
+    "desc": "",
+    "bounds": [
+      212,
+      527,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.55",
+    "desc": "",
+    "bounds": [
+      487,
+      527,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      527,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Nb",
+    "desc": "",
+    "bounds": [
+      8,
+      129,
+      154,
+      147
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4",
+    "desc": "",
+    "bounds": [
+      158,
+      129,
+      252,
+      147
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      129,
+      312,
+      147
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "x0",
+    "desc": "",
+    "bounds": [
+      8,
+      153,
+      154,
+      205
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.150",
+    "desc": "",
+    "bounds": [
+      158,
+      153,
+      252,
+      205
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      153,
+      312,
+      205
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "cR",
+    "desc": "",
+    "bounds": [
+      8,
+      211,
+      154,
+      263
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      158,
+      211,
+      252,
+      263
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      256,
+      211,
+      312,
+      263
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "cT",
+    "desc": "",
+    "bounds": [
+      8,
+      269,
+      154,
+      321
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      158,
+      269,
+      252,
+      321
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      256,
+      269,
+      312,
+      321
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "cT/cR",
+    "desc": "",
+    "bounds": [
+      8,
+      327,
+      154,
+      379
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.000",
+    "desc": "",
+    "bounds": [
+      158,
+      327,
+      252,
+      379
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      327,
+      312,
+      379
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AR",
+    "desc": "",
+    "bounds": [
+      8,
+      385,
+      154,
+      437
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.43",
+    "desc": "",
+    "bounds": [
+      158,
+      385,
+      252,
+      437
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      385,
+      312,
+      437
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SOLIDITY & AREAS",
+    "desc": "",
+    "bounds": [
+      12,
+      446,
+      308,
+      480
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "σREF",
+    "desc": "",
+    "bounds": [
+      8,
+      485,
+      154,
+      537
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0825",
+    "desc": "",
+    "bounds": [
+      158,
+      485,
+      252,
+      537
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      485,
+      312,
+      537
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "σact",
+    "desc": "",
+    "bounds": [
+      8,
+      543,
+      154,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      158,
+      543,
+      252,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      543,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

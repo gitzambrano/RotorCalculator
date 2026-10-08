@@ -1,0 +1,278 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Speed Ω",
+    "desc": "",
+    "bounds": [
+      155,
+      76,
+      448,
+      87
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      452,
+      76,
+      642,
+      87
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      646,
+      76,
+      759,
+      87
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Target Thrust Coefficient CT",
+    "desc": "",
+    "bounds": [
+      155,
+      93,
+      448,
+      145
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00650",
+    "desc": "",
+    "bounds": [
+      452,
+      93,
+      642,
+      145
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      93,
+      759,
+      145
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMIC MODEL",
+    "desc": "",
+    "bounds": [
+      159,
+      154,
+      755,
+      188
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Inflow Model",
+    "desc": "",
+    "bounds": [
+      155,
+      193,
+      448,
+      245
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Coleman FG",
+    "desc": "",
+    "bounds": [
+      452,
+      193,
+      642,
+      245
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      626,
+      193,
+      640,
+      245
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      193,
+      759,
+      245
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Power Factor kind",
+    "desc": "",
+    "bounds": [
+      155,
+      251,
+      448,
+      303
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.150",
+    "desc": "",
+    "bounds": [
+      452,
+      251,
+      642,
+      303
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      251,
+      759,
+      303
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Drag Integration",
+    "desc": "",
+    "bounds": [
+      155,
+      309,
+      448,
+      361
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Num. Vec.",
+    "desc": "",
+    "bounds": [
+      452,
+      309,
+      642,
+      361
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      626,
+      309,
+      640,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      309,
+      759,
+      361
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,398 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Cutout x0",
+    "desc": "",
+    "bounds": [
+      210,
+      76,
+      503,
+      103
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.150",
+    "desc": "",
+    "bounds": [
+      507,
+      76,
+      697,
+      103
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      76,
+      814,
+      103
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Chord cR",
+    "desc": "",
+    "bounds": [
+      210,
+      109,
+      503,
+      161
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      507,
+      109,
+      697,
+      161
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      701,
+      109,
+      814,
+      161
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Chord cT",
+    "desc": "",
+    "bounds": [
+      210,
+      167,
+      503,
+      219
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      507,
+      167,
+      697,
+      219
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      701,
+      167,
+      814,
+      219
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Taper Ratio cT/cR",
+    "desc": "",
+    "bounds": [
+      210,
+      225,
+      503,
+      277
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.000",
+    "desc": "",
+    "bounds": [
+      507,
+      225,
+      697,
+      277
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      225,
+      814,
+      277
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Aspect Ratio AR",
+    "desc": "",
+    "bounds": [
+      210,
+      283,
+      503,
+      335
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.43",
+    "desc": "",
+    "bounds": [
+      507,
+      283,
+      697,
+      335
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      283,
+      814,
+      335
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SOLIDITY & AREAS",
+    "desc": "",
+    "bounds": [
+      214,
+      344,
+      810,
+      378
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Solidity σREF",
+    "desc": "",
+    "bounds": [
+      210,
+      383,
+      503,
+      435
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0825",
+    "desc": "",
+    "bounds": [
+      507,
+      383,
+      697,
+      435
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      383,
+      814,
+      435
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Solidity σact",
+    "desc": "",
+    "bounds": [
+      210,
+      441,
+      503,
+      493
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      507,
+      441,
+      697,
+      493
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      441,
+      814,
+      493
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust-Weighted Solidity σTR",
+    "desc": "",
+    "bounds": [
+      210,
+      499,
+      503,
+      551
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      507,
+      499,
+      697,
+      551
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      499,
+      814,
+      551
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Area ADISK",
+    "desc": "",
+    "bounds": [
+      210,
+      557,
+      503,
+      568
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      507,
+      557,
+      697,
+      568
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      701,
+      557,
+      814,
+      568
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -216,7 +216,7 @@ Private Sub Ensure
 	' ---------------- inflow models ----------------
 	Add("inflow_uniform", "Uniform Inflow", "Uniform", "", "", "Classical actuator disk momentum theory with uniform induced downwash across the rotor disk (K_x = K_y = 0). Produces zero hub pitching moment and side force.", "K_x = K_y = 0", "")
 	Add("inflow_coleman_simple", "Coleman", "Coleman", "", "", "Coleman (1945) first-harmonic inflow model with longitudinal gradient K_x = tan(χ/2) derived from wake skew angle χ. Lateral gradient is zero (K_y = 0).", "K_x = tan(χ/2),  K_y = 0", "")
-	Add("inflow_coleman_feingold", "Coleman-Feingold (NDARC)", "Coleman-FG", "", "", "Coleman-Feingold harmonic inflow model (NDARC standard). Longitudinal gradient K_x = (15π/32)·tan(χ/2) and lateral gradient K_y = −2μ.", "K_x = (15π/32)·tan(χ/2),  K_y = −2μ", "")
+	Add("inflow_coleman_feingold", "Coleman-Feingold (NDARC)", "Coleman FG", "", "", "Coleman-Feingold harmonic inflow model (NDARC standard). Longitudinal gradient K_x = (15π/32)·tan(χ/2) and lateral gradient K_y = −2μ.", "K_x = (15π/32)·tan(χ/2),  K_y = −2μ", "")
 	Add("inflow_drees", "Drees", "Drees", "", "", "Drees (1949) harmonic inflow model. Incorporates advance-ratio dependent longitudinal gradient K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2) and lateral gradient K_y = −2μ.", "K_x = (4/3)·(1 − 1.8μ²)·tan(χ/2),  K_y = −2μ", "")
 	' ---------------- trim modes ----------------
 	Add("trim_none", "Trim None", "None", "", "", "Uses the typed collective pitch and rotor speed as they are.", "", "")

@@ -1,0 +1,590 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Area ADISK",
+    "desc": "",
+    "bounds": [
+      82,
+      138,
+      375,
+      185
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      379,
+      138,
+      569,
+      185
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      138,
+      686,
+      185
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Blade Area AREF",
+    "desc": "",
+    "bounds": [
+      82,
+      191,
+      375,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      379,
+      191,
+      569,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      191,
+      686,
+      243
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Blade Area Aact",
+    "desc": "",
+    "bounds": [
+      82,
+      249,
+      375,
+      301
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      379,
+      249,
+      569,
+      301
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      573,
+      249,
+      686,
+      301
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      86,
+      310,
+      682,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Pitch θR",
+    "desc": "",
+    "bounds": [
+      82,
+      349,
+      375,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      379,
+      349,
+      569,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      349,
+      686,
+      401
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Pitch θT",
+    "desc": "",
+    "bounds": [
+      82,
+      407,
+      375,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      379,
+      407,
+      569,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      407,
+      686,
+      459
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Blade Twist θtwist",
+    "desc": "",
+    "bounds": [
+      82,
+      465,
+      375,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      379,
+      465,
+      569,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      573,
+      465,
+      686,
+      517
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMICS",
+    "desc": "",
+    "bounds": [
+      86,
+      526,
+      682,
+      560
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Airfoil Section",
+    "desc": "",
+    "bounds": [
+      82,
+      565,
+      375,
+      617
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Custom",
+    "desc": "",
+    "bounds": [
+      379,
+      565,
+      569,
+      617
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      565,
+      567,
+      617
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      565,
+      686,
+      617
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Lift-Curve Slope a0",
+    "desc": "",
+    "bounds": [
+      82,
+      623,
+      375,
+      675
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "5.73",
+    "desc": "",
+    "bounds": [
+      379,
+      623,
+      569,
+      675
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rad⁻¹",
+    "desc": "",
+    "bounds": [
+      573,
+      623,
+      686,
+      675
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Drag Coefficient Cd0",
+    "desc": "",
+    "bounds": [
+      82,
+      681,
+      375,
+      733
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0088",
+    "desc": "",
+    "bounds": [
+      379,
+      681,
+      569,
+      733
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      681,
+      686,
+      733
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Model",
+    "desc": "",
+    "bounds": [
+      82,
+      739,
+      375,
+      791
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sissingh",
+    "desc": "",
+    "bounds": [
+      379,
+      739,
+      569,
+      791
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      739,
+      567,
+      791
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      739,
+      686,
+      791
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Factor B",
+    "desc": "",
+    "bounds": [
+      82,
+      797,
+      375,
+      849
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.971",
+    "desc": "",
+    "bounds": [
+      379,
+      797,
+      569,
+      849
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      797,
+      686,
+      849
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Compressibility Correction",
+    "desc": "",
+    "bounds": [
+      82,
+      855,
+      375,
+      907
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "On",
+    "desc": "",
+    "bounds": [
+      379,
+      855,
+      569,
+      907
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      553,
+      855,
+      567,
+      907
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      573,
+      855,
+      686,
+      907
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SAVE",
+    "desc": "",
+    "bounds": [
+      82,
+      924,
+      278,
+      976
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "COPY",
+    "desc": "",
+    "bounds": [
+      286,
+      924,
+      482,
+      976
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "DELETE",
+    "desc": "",
+    "bounds": [
+      490,
+      924,
+      686,
+      976
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

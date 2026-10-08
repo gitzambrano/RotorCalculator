@@ -1,0 +1,434 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA Tip αret,tip",
+    "desc": "",
+    "bounds": [
+      212,
+      76,
+      487,
+      78
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.55",
+    "desc": "",
+    "bounds": [
+      487,
+      76,
+      673,
+      78
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      76,
+      820,
+      78
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 25% φadv,25",
+    "desc": "",
+    "bounds": [
+      212,
+      78,
+      487,
+      132
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "13.21",
+    "desc": "",
+    "bounds": [
+      487,
+      78,
+      673,
+      132
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      78,
+      820,
+      132
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 25% φret,25",
+    "desc": "",
+    "bounds": [
+      212,
+      132,
+      487,
+      186
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "13.21",
+    "desc": "",
+    "bounds": [
+      487,
+      132,
+      673,
+      186
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      132,
+      820,
+      186
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 50% φadv,50",
+    "desc": "",
+    "bounds": [
+      212,
+      186,
+      487,
+      240
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      487,
+      186,
+      673,
+      240
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      186,
+      820,
+      240
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 50% φret,50",
+    "desc": "",
+    "bounds": [
+      212,
+      240,
+      487,
+      294
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      487,
+      240,
+      673,
+      294
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      240,
+      820,
+      294
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 75% φadv,75",
+    "desc": "",
+    "bounds": [
+      212,
+      294,
+      487,
+      348
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      487,
+      294,
+      673,
+      348
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      294,
+      820,
+      348
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 75% φret,75",
+    "desc": "",
+    "bounds": [
+      212,
+      348,
+      487,
+      402
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      487,
+      348,
+      673,
+      402
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      348,
+      820,
+      402
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle Tip φadv,tip",
+    "desc": "",
+    "bounds": [
+      212,
+      402,
+      487,
+      456
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      487,
+      402,
+      673,
+      456
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      402,
+      820,
+      456
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle Tip φret,tip",
+    "desc": "",
+    "bounds": [
+      212,
+      456,
+      487,
+      510
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      487,
+      456,
+      673,
+      510
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      675,
+      456,
+      820,
+      510
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "STATE & ATMOSPHERE",
+    "desc": "",
+    "bounds": [
+      214,
+      510,
+      810,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Speed Ω",
+    "desc": "",
+    "bounds": [
+      212,
+      546,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "258.0",
+    "desc": "",
+    "bounds": [
+      487,
+      546,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      675,
+      546,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

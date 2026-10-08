@@ -1,0 +1,674 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      64,
+      24,
+      697,
+      84
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      705,
+      24,
+      753,
+      84
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      84,
+      256,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      256,
+      84,
+      512,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      512,
+      84,
+      768,
+      136
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Mach Mret",
+    "desc": "",
+    "bounds": [
+      84,
+      138,
+      359,
+      152
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      359,
+      138,
+      545,
+      152
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      547,
+      138,
+      692,
+      152
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA 25% αadv,25",
+    "desc": "",
+    "bounds": [
+      84,
+      152,
+      359,
+      206
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.58",
+    "desc": "",
+    "bounds": [
+      359,
+      152,
+      545,
+      206
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      152,
+      692,
+      206
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA 25% αret,25",
+    "desc": "",
+    "bounds": [
+      84,
+      206,
+      359,
+      260
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.58",
+    "desc": "",
+    "bounds": [
+      359,
+      206,
+      545,
+      260
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      206,
+      692,
+      260
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA 50% αadv,50",
+    "desc": "",
+    "bounds": [
+      84,
+      260,
+      359,
+      314
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      359,
+      260,
+      545,
+      314
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      260,
+      692,
+      314
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA 50% αret,50",
+    "desc": "",
+    "bounds": [
+      84,
+      314,
+      359,
+      368
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      359,
+      314,
+      545,
+      368
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      314,
+      692,
+      368
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA 75% αadv,75",
+    "desc": "",
+    "bounds": [
+      84,
+      368,
+      359,
+      422
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      359,
+      368,
+      545,
+      422
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      368,
+      692,
+      422
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA 75% αret,75",
+    "desc": "",
+    "bounds": [
+      84,
+      422,
+      359,
+      476
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      359,
+      422,
+      545,
+      476
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      422,
+      692,
+      476
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing AoA Tip αadv,tip",
+    "desc": "",
+    "bounds": [
+      84,
+      476,
+      359,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.55",
+    "desc": "",
+    "bounds": [
+      359,
+      476,
+      545,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      476,
+      692,
+      530
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating AoA Tip αret,tip",
+    "desc": "",
+    "bounds": [
+      84,
+      530,
+      359,
+      584
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.55",
+    "desc": "",
+    "bounds": [
+      359,
+      530,
+      545,
+      584
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      530,
+      692,
+      584
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 25% φadv,25",
+    "desc": "",
+    "bounds": [
+      84,
+      584,
+      359,
+      638
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "13.21",
+    "desc": "",
+    "bounds": [
+      359,
+      584,
+      545,
+      638
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      584,
+      692,
+      638
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 25% φret,25",
+    "desc": "",
+    "bounds": [
+      84,
+      638,
+      359,
+      692
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "13.21",
+    "desc": "",
+    "bounds": [
+      359,
+      638,
+      545,
+      692
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      638,
+      692,
+      692
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 50% φadv,50",
+    "desc": "",
+    "bounds": [
+      84,
+      692,
+      359,
+      746
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      359,
+      692,
+      545,
+      746
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      692,
+      692,
+      746
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 50% φret,50",
+    "desc": "",
+    "bounds": [
+      84,
+      746,
+      359,
+      800
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "6.69",
+    "desc": "",
+    "bounds": [
+      359,
+      746,
+      545,
+      800
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      746,
+      692,
+      800
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle 75% φadv,75",
+    "desc": "",
+    "bounds": [
+      84,
+      800,
+      359,
+      854
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      359,
+      800,
+      545,
+      854
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      800,
+      692,
+      854
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle 75% φret,75",
+    "desc": "",
+    "bounds": [
+      84,
+      854,
+      359,
+      908
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.47",
+    "desc": "",
+    "bounds": [
+      359,
+      854,
+      545,
+      908
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      854,
+      692,
+      908
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Advancing Inflow Angle Tip φadv,tip",
+    "desc": "",
+    "bounds": [
+      84,
+      908,
+      359,
+      962
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      359,
+      908,
+      545,
+      962
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      908,
+      692,
+      962
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Retreating Inflow Angle Tip φret,tip",
+    "desc": "",
+    "bounds": [
+      84,
+      962,
+      359,
+      1000
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "3.36",
+    "desc": "",
+    "bounds": [
+      359,
+      962,
+      545,
+      1000
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      547,
+      962,
+      692,
+      1000
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

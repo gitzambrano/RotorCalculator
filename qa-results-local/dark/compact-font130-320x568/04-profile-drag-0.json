@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "OAT",
+    "desc": "",
+    "bounds": [
+      8,
+      129,
+      154,
+      134
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.0",
+    "desc": "",
+    "bounds": [
+      158,
+      129,
+      252,
+      134
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "°C",
+    "desc": "",
+    "bounds": [
+      256,
+      129,
+      312,
+      134
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "μx ⇄",
+    "desc": "",
+    "bounds": [
+      8,
+      140,
+      154,
+      192
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      158,
+      140,
+      252,
+      192
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      140,
+      312,
+      192
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "α ⇄",
+    "desc": "",
+    "bounds": [
+      8,
+      198,
+      154,
+      250
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      158,
+      198,
+      252,
+      250
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      198,
+      312,
+      250
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "OPERATING CONSTRAINTS",
+    "desc": "",
+    "bounds": [
+      12,
+      259,
+      308,
+      293
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Trim",
+    "desc": "",
+    "bounds": [
+      8,
+      298,
+      154,
+      350
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Ω + CT",
+    "desc": "",
+    "bounds": [
+      158,
+      298,
+      252,
+      350
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      236,
+      298,
+      250,
+      350
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      298,
+      312,
+      350
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Ω",
+    "desc": "",
+    "bounds": [
+      8,
+      356,
+      154,
+      408
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      158,
+      356,
+      252,
+      408
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      256,
+      356,
+      312,
+      408
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CT",
+    "desc": "",
+    "bounds": [
+      8,
+      414,
+      154,
+      466
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00650",
+    "desc": "",
+    "bounds": [
+      158,
+      414,
+      252,
+      466
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      414,
+      312,
+      466
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMIC MODEL",
+    "desc": "",
+    "bounds": [
+      12,
+      475,
+      308,
+      509
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Inflow",
+    "desc": "",
+    "bounds": [
+      8,
+      514,
+      154,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Coleman FG",
+    "desc": "",
+    "bounds": [
+      158,
+      514,
+      252,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      236,
+      514,
+      250,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      514,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

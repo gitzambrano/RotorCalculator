@@ -1,0 +1,266 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Pitch Moment My",
+    "desc": "",
+    "bounds": [
+      157,
+      76,
+      432,
+      105
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      432,
+      76,
+      618,
+      105
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      620,
+      76,
+      765,
+      105
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "POWER",
+    "desc": "",
+    "bounds": [
+      159,
+      105,
+      755,
+      139
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Shaft Power P",
+    "desc": "",
+    "bounds": [
+      157,
+      141,
+      432,
+      195
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 471.4",
+    "desc": "",
+    "bounds": [
+      432,
+      141,
+      618,
+      195
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      620,
+      141,
+      765,
+      195
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Power Pi",
+    "desc": "",
+    "bounds": [
+      157,
+      195,
+      432,
+      249
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 219.3",
+    "desc": "",
+    "bounds": [
+      432,
+      195,
+      618,
+      249
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      620,
+      195,
+      765,
+      249
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Power P0",
+    "desc": "",
+    "bounds": [
+      157,
+      249,
+      432,
+      303
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "252.1",
+    "desc": "",
+    "bounds": [
+      432,
+      249,
+      618,
+      303
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      620,
+      249,
+      765,
+      303
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Air Power Pair",
+    "desc": "",
+    "bounds": [
+      157,
+      303,
+      432,
+      357
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 471.4",
+    "desc": "",
+    "bounds": [
+      432,
+      303,
+      618,
+      357
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      620,
+      303,
+      765,
+      357
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "LOADING & EFFICIENCY",
+    "desc": "",
+    "bounds": [
+      159,
+      357,
+      755,
+      388
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Solidity σact",
+    "desc": "",
+    "bounds": [
+      210,
+      76,
+      503,
+      112
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      507,
+      76,
+      697,
+      112
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      76,
+      814,
+      112
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust-Weighted Solidity σTR",
+    "desc": "",
+    "bounds": [
+      210,
+      118,
+      503,
+      170
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      507,
+      118,
+      697,
+      170
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      701,
+      118,
+      814,
+      170
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Area ADISK",
+    "desc": "",
+    "bounds": [
+      210,
+      176,
+      503,
+      228
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      507,
+      176,
+      697,
+      228
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      701,
+      176,
+      814,
+      228
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Blade Area AREF",
+    "desc": "",
+    "bounds": [
+      210,
+      234,
+      503,
+      286
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      507,
+      234,
+      697,
+      286
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      701,
+      234,
+      814,
+      286
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Blade Area Aact",
+    "desc": "",
+    "bounds": [
+      210,
+      292,
+      503,
+      344
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      507,
+      292,
+      697,
+      344
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      701,
+      292,
+      814,
+      344
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      214,
+      353,
+      810,
+      387
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Pitch θR",
+    "desc": "",
+    "bounds": [
+      210,
+      392,
+      503,
+      444
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      507,
+      392,
+      697,
+      444
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      701,
+      392,
+      814,
+      444
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Pitch θT",
+    "desc": "",
+    "bounds": [
+      210,
+      450,
+      503,
+      502
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      507,
+      450,
+      697,
+      502
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      701,
+      450,
+      814,
+      502
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Blade Twist θtwist",
+    "desc": "",
+    "bounds": [
+      210,
+      508,
+      503,
+      560
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      507,
+      508,
+      697,
+      560
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      701,
+      508,
+      814,
+      560
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

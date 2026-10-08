@@ -2162,6 +2162,19 @@ Private Sub BreakAtHyphen(t As String) As String
 	Return t
 End Sub
 
+' Sets a selector value and reduces its text size until the longest word fits on one line,
+' so a word never breaks mid-word at 320dp or at 130% font scale.
+Private Sub SetSelectorText(btn As Button, txt As String)
+	btn.Text = txt
+	Dim avail As Int = btn.Width - 24dip
+	If avail <= 0 Then avail = ColValW - 24dip
+	Dim sz As Float = TextSp
+	For Each w As String In Regex.Split("\s+", txt)
+		If w.Length > 0 Then sz = Min(sz, RotorNames.FitTextSize(w, TextSp, TextSp * 0.7, avail))
+	Next
+	btn.TextSize = sz
+End Sub
+
 Private Sub CreateSelectorValue(rowId As String, evt As String) As Button
 	Dim btn As Button
 	btn.Initialize(evt)
@@ -2513,7 +2526,7 @@ Private Sub RefreshGeomFields(skipId As String)
 		StyleUnitButton(ub, key)
 		Select key
 			Case "airfoil"
-				btnSelectAirfoil.Text = BreakAtHyphen(AirfoilDisplayName(g))
+				SetSelectorText(btnSelectAirfoil, BreakAtHyphen(AirfoilDisplayName(g)))
 			Case "tipModel"
 				RefreshTipLossButton(g)
 			Case "comp"
@@ -2530,11 +2543,11 @@ End Sub
 Private Sub RefreshTipLossButton(geom As RotorGeometry)
 	Select geom.TipLossMode
 		Case "sissingh"
-			btnTipLoss.Text = RotorNames.ShortName("tip_sissingh")
+			SetSelectorText(btnTipLoss, RotorNames.ShortName("tip_sissingh"))
 		Case "fixed"
-			btnTipLoss.Text = RotorNames.ShortName("tip_fixed")
+			SetSelectorText(btnTipLoss, RotorNames.ShortName("tip_fixed"))
 		Case Else
-			btnTipLoss.Text = RotorNames.ShortName("tip_none")
+			SetSelectorText(btnTipLoss, RotorNames.ShortName("tip_none"))
 	End Select
 End Sub
 
@@ -3057,7 +3070,7 @@ Private Sub BuildPageCond
 	edtKInd = RowVal.Get("kind")
 	y = BuildRow(scvCond, y, "drag", "drag", "sel", lv, "btnDragInfo")
 	Dim btnDrag As Button = RowVal.Get("drag")
-	btnDrag.Text = RotorNames.ShortName("drag_numerical")
+	SetSelectorText(btnDrag, RotorNames.ShortName("drag_numerical"))
 	scvCond.Panel.Height = y + 24dip
 End Sub
 
@@ -3932,7 +3945,7 @@ Sub LoadConditionDataToFields
 	SetEdit("T0", FormatKey("T0", ConditionTemperatureC))
 	RefreshHorizontalInputDisplay
 	RefreshAxialInputDisplay
-	btnInflowModel.Text = RotorNames.ShortName("inflow_" & ActiveCond.InflowModel)
+	SetSelectorText(btnInflowModel, RotorNames.ShortName("inflow_" & ActiveCond.InflowModel))
 	SetEdit("kind", FormatKey("kind", ActiveCond.KInd))
 	RefreshOperatingControls
 	UpdatingUI = wasUpdating

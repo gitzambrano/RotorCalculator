@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CPair",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      182
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0005293",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      182
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      182
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Mean Lift C̄L",
+    "desc": "",
+    "bounds": [
+      10,
+      182,
+      147,
+      236
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.4744",
+    "desc": "",
+    "bounds": [
+      147,
+      182,
+      243,
+      236
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      182,
+      318,
+      236
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Tc",
+    "desc": "",
+    "bounds": [
+      10,
+      236,
+      147,
+      290
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      147,
+      236,
+      243,
+      290
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      236,
+      318,
+      290
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Pc",
+    "desc": "",
+    "bounds": [
+      10,
+      290,
+      147,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      147,
+      290,
+      243,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      290,
+      318,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "INFLOW & AXIAL FLOW",
+    "desc": "",
+    "bounds": [
+      12,
+      344,
+      308,
+      378
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "λ",
+    "desc": "",
+    "bounds": [
+      10,
+      380,
+      147,
+      434
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      147,
+      380,
+      243,
+      434
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      380,
+      318,
+      434
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "λi",
+    "desc": "",
+    "bounds": [
+      10,
+      434,
+      147,
+      488
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      147,
+      434,
+      243,
+      488
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      434,
+      318,
+      488
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "λh",
+    "desc": "",
+    "bounds": [
+      10,
+      488,
+      147,
+      542
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05701",
+    "desc": "",
+    "bounds": [
+      147,
+      488,
+      243,
+      542
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      488,
+      318,
+      542
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vi",
+    "desc": "",
+    "bounds": [
+      10,
+      542,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      147,
+      542,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      542,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,338 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Pair",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      163
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 471.4",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      163
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      163
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "LOADING & EFFICIENCY",
+    "desc": "",
+    "bounds": [
+      12,
+      163,
+      308,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "T/ADISK",
+    "desc": "",
+    "bounds": [
+      10,
+      199,
+      147,
+      253
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "388.9",
+    "desc": "",
+    "bounds": [
+      147,
+      199,
+      243,
+      253
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N/m²",
+    "desc": "",
+    "bounds": [
+      245,
+      199,
+      318,
+      253
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "T/P",
+    "desc": "",
+    "bounds": [
+      10,
+      253,
+      147,
+      307
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "55.56",
+    "desc": "",
+    "bounds": [
+      147,
+      253,
+      243,
+      307
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N/kW",
+    "desc": "",
+    "bounds": [
+      245,
+      253,
+      318,
+      307
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "CT/σTR",
+    "desc": "",
+    "bounds": [
+      10,
+      307,
+      147,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.07906",
+    "desc": "",
+    "bounds": [
+      147,
+      307,
+      243,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      307,
+      318,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "FM FM",
+    "desc": "",
+    "bounds": [
+      10,
+      361,
+      147,
+      415
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.7170",
+    "desc": "",
+    "bounds": [
+      147,
+      361,
+      243,
+      415
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      361,
+      318,
+      415
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "(L/D)e",
+    "desc": "",
+    "bounds": [
+      10,
+      415,
+      147,
+      469
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000",
+    "desc": "",
+    "bounds": [
+      147,
+      415,
+      243,
+      469
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      415,
+      318,
+      469
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMIC COEFFICIENTS",
+    "desc": "",
+    "bounds": [
+      12,
+      469,
+      308,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust CT",
+    "desc": "",
+    "bounds": [
+      10,
+      505,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.006500",
+    "desc": "",
+    "bounds": [
+      147,
+      505,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      505,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

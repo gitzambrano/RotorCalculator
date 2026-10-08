@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Vz",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      148
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      148
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      148
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk AoA α",
+    "desc": "",
+    "bounds": [
+      10,
+      148,
+      147,
+      202
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      148,
+      243,
+      202
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      148,
+      318,
+      202
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μ/λ",
+    "desc": "",
+    "bounds": [
+      10,
+      202,
+      147,
+      256
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      202,
+      243,
+      256
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      202,
+      318,
+      256
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Kx",
+    "desc": "",
+    "bounds": [
+      10,
+      256,
+      147,
+      310
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      256,
+      243,
+      310
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      256,
+      318,
+      310
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Ky",
+    "desc": "",
+    "bounds": [
+      10,
+      310,
+      147,
+      364
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      310,
+      243,
+      364
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      310,
+      318,
+      364
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "χ",
+    "desc": "",
+    "bounds": [
+      10,
+      364,
+      147,
+      418
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      364,
+      243,
+      418
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      364,
+      318,
+      418
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Factor B",
+    "desc": "",
+    "bounds": [
+      10,
+      418,
+      147,
+      472
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.9715",
+    "desc": "",
+    "bounds": [
+      147,
+      418,
+      243,
+      472
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      418,
+      318,
+      472
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "FLOW & BLADE DIAGNOSTICS",
+    "desc": "",
+    "bounds": [
+      12,
+      472,
+      308,
+      506
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μx",
+    "desc": "",
+    "bounds": [
+      10,
+      508,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      508,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      508,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

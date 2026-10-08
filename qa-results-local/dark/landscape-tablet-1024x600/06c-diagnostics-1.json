@@ -1,0 +1,434 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Pitch Moment Coefficient CMy",
+    "desc": "",
+    "bounds": [
+      212,
+      76,
+      487,
+      83
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000000",
+    "desc": "",
+    "bounds": [
+      487,
+      76,
+      673,
+      83
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      76,
+      820,
+      83
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Air Power Coefficient CPair",
+    "desc": "",
+    "bounds": [
+      212,
+      83,
+      487,
+      137
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0005293",
+    "desc": "",
+    "bounds": [
+      487,
+      83,
+      673,
+      137
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      83,
+      820,
+      137
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Mean Lift Coefficient C̄L",
+    "desc": "",
+    "bounds": [
+      212,
+      137,
+      487,
+      191
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.4744",
+    "desc": "",
+    "bounds": [
+      487,
+      137,
+      673,
+      191
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      137,
+      820,
+      191
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Dynamic Thrust Coefficient Tc",
+    "desc": "",
+    "bounds": [
+      212,
+      191,
+      487,
+      245
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      487,
+      191,
+      673,
+      245
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      191,
+      820,
+      245
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Dynamic Power Coefficient Pc",
+    "desc": "",
+    "bounds": [
+      212,
+      245,
+      487,
+      299
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      487,
+      245,
+      673,
+      299
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      245,
+      820,
+      299
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "INFLOW & AXIAL FLOW",
+    "desc": "",
+    "bounds": [
+      214,
+      299,
+      810,
+      333
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Inflow Ratio λ",
+    "desc": "",
+    "bounds": [
+      212,
+      335,
+      487,
+      389
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      487,
+      335,
+      673,
+      389
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      335,
+      820,
+      389
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Inflow Ratio λi",
+    "desc": "",
+    "bounds": [
+      212,
+      389,
+      487,
+      443
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05868",
+    "desc": "",
+    "bounds": [
+      487,
+      389,
+      673,
+      443
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      389,
+      820,
+      443
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Hover Inflow Ratio λh",
+    "desc": "",
+    "bounds": [
+      212,
+      443,
+      487,
+      497
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.05701",
+    "desc": "",
+    "bounds": [
+      487,
+      443,
+      673,
+      497
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      443,
+      820,
+      497
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Speed Vi",
+    "desc": "",
+    "bounds": [
+      212,
+      497,
+      487,
+      551
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      487,
+      497,
+      673,
+      551
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      675,
+      497,
+      820,
+      551
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Total Axial Speed Vz,tot",
+    "desc": "",
+    "bounds": [
+      212,
+      551,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      487,
+      551,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      675,
+      551,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

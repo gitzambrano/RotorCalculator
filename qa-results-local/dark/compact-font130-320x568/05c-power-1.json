@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust T",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      143
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "81 752.6",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      143
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      143
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "H",
+    "desc": "",
+    "bounds": [
+      10,
+      143,
+      147,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      143,
+      243,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      143,
+      318,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Hi",
+    "desc": "",
+    "bounds": [
+      10,
+      197,
+      147,
+      251
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      197,
+      243,
+      251
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      197,
+      318,
+      251
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "H0",
+    "desc": "",
+    "bounds": [
+      10,
+      251,
+      147,
+      305
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      251,
+      243,
+      305
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      251,
+      318,
+      305
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Side Force Y",
+    "desc": "",
+    "bounds": [
+      10,
+      305,
+      147,
+      359
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      147,
+      305,
+      243,
+      359
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      245,
+      305,
+      318,
+      359
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "TORQUES & MOMENTS",
+    "desc": "",
+    "bounds": [
+      12,
+      359,
+      308,
+      393
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Torque Q",
+    "desc": "",
+    "bounds": [
+      10,
+      395,
+      147,
+      449
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "54 460.2",
+    "desc": "",
+    "bounds": [
+      147,
+      395,
+      243,
+      449
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      245,
+      395,
+      318,
+      449
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Qi",
+    "desc": "",
+    "bounds": [
+      10,
+      449,
+      147,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "45 128.8",
+    "desc": "",
+    "bounds": [
+      147,
+      449,
+      243,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      245,
+      449,
+      318,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Q0",
+    "desc": "",
+    "bounds": [
+      10,
+      503,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "9 331.4",
+    "desc": "",
+    "bounds": [
+      147,
+      503,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      245,
+      503,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

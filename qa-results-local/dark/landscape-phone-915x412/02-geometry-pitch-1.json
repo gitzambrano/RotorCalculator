@@ -1,0 +1,254 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Aspect Ratio AR",
+    "desc": "",
+    "bounds": [
+      155,
+      80,
+      448,
+      132
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "15.43",
+    "desc": "",
+    "bounds": [
+      452,
+      80,
+      642,
+      132
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      80,
+      759,
+      132
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SOLIDITY & AREAS",
+    "desc": "",
+    "bounds": [
+      159,
+      141,
+      755,
+      175
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Reference Solidity σREF",
+    "desc": "",
+    "bounds": [
+      155,
+      180,
+      448,
+      232
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0825",
+    "desc": "",
+    "bounds": [
+      452,
+      180,
+      642,
+      232
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      180,
+      759,
+      232
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Actual Solidity σact",
+    "desc": "",
+    "bounds": [
+      155,
+      238,
+      448,
+      290
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0701",
+    "desc": "",
+    "bounds": [
+      452,
+      238,
+      642,
+      290
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      238,
+      759,
+      290
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust-Weighted Solidity σTR",
+    "desc": "",
+    "bounds": [
+      155,
+      296,
+      448,
+      348
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0822",
+    "desc": "",
+    "bounds": [
+      452,
+      296,
+      642,
+      348
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      296,
+      759,
+      348
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Area ADISK",
+    "desc": "",
+    "bounds": [
+      155,
+      354,
+      448,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "210.2",
+    "desc": "",
+    "bounds": [
+      452,
+      354,
+      642,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      646,
+      354,
+      759,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

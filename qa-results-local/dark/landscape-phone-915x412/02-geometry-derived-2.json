@@ -1,0 +1,278 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Rotor Radius R",
+    "desc": "",
+    "bounds": [
+      155,
+      76,
+      448,
+      118
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "8.18",
+    "desc": "",
+    "bounds": [
+      452,
+      76,
+      642,
+      118
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      646,
+      76,
+      759,
+      118
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Blade Count Nb",
+    "desc": "",
+    "bounds": [
+      155,
+      124,
+      448,
+      176
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4",
+    "desc": "",
+    "bounds": [
+      452,
+      124,
+      642,
+      176
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      124,
+      759,
+      176
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Cutout x0",
+    "desc": "",
+    "bounds": [
+      155,
+      182,
+      448,
+      234
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.150",
+    "desc": "",
+    "bounds": [
+      452,
+      182,
+      642,
+      234
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      182,
+      759,
+      234
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Root Chord cR",
+    "desc": "",
+    "bounds": [
+      155,
+      240,
+      448,
+      292
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      452,
+      240,
+      642,
+      292
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      646,
+      240,
+      759,
+      292
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Chord cT",
+    "desc": "",
+    "bounds": [
+      155,
+      298,
+      448,
+      350
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      452,
+      298,
+      642,
+      350
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      646,
+      298,
+      759,
+      350
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Taper Ratio cT/cR",
+    "desc": "",
+    "bounds": [
+      155,
+      356,
+      448,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "1.000",
+    "desc": "",
+    "bounds": [
+      452,
+      356,
+      642,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      356,
+      759,
+      388
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,290 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sikorsky UH-60 Black Hawk",
+    "desc": "",
+    "bounds": [
+      8,
+      141,
+      312,
+      193
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      268,
+      141,
+      308,
+      193
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "ROTOR",
+    "desc": "",
+    "bounds": [
+      12,
+      205,
+      308,
+      239
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Ωnom",
+    "desc": "",
+    "bounds": [
+      8,
+      244,
+      154,
+      296
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "258",
+    "desc": "",
+    "bounds": [
+      158,
+      244,
+      252,
+      296
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rpm",
+    "desc": "",
+    "bounds": [
+      256,
+      244,
+      312,
+      296
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "PLANFORM",
+    "desc": "",
+    "bounds": [
+      12,
+      305,
+      308,
+      339
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "R",
+    "desc": "",
+    "bounds": [
+      8,
+      344,
+      154,
+      396
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "8.18",
+    "desc": "",
+    "bounds": [
+      158,
+      344,
+      252,
+      396
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      256,
+      344,
+      312,
+      396
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Nb",
+    "desc": "",
+    "bounds": [
+      8,
+      402,
+      154,
+      454
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4",
+    "desc": "",
+    "bounds": [
+      158,
+      402,
+      252,
+      454
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      402,
+      312,
+      454
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "x0",
+    "desc": "",
+    "bounds": [
+      8,
+      460,
+      154,
+      512
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.150",
+    "desc": "",
+    "bounds": [
+      158,
+      460,
+      252,
+      512
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      460,
+      312,
+      512
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "cR",
+    "desc": "",
+    "bounds": [
+      8,
+      518,
+      154,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.53",
+    "desc": "",
+    "bounds": [
+      158,
+      518,
+      252,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      256,
+      518,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,266 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      244,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      252,
+      24,
+      451,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      451,
+      24,
+      650,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      650,
+      24,
+      849,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      849,
+      24,
+      897,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile Drag Coefficient Cd0",
+    "desc": "",
+    "bounds": [
+      155,
+      76,
+      448,
+      113
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0088",
+    "desc": "",
+    "bounds": [
+      452,
+      76,
+      642,
+      113
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      76,
+      759,
+      113
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Model",
+    "desc": "",
+    "bounds": [
+      155,
+      119,
+      448,
+      171
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Sissingh",
+    "desc": "",
+    "bounds": [
+      452,
+      119,
+      642,
+      171
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      626,
+      119,
+      640,
+      171
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      119,
+      759,
+      171
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip-Loss Factor B",
+    "desc": "",
+    "bounds": [
+      155,
+      177,
+      448,
+      229
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "0.971",
+    "desc": "",
+    "bounds": [
+      452,
+      177,
+      642,
+      229
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      177,
+      759,
+      229
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Compressibility Correction",
+    "desc": "",
+    "bounds": [
+      155,
+      235,
+      448,
+      287
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "On",
+    "desc": "",
+    "bounds": [
+      452,
+      235,
+      642,
+      287
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      626,
+      235,
+      640,
+      287
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      646,
+      235,
+      759,
+      287
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "SAVE",
+    "desc": "",
+    "bounds": [
+      155,
+      304,
+      351,
+      356
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "COPY",
+    "desc": "",
+    "bounds": [
+      359,
+      304,
+      555,
+      356
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "DELETE",
+    "desc": "",
+    "bounds": [
+      563,
+      304,
+      759,
+      356
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

@@ -1,0 +1,386 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Vi",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      138
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      138
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      138
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vz,tot",
+    "desc": "",
+    "bounds": [
+      10,
+      138,
+      147,
+      192
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "12.97",
+    "desc": "",
+    "bounds": [
+      147,
+      138,
+      243,
+      192
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      138,
+      318,
+      192
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μz",
+    "desc": "",
+    "bounds": [
+      10,
+      192,
+      147,
+      246
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      192,
+      243,
+      246
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      192,
+      318,
+      246
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vz",
+    "desc": "",
+    "bounds": [
+      10,
+      246,
+      147,
+      300
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      246,
+      243,
+      300
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      246,
+      318,
+      300
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk AoA α",
+    "desc": "",
+    "bounds": [
+      10,
+      300,
+      147,
+      354
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      300,
+      243,
+      354
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      300,
+      318,
+      354
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μ/λ",
+    "desc": "",
+    "bounds": [
+      10,
+      354,
+      147,
+      408
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      354,
+      243,
+      408
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      354,
+      318,
+      408
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Kx",
+    "desc": "",
+    "bounds": [
+      10,
+      408,
+      147,
+      462
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      408,
+      243,
+      462
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      408,
+      318,
+      462
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Ky",
+    "desc": "",
+    "bounds": [
+      10,
+      462,
+      147,
+      516
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      462,
+      243,
+      516
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      462,
+      318,
+      516
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "χ",
+    "desc": "",
+    "bounds": [
+      10,
+      516,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      516,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      516,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

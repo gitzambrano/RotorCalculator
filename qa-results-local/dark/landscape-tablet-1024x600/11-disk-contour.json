@@ -1,0 +1,434 @@
+[
+  {
+    "text": "ROTOR DISK CONTOUR",
+    "desc": "",
+    "bounds": [
+      12,
+      26,
+      972,
+      74
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "×",
+    "desc": "",
+    "bounds": [
+      972,
+      26,
+      1020,
+      74
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Angle of Attack α [deg]",
+    "desc": "",
+    "bounds": [
+      12,
+      80,
+      1012,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Active point: μx = 0 · Vx = 0 m/s · μz = 0",
+    "desc": "",
+    "bounds": [
+      12,
+      470,
+      1012,
+      512
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "EXPORT PNG",
+    "desc": "",
+    "bounds": [
+      12,
+      516,
+      510,
+      564
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "EXPORT ALL PNG",
+    "desc": "",
+    "bounds": [
+      514,
+      516,
+      1012,
+      564
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "PARAMETER SWEEP",
+    "desc": "",
+    "bounds": [
+      220,
+      86,
+      507,
+      138
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "DISK CONTOUR",
+    "desc": "",
+    "bounds": [
+      515,
+      86,
+      802,
+      138
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "FORCES",
+    "desc": "",
+    "bounds": [
+      214,
+      152,
+      810,
+      186
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust T",
+    "desc": "",
+    "bounds": [
+      212,
+      188,
+      487,
+      242
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "81 752.6",
+    "desc": "",
+    "bounds": [
+      487,
+      188,
+      673,
+      242
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      188,
+      820,
+      242
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "In-Plane Force H",
+    "desc": "",
+    "bounds": [
+      212,
+      242,
+      487,
+      296
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      242,
+      673,
+      296
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      242,
+      820,
+      296
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced In-Plane Force Hi",
+    "desc": "",
+    "bounds": [
+      212,
+      296,
+      487,
+      350
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      296,
+      673,
+      350
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      296,
+      820,
+      350
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Profile In-Plane Force H0",
+    "desc": "",
+    "bounds": [
+      212,
+      350,
+      487,
+      404
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      350,
+      673,
+      404
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      350,
+      820,
+      404
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Side Force Y",
+    "desc": "",
+    "bounds": [
+      212,
+      404,
+      487,
+      458
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0",
+    "desc": "",
+    "bounds": [
+      487,
+      404,
+      673,
+      458
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N",
+    "desc": "",
+    "bounds": [
+      675,
+      404,
+      820,
+      458
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "TORQUES & MOMENTS",
+    "desc": "",
+    "bounds": [
+      214,
+      458,
+      810,
+      492
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Shaft Torque Q",
+    "desc": "",
+    "bounds": [
+      212,
+      494,
+      487,
+      548
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "54 460.2",
+    "desc": "",
+    "bounds": [
+      487,
+      494,
+      673,
+      548
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      494,
+      820,
+      548
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Torque Qi",
+    "desc": "",
+    "bounds": [
+      212,
+      548,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "45 128.8",
+    "desc": "",
+    "bounds": [
+      487,
+      548,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N·m",
+    "desc": "",
+    "bounds": [
+      675,
+      548,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

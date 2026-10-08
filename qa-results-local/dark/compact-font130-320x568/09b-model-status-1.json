@@ -1,0 +1,278 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Altitude Hp",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      181
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      181
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      181
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Temp. OAT",
+    "desc": "",
+    "bounds": [
+      10,
+      181,
+      147,
+      235
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "15.00",
+    "desc": "",
+    "bounds": [
+      147,
+      181,
+      243,
+      235
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "°C",
+    "desc": "",
+    "bounds": [
+      245,
+      181,
+      318,
+      235
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Air Density ρ",
+    "desc": "",
+    "bounds": [
+      10,
+      235,
+      147,
+      289
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1.225",
+    "desc": "",
+    "bounds": [
+      147,
+      235,
+      243,
+      289
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kg/m³",
+    "desc": "",
+    "bounds": [
+      245,
+      235,
+      318,
+      289
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Pressure p",
+    "desc": "",
+    "bounds": [
+      10,
+      289,
+      147,
+      343
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 013",
+    "desc": "",
+    "bounds": [
+      147,
+      289,
+      243,
+      343
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "hPa",
+    "desc": "",
+    "bounds": [
+      245,
+      289,
+      318,
+      343
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "a",
+    "desc": "",
+    "bounds": [
+      10,
+      343,
+      147,
+      397
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "340.30",
+    "desc": "",
+    "bounds": [
+      147,
+      343,
+      243,
+      397
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      343,
+      318,
+      397
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "MODEL STATUS",
+    "desc": "",
+    "bounds": [
+      12,
+      397,
+      308,
+      431
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Trim: Ω + CT",
+    "desc": "",
+    "bounds": [
+      8,
+      437,
+      312,
+      485
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Model Valid: Mtip = 0.649, Madv = 0.649",
+    "desc": "",
+    "bounds": [
+      8,
+      495,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]

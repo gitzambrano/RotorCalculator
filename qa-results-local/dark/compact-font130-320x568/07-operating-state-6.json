@@ -1,0 +1,350 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "αadv,50",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      182
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      182
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      182
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αret,50",
+    "desc": "",
+    "bounds": [
+      10,
+      182,
+      147,
+      236
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "7.80",
+    "desc": "",
+    "bounds": [
+      147,
+      182,
+      243,
+      236
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      182,
+      318,
+      236
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αadv,75",
+    "desc": "",
+    "bounds": [
+      10,
+      236,
+      147,
+      290
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      147,
+      236,
+      243,
+      290
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      236,
+      318,
+      290
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αret,75",
+    "desc": "",
+    "bounds": [
+      10,
+      290,
+      147,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "4.73",
+    "desc": "",
+    "bounds": [
+      147,
+      290,
+      243,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      290,
+      318,
+      344
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αadv,tip",
+    "desc": "",
+    "bounds": [
+      10,
+      344,
+      147,
+      398
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.55",
+    "desc": "",
+    "bounds": [
+      147,
+      344,
+      243,
+      398
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      344,
+      318,
+      398
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "αret,tip",
+    "desc": "",
+    "bounds": [
+      10,
+      398,
+      147,
+      452
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.55",
+    "desc": "",
+    "bounds": [
+      147,
+      398,
+      243,
+      452
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      398,
+      318,
+      452
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φadv,25",
+    "desc": "",
+    "bounds": [
+      10,
+      452,
+      147,
+      506
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "13.21",
+    "desc": "",
+    "bounds": [
+      147,
+      452,
+      243,
+      506
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      452,
+      318,
+      506
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "φret,25",
+    "desc": "",
+    "bounds": [
+      10,
+      506,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "13.21",
+    "desc": "",
+    "bounds": [
+      147,
+      506,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      245,
+      506,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

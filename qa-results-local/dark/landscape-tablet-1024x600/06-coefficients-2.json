@@ -1,0 +1,410 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      56,
+      24,
+      246,
+      76
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      254,
+      24,
+      488,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      488,
+      24,
+      722,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      722,
+      24,
+      956,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      956,
+      24,
+      1004,
+      76
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Air Power Pair",
+    "desc": "",
+    "bounds": [
+      212,
+      76,
+      487,
+      107
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "1 471.4",
+    "desc": "",
+    "bounds": [
+      487,
+      76,
+      673,
+      107
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "kW",
+    "desc": "",
+    "bounds": [
+      675,
+      76,
+      820,
+      107
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "LOADING & EFFICIENCY",
+    "desc": "",
+    "bounds": [
+      214,
+      107,
+      810,
+      141
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Disk Loading T/ADISK",
+    "desc": "",
+    "bounds": [
+      212,
+      143,
+      487,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "388.9",
+    "desc": "",
+    "bounds": [
+      487,
+      143,
+      673,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N/m²",
+    "desc": "",
+    "bounds": [
+      675,
+      143,
+      820,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Power Loading T/P",
+    "desc": "",
+    "bounds": [
+      212,
+      197,
+      487,
+      251
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "55.56",
+    "desc": "",
+    "bounds": [
+      487,
+      197,
+      673,
+      251
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "N/kW",
+    "desc": "",
+    "bounds": [
+      675,
+      197,
+      820,
+      251
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Blade Loading CT/σTR",
+    "desc": "",
+    "bounds": [
+      212,
+      251,
+      487,
+      305
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.07906",
+    "desc": "",
+    "bounds": [
+      487,
+      251,
+      673,
+      305
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      251,
+      820,
+      305
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Figure of Merit (hover only) FM",
+    "desc": "",
+    "bounds": [
+      212,
+      305,
+      487,
+      359
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.7170",
+    "desc": "",
+    "bounds": [
+      487,
+      305,
+      673,
+      359
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      305,
+      820,
+      359
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Effective Lift/Drag Ratio (L/D)e",
+    "desc": "",
+    "bounds": [
+      212,
+      359,
+      487,
+      413
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.000",
+    "desc": "",
+    "bounds": [
+      487,
+      359,
+      673,
+      413
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      359,
+      820,
+      413
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMIC COEFFICIENTS",
+    "desc": "",
+    "bounds": [
+      214,
+      413,
+      810,
+      447
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Thrust Coefficient CT",
+    "desc": "",
+    "bounds": [
+      212,
+      449,
+      487,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.006500",
+    "desc": "",
+    "bounds": [
+      487,
+      449,
+      673,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      449,
+      820,
+      503
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Torque Coefficient CQ",
+    "desc": "",
+    "bounds": [
+      212,
+      503,
+      487,
+      557
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0005293",
+    "desc": "",
+    "bounds": [
+      487,
+      503,
+      673,
+      557
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      503,
+      820,
+      557
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Induced Torque Coefficient CQi",
+    "desc": "",
+    "bounds": [
+      212,
+      557,
+      487,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.0004386",
+    "desc": "",
+    "bounds": [
+      487,
+      557,
+      673,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      675,
+      557,
+      820,
+      568
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

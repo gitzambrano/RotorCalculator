@@ -252,7 +252,7 @@ def test_trim_is_at_current_flight_condition_and_candidate_rpm_recomputes_mu():
 def test_numerical_vectorial_profile_drag_is_authoritative():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
-    assert 'btnDrag.Text = RotorNames.ShortName("drag_numerical")' in main
+    assert 'SetSelectorText(btnDrag, RotorNames.ShortName("drag_numerical"))' in main
     assert "btnProfileDragModel" not in main
     assert 'c.ProfileDragModel = "numerical_vectorial"' in engine
     assert 'ProfileDrag(c.Mu, c.MuZ, g, "numerical_vectorial")' in engine

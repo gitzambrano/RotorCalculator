@@ -1,0 +1,362 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Tip Factor B",
+    "desc": "",
+    "bounds": [
+      10,
+      129,
+      147,
+      163
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.9715",
+    "desc": "",
+    "bounds": [
+      147,
+      129,
+      243,
+      163
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      129,
+      318,
+      163
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "FLOW & BLADE DIAGNOSTICS",
+    "desc": "",
+    "bounds": [
+      12,
+      163,
+      308,
+      197
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "μx",
+    "desc": "",
+    "bounds": [
+      10,
+      199,
+      147,
+      253
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0",
+    "desc": "",
+    "bounds": [
+      147,
+      199,
+      243,
+      253
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      199,
+      318,
+      253
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Airspeed Vx",
+    "desc": "",
+    "bounds": [
+      10,
+      253,
+      147,
+      307
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.00",
+    "desc": "",
+    "bounds": [
+      147,
+      253,
+      243,
+      307
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      253,
+      318,
+      307
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "ΩR",
+    "desc": "",
+    "bounds": [
+      10,
+      307,
+      147,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      147,
+      307,
+      243,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      307,
+      318,
+      361
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Mtip",
+    "desc": "",
+    "bounds": [
+      10,
+      361,
+      147,
+      415
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      147,
+      361,
+      243,
+      415
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      361,
+      318,
+      415
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vadv",
+    "desc": "",
+    "bounds": [
+      10,
+      415,
+      147,
+      469
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      147,
+      415,
+      243,
+      469
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      415,
+      318,
+      469
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Madv",
+    "desc": "",
+    "bounds": [
+      10,
+      469,
+      147,
+      523
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "0.649",
+    "desc": "",
+    "bounds": [
+      147,
+      469,
+      243,
+      523
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      245,
+      469,
+      318,
+      523
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Vret",
+    "desc": "",
+    "bounds": [
+      10,
+      523,
+      147,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "221.00",
+    "desc": "",
+    "bounds": [
+      147,
+      523,
+      243,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "m/s",
+    "desc": "",
+    "bounds": [
+      245,
+      523,
+      318,
+      544
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  }
+]

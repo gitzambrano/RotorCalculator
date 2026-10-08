@@ -130,7 +130,7 @@ Tabela extraída das fontes B4A. Não utiliza o emulador nem altera a versão we
 | Opções / ações / help | comp_pg | Canônico | Prandtl-Glauert | On | On | On | On | RotorNames.bas |
 | Opções / ações / help | inflow_uniform | Canônico | Uniform Inflow | Uniform | Uniform | Uniform | Uniform | RotorNames.bas |
 | Opções / ações / help | inflow_coleman_simple | Canônico | Coleman | Coleman | Coleman | Coleman | Coleman | RotorNames.bas |
-| Opções / ações / help | inflow_coleman_feingold | Canônico | Coleman-Feingold (NDARC) | Coleman-FG | Coleman-FG | Coleman-FG | Coleman-FG | RotorNames.bas |
+| Opções / ações / help | inflow_coleman_feingold | Canônico | Coleman-Feingold (NDARC) | Coleman FG | Coleman-FG | Coleman-FG | Coleman-FG | RotorNames.bas |
 | Opções / ações / help | inflow_drees | Canônico | Drees | Drees | Drees | Drees | Drees | RotorNames.bas |
 | Opções / ações / help | trim_none | Canônico | Trim None | None | None | None | None | RotorNames.bas |
 | Opções / ações / help | trim_collective | Canônico | Trim Collective Δθ | Collective Δθ | Collective Δθ | Collective Δθ | Δθ | RotorNames.bas |

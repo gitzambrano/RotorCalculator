@@ -1,0 +1,350 @@
+[
+  {
+    "text": "RotorCalculator",
+    "desc": "",
+    "bounds": [
+      54,
+      24,
+      256,
+      80
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "⋮",
+    "desc": "",
+    "bounds": [
+      264,
+      24,
+      312,
+      80
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "GEOMETRY",
+    "desc": "",
+    "bounds": [
+      0,
+      80,
+      106,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "CONDITIONS",
+    "desc": "",
+    "bounds": [
+      106,
+      80,
+      212,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "RESULTS",
+    "desc": "",
+    "bounds": [
+      212,
+      80,
+      320,
+      128
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AREF",
+    "desc": "",
+    "bounds": [
+      8,
+      129,
+      154,
+      153
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "4.335",
+    "desc": "",
+    "bounds": [
+      158,
+      129,
+      252,
+      153
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      256,
+      129,
+      312,
+      153
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Aact",
+    "desc": "",
+    "bounds": [
+      8,
+      159,
+      154,
+      211
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "3.685",
+    "desc": "",
+    "bounds": [
+      158,
+      159,
+      252,
+      211
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "m²",
+    "desc": "",
+    "bounds": [
+      256,
+      159,
+      312,
+      211
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "BLADE PITCH",
+    "desc": "",
+    "bounds": [
+      12,
+      220,
+      308,
+      254
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "θR",
+    "desc": "",
+    "bounds": [
+      8,
+      259,
+      154,
+      311
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "14.0",
+    "desc": "",
+    "bounds": [
+      158,
+      259,
+      252,
+      311
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      259,
+      312,
+      311
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "θT",
+    "desc": "",
+    "bounds": [
+      8,
+      317,
+      154,
+      369
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-4.0",
+    "desc": "",
+    "bounds": [
+      158,
+      317,
+      252,
+      369
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      317,
+      312,
+      369
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "θtwist",
+    "desc": "",
+    "bounds": [
+      8,
+      375,
+      154,
+      427
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "-18.0",
+    "desc": "",
+    "bounds": [
+      158,
+      375,
+      252,
+      427
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "deg",
+    "desc": "",
+    "bounds": [
+      256,
+      375,
+      312,
+      427
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "AERODYNAMICS",
+    "desc": "",
+    "bounds": [
+      12,
+      436,
+      308,
+      470
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "Airfoil",
+    "desc": "",
+    "bounds": [
+      8,
+      475,
+      154,
+      527
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "Custom",
+    "desc": "",
+    "bounds": [
+      158,
+      475,
+      252,
+      527
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "▾",
+    "desc": "",
+    "bounds": [
+      236,
+      475,
+      250,
+      527
+    ],
+    "clickable": "false",
+    "enabled": "true"
+  },
+  {
+    "text": "–",
+    "desc": "",
+    "bounds": [
+      256,
+      475,
+      312,
+      527
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "a0",
+    "desc": "",
+    "bounds": [
+      8,
+      533,
+      154,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "5.73",
+    "desc": "",
+    "bounds": [
+      158,
+      533,
+      252,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  },
+  {
+    "text": "rad⁻¹",
+    "desc": "",
+    "bounds": [
+      256,
+      533,
+      312,
+      544
+    ],
+    "clickable": "true",
+    "enabled": "true"
+  }
+]
