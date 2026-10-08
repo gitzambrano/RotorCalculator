@@ -128,6 +128,8 @@ Sub Process_Globals
 	Public ActiveGeom As RotorGeometry
 	Public ActiveCond As FlightCondition
 	Public ActiveRes As RotorResults
+	Private PriorVariablePitchMode As String = ""
+	Private PriorVariablePitchCollective As Double = 0
 	Public AmbientPressureHPa As Double = 1013.25
 	
 	' Navigation & Scaling
@@ -625,6 +627,10 @@ Private Sub RestoreSessionState
 		CheckDirty
 	End If
 	If hadSession = False And ActiveGeom.NominalRPM > 0 Then ActiveCond.RPM = ActiveGeom.NominalRPM
+	If hadSession = False And ActiveGeom.Name = "DJI Matrice 300 Drone" Then
+		ActiveCond.OperatingPair = "rpm_collective"
+		ActiveCond.CollectiveDeg = 0
+	End If
 End Sub
 
 ' ====================================================================
@@ -2894,7 +2900,22 @@ End Sub
 
 ' Loads the library's active rotor into the editor; Conditions speed follows the rotor's nominal speed.
 Private Sub AfterRotorChange
+	Dim oldWasDJI As Boolean = (ActiveGeom.Name = "DJI Matrice 300 Drone")
 	ActiveGeom = RotorStorage.GetActiveRotor
+	Dim nowDJI As Boolean = (ActiveGeom.Name = "DJI Matrice 300 Drone")
+	If nowDJI Then
+		If oldWasDJI = False Then
+			PriorVariablePitchMode = ActiveCond.OperatingPair
+			PriorVariablePitchCollective = ActiveCond.CollectiveDeg
+		End If
+		' Fixed-pitch 2110 propeller: use RPM and zero collective offset to control thrust.
+		ActiveCond.OperatingPair = "rpm_collective"
+		ActiveCond.CollectiveDeg = 0
+	Else If oldWasDJI And PriorVariablePitchMode <> "" Then
+		ActiveCond.OperatingPair = PriorVariablePitchMode
+		ActiveCond.CollectiveDeg = PriorVariablePitchCollective
+		PriorVariablePitchMode = ""
+	End If
 	GeometryDirty = False
 	RotorStorage.ClearDraft
 	If ActiveGeom.NominalRPM > 0 Then ActiveCond.RPM = ActiveGeom.NominalRPM
