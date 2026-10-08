@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 // A standard ZIP (stored entries) requires no platform tools or dependencies.
 const root = fileURLToPath(new URL("../dist/", import.meta.url));
+const pkg = JSON.parse(await readFile(fileURLToPath(new URL("../package.json", import.meta.url)), "utf8"));
+const releaseVersion = pkg.version.split(".").slice(0, 2).join(".");
 async function files(dir) {
   const result = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -23,7 +25,7 @@ function crc32(data) {
 }
 const entries = [];
 for (const path of await files(root)) entries.push({ name: relative(root, path).replaceAll("\\", "/"), data: await readFile(path) });
-entries.push({ name: "README.txt", data: Buffer.from("RotorCalculator 1.25 — Offline web application\r\n\r\nExtract this ZIP, then open index.html in a modern browser.\r\nKeep the assets folder and bundled manuals beside index.html.\r\nGeometry import/export and sweep CSV/PNG work offline.\r\nFor home-screen installation, use the hosted HTTPS web app.\r\n") });
+entries.push({ name: "README.txt", data: Buffer.from(`RotorCalculator ${releaseVersion} — Offline web application\r\n\r\nExtract this ZIP, then open index.html in a modern browser.\r\nKeep the assets folder and bundled manuals beside index.html.\r\nGeometry import/export and sweep CSV/PNG work offline.\r\nFor home-screen installation, use the hosted HTTPS web app.\r\n`) });
 const chunks = [], directory = [];
 let offset = 0;
 for (const { name, data } of entries) {

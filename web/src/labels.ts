@@ -264,20 +264,20 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     key: "h",
     full: "Pressure Altitude",
     short: "Altitude",
-    sym: "h",
+    sym: "H_p",
     unit: "m",
-    body: "Altitude in the International Standard Atmosphere. Sets pressure, density and speed of sound together with temperature.",
-    eq: "ρ = p / (R_gas·T_amb)",
+    body: "Pressure altitude H_p in the International Standard Atmosphere. H_p sets the static pressure. Pressure and OAT set density and speed of sound.",
+    eq: "ρ = p / (R_gas·T),  T = OAT + 273.15 K",
     range: "0 to 6000 m",
   },
   T0: {
     key: "T0",
-    full: "Ambient Temperature",
+    full: "Outside Air Temperature",
     short: "Temperature",
-    sym: "T_amb",
+    sym: "OAT",
     unit: "°C",
-    body: "Static air temperature at the rotor. Used with altitude pressure to get air density.",
-    eq: "ρ = p / (R_gas·T_amb)",
+    body: "Outside air temperature (OAT) at the rotor. OAT and pressure set the air density.",
+    eq: "ρ = p / (R_gas·T),  T = OAT + 273.15 K",
     range: "-40 to 50 °C",
   },
   mu: {
@@ -869,7 +869,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     sym: "ρ",
     unit: "kg/m³",
     body: "Air density from the standard atmosphere and the temperature entered.",
-    eq: "ρ = p / (R_gas·T_amb)",
+    eq: "ρ = p / (R_gas·T),  T = OAT + 273.15 K",
     range: "0.9 to 1.225 kg/m³",
   },
   p: {
@@ -889,7 +889,7 @@ export const CANONICAL_NOMENCLATURE: Record<string, NomenclatureEntry> = {
     sym: "a",
     unit: "m/s",
     body: "Local speed of sound at the ambient temperature.",
-    eq: "a = √(γ·R_gas·T_amb)",
+    eq: "a = √(γ·R_gas·T),  T = OAT + 273.15 K",
     range: "",
   },
   Vztot: {
@@ -1171,7 +1171,7 @@ export function getResponsiveInputLabel(fullText: string, width: number): string
       case "Tip Factor B":
       case "Fixed Tip Factor B": return "Factor B";
       case "Altitude": return "Altitude";
-      case "Temperature": return "Tamb";
+      case "Temperature": return "OAT";
       case "Trim Mode":
       case "Trim":
       case "Trim Condition": return "Trim";
@@ -1281,8 +1281,8 @@ export function getResultDisplayLabel(canonical: string, width: number): string 
       case "α — Angle of Attack": return "α — AoA";
       case "Mtip — Tip Mach": return "Mtip — Mach";
       case "Madv — Advancing Mach": return "Madv — Adv. Mach";
-      case "h — Altitude": return "h — Altitude";
-      case "Tamb — Temperature": return "Tamb — Temp.";
+      case "Hp — Altitude": return "Hp — Altitude";
+      case "OAT — Temperature": return "OAT — Temp.";
       default: return canonical;
     }
   }

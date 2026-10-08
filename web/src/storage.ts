@@ -8,6 +8,78 @@ export interface StoredRotor {
 
 const STORAGE_KEY = "rotorcalculator_rotors_v2";
 const ACTIVE_ID_KEY = "rotorcalculator_active_rotor_id";
+const BACKUP_KEY = "rotorcalculator_rotors_v2_backup";
+export const MAX_ROTOR_NAME_LENGTH = 32;
+
+// ---------------------------------------------------------------------------
+// Safe storage: every access is guarded, with an in-memory fallback so the
+// application keeps working when localStorage is blocked or full.
+// ---------------------------------------------------------------------------
+const memoryStore = new Map<string, string>();
+
+/** Read a stored string. Returns null when the key does not exist. */
+export function safeGet(key: string): string | null {
+  try {
+    const value = localStorage.getItem(key);
+    if (value !== null && value !== undefined) return value;
+  } catch {
+    // fall through to memory
+  }
+  return memoryStore.has(key) ? (memoryStore.get(key) as string) : null;
+}
+
+/** Write a string. Returns true when the value reached persistent storage. */
+export function safeSet(key: string, value: string): boolean {
+  memoryStore.set(key, value);
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (err) {
+    console.warn(`Storage write failed for ${key}:`, err);
+    return false;
+  }
+}
+
+export function safeRemove(key: string): void {
+  memoryStore.delete(key);
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
+/** Remove control characters, delimiters and markup characters from a rotor name. */
+export function sanitizeRotorName(name: unknown, fallback = "Imported Rotor"): string {
+  const text = typeof name === "string" ? name : name == null ? "" : String(name);
+  const clean = text
+    .replace(/[\u0000-\u001F\u007F]+/g, " ")
+    .replace(/\|/g, "/")
+    .replace(/[<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_ROTOR_NAME_LENGTH)
+    .trim();
+  return clean || fallback;
+}
+
+/** Make names unique inside one list (case-insensitive) by appending a counter. */
+export function dedupeRotorNames(list: StoredRotor[]): StoredRotor[] {
+  const seen = new Set<string>();
+  for (const rotor of list) {
+    const base = sanitizeRotorName(rotor.name);
+    let candidate = base;
+    let counter = 2;
+    while (seen.has(candidate.toLowerCase())) {
+      const suffix = ` ${counter++}`;
+      candidate = `${base.slice(0, MAX_ROTOR_NAME_LENGTH - suffix.length).trim()}${suffix}`;
+    }
+    seen.add(candidate.toLowerCase());
+    rotor.name = candidate;
+    rotor.geom = { ...rotor.geom, name: candidate };
+  }
+  return list;
+}
 
 export function getFactoryPresets(): StoredRotor[] {
   return [
@@ -176,43 +248,98 @@ export function getFactoryPresets(): StoredRotor[] {
   ];
 }
 
-export function loadStoredRotors(): StoredRotor[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const presets = getFactoryPresets();
-      saveStoredRotors(presets);
-      return presets;
-    }
-    const parsed = JSON.parse(raw) as StoredRotor[];
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.map((item) => ({
-        ...item,
-        geom: resolveSolidity(item.geom),
-      }));
-    }
-  } catch (err) {
-    console.warn("Failed to load rotors from storage, using presets:", err);
-  }
-  const presets = getFactoryPresets();
-  saveStoredRotors(presets);
-  return presets;
+function backupRawStore(raw: string): void {
+  if (safeGet(BACKUP_KEY) === raw) return;
+  safeSet(BACKUP_KEY, raw);
 }
 
-export function saveStoredRotors(rotors: StoredRotor[]): void {
+/**
+ * Load saved rotors. Malformed entries are skipped, valid entries are kept,
+ * and an unreadable store is never overwritten (the raw value is backed up).
+ */
+export function loadStoredRotors(): StoredRotor[] {
+  const raw = safeGet(STORAGE_KEY);
+  if (raw === null || raw === "") {
+    const presets = getFactoryPresets();
+    saveStoredRotors(presets);
+    return presets;
+  }
+  let parsed: unknown;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rotors));
+    parsed = JSON.parse(raw);
   } catch (err) {
-    console.error("Failed to save rotors to localStorage:", err);
+    console.warn("Saved rotors are unreadable; keeping a backup and using presets:", err);
+    backupRawStore(raw);
+    return getFactoryPresets();
+  }
+  if (!Array.isArray(parsed)) {
+    backupRawStore(raw);
+    return getFactoryPresets();
+  }
+  if (parsed.length === 0) {
+    const presets = getFactoryPresets();
+    saveStoredRotors(presets);
+    return presets;
+  }
+  const valid: StoredRotor[] = [];
+  const usedIds = new Set<string>();
+  let skipped = 0;
+  for (const item of parsed as unknown[]) {
+    const rotor = coerceStoredRotor(item);
+    if (!rotor) {
+      skipped++;
+      continue;
+    }
+    if (usedIds.has(rotor.id)) rotor.id = `${rotor.id}-${usedIds.size}-${Math.random().toString(36).substring(2, 6)}`;
+    usedIds.add(rotor.id);
+    valid.push(rotor);
+  }
+  if (valid.length === 0) {
+    backupRawStore(raw);
+    return getFactoryPresets();
+  }
+  if (skipped > 0) {
+    backupRawStore(raw);
+    saveStoredRotors(valid);
+  }
+  return valid;
+}
+
+function coerceStoredRotor(item: unknown): StoredRotor | null {
+  if (!item || typeof item !== "object") return null;
+  const rec = item as Record<string, unknown>;
+  if (!rec.geom || typeof rec.geom !== "object") return null;
+  const geomIn = rec.geom as Record<string, unknown>;
+  const name = sanitizeRotorName(rec.name ?? geomIn.name, "");
+  if (!name) return null;
+  const candidate = { ...(geomIn as unknown as RotorGeometry), name };
+  const nominal = candidate.nominalRpm ?? candidate.rpm;
+  if (!Number.isFinite(nominal) || nominal <= 0) return null;
+  if (!isImportedGeometryValid(candidate)) return null;
+  const id = typeof rec.id === "string" && rec.id.trim() ? rec.id : `restored-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  try {
+    return { id, name, geom: resolveSolidity(candidate) };
+  } catch {
+    return null;
+  }
+}
+
+/** Persist the rotor library. Returns false when the browser refuses the write. */
+export function saveStoredRotors(rotors: StoredRotor[]): boolean {
+  try {
+    return safeSet(STORAGE_KEY, JSON.stringify(rotors));
+  } catch (err) {
+    console.error("Failed to serialize rotors:", err);
+    return false;
   }
 }
 
 export function getActiveRotorId(): string {
-  return localStorage.getItem(ACTIVE_ID_KEY) || "preset-uh60";
+  return safeGet(ACTIVE_ID_KEY) || "preset-uh60";
 }
 
-export function setActiveRotorId(id: string): void {
-  localStorage.setItem(ACTIVE_ID_KEY, id);
+export function setActiveRotorId(id: string): boolean {
+  return safeSet(ACTIVE_ID_KEY, id);
 }
 
 export function exportRotorsJSON(rotors: StoredRotor[]): string {
@@ -237,7 +364,7 @@ export function exportRotorsDatabaseText(rotors: StoredRotor[]): string {
   const lines: string[] = ["ROTORCALCULATOR_GEOMETRIES|3"];
   for (const r of rotors) {
     const g = r.geom;
-    const cleanName = (r.name || g.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
+    const cleanName = sanitizeRotorName(r.name || g.name, "");
     const pg = g.usePrandtlGlauert ? "1" : "0";
     const nomRpm = g.nominalRpm && g.nominalRpm > 0 ? g.nominalRpm : g.rpm;
     lines.push(
@@ -263,7 +390,7 @@ export function exportRotorsDatabaseText(rotors: StoredRotor[]): string {
   return lines.join("\n") + "\n";
 }
 
-function isImportedGeometryValid(g: RotorGeometry): boolean {
+export function isImportedGeometryValid(g: RotorGeometry): boolean {
   if (!g.name || !g.name.trim()) return false;
   if (!Number.isFinite(g.radius) || g.radius < 0.02 || g.radius > 50.0) return false;
   if (!Number.isInteger(g.nBlades) || g.nBlades < 1 || g.nBlades > 16) return false;
@@ -295,7 +422,7 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
       version = parseInt(parts[1], 10) || 3;
     } else if ((version === 2 || version === 3) && parts.length >= 14 && parts[0] === "R") {
       try {
-        const name = parts[1].trim() || "Imported Rotor";
+        const name = sanitizeRotorName(parts[1]);
         const radius = parseFloat(parts[2]);
         const nBlades = parseInt(parts[3], 10);
         const rootCutout = parseFloat(parts[4]);
@@ -349,7 +476,7 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
     } else if (parts.length >= 18) {
       // Legacy v1 line format
       try {
-        const name = parts[0].trim() || "Imported Rotor";
+        const name = sanitizeRotorName(parts[0]);
         const radius = parseFloat(parts[1]);
         const nBlades = parseInt(parts[3], 10);
         const rootCutout = parseFloat(parts[4]);
@@ -404,34 +531,34 @@ export function parseDatabaseText(text: string): StoredRotor[] | null {
     }
   }
 
-  return imported.length > 0 ? imported : null;
+  return imported.length > 0 ? dedupeRotorNames(imported) : null;
 }
 
 const DRAFT_KEY = "rotorcalculator_geometry_draft";
 
 export function hasDraft(): boolean {
-  try {
-    return localStorage.getItem(DRAFT_KEY) !== null;
-  } catch {
-    return false;
-  }
+  return safeGet(DRAFT_KEY) !== null;
 }
 
-export function saveDraft(geom: RotorGeometry, baseId: string = "active"): void {
+/** Persist the unsaved geometry. Returns false when the browser refuses the write. */
+export function saveDraft(geom: RotorGeometry, baseId: string = "active"): boolean {
   try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ geom, baseId }));
+    return safeSet(DRAFT_KEY, JSON.stringify({ geom, baseId }));
   } catch (err) {
-    console.error("Failed to save draft to localStorage:", err);
+    console.error("Failed to serialize draft:", err);
+    return false;
   }
 }
 
 export function loadDraft(): { geom: RotorGeometry; baseId: string } | null {
   try {
-    const raw = localStorage.getItem(DRAFT_KEY);
+    const raw = safeGet(DRAFT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.geom && parsed.baseId) {
-      return { geom: resolveSolidity(parsed.geom), baseId: parsed.baseId };
+    if (parsed && parsed.geom && typeof parsed.geom === "object" && typeof parsed.baseId === "string") {
+      const g = parsed.geom as RotorGeometry;
+      if (!Number.isFinite(g.radius) || !Number.isFinite(g.rpm) || !Number.isFinite(g.chordRoot) || !Number.isFinite(g.chordTip)) return null;
+      return { geom: resolveSolidity({ ...g, name: sanitizeRotorName(g.name, "Custom Rotor") }), baseId: parsed.baseId };
     }
   } catch (err) {
     console.warn("Failed to load draft:", err);
@@ -440,11 +567,7 @@ export function loadDraft(): { geom: RotorGeometry; baseId: string } | null {
 }
 
 export function clearDraft(): void {
-  try {
-    localStorage.removeItem(DRAFT_KEY);
-  } catch (err) {
-    console.error("Failed to clear draft:", err);
-  }
+  safeRemove(DRAFT_KEY);
 }
 
 export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
@@ -456,7 +579,7 @@ export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
     const validated: StoredRotor[] = [];
     for (const item of list) {
       if (item && item.name && item.geom) {
-        const name = String(item.name).replace(/\|/g, "/").replace(/[\r\n]+/g, " ").trim();
+        const name = sanitizeRotorName(item.name);
         const geom = { ...item.geom, name } as RotorGeometry;
         if (!isImportedGeometryValid(geom)) continue;
         const nominalRpm = geom.nominalRpm ?? geom.rpm;
@@ -470,7 +593,7 @@ export function importRotorsJSON(jsonStr: string): StoredRotor[] | null {
         });
       }
     }
-    return validated.length > 0 ? validated : null;
+    return validated.length > 0 ? dedupeRotorNames(validated) : null;
   } catch (err) {
     console.error("Failed to parse rotor JSON:", err);
     return null;

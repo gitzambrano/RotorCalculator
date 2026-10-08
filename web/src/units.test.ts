@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { convertValue, formatInputValue } from "./units";
+import { convertValue, formatInputValue, formatNumberList, parseNumberList } from "./units";
 
 describe("Android input unit parity", () => {
   it("formats engineering inputs with the Android decimal limits", () => {
@@ -30,5 +30,36 @@ describe("Android input unit parity", () => {
   it("supports centimeters and radians for pitch", () => {
     expect(convertValue(1, "m", "cm")).toBe(100);
     expect(convertValue(Math.PI, "rad", "deg")).toBeCloseTo(180, 12);
+  });
+});
+
+describe("Input formatting by unit", () => {
+  it("shows altitude decimals that match the unit", () => {
+    expect(formatInputValue("h", 1500, "m")).toBe("1500");
+    expect(formatInputValue("h", 1000.5, "m")).toBe("1000.5");
+    expect(formatInputValue("h", 1.5244, "km")).toBe("1.524");
+    expect(formatInputValue("h", 0.3048, "km")).toBe("0.305");
+  });
+  it("shows pitch in radians with four decimals", () => {
+    expect(formatInputValue("thRoot", 0.2443461, "rad")).toBe("0.2443");
+    expect(formatInputValue("thRoot", 14, "deg")).toBe("14.0");
+  });
+});
+
+describe("Number list parsing", () => {
+  it("separates items with semicolons or spaces and accepts a decimal comma", () => {
+    expect(parseNumberList("2,5")).toEqual([2.5]);
+    expect(parseNumberList("2,5; 3 4.5")).toEqual([2.5, 3, 4.5]);
+    expect(parseNumberList("-10; -5; 0; 5; 10")).toEqual([-10, -5, 0, 5, 10]);
+  });
+  it("rejects text, empty lists and partial numbers", () => {
+    expect(parseNumberList("")).toBeNull();
+    expect(parseNumberList("1; abc")).toBeNull();
+    expect(parseNumberList("1e")).toBeNull();
+    expect(parseNumberList("1,2,3")).toBeNull();
+  });
+  it("formats a list for editing and parses it back", () => {
+    const text = formatNumberList([-0.05, 0, 0.05]);
+    expect(parseNumberList(text)).toEqual([-0.05, 0, 0.05]);
   });
 });

@@ -1,15 +1,16 @@
-const CACHE_NAME = "rotorcalculator-web-1791324786629";
+const CACHE_NAME = "rotorcalculator-web-1.31.0-1f5b61d09b";
 const PRECACHE = [
   "./",
   "./.nojekyll",
   "./android-chrome-192x192.png",
   "./android-chrome-512x512.png",
   "./apple-touch-icon.png",
-  "./assets/index--TS_-NGz.js",
-  "./assets/style--fOuGpS1.css",
+  "./assets/index-JA0PdBHV.js",
+  "./assets/style-C6gi1qwj.css",
   "./favicon-16x16.png",
   "./favicon-32x32.png",
   "./favicon.ico",
+  "./icon-maskable-512.png",
   "./icon.png",
   "./icon_header.png",
   "./index.html",
@@ -19,10 +20,14 @@ const PRECACHE = [
   "./physics_help.html",
   "./physics_help_light.html",
   "./physics_help_midnight.html",
+  "./physics_help_sepia.html",
   "./privacy_policy.html",
   "./privacy_policy_light.html",
-  "./release-1.28.json"
+  "./privacy_policy_midnight.html",
+  "./privacy_policy_sepia.html",
+  "./release-1.31.json"
 ];
+const APP_SHELL = "./index.html";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -40,32 +45,65 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+function isAppEntry(url) {
+  const base = new URL("./", self.location.href).pathname;
+  return url.pathname === base || url.pathname === base + "index.html";
+}
+
+function isHtml(request, url) {
+  return request.mode === "navigate" || request.destination === "document" || request.destination === "iframe" || url.pathname.endsWith(".html");
+}
+
+// Network-first for HTML. Each page is cached under its own URL.
+// Only the app entry URL (./ or ./index.html) refreshes the app shell key.
+async function networkFirstHtml(event, url) {
+  const entry = isAppEntry(url) && event.request.destination !== "iframe";
+  try {
+    const response = await fetch(event.request);
+    if (response && response.status === 200 && response.type === "basic") {
+      const cache = await caches.open(CACHE_NAME);
+      if (entry) await cache.put(APP_SHELL, response.clone());
+      else await cache.put(event.request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = entry
+      ? await caches.match(APP_SHELL)
+      : await caches.match(event.request, { ignoreSearch: true });
+    if (cached) return cached;
+    // Offline navigation to a page that is not cached: show the app shell only for top-level app navigation.
+    if (event.request.mode === "navigate" && event.request.destination !== "iframe") {
+      return (await caches.match(APP_SHELL)) ?? Response.error();
+    }
+    return Response.error();
+  }
+}
+
+// Cache-first for hashed assets and other static files.
+async function cacheFirst(event) {
+  const cached = await caches.match(event.request, { ignoreSearch: true });
+  if (cached) return cached;
+  try {
+    const response = await fetch(event.request);
+    if (response && response.status === 200 && response.type === "basic") {
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+    }
+    return response;
+  } catch {
+    return Response.error();
+  }
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith("/sw.js")) return;
 
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", clone));
-          }
-          return response;
-        })
-        .catch(async () => {
-          return (await caches.match("./index.html")) ?? Response.error();
-        })
-    );
+  if (isHtml(event.request, url)) {
+    event.respondWith(networkFirstHtml(event, url));
     return;
   }
-
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).catch(() => Response.error());
-    })
-  );
+  event.respondWith(cacheFirst(event));
 });

@@ -71,7 +71,7 @@ Sub Process_Globals
 		EffectiveLiftSlope As Double, TrimmedRPM As Double, TrimmedCollectiveDeg As Double, TrimmedTheta0Deg As Double, _
 		OperatingMu As Double, OperatingMuZ As Double, OperatingVx As Double, OperatingVz As Double, OperatingAlphaDeg As Double, _
 		AltitudeM As Double, TemperatureC As Double, DensityRho As Double, PressurePa As Double, SpeedOfSound As Double, _
-		SolutionValid As Boolean, CompressibilityWarning As Boolean, CompressibilityInvalid As Boolean, StatusMessage As String)
+		SolutionValid As Boolean, CompressibilityWarning As Boolean, CompressibilityInvalid As Boolean, StatusMessage As String, ValidityWarning As String)
 
 	' Nós e pesos de quadratura de Gauss-Legendre (16 nós radiais, 24 nós azimutais)
 	Private GL_X16() As Double
@@ -218,7 +218,8 @@ Public Sub ResolveMuZ(mu As Double, axialMode As String, axialValue As Double, v
 End Sub
 
 Public Sub AlphaFromMuZ(mu As Double, muZ As Double) As Double
-	If Abs(mu) < 1e-12 Then Return 0.0
+	' -ATan(muZ / mu) equals -ATan2(muZ * Sgn(mu), Abs(mu)): alpha stays in (-90, 90) for mu < 0 too.
+	If Abs(mu) < 1e-9 Then Return 0.0
 	Return -ATan(muZ / mu) * 180.0 / cPI
 End Sub
 
@@ -280,6 +281,90 @@ Public Sub SanitizeCondition(src As FlightCondition) As FlightCondition
 	Return c
 End Sub
 
+' ---------------------------------------------------------------------------
+' Input limit notes (parity with inputLimitNotes in web/src/engine.ts).
+' Returns "" when no input is limited. Otherwise returns a short STE message,
+' for example "Input limited: μx = 0.60". Pass the raw geometry/condition and
+' the operating RPM that resolves Vx and Vz.
+' ---------------------------------------------------------------------------
+Private Sub LimitedItem(items As List, label As String, raw As Double, lo As Double, hi As Double, digits As Int)
+	If raw < lo Or raw > hi Then
+		items.Add(label & " = " & NumberFormat2(Max(lo, Min(hi, raw)), 1, digits, digits, False))
+	End If
+End Sub
+
+Public Sub InputLimitNotes(geom As RotorGeometry, cond As FlightCondition, rpm As Double) As String
+	Dim items As List
+	items.Initialize
+	
+	' Geometry (see ResolveSolidity)
+	Dim radius As Double = Max(0.02, Min(50.0, geom.Radius))
+	Dim x0 As Double = Max(0.0, Min(0.95, geom.RootCutout))
+	LimitedItem(items, "R", geom.Radius, 0.02, 50.0, 2)
+	LimitedItem(items, "N_b", geom.NBlades, 1, 16, 0)
+	LimitedItem(items, "x_0", geom.RootCutout, 0.0, 0.95, 2)
+	If geom.SolidityMode = "chords" Then
+		LimitedItem(items, "c_R", geom.ChordRoot, 0.0001, 2.0 * radius, 4)
+		LimitedItem(items, "c_T", geom.ChordTip, 0.0001, 2.0 * radius, 4)
+	End If
+	LimitedItem(items, "a_0", geom.LiftSlope0, 0.1, 10.0, 2)
+	LimitedItem(items, "C_d0", geom.Cd0, 0.0, 0.5, 4)
+	If geom.TipLossMode = "fixed" Then LimitedItem(items, "B", geom.TipLossB, x0 + 0.01, 1.0, 3)
+	
+	' Atmosphere and engine settings (see SanitizeCondition)
+	LimitedItem(items, "altitude", cond.AltitudeM, -500.0, 11000.0, 0)
+	LimitedItem(items, "temperature", cond.TemperatureC, -80.0, 60.0, 0)
+	LimitedItem(items, "pressure", cond.PressurePa, 1000.0, 120000.0, 0)
+	LimitedItem(items, Chr(961), cond.Rho, 0.01, 5.0, 3)
+	LimitedItem(items, "speed of sound", cond.SpeedOfSound, 100.0, 500.0, 1)
+	Dim pair() As String = Regex.Split("_", cond.OperatingPair)
+	Dim usesRPM As Boolean = (pair(0) = "rpm")
+	Dim usesCollective As Boolean = False
+	Dim usesCT As Boolean = False
+	Dim usesThrust As Boolean = False
+	For Each token As String In pair
+		If token = "collective" Then usesCollective = True
+		If token = "ct" Then usesCT = True
+		If token = "thrust" Then usesThrust = True
+	Next
+	If usesRPM Then LimitedItem(items, Chr(937), cond.RPM, 1.0, 30000.0, 0)
+	If usesCollective Then LimitedItem(items, Chr(916) & Chr(952), cond.CollectiveDeg, -60.0, 60.0, 1)
+	If usesCT Then LimitedItem(items, "C_T target", cond.TargetCT, 0.0, 0.20, 4)
+	If usesThrust Then LimitedItem(items, "T target", cond.TargetThrustN, 0.0, 1.0e8, 0)
+	LimitedItem(items, "k_ind", cond.KInd, 1.0, 3.0, 2)
+	If cond.InflowModel = "coleman_feingold" Then
+		LimitedItem(items, "f_x", cond.FxColeman, -5.0, 5.0, 2)
+		LimitedItem(items, "f_y", cond.FyColeman, -5.0, 5.0, 2)
+	End If
+	
+	' Flight kinematics at the operating RPM (see ResolveConditionAtRPM)
+	Dim vtip As Double = Max(1.0e-9, Max(1.0, Min(30000.0, rpm)) * 2.0 * cPI / 60.0 * radius)
+	Dim rawMu As Double = cond.HorizontalValue
+	If cond.HorizontalMode = "vx" Then rawMu = cond.HorizontalValue / vtip
+	LimitedItem(items, Chr(956) & "x", rawMu, -0.60, 0.60, 2)
+	Dim mu As Double = Max(-0.60, Min(0.60, rawMu))
+	Dim axialMode As String = cond.AxialMode
+	If axialMode <> "alpha" And axialMode <> "vz" And axialMode <> "muz" Then axialMode = "alpha"
+	LimitedItem(items, Chr(956) & "z", ResolveMuZ(mu, axialMode, cond.AxialValue, vtip), -0.50, 0.50, 2)
+	
+	If items.Size = 0 Then Return ""
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append("Input limited: ")
+	For i = 0 To items.Size - 1
+		If i > 0 Then sb.Append("; ")
+		Dim item As String = items.Get(i)
+		sb.Append(item)
+	Next
+	Return sb.ToString
+End Sub
+
+Private Sub JoinWarnings(a As String, b As String) As String
+	If a.Length = 0 Then Return b
+	If b.Length = 0 Then Return a
+	Return a & ". " & b
+End Sub
+
 ' Resolve e unifica as três definições de solidez
 Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
 	' Defensive domain guards. UI validates too, but the engine must remain safe when called directly.
@@ -293,8 +378,8 @@ Public Sub ResolveSolidity(geom As RotorGeometry) As RotorGeometry
 	geom.ChordTip = Max(0.0001, Min(2.0 * geom.Radius, geom.ChordTip))
 	geom.LiftSlope0 = Max(0.1, Min(10.0, geom.LiftSlope0))
 	geom.Cd0 = Max(0.0, Min(0.5, geom.Cd0))
-	If geom.TipLossB <= geom.RootCutout Or geom.TipLossB > 1.0 Then geom.TipLossB = 0.97
-	If geom.TipLossB <= geom.RootCutout Then geom.TipLossB = Min(1.0, geom.RootCutout + 0.01)
+	' Same clamp as tools/zBET.py Geometry.b_factor: B in [x0 + 0.01, 1.0].
+	geom.TipLossB = Max(geom.RootCutout + 0.01, Min(1.0, geom.TipLossB))
 	If geom.SolidityMode <> "chords" And geom.SolidityMode <> "sigma_geom" And geom.SolidityMode <> "sigma_ref" Then geom.SolidityMode = "chords"
 	If geom.PitchMode <> "constant" And geom.PitchMode <> "linear_twist" Then geom.PitchMode = "linear_twist"
 	If geom.TipLossMode <> "none" And geom.TipLossMode <> "fixed" And geom.TipLossMode <> "sissingh" Then geom.TipLossMode = "none"
@@ -980,6 +1065,7 @@ Public Sub ResolveOperatingState(geom As RotorGeometry, cond As FlightCondition)
 		End Select
 	If ok = False And status = "VALID" Then
 		status = "INVALID: selected operating constraints could not be trimmed"
+		If baseGeom.RootCutout >= 0.95 Then status = status & ". Root cutout x_0 is at the 0.95 limit"
 	End If
 	Dim resolvedGeom As RotorGeometry = ApplyOperatingGeometry(baseGeom, rpm, collective)
 	Dim resolvedCond As FlightCondition = ResolveConditionAtRPM(c, resolvedGeom)
@@ -1006,11 +1092,15 @@ Public Sub Calculate(geom As RotorGeometry, cond As FlightCondition) As RotorRes
 		invalid.Initialize
 		invalid.SolutionValid = False
 		invalid.StatusMessage = status
+		Dim invalidGeom As RotorGeometry = state(0)
+		invalid.ValidityWarning = InputLimitNotes(geom, cond, invalidGeom.RPM)
 		Return invalid
 	End If
 	Dim g As RotorGeometry = state(0)
 	Dim c As FlightCondition = state(1)
-	Return CalculateCoreResolved(g, c)
+	Dim result As RotorResults = CalculateCoreResolved(g, c)
+	result.ValidityWarning = JoinWarnings(InputLimitNotes(geom, cond, g.RPM), result.ValidityWarning)
+	Return result
 End Sub
 
 ' Núcleo aerodinâmico para geometria/condição já resolvidas.
@@ -1027,6 +1117,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.CompressibilityWarning = False
 	res.CompressibilityInvalid = False
 	res.StatusMessage = "VALID"
+	res.ValidityWarning = ""
 	
 	' Caller already supplied the resolved operating RPM, collective and kinematics.
 	Dim c As FlightCondition = SanitizeCondition(cond)
@@ -1054,7 +1145,8 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.SpeedOfSound = c.SpeedOfSound
 	
 	' Mach da pá avançante
-	res.AdvancingTipMach = vtip * (1.0 + c.Mu) / c.SpeedOfSound
+	' The advancing blade sees Omega*r plus the in-plane flow speed |mu|*Omega*R in forward and rearward flight.
+	res.AdvancingTipMach = vtip * (1.0 + Abs(c.Mu)) / c.SpeedOfSound
 	res.EffectiveLiftSlope = GetLiftSlope(g, c.Mu, c.SpeedOfSound)
 	If g.UsePrandtlGlauert And res.AdvancingTipMach >= 0.80 Then
 		res.CompressibilityWarning = True
@@ -1076,6 +1168,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	If lambda_i < 0 Then
 		res.SolutionValid = False
 		res.StatusMessage = "INVALID: no physical inflow root was bracketed"
+		If g.RootCutout >= 0.95 Then res.StatusMessage = res.StatusMessage & ". Root cutout x_0 is at the 0.95 limit"
 		Return res
 	End If
 	Dim lambda_total As Double = c.MuZ + lambda_i
@@ -1118,6 +1211,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 			If lambda_i < 0 Then
 				res.SolutionValid = False
 				res.StatusMessage = "INVALID: no physical inflow root after tip-loss update"
+				If g.RootCutout >= 0.95 Then res.StatusMessage = res.StatusMessage & ". Root cutout x_0 is at the 0.95 limit"
 				Return res
 			End If
 			lambda_total = c.MuZ + lambda_i
@@ -1146,6 +1240,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 		End If
 	End If
 	res.BFactor = b_val
+	If res.InflowLambda < 0.0 Then res.ValidityWarning = "Outside model validity: vortex ring state / windmill region"
 	
 	If FullResults = False Then
 		' Trim residuals need only CT and dimensional thrust.
@@ -1220,6 +1315,7 @@ Private Sub CalculateCoreResolvedMode(geom As RotorGeometry, cond As FlightCondi
 	res.PowerShaftW = res.TorqueNm * omega
 	res.PowerShaftKW = res.PowerShaftW / 1000.0
 	res.PowerShaftHP = res.PowerShaftW / 745.699872
+	If c.MuZ < 0.0 And res.PowerShaftW < 0.0 Then res.ValidityWarning = "Outside model validity: vortex ring state / windmill region"
 	res.PhiAdv25 = SectionPhi(g, res, 0.25, 1)
 	res.PhiRet25 = SectionPhi(g, res, 0.25, -1)
 	Dim pitch25 As Double = LocalPitch(g, 0.25) * 180.0 / cPI

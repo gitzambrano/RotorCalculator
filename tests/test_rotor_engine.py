@@ -380,6 +380,48 @@ def test_fom_matches_kind_energy_balance():
     print("PASS: FoM / Kind")
 
 
+def test_tip_loss_b_is_clamped_to_root_cutout_and_one():
+    """B must be clamped to [x0 + 0.01, 1.0]. Web and Android clamp the same way."""
+    for b_in, expected in ((1.5, 1.0), (0.05, 0.16), (0.15, 0.16), (0.97, 0.97), (1.0, 1.0)):
+        geom = make_geometry(tip_loss="fixed")
+        geom.tip_loss_b = b_in
+        assert math.isclose(geom.b_factor(), expected, rel_tol=0, abs_tol=1e-14), (b_in, geom.b_factor())
+    sis = make_geometry(tip_loss="sissingh", blades=1)
+    assert math.isclose(sis.b_factor(ct=5.0), 0.16, rel_tol=0, abs_tol=1e-14)
+    sis4 = make_geometry(tip_loss="sissingh")
+    assert math.isclose(sis4.b_factor(ct=0.2), 0.841886116991581, rel_tol=0, abs_tol=1e-12)
+    print("PASS: tip-loss B clamp")
+
+
+def test_operating_flow_limits_match_android_contract():
+    """mu in [-0.60, 0.60], mu_z in [-0.50, 0.50] at every candidate RPM."""
+    geom = make_geometry(rpm=420.0)
+    mu, mu_z = zBET._operating_flow(geom, "mu", 0.9, "muz", 0.9)
+    assert (mu, mu_z) == (0.6, 0.5)
+    mu, mu_z = zBET._operating_flow(geom, "mu", -0.9, "muz", -0.9)
+    assert (mu, mu_z) == (-0.6, -0.5)
+    vx = 0.2 * geom.vtip
+    mu, _ = zBET._operating_flow(geom, "vx", vx, "alpha", 0.0)
+    assert math.isclose(mu, 0.2, rel_tol=0, abs_tol=1e-14)
+    _, mu_z = zBET._operating_flow(geom, "mu", 0.2, "alpha", 90.0)
+    assert mu_z == -0.5
+    print("PASS: operating flow limits")
+
+
+def test_analytical_bet_induced_torque_differs_from_energy_balance_only_in_cqi():
+    geom = make_geometry(rpm=430.0, pg=True)
+    pitch = zBET._operating_pitch(geom, 12.0, 2.0, 4.0)
+    common = dict(profile_drag_model="numerical_vectorial", k_ind=1.15)
+    energy = zBET.coefficients(0.15, 0.01, pitch, geom, "coleman_feingold",
+                               induced_torque_model="energy_balance", **common)
+    direct = zBET.coefficients(0.15, 0.01, pitch, geom, "coleman_feingold",
+                               induced_torque_model="analytical_bet", **common)
+    assert math.isclose(energy["CT"], direct["CT"], rel_tol=0, abs_tol=1e-15)
+    assert math.isclose(energy["CQ0"], direct["CQ0"], rel_tol=0, abs_tol=1e-15)
+    assert math.isclose(direct["CQi"], 0.00020762594824080686, rel_tol=1e-9)
+    print("PASS: analytical_bet induced torque")
+
+
 if __name__ == "__main__":
     print("Running RotorCalculator reference tests...")
     test_reference_planform_metrics_ignore_root_cutout_for_reference_area()
@@ -393,4 +435,7 @@ if __name__ == "__main__":
     test_sissingh_tip_loss_is_self_consistent()
     test_numerical_vectorial_profile_drag_is_finite()
     test_fom_matches_kind_energy_balance()
+    test_tip_loss_b_is_clamped_to_root_cutout_and_one()
+    test_operating_flow_limits_match_android_contract()
+    test_analytical_bet_induced_torque_differs_from_energy_balance_only_in_cqi()
     print("All RotorCalculator reference tests passed.")

@@ -1,0 +1,14 @@
+<en-US>
+RotorCalculator 1.31.
+New warm Sepia theme across interface, contextual help, and privacy policy.
+Expanded parameter sweep support for angle of attack, vertical velocity, and vertical advance ratio.
+Enhanced landscape header responsiveness, parameter limit indicators, and undo support for preset edits.
+Full numerical and UI parity between Android and Web applications.
+</en-US>
+<pt-BR>
+RotorCalculator 1.31.
+Novo tema Sepia suave em toda a interface, ajuda contextual e política de privacidade.
+Suporte expandido para varredura de parâmetros por ângulo de ataque, velocidade vertical e razão de avanço vertical.
+Cabeçalho otimizado para telas em paisagem, indicadores de limites de parâmetros e suporte a desfazer edição de predefinições.
+Paridade numérica e de interface completa entre o aplicativo Android e Web.
+</pt-BR>

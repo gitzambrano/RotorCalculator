@@ -54,8 +54,8 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getResultDisplayLabel("ΩR — Tip Speed", 360)).toBe("ΩR");
       expect(getResultDisplayLabel("Mtip — Tip Mach", 360)).toBe("Mtip");
       expect(getResultDisplayLabel("Madv — Advancing Mach", 360)).toBe("Madv");
-      expect(getResultDisplayLabel("h — Altitude", 360)).toBe("h");
-      expect(getResultDisplayLabel("Tamb — Temperature", 360)).toBe("Tamb");
+      expect(getResultDisplayLabel("Hp — Altitude", 360)).toBe("Hp");
+      expect(getResultDisplayLabel("OAT — Temperature", 360)).toBe("OAT");
       expect(getResultDisplayLabel("ρ — Air Density", 360)).toBe("ρ");
       expect(getResultDisplayLabel("p — Ambient Pressure", 360)).toBe("p");
       expect(getResultDisplayLabel("a — Speed of Sound", 360)).toBe("a");
@@ -86,7 +86,7 @@ describe("Mobile Responsive Labels (B4A Parity)", () => {
       expect(getResponsiveInputLabel("Aspect Ratio", 360)).toBe("AR");
       expect(getResponsiveInputLabel("Total Twist", 360)).toBe("Δθ");
       expect(getResponsiveInputLabel("Taper Ratio", 360)).toBe("c₁/c₀");
-      expect(getResponsiveInputLabel("Temperature", 360)).toBe("Tamb");
+      expect(getResponsiveInputLabel("Temperature", 360)).toBe("OAT");
       expect(getResponsiveInputLabel("Target Thrust", 360)).toBe("Target T");
       expect(getResponsiveInputLabel("Compressibility", 360)).toBe("Comp.");
       expect(getResponsiveInputLabel("Inflow Model", 360)).toBe("Inflow");

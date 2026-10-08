@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultCondition, createDefaultGeometry } from "./engine";
+import { calculate, createDefaultCondition, createDefaultGeometry, updateAtmosphere, type FlightCondition } from "./engine";
 import {
   buildSweepTableRows,
   generateSweepCSV,
@@ -105,5 +105,58 @@ describe("Native sweep plot domain and live-marker rules", () => {
   it("does not interpolate across invalid points", () => {
     const curves = [curve([point(0, 0), point(0.1, 1, false), point(0.2, 2)])];
     expect(visibleSweepMarker(curves, { mu: 0.1, vx: 10, val: 1 }, "mu")).toBeNull();
+  });
+});
+
+describe("Sweep uses the real geometry and the active atmosphere", () => {
+  const geom = createDefaultGeometry();
+  const base = { ...createDefaultCondition(), operatingPair: "rpm_collective" as const, collectiveDeg: 8 };
+
+  it("shows the operating marker at the Vx-equivalent mu of the real radius", () => {
+    const sweep = runParameterSweep(geom, { ...base, horizontalMode: "vx", horizontalValue: 10 }, "Mu", 0, 0.4, 5);
+    const vtip = (258 * 2 * Math.PI) / 60 * 8.18;
+    expect(sweep.currentOpPoint?.mu).toBeCloseTo(10 / vtip, 9);
+    expect(sweep.currentOpPoint?.vx).toBeCloseTo(10, 9);
+  });
+
+  it("uses the geometry radius for dimensional sweep outputs (induced + profile power = shaft power)", () => {
+    const small = { ...geom, radius: 5, chordRoot: 0.3, chordTip: 0.3 };
+    const pi = runParameterSweep(small, base, "PowerIndKW", 0, 0.3, 4).curves[0].points;
+    const p0 = runParameterSweep(small, base, "PowerProfKW", 0, 0.3, 4).curves[0].points;
+    const total = runParameterSweep(small, base, "PowerKW", 0, 0.3, 4).curves[0].points;
+    for (let i = 0; i < total.length; i++) {
+      expect(total[i].valid).toBe(true);
+      expect(pi[i].val + p0[i].val).toBeCloseTo(total[i].val, 6);
+    }
+  });
+
+  it("recomputes density, pressure and speed of sound at altitude != 0 (updateAtmosphere)", () => {
+    const sea = updateAtmosphere(base, 0, 15);
+    const high = updateAtmosphere(base, 3000, -4.5);
+    const get = (cond: FlightCondition, key: string) => runParameterSweep(geom, cond, key, 0, 0.2, 3).curves[0].points[0].val;
+    expect(get(high, "Altitude")).toBe(3000);
+    expect(get(high, "Temperature")).toBeCloseTo(-4.5, 12);
+    expect(get(high, "Density")).toBeCloseTo(high.rho, 12);
+    expect(get(high, "Pressure")).toBeCloseTo(high.pressurePa, 6);
+    expect(get(high, "SoundSpeed")).toBeCloseTo(high.speedOfSound, 9);
+    expect(get(high, "Density")).toBeLessThan(get(sea, "Density") * 0.8);
+    // Fixed controls: thrust follows the lower density.
+    expect(get(high, "ThrustN")).toBeLessThan(get(sea, "ThrustN") * 0.95);
+  });
+
+  it("sweeps a rpm + collective pair against the current thrust, not a stale default CT target", () => {
+    const live = calculate(geom, base);
+    const sweep = runParameterSweep(geom, base, "ThrustN", 0, 0.2, 3, undefined, "coll_all");
+    expect(sweep.curves[0].points[0].valid).toBe(true);
+    expect(sweep.curves[0].points[0].thrustN).toBeCloseTo(live.thrustN, 0);
+  });
+
+  it("drops samples above the supported mu range of 0.60", () => {
+    const sweep = runParameterSweep(geom, base, "CT", 0, 0.8, 9);
+    const points = sweep.curves[0].points;
+    expect(points[points.length - 1].mu).toBeCloseTo(0.8, 12);
+    expect(points[points.length - 1].valid).toBe(true);
+    expect(isSweepPointUsable(points[points.length - 1], "mu")).toBe(false);
+    expect(isSweepPointUsable(points[6], "mu")).toBe(true); // mu = 0.6
   });
 });

@@ -201,11 +201,11 @@
   --accent: #8C5A2B;
   --accent-rgb: 140, 90, 43;
   --accent-green: #3B6E4A;
-  --accent-amber: #9E6728;
+  --accent-amber: #8A5A1F;
   --accent-red: #A63D32;
   --text-main: #2D2319;
-  --text-muted: #7A6E5F;
-  --text-dim: #9E8D75;
+  --text-muted: #645747;
+  --text-dim: #6F5F49;
   --border: #DDD2C0;
   --input-bg: #F0E9DC;
   --btn-top: #EDE5D8;
@@ -214,7 +214,7 @@
   --btn-hover: #E2D7C8;
   --modal-overlay: rgba(45, 35, 25, 0.45);
   --card-border: #DDD2C0;
-  --text-sub: #7A6E5F;
+  --text-sub: #645747;
   --btn-bg: #EDE5D8;
   --btn-bg-hover: #E4DBD0;
   --input-border: #DDD2C0;
@@ -290,7 +290,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
   border: 1px solid var(--border) !important;
   border-radius: 10px !important;
   padding: 14px 16px !important;
-  font-size: 15px !important;
+  font-size: 0.9375rem !important;
   color: var(--accent);
   margin-bottom: 16px !important;
   display: flex;
@@ -421,7 +421,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .brand-title {
 
-  font-size: 19px;
+  font-size: 1.1875rem;
 
   font-weight: 700;
 
@@ -443,7 +443,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .version-badge {
 
-  font-size: 11px;
+  font-size: 0.6875rem;
 
   font-weight: 600;
 
@@ -497,7 +497,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   color: var(--accent);
 
-  font-size: 13px;
+  font-size: 0.8125rem;
 
   font-weight: 700;
 
@@ -547,7 +547,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   cursor: pointer;
 
-  font-size: 24px;
+  font-size: 1.5rem;
 
   font-weight: 700;
 
@@ -562,7 +562,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
   max-width: 32px !important;
   min-height: 32px !important;
   max-height: 32px !important;
-  font-size: 18px !important;
+  font-size: 1.125rem !important;
   padding: 0 !important;
   margin-right: 4px;
   opacity: 0.88;
@@ -650,7 +650,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   font-family: inherit;
 
-  font-size: 14px;
+  font-size: 0.875rem;
 
   font-weight: 500;
 
@@ -728,7 +728,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   border: none;
 
-  font-size: 13px;
+  font-size: 0.8125rem;
 
   font-weight: 700;
 
@@ -812,10 +812,12 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 }
 
-.content-area:focus {
-
+.content-area:focus:not(:focus-visible) {
   outline: none;
-
+}
+.content-area:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 
@@ -924,7 +926,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .active-rotor-name {
 
-  font-size: 16px;
+  font-size: 1rem;
 
   font-weight: 700;
 
@@ -942,7 +944,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .active-rotor-tag {
 
-  font-size: 11px;
+  font-size: 0.6875rem;
 
   color: var(--text-dim);
 
@@ -980,7 +982,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   font-weight: 700;
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   letter-spacing: 0.5px;
 
@@ -1056,7 +1058,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .section-header {
 
-  font-size: 13px;
+  font-size: 0.8125rem;
 
   font-weight: 700;
 
@@ -1138,7 +1140,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   color: var(--text-main);
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -1202,7 +1204,7 @@ button.result-label sub,
 
   font-family: inherit;
 
-  font-size: 16px;
+  font-size: 1rem;
 
   font-weight: 700;
 
@@ -1241,7 +1243,7 @@ input[type="text"].row-input {
 .tip-factor-value .row-input {
   color: var(--accent) !important;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: inherit;
   text-align: center !important;
 }
@@ -1288,7 +1290,7 @@ input[type="text"].row-input {
 
   font-family: inherit;
 
-  font-size: 16px;
+  font-size: 1rem;
 
   font-weight: 700;
 
@@ -1344,7 +1346,7 @@ input[type="text"].row-input {
 
   color: var(--text-muted);
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -1405,7 +1407,7 @@ input[type="text"].row-input {
 
   color: var(--accent);
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -1457,7 +1459,7 @@ input[type="text"].row-input {
 
   border-radius: 6px;
 
-  font-size: 12.5px;
+  font-size: 0.7812rem;
 
   font-weight: 700;
 
@@ -1555,7 +1557,7 @@ button.result-label {
 
   font-family: inherit;
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -1595,7 +1597,7 @@ button.result-label:hover {
 
 .result-val {
 
-  font-size: 15.5px;
+  font-size: 0.9688rem;
 
   font-weight: 700;
 
@@ -1611,7 +1613,7 @@ button.result-label:hover {
 
 .result-unit {
 
-  font-size: 14px;
+  font-size: 0.875rem;
 
   font-weight: 700;
 
@@ -1741,7 +1743,7 @@ button.result-label:hover {
 
 .modal-title {
 
-  font-size: 16px;
+  font-size: 1rem;
 
   font-weight: 700;
 
@@ -1761,7 +1763,7 @@ button.result-label:hover {
 
   color: var(--text-muted);
 
-  font-size: 24px;
+  font-size: 1.5rem;
 
   cursor: pointer;
 
@@ -1859,7 +1861,7 @@ button.result-label:hover {
 
   color: var(--text-dim);
 
-  font-size: 18px;
+  font-size: 1.125rem;
 
   touch-action: none;
 
@@ -1889,7 +1891,7 @@ button.result-label:hover {
 
 .rotor-manager-name {
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -1901,7 +1903,7 @@ button.result-label:hover {
 
 .rotor-manager-desc {
 
-  font-size: 12px;
+  font-size: 0.75rem;
 
   color: var(--text-muted);
 
@@ -1957,7 +1959,7 @@ button.result-label:hover {
 
 .sweep-control-group label {
 
-  font-size: 12px;
+  font-size: 0.75rem;
 
   font-weight: 600;
 
@@ -1987,7 +1989,7 @@ button.result-label:hover {
 
   font-family: inherit;
 
-  font-size: 13.5px;
+  font-size: 0.8438rem;
 
   font-weight: 600;
 
@@ -2045,7 +2047,7 @@ button.result-label:hover {
 .sweep-footer-actions .action-btn {
   min-height: 40px;
   padding: 0 16px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   border-radius: 4px;
 }
@@ -2076,7 +2078,7 @@ button.result-label:hover {
 
   border-radius: 6px;
 
-  font-size: 12px;
+  font-size: 0.75rem;
 
   color: var(--text-main);
 
@@ -2176,7 +2178,7 @@ button.result-label:hover {
 
 .options-modal-card .modal-title {
 
-  font-size: 14.5px;
+  font-size: 0.9062rem;
 
   font-weight: 700;
 
@@ -2236,12 +2238,11 @@ button.result-label:hover {
 
 
 
-.option-item:hover {
-
-  border-color: var(--accent);
-
-  background: rgba(var(--accent-rgb), 0.08);
-
+@media (hover: hover) and (pointer: fine) {
+  .option-item:hover {
+    border-color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.08);
+  }
 }
 
 
@@ -2274,7 +2275,7 @@ button.result-label:hover {
 
 .option-label {
 
-  font-size: 13.5px;
+  font-size: 0.8438rem;
 
   font-weight: 700;
 
@@ -2288,7 +2289,7 @@ button.result-label:hover {
 
 .option-desc {
 
-  font-size: 11px;
+  font-size: 0.6875rem;
 
   color: var(--text-muted);
 
@@ -2366,7 +2367,7 @@ button.result-label:hover {
 
 .settings-section-hdr {
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -2432,7 +2433,7 @@ button.result-label:hover {
 
 .settings-row-title {
 
-  font-size: 15px;
+  font-size: 0.9375rem;
 
   font-weight: 700;
 
@@ -2450,7 +2451,7 @@ button.result-label:hover {
 
 .settings-row-sub {
 
-  font-size: 12.5px;
+  font-size: 0.7812rem;
 
   color: var(--text-muted);
 
@@ -2478,7 +2479,7 @@ button.result-label:hover {
 
   color: var(--accent);
 
-  font-size: 14px;
+  font-size: 0.875rem;
 
   font-weight: 700;
 
@@ -2582,7 +2583,7 @@ button.result-label:hover {
 
   color: var(--accent);
 
-  font-size: 12.5px;
+  font-size: 0.7812rem;
 
   font-weight: 600;
 
@@ -2656,7 +2657,7 @@ button.result-label:hover {
 
   .brand-title {
 
-    font-size: 17.5px;
+    font-size: 1.0938rem;
 
   }
 
@@ -2672,7 +2673,7 @@ button.result-label:hover {
 
   .row-label-btn {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
     padding: 0 2px;
 
@@ -2680,7 +2681,7 @@ button.result-label:hover {
 
   .row-input {
 
-    font-size: 16px;
+    font-size: 1rem;
 
     padding: 0 4px;
 
@@ -2688,13 +2689,13 @@ button.result-label:hover {
 
   .row-derived-val {
 
-    font-size: 16px;
+    font-size: 1rem;
 
   }
 
   .row-unit-btn {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
     padding: 0 2px;
 
@@ -2702,13 +2703,13 @@ button.result-label:hover {
 
   .action-btn {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
   }
 
   .tab-btn {
 
-    font-size: 13px;
+    font-size: 0.8125rem;
 
   }
 
@@ -2724,19 +2725,19 @@ button.result-label:hover {
 
   .result-label {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
   }
 
   .result-val {
 
-    font-size: 15.5px;
+    font-size: 0.9688rem;
 
   }
 
   .result-unit {
 
-    font-size: 14px;
+    font-size: 0.875rem;
 
   }
 
@@ -2760,7 +2761,7 @@ button.result-label:hover {
 
   .modal-title {
 
-    font-size: 14.5px;
+    font-size: 0.9062rem;
 
   }
 
@@ -2786,7 +2787,7 @@ button.result-label:hover {
 
   .brand-title {
 
-    font-size: 16px;
+    font-size: 1rem;
 
     gap: 4px;
 
@@ -2802,7 +2803,7 @@ button.result-label:hover {
 
   .version-badge {
 
-    font-size: 9.5px;
+    font-size: 0.5938rem;
 
     padding: 1px 4px;
 
@@ -2814,19 +2815,19 @@ button.result-label:hover {
 
     height: 38px;
 
-    font-size: 20px;
+    font-size: 1.25rem;
 
   }
 
   .tab-btn {
 
-    font-size: 12.5px;
+    font-size: 0.7812rem;
 
   }
 
   .btn-open-sweep {
 
-    font-size: 13px;
+    font-size: 0.8125rem;
 
     letter-spacing: 0;
 
@@ -2844,7 +2845,7 @@ button.result-label:hover {
 
   .row-label-btn {
 
-    font-size: 14px;
+    font-size: 0.875rem;
 
     padding: 0 2px;
 
@@ -2852,7 +2853,7 @@ button.result-label:hover {
 
   .row-input {
 
-    font-size: 16px;
+    font-size: 1rem;
 
     padding: 0 2px;
 
@@ -2860,13 +2861,13 @@ button.result-label:hover {
 
   .row-derived-val {
 
-    font-size: 16px;
+    font-size: 1rem;
 
   }
 
   .row-unit-btn {
 
-    font-size: 14px;
+    font-size: 0.875rem;
 
     padding: 0 2px;
 
@@ -2874,7 +2875,7 @@ button.result-label:hover {
 
   .action-btn {
 
-    font-size: 14px;
+    font-size: 0.875rem;
 
   }
 
@@ -2890,19 +2891,19 @@ button.result-label:hover {
 
   .result-label {
 
-    font-size: 14.5px;
+    font-size: 0.9062rem;
 
   }
 
   .result-val {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
   }
 
   .result-unit {
 
-    font-size: 13.5px;
+    font-size: 0.8438rem;
 
   }
 
@@ -2924,7 +2925,7 @@ button.result-label:hover {
 
   .modal-title {
 
-    font-size: 13.5px;
+    font-size: 0.8438rem;
 
   }
 
@@ -2942,37 +2943,37 @@ button.result-label:hover {
 
   .tab-btn {
 
-    font-size: 12px;
+    font-size: 0.75rem;
 
   }
 
   .row-label-btn {
 
-    font-size: 13.5px;
+    font-size: 0.8438rem;
 
   }
 
   .row-unit-btn {
 
-    font-size: 13.5px;
+    font-size: 0.8438rem;
 
   }
 
   .action-btn {
 
-    font-size: 13.5px;
+    font-size: 0.8438rem;
 
   }
 
   .result-label {
 
-    font-size: 13.5px;
+    font-size: 0.8438rem;
 
   }
 
   .result-val {
 
-    font-size: 14.5px;
+    font-size: 0.9062rem;
 
   }
 
@@ -3020,7 +3021,7 @@ button.result-label:hover {
 
   .brand-title {
 
-    font-size: 22px;
+    font-size: 1.375rem;
 
   }
 
@@ -3034,7 +3035,7 @@ button.result-label:hover {
 
   .version-badge {
 
-    font-size: 12px;
+    font-size: 0.75rem;
 
     padding: 3px 8px;
 
@@ -3046,7 +3047,7 @@ button.result-label:hover {
 
     height: 44px;
 
-    font-size: 20px;
+    font-size: 1.25rem;
 
     border-radius: 10px;
 
@@ -3060,7 +3061,7 @@ button.result-label:hover {
 
   .tab-btn {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
     letter-spacing: 1px;
 
@@ -3084,7 +3085,7 @@ button.result-label:hover {
 
   .active-rotor-name {
 
-    font-size: 18px;
+    font-size: 1.125rem;
 
   }
 
@@ -3100,7 +3101,7 @@ button.result-label:hover {
 
     height: 48px;
 
-    font-size: 14.5px;
+    font-size: 0.9062rem;
 
     border-radius: 8px;
 
@@ -3108,7 +3109,7 @@ button.result-label:hover {
 
   .section-header {
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
     margin: 24px 6px 12px;
 
@@ -3130,7 +3131,7 @@ button.result-label:hover {
 
     height: 46px;
 
-    font-size: 15px;
+    font-size: 0.9375rem;
 
     padding: 0 12px;
 
@@ -3146,7 +3147,7 @@ button.result-label:hover {
 
     height: 46px;
 
-    font-size: 17px;
+    font-size: 1.0625rem;
 
     border-radius: 8px;
 
@@ -3156,7 +3157,7 @@ button.result-label:hover {
 
     height: 46px;
 
-    font-size: 17px;
+    font-size: 1.0625rem;
 
   }
 
@@ -3164,7 +3165,7 @@ button.result-label:hover {
 
     height: 46px;
 
-    font-size: 14.5px;
+    font-size: 0.9062rem;
 
     border-radius: 8px;
 
@@ -3184,19 +3185,19 @@ button.result-label:hover {
 
   .result-label {
 
-    font-size: 15.5px;
+    font-size: 0.9688rem;
 
   }
 
   .result-val {
 
-    font-size: 16.5px;
+    font-size: 1.0312rem;
 
   }
 
   .result-unit {
 
-    font-size: 14.5px;
+    font-size: 0.9062rem;
 
   }
 
@@ -3204,7 +3205,7 @@ button.result-label:hover {
 
     height: 52px;
 
-    font-size: 16px;
+    font-size: 1rem;
 
     border-radius: 10px;
 
@@ -3286,7 +3287,7 @@ button:active { filter: brightness(1.15); }
 
   .row-label-btn { padding: 1px 4px 1px 8px; }
 
-  .row-input, .row-derived-val, .row-unit-btn { font-size: 16px; }
+  .row-input, .row-derived-val, .row-unit-btn { font-size: 1rem; }
 
   .row-unit-btn { padding: 1px 2px; }
 
@@ -3294,7 +3295,7 @@ button:active { filter: brightness(1.15); }
 
   .result-label { padding-left: 10px; }
 
-  .result-val, .result-unit { font-size: 16px; }
+  .result-val, .result-unit { font-size: 1rem; }
 
   .result-val { padding-right: 0; }
 
@@ -3304,7 +3305,7 @@ button:active { filter: brightness(1.15); }
 
     min-height: 34px;
 
-    font-size: 17px;
+    font-size: 1.0625rem;
 
     margin: 0 12px 2px;
 
@@ -3326,15 +3327,15 @@ button:active { filter: brightness(1.15); }
 
   .rotor-actions-row { margin: 0 8px 8px; gap: 8px; }
 
-  .action-btn { height: 52px; font-size: 15px; }
+  .action-btn { height: 52px; font-size: 0.9375rem; }
 
   .results-header-actions { margin: 2px 8px 8px; }
 
   .btn-open-sweep { height: 52px; }
 
-  .status-pill { min-height: 48px; font-size: 15px; }
+  .status-pill { min-height: 48px; font-size: 0.9375rem; }
 
-  .sweep-control-group label { font-size: 15px; }
+  .sweep-control-group label { font-size: 0.9375rem; }
 
 }
 
@@ -3346,7 +3347,7 @@ button:active { filter: brightness(1.15); }
 
   .result-row { min-height: 58px; }
 
-  .section-header { font-size: 17px; }
+  .section-header { font-size: 1.0625rem; }
 
 }
 
@@ -3364,7 +3365,7 @@ button:active { filter: brightness(1.15); }
   border: 1px solid rgba(var(--accent-rgb), 0.3);
   color: var(--accent) !important;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 400;
   letter-spacing: normal;
   padding: 0 18px !important;
@@ -3382,7 +3383,7 @@ button:active { filter: brightness(1.15); }
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--accent);
   pointer-events: none;
 }
@@ -3423,7 +3424,7 @@ input[type="number"] {
 
   .tabs-nav { height: 48px; }
 
-  .brand-title { font-size: 20px; letter-spacing: 0; }
+  .brand-title { font-size: 1.25rem; letter-spacing: 0; }
 
   .brand-title { min-width: 0; }
 
@@ -3431,13 +3432,13 @@ input[type="number"] {
 
   .active-rotor-bar > span { position: absolute; right: 10px; }
 
-  .active-rotor-name { font-size: 16px; }
+  .active-rotor-name { font-size: 1rem; }
 
   #page-geometry > .rotor-actions-row { margin-top: 14px; }
 
 }
 
-@media (max-width: 340px) { .brand-title { font-size: 18px; } }
+@media (max-width: 340px) { .brand-title { font-size: 1.125rem; } }
 
 
 
@@ -3449,8 +3450,8 @@ input[type="number"] {
 
   .engineering-row + .section-header { margin-top: 6px; }
 
-  .header-actions .icon-btn { border: none; background: transparent; font-size: 28px; }
-  .header-actions #btn-install-app { font-size: 18px !important; width: 34px !important; height: 34px !important; min-width: 34px !important; }
+  .header-actions .icon-btn { border: none; background: transparent; font-size: 1.75rem; }
+  .header-actions #btn-install-app { font-size: 1.125rem !important; width: 34px !important; height: 34px !important; min-width: 34px !important; }
 
 }
 
@@ -3530,7 +3531,7 @@ input[type="number"] {
 
     position: relative;
 
-    font-size: 18px;
+    font-size: 1.125rem;
 
     font-weight: 700;
 
@@ -3558,7 +3559,7 @@ input[type="number"] {
 
   }
 
-  .menu-sheet-header .modal-close-btn { color: #94a3b8; font-size: 26px; font-weight: 400; }
+  .menu-sheet-header .modal-close-btn { color: #94a3b8; font-size: 1.625rem; font-weight: 400; }
 
   .popup-menu .menu-primary {
 
@@ -3580,7 +3581,7 @@ input[type="number"] {
 
     color: #e2e8f0;
 
-    font-size: 16px;
+    font-size: 1rem;
 
     font-weight: 400;
 
@@ -3606,7 +3607,7 @@ input[type="number"] {
 
   .menu-item-title { line-height: 23px; }
 
-  .menu-item-subtitle { display: block; color: #94a3b8; font-size: 15px; line-height: 21px; }
+  .menu-item-subtitle { display: block; color: #94a3b8; font-size: 0.9375rem; line-height: 21px; }
 
   .popup-menu .menu-desktop-only { display: none !important; }
 
@@ -3688,18 +3689,18 @@ input[type="number"] {
 
   }
 
-  #modal-options-selector .modal-title, #modal-result-tooltip .modal-title { color: #fff; font-size: 18px; }
+  #modal-options-selector .modal-title, #modal-result-tooltip .modal-title { color: #fff; font-size: 1.125rem; }
 
   #modal-result-tooltip .modal-header { min-height: 58px; }
 
-  #modal-result-tooltip #result-tooltip-desc { font-size: 15px !important; font-weight: 400; line-height: 18px !important; margin-bottom: 18px !important; }
+  #modal-result-tooltip #result-tooltip-desc { font-size: 0.9375rem !important; font-weight: 400; line-height: 18px !important; margin-bottom: 18px !important; }
 
-  #modal-result-tooltip #result-tooltip-eq-box { font-size: 15px !important; font-weight: 400; line-height: normal !important; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 14px 16px !important; border-radius: 10px !important; margin-bottom: 16px !important; display: flex; justify-content: center; align-items: center; overflow: visible !important; box-sizing: border-box; }
+  #modal-result-tooltip #result-tooltip-eq-box { font-size: 0.9375rem !important; font-weight: 400; line-height: normal !important; word-break: normal !important; overflow-wrap: normal !important; background: var(--bg) !important; border-color: var(--border) !important; padding: 14px 16px !important; border-radius: 10px !important; margin-bottom: 16px !important; display: flex; justify-content: center; align-items: center; overflow: visible !important; box-sizing: border-box; }
   #result-tooltip-eq-box math { display: block; text-align: center; font-size: 1.15em; line-height: normal !important; color: var(--accent); overflow-x: auto; overflow-y: visible !important; padding: 8px 6px !important; margin: 0 auto; box-sizing: border-box; }
   #result-tooltip-eq-box math * { overflow: visible !important; }
   #result-tooltip-eq-box math mo[stretchy="false"] { font-size: 1em !important; transform: none !important; }
 
-  #modal-result-tooltip #result-tooltip-range-box, #modal-result-tooltip #result-tooltip-unit-box { font-size: 15px !important; font-weight: 400; line-height: 24px; }
+  #modal-result-tooltip #result-tooltip-range-box, #modal-result-tooltip #result-tooltip-unit-box { font-size: 0.9375rem !important; font-weight: 400; line-height: 24px; }
 
   #modal-result-tooltip #result-tooltip-range-box span,
 
@@ -3770,11 +3771,11 @@ input[type="number"] {
 
 @media (max-width: 340px) {
 
-  .menu-sheet-header { font-size: 15.48px; }
+  .menu-sheet-header { font-size: 0.9675rem; }
 
-  .popup-menu .menu-primary { font-size: 13.76px; }
+  .popup-menu .menu-primary { font-size: 0.86rem; }
 
-  .menu-item-subtitle { font-size: 12.9px; }
+  .menu-item-subtitle { font-size: 0.8063rem; }
 
 }
 
@@ -3808,13 +3809,13 @@ input[type="number"] {
   }
 
   #modal-sweep .modal-title { font-size: 0; letter-spacing: 0; }
-  #modal-sweep .modal-title::after { content: "PARAMETER SWEEP"; font-size: 15px; }
+  #modal-sweep .modal-title::after { content: "PARAMETER SWEEP"; font-size: 0.9375rem; }
 
   #modal-disk-contour .modal-title { font-size: 0; letter-spacing: 0; }
-  #modal-disk-contour .modal-title::after { content: "ROTOR DISK CONTOUR"; font-size: 15px; }
+  #modal-disk-contour .modal-title::after { content: "ROTOR DISK CONTOUR"; font-size: 0.9375rem; }
 
   #modal-sweep .modal-close-btn,
-  #modal-disk-contour .modal-close-btn { color: var(--accent-red); font-size: 20px; }
+  #modal-disk-contour .modal-close-btn { color: var(--accent-red); font-size: 1.25rem; }
 
   #modal-sweep .modal-body,
   #modal-disk-contour .modal-body { padding: 0; flex: 1; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
@@ -3858,7 +3859,7 @@ input[type="number"] {
     background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
     color: var(--accent);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 700;
     line-height: 17px;
     cursor: pointer;
@@ -3866,7 +3867,7 @@ input[type="number"] {
   }
 
   #modal-sweep .sweep-control-group:first-child .sweep-mobile-selector,
-  #modal-disk-contour .sweep-mobile-selector { font-size: 14px; }
+  #modal-disk-contour .sweep-mobile-selector { font-size: 0.875rem; }
 
   #modal-sweep .sweep-mobile-selector:disabled,
   #modal-disk-contour .sweep-mobile-selector:disabled { color: var(--text-muted); cursor: default; }
@@ -3906,12 +3907,12 @@ input[type="number"] {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    font-size: 14px !important;
+    font-size: 0.875rem !important;
     color: var(--accent-amber) !important;
     font-weight: 700 !important;
   }
 
-  #modal-sweep #sweep-readout { min-height: auto; font-size: 15px !important; font-weight: 400 !important; line-height: 22px; word-break: break-word; white-space: pre-line; }
+  #modal-sweep #sweep-readout { min-height: auto; font-size: 0.9375rem !important; font-weight: 400 !important; line-height: 22px; word-break: break-word; white-space: pre-line; }
 
   #modal-sweep .sweep-footer-actions,
   #modal-disk-contour .sweep-footer-actions {
@@ -3924,15 +3925,15 @@ input[type="number"] {
 
   #modal-sweep .sweep-footer-actions .action-btn { flex: 1; height: 48px !important; font-size: 0; padding: 0; }
 
-  #btn-sweep-toggle-table::after { content: "TABLE"; font-size: 14px; }
-  #btn-sweep-export-csv::after { content: "CSV"; font-size: 14px; color: var(--accent-green); }
-  #btn-sweep-export-png::after { content: "PNG"; font-size: 14px; color: var(--accent-green); }
-  #btn-sweep-export-all-png::after { content: "ALL PNG"; font-size: 12px; color: var(--accent-green); }
+  #btn-sweep-toggle-table::after { content: "TABLE"; font-size: 0.875rem; }
+  #btn-sweep-export-csv::after { content: "CSV"; font-size: 0.875rem; color: var(--accent-green); }
+  #btn-sweep-export-png::after { content: "PNG"; font-size: 0.875rem; color: var(--accent-green); }
+  #btn-sweep-export-all-png::after { content: "ALL PNG"; font-size: 0.75rem; color: var(--accent-green); }
 
   #modal-disk-contour .sweep-footer-actions .action-btn {
     flex: 1;
     height: 48px !important;
-    font-size: 13px !important;
+    font-size: 0.8125rem !important;
     font-weight: 700;
     padding: 0 8px;
     letter-spacing: 0.3px;
@@ -3978,14 +3979,14 @@ input[type="number"] {
   }
   #modal-disk-contour #disk-contour-val {
     min-height: 28px;
-    font-size: 12px !important;
+    font-size: 0.75rem !important;
   }
 
   #modal-sweep .sweep-footer-actions,
   #modal-disk-contour .sweep-footer-actions { min-height: 42px; padding: 4px 12px; }
 
   #modal-sweep .sweep-footer-actions .action-btn { height: 34px !important; }
-  #modal-disk-contour .sweep-footer-actions .action-btn { height: 34px !important; font-size: 12px !important; }
+  #modal-disk-contour .sweep-footer-actions .action-btn { height: 34px !important; font-size: 0.75rem !important; }
 }
 
 /* Low-height landscape includes wide phones (for example 915x412) and
@@ -4050,7 +4051,7 @@ input[type="number"] {
 
   #modal-disk-contour #disk-contour-val {
     min-height: 28px;
-    font-size: 12px !important;
+    font-size: 0.75rem !important;
   }
 
   #modal-disk-contour .sweep-footer-actions {
@@ -4061,7 +4062,7 @@ input[type="number"] {
 
   #modal-disk-contour .sweep-footer-actions .action-btn {
     height: 34px !important;
-    font-size: 12px !important;
+    font-size: 0.75rem !important;
   }
 }
 
@@ -4087,21 +4088,21 @@ input[type="number"] {
 
 #modal-unit-converter .modal-card { width: min(100%, 520px); }
 
-.quick-caption { display: block; font-size: 13px; font-weight: 700; color: var(--text-muted); line-height: 22px; }
+.quick-caption { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); line-height: 22px; }
 
 .quick-mode-row { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 8px; margin: 2px 0 8px; }
 
-.quick-mode-row .action-btn { height: 48px; background: linear-gradient(180deg,var(--btn-top),var(--btn-bottom)); color: var(--accent); font-size: 15px; padding: 0 8px; }
+.quick-mode-row .action-btn { height: 48px; background: linear-gradient(180deg,var(--btn-top),var(--btn-bottom)); color: var(--accent); font-size: 0.9375rem; padding: 0 8px; }
 
-#quick-converter-input { width: 100%; height: 48px; text-align: center; font-size: 16px; }
+#quick-converter-input { width: 100%; height: 48px; text-align: center; font-size: 1rem; }
 
-#quick-converter-result { height: 72px; margin-top: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 700; color: var(--accent-green); }
+#quick-converter-result { height: 72px; margin-top: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1875rem; font-weight: 700; color: var(--accent-green); }
 
 .advanced-converter { margin-top: 16px; }
 
 .advanced-converter summary { cursor: pointer; padding: 12px 0; }
 
-.about-body { padding: 0 20px 20px; text-align: left; font-size: 16px; line-height: 19px; font-weight: 400; }
+.about-body { padding: 0 20px 20px; text-align: left; font-size: 1rem; line-height: 19px; font-weight: 400; }
 
 .about-body p { margin: 0 0 18px; }
 
@@ -4119,11 +4120,11 @@ input[type="number"] {
 
   #modal-about .modal-header { padding: 18px 20px; min-height: 58px; border: none; background: transparent; }
 
-  #modal-about .modal-title { font-size: 18px; color: #fff; letter-spacing: 0; }
+  #modal-about .modal-title { font-size: 1.125rem; color: #fff; letter-spacing: 0; }
 
   #modal-about .modal-close-btn { display: none; }
 
-  #modal-about .action-btn { height: 48px !important; background: var(--accent); color: var(--bg); border: none; border-radius: 12px; font-size: 16px; }
+  #modal-about .action-btn { height: 48px !important; background: var(--accent); color: var(--bg); border: none; border-radius: 12px; font-size: 1rem; }
 
   :root[data-theme="light"] #modal-about .modal-card { background: #fff; }
 
@@ -4147,7 +4148,7 @@ input[type="number"] {
 
   #modal-settings .settings-form-grid { gap: 0; }
 
-  #modal-settings .settings-section-hdr { height: 44px; flex-shrink: 0; padding: 16px 0 8px; margin: 0; font-size: 17px; }
+  #modal-settings .settings-section-hdr { height: 44px; flex-shrink: 0; padding: 16px 0 8px; margin: 0; font-size: 1.0625rem; }
 
   #modal-settings .settings-row { min-height: 84px; gap: 8px; padding: 12px 0; border: none; }
 
@@ -4155,9 +4156,9 @@ input[type="number"] {
 
   #modal-settings .settings-row-info, #modal-settings .settings-btn { transform: translateY(10px); }
 
-  #modal-settings .settings-row-title { font-size: 14px; white-space: normal; overflow: visible; }
+  #modal-settings .settings-row-title { font-size: 0.875rem; white-space: normal; overflow: visible; }
 
-  #modal-settings .settings-row-sub { font-size: 13px; font-weight: 400; line-height: 15px; }
+  #modal-settings .settings-row-sub { font-size: 0.8125rem; font-weight: 400; line-height: 15px; }
 
   #modal-settings .settings-btn { flex: 0 0 44%; min-width: 0; max-width: none; height: 48px; border: none; border-radius: 4px; color: var(--accent) !important; }
 
@@ -4167,7 +4168,7 @@ input[type="number"] {
 
   #modal-unit-converter .modal-header { height: 52px; min-height: 52px; background: var(--header-bg); padding: 0 4px 0 16px; border: none; }
 
-  #modal-unit-converter .modal-title { font-size: 15px; letter-spacing: 0; }
+  #modal-unit-converter .modal-title { font-size: 0.9375rem; letter-spacing: 0; }
 
   #modal-unit-converter .modal-body { padding: 8px 16px 0; }
 
@@ -4197,3 +4198,168 @@ input[type="number"] {
 
 .name-dialog-actions button { min-height:48px; min-width:88px; }
 
+
+
+/* ==========================================================================
+   Web UI fixes: touch targets, accessibility, feedback, dialogs
+   ========================================================================== */
+
+/* Touch targets: at least 48px for every row control. */
+.row-label-btn, .row-input, .row-derived-val, .row-unit-btn { min-height: 48px; height: 48px; }
+@media (max-width: 767px) {
+  .row-label-btn, .row-input, .row-derived-val, .row-unit-btn { height: 52px; }
+}
+@media (min-width: 768px) {
+  .row-label-btn, .row-input, .row-derived-val, .row-unit-btn { height: 52px; }
+}
+
+/* The whole result row is the help button. */
+.result-row { position: relative; min-height: 48px; }
+.result-label::after { content: ""; position: absolute; inset: 0; }
+
+/* Icon buttons keep their look but get a 48px hit area. */
+.icon-btn { position: relative; }
+.icon-btn::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 48px; height: 48px; transform: translate(-50%, -50%); }
+@media (max-width: 360px) {
+  .icon-btn { min-width: 38px; }
+}
+
+/* Option rows are buttons. */
+.option-item { width: 100%; font: inherit; color: inherit; text-align: left; min-height: 48px; }
+.option-text-group > span { display: block; }
+.option-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Selector cells may wrap to two lines on narrow screens. */
+.engineering-row > .action-btn {
+  white-space: normal !important;
+  line-height: 1.1 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 20px 2px 6px !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.engineering-row > .action-btn::after { right: 6px; }
+
+/* Rotor manager actions */
+.rotor-act-btn { min-height: 48px; height: 48px; padding: 0 10px; }
+.rotor-manager-info { cursor: pointer; }
+.rotor-manager-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.rotor-drag-handle { touch-action: none; }
+@media (max-width: 480px) {
+  .rotor-manager-item { flex-wrap: wrap; }
+  .rotor-manager-item .rotor-manager-info { flex: 1 1 calc(100% - 40px); min-width: 0; }
+  .rotor-manager-actions { flex: 1 1 100%; }
+  .rotor-manager-actions .rotor-act-btn { flex: 1; }
+}
+
+/* Help dialog link and status chips */
+#btn-result-tooltip-open-help { min-height: 48px; }
+.status-chip-btn {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  text-align: left;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.status-chip-btn > span { white-space: normal; overflow-wrap: anywhere; }
+
+/* Reason banner above the results */
+.results-banner {
+  margin: 0 12px 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.results-banner[hidden] { display: none; }
+.results-banner.error { color: var(--accent-red); background: rgba(255, 23, 68, 0.08); border-color: rgba(255, 23, 68, 0.4); }
+.results-banner.warn { color: var(--accent-amber); background: rgba(255, 179, 0, 0.1); border-color: rgba(255, 179, 0, 0.45); }
+
+/* Inline field feedback */
+.engineering-row > .row-hint {
+  grid-column: 1 / -1;
+  padding: 2px 4px 4px;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--accent-amber);
+}
+.engineering-row > .row-hint[hidden] { display: none; }
+.field-error {
+  margin: 6px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--accent-red);
+}
+.field-error[hidden] { display: none; }
+.unsaved-tag { color: var(--accent-amber); font-weight: 700; margin-left: 6px; }
+
+/* In-app dialogs */
+.app-dialog { max-width: 440px; }
+.app-dialog-body { padding: 16px 20px; }
+.app-dialog-message { margin-bottom: 16px; font-size: 0.9375rem; line-height: 1.5; color: var(--text-main); white-space: pre-line; }
+.app-dialog-actions { display: flex; flex-direction: column; gap: 8px; }
+.app-dialog-actions .action-btn { min-height: 48px; height: auto; padding: 8px 12px; font-weight: 700; }
+.app-dialog-actions .dialog-primary { color: var(--accent); }
+
+/* Toast */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 24px);
+  max-width: min(92vw, 420px);
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--header-bg);
+  color: var(--text-main);
+  border: 1px solid var(--accent);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 10000;
+}
+.app-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* Disk contour: the app selector sheet replaces the native select on every width. */
+#modal-disk-contour .sweep-control-group > select { display: none !important; }
+#modal-disk-contour .sweep-control-group > label { display: none !important; }
+#modal-disk-contour .sweep-mobile-selector {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+#modal-disk-contour .disk-contour-canvas-wrapper { padding: 0 0 6px; }
+
+/* Modal action buttons keep a 48px target. */
+.modal-body .action-btn, .sweep-footer-actions .action-btn { min-height: 48px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-toast { transition: none; }
+}

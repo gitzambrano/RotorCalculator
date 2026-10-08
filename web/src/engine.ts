@@ -114,6 +114,8 @@ export interface RotorResults {
   compressibilityWarning: boolean;
   compressibilityInvalid?: boolean;
   statusMessage: string;
+  /** Empty when none. Short STE text: clamped inputs and out-of-model flight regimes. */
+  validityWarning: string;
   powerInducedKW: number;
   powerProfileKW: number;
   diskLoadingN_m2: number;
@@ -265,8 +267,8 @@ export function resolveSolidity(geom: RotorGeometry): RotorGeometry {
   g.liftSlope0 = Math.max(0.1, Math.min(10.0, g.liftSlope0));
   g.cd0 = Math.max(0.0, Math.min(0.5, g.cd0));
 
-  if (g.tipLossB <= g.rootCutout || g.tipLossB > 1.0) g.tipLossB = 0.97;
-  if (g.tipLossB <= g.rootCutout) g.tipLossB = Math.min(1.0, g.rootCutout + 0.01);
+  // Same clamp as tools/zBET.py Geometry.b_factor: B in [x0 + 0.01, 1.0].
+  g.tipLossB = Math.max(g.rootCutout + 0.01, Math.min(1.0, g.tipLossB));
 
   const x0 = g.rootCutout;
   const nb = g.nBlades;
@@ -527,11 +529,15 @@ export function radialMoments(geom: RotorGeometry, b: number): [number[], number
 
 export function getBFactor(geom: RotorGeometry, ct: number): number {
   if (geom.tipLossMode === "none") return 1.0;
-  if (geom.tipLossMode === "fixed") return geom.tipLossB;
+  if (geom.tipLossMode === "fixed") {
+    const x0 = Math.max(0.0, Math.min(0.95, geom.rootCutout));
+    return Math.max(x0 + 0.01, Math.min(1.0, geom.tipLossB));
+  }
   if (geom.tipLossMode === "sissingh") {
     if (ct <= 0) return 1.0;
-    const b = 1.0 - Math.sqrt(2.0 * ct) / geom.nBlades;
-    return Math.max(0.5, Math.min(1.0, b));
+    const x0 = Math.max(0.0, Math.min(0.95, geom.rootCutout));
+    const b = 1.0 - Math.sqrt(2.0 * ct) / Math.max(1, geom.nBlades);
+    return Math.max(x0 + 0.01, Math.min(1.0, b));
   }
   return 1.0;
 }
@@ -620,6 +626,32 @@ export function solveInflow(
   return 0.5 * (currentLo + currentHi);
 }
 
+/** Direct BET induced shaft torque CQi (analytical_bet); matches InducedTorqueBET in zBETEngine.bas and tools/zBET.py. */
+export function inducedTorqueBET(
+  mu: number,
+  lam: number,
+  l1c: number,
+  l1s: number,
+  geom: RotorGeometry,
+  bVal: number,
+  a: number
+): number {
+  const x0 = geom.rootCutout;
+  if (bVal <= x0) return 0.0;
+  const halfSpan = 0.5 * (bVal - x0);
+  let sum = 0.0;
+  for (let i = 0; i < 16; i++) {
+    const x = halfSpan * (GL_X16[i] + 1.0) + x0;
+    const integrand = 0.5 * localSolidity(geom, x) * a * (
+      (lam + 0.5 * mu * l1s) * localPitch(geom, x) * x * x -
+      lam * lam * x -
+      0.5 * (l1c * l1c + l1s * l1s) * x * x * x
+    );
+    sum += halfSpan * GL_W16[i] * integrand;
+  }
+  return sum;
+}
+
 export function profileDrag(
   mu: number,
   muZ: number,
@@ -675,37 +707,159 @@ export function profileDrag(
   return [ch0Sum, cq0Sum];
 }
 
+/**
+ * Operating limits shared with zBETEngine.bas (SanitizeCondition) and tools/zBET.py.
+ * Values outside these ranges are limited, never rejected.
+ */
+export const OPERATING_LIMITS = {
+  altitudeM: [-500.0, 11000.0],
+  temperatureC: [-80.0, 60.0],
+  pressurePa: [1000.0, 120000.0],
+  rho: [0.01, 5.0],
+  speedOfSound: [100.0, 500.0],
+  rpm: [1.0, 30000.0],
+  collectiveDeg: [-60.0, 60.0],
+  mu: [-0.6, 0.6],
+  muZ: [-0.5, 0.5],
+  targetThrustN: [0.0, 1.0e8],
+  targetCT: [0.0, 0.2],
+  kInd: [1.0, 3.0],
+  fxColeman: [-5.0, 5.0],
+  fyColeman: [-5.0, 5.0],
+} as const;
+
+function clampTo(v: number, range: readonly number[]): number {
+  return Math.max(range[0], Math.min(range[1], v));
+}
+
+/**
+ * Returns a clamped copy of the condition (same ranges as the Android engine).
+ * It does not derive mu or muZ from Vx, Vz or alpha. Use resolveConditionAtRPM for that.
+ */
 export function sanitizeCondition(cond: FlightCondition): FlightCondition {
   const c = { ...cond };
-  c.kInd = Math.max(0.5, Math.min(3.0, c.kInd));
-  c.fxColeman = Math.max(0.0, Math.min(2.0, c.fxColeman));
-  c.fyColeman = Math.max(0.0, Math.min(2.0, c.fyColeman));
-
-  if (c.horizontalMode === "vx") {
-    const omega = (c.rpm * 2.0 * Math.PI) / 60.0;
-    const vtip = omega * 5.0; // fallback radius
-    c.mu = vtip > 0 ? c.horizontalValue / vtip : 0.0;
-  } else {
-    c.mu = c.horizontalValue;
-  }
-  c.mu = Math.max(0.0, Math.min(0.8, c.mu));
-
-  if (c.axialMode === "alpha") {
-    const aRad = (c.axialValue * Math.PI) / 180.0;
-    c.muZ = -c.mu * Math.tan(aRad);
-  } else if (c.axialMode === "vz") {
-    const omega = (c.rpm * 2.0 * Math.PI) / 60.0;
-    const vtip = omega * 5.0;
-    c.muZ = vtip > 0 ? c.axialValue / vtip : 0.0;
-  } else {
-    c.muZ = c.axialValue;
-  }
+  const L = OPERATING_LIMITS;
+  c.altitudeM = clampTo(c.altitudeM, L.altitudeM);
+  c.temperatureC = clampTo(c.temperatureC, L.temperatureC);
+  c.pressurePa = clampTo(c.pressurePa, L.pressurePa);
+  c.rho = clampTo(c.rho, L.rho);
+  c.speedOfSound = clampTo(c.speedOfSound, L.speedOfSound);
+  c.rpm = clampTo(c.rpm, L.rpm);
+  c.collectiveDeg = clampTo(c.collectiveDeg, L.collectiveDeg);
+  c.mu = clampTo(c.mu, L.mu);
+  c.muZ = clampTo(c.muZ, L.muZ);
+  c.targetThrustN = clampTo(c.targetThrustN, L.targetThrustN);
+  c.targetCT = clampTo(c.targetCT, L.targetCT);
+  c.kInd = clampTo(c.kInd, L.kInd);
+  c.fxColeman = clampTo(c.fxColeman, L.fxColeman);
+  c.fyColeman = clampTo(c.fyColeman, L.fyColeman);
+  if (c.horizontalMode !== "mu" && c.horizontalMode !== "vx") c.horizontalMode = "mu";
+  if (c.axialMode !== "alpha" && c.axialMode !== "vz" && c.axialMode !== "muz") c.axialMode = "alpha";
+  if (c.inducedTorqueModel !== "energy_balance" && c.inducedTorqueModel !== "analytical_bet") c.inducedTorqueModel = "energy_balance";
   return c;
 }
 
+/** Canonical convention: muZ = -mu tan(alpha); Vz and muZ are positive downward through the disk. */
+export function resolveMuZ(mu: number, axialMode: string, axialValue: number, vtip: number): number {
+  switch (axialMode) {
+    case "alpha":
+      return -mu * Math.tan((axialValue * Math.PI) / 180.0);
+    case "vz":
+      return Math.abs(vtip) < 1e-12 ? 0.0 : axialValue / vtip;
+    default:
+      return axialValue;
+  }
+}
+
+/** Tip speed [m/s] of a resolved geometry. The floor matches ResolveConditionAtRPM in zBETEngine.bas. */
+function geometryTipSpeed(geom: RotorGeometry): number {
+  return Math.max(1.0e-9, ((geom.rpm * 2.0 * Math.PI) / 60.0) * geom.radius);
+}
+
+/**
+ * Resolves mu and muZ from the selected Vx / mu and alpha / Vz / muZ inputs with the
+ * real geometry (radius and RPM). Matches zBETEngine.ResolveConditionAtRPM.
+ */
+export function resolveConditionAtRPM(src: FlightCondition, geom: RotorGeometry): FlightCondition {
+  const c = sanitizeCondition(src);
+  const vtip = geometryTipSpeed(geom);
+  const rawMu = c.horizontalMode === "vx" ? c.horizontalValue / vtip : c.horizontalValue;
+  c.mu = clampTo(rawMu, OPERATING_LIMITS.mu);
+  c.muZ = clampTo(resolveMuZ(c.mu, c.axialMode, c.axialValue, vtip), OPERATING_LIMITS.muZ);
+  c.rpm = geom.rpm;
+  return c;
+}
+
+/**
+ * Disk angle of attack [deg] from mu and muZ, with muZ = -mu tan(alpha).
+ * The signed atan2 form keeps alpha in (-90, 90) for rearward flight (mu < 0) too.
+ */
 export function alphaFromMuZ(mu: number, muZ: number): number {
-  if (mu <= 1e-9) return 0.0;
-  return (-Math.atan2(muZ, mu) * 180.0) / Math.PI;
+  if (Math.abs(mu) < 1e-9) return 0.0;
+  return (-Math.atan2(muZ * Math.sign(mu), Math.abs(mu)) * 180.0) / Math.PI;
+}
+
+function limitedItem(items: string[], label: string, raw: number, range: readonly number[], digits: number): void {
+  if (Number.isFinite(raw) && (raw < range[0] || raw > range[1])) {
+    items.push(`${label} = ${clampTo(raw, range).toFixed(digits)}`);
+  }
+}
+
+/**
+ * Lists every input that the engine limits. Returns "" when nothing is limited,
+ * otherwise a short STE message such as "Input limited: μx = 0.60".
+ * Pass the raw (caller) geometry and condition, and the operating RPM that resolves Vx and Vz.
+ */
+export function inputLimitNotes(geom: RotorGeometry, cond: FlightCondition, rpm: number): string {
+  const items: string[] = [];
+  const L = OPERATING_LIMITS;
+
+  // Geometry (see resolveSolidity).
+  const radius = clampTo(geom.radius, [0.02, 50.0]);
+  const x0 = clampTo(geom.rootCutout, [0.0, 0.95]);
+  limitedItem(items, "R", geom.radius, [0.02, 50.0], 2);
+  limitedItem(items, "N_b", Math.floor(geom.nBlades), [1, 16], 0);
+  limitedItem(items, "x_0", geom.rootCutout, [0.0, 0.95], 2);
+  if (geom.solidityMode === "chords") {
+    limitedItem(items, "c_R", geom.chordRoot, [0.0001, 2.0 * radius], 4);
+    limitedItem(items, "c_T", geom.chordTip, [0.0001, 2.0 * radius], 4);
+  }
+  limitedItem(items, "a_0", geom.liftSlope0, [0.1, 10.0], 2);
+  limitedItem(items, "C_d0", geom.cd0, [0.0, 0.5], 4);
+  if (geom.tipLossMode === "fixed") limitedItem(items, "B", geom.tipLossB, [x0 + 0.01, 1.0], 3);
+
+  // Atmosphere and engine settings.
+  limitedItem(items, "altitude", cond.altitudeM, L.altitudeM, 0);
+  limitedItem(items, "temperature", cond.temperatureC, L.temperatureC, 0);
+  limitedItem(items, "pressure", cond.pressurePa, L.pressurePa, 0);
+  limitedItem(items, "ρ", cond.rho, L.rho, 3);
+  limitedItem(items, "speed of sound", cond.speedOfSound, L.speedOfSound, 1);
+  const pair = cond.operatingPair.split("_");
+  if (pair[0] === "rpm") limitedItem(items, "Ω", cond.rpm, L.rpm, 0);
+  if (pair.includes("collective")) limitedItem(items, "Δθ", cond.collectiveDeg, L.collectiveDeg, 1);
+  if (pair.includes("ct")) limitedItem(items, "C_T target", cond.targetCT, L.targetCT, 4);
+  if (pair.includes("thrust")) limitedItem(items, "T target", cond.targetThrustN, L.targetThrustN, 0);
+  limitedItem(items, "k_ind", cond.kInd, L.kInd, 2);
+  if (cond.inflowModel === "coleman_feingold") {
+    limitedItem(items, "f_x", cond.fxColeman, L.fxColeman, 2);
+    limitedItem(items, "f_y", cond.fyColeman, L.fyColeman, 2);
+  }
+
+  // Flight kinematics at the operating RPM.
+  const vtip = Math.max(1.0e-9, ((clampTo(rpm, L.rpm) * 2.0 * Math.PI) / 60.0) * radius);
+  const base = sanitizeCondition(cond);
+  const rawMu = base.horizontalMode === "vx" ? base.horizontalValue / vtip : base.horizontalValue;
+  limitedItem(items, "μx", rawMu, L.mu, 2);
+  const mu = clampTo(rawMu, L.mu);
+  limitedItem(items, "μz", resolveMuZ(mu, base.axialMode, base.axialValue, vtip), L.muZ, 2);
+
+  return items.length > 0 ? `Input limited: ${items.join("; ")}` : "";
+}
+
+export const VORTEX_RING_WARNING = "Outside model validity: vortex ring state / windmill region";
+
+function joinWarnings(...parts: string[]): string {
+  return parts.filter((p) => p.length > 0).join(". ");
 }
 
 function candidateResidual(
@@ -719,7 +873,9 @@ function candidateResidual(
   const delta = candidateCollectiveDeg * Math.PI / 180;
   const g = resolveSolidity({ ...baseGeom, rpm: candidateRPM, pitchMode: "linear_twist", thetaRoot: baseGeom.thetaRoot + delta, thetaTip: baseGeom.thetaTip + delta, theta0: .5 * (baseGeom.thetaRoot + baseGeom.thetaTip) + delta });
 
-  const c = { ...sourceCond, rpm: candidateRPM, collectiveDeg: candidateCollectiveDeg };
+  const c = resolveConditionAtRPM({ ...sourceCond, rpm: candidateRPM, collectiveDeg: candidateCollectiveDeg }, g);
+  c.operatingPair = "rpm_collective";
+  c.collectiveDeg = candidateCollectiveDeg;
   const res = calculateCoreResolvedMode(g, c, false);
   if (!res.solutionValid) return [0.0, false];
 
@@ -964,13 +1120,13 @@ export function resolveOperatingState(
   }
 
   if (!ok && status === "VALID") {
-    status = "INVALID: selected operating constraints could not be trimmed";
+    status = baseGeom.rootCutout >= 0.95
+      ? "INVALID: selected operating constraints could not be trimmed. Root cutout x_0 is at the 0.95 limit"
+      : "INVALID: selected operating constraints could not be trimmed";
   }
 
   if (!ok) return [baseGeom, c, status];
 
-  c.rpm = rpm;
-  c.collectiveDeg = collective;
   baseGeom.rpm = rpm;
 
   const delta = collective * Math.PI / 180;
@@ -979,31 +1135,26 @@ export function resolveOperatingState(
   baseGeom.thetaTip += delta;
   baseGeom.theta0 = .5 * (baseGeom.thetaRoot + baseGeom.thetaTip);
 
-  // Re-resolve mu and muZ with final RPM
-  const omega = (rpm * 2.0 * Math.PI) / 60.0;
-  const vtip = omega * baseGeom.radius;
-  if (c.horizontalMode === "vx") {
-    c.mu = vtip > 0 ? c.horizontalValue / vtip : 0.0;
-  }
-  if (c.axialMode === "vz") {
-    c.muZ = vtip > 0 ? c.axialValue / vtip : 0.0;
-  } else if (c.axialMode === "alpha") {
-    const aRad = (c.axialValue * Math.PI) / 180.0;
-    c.muZ = -c.mu * Math.tan(aRad);
-  }
+  // Resolve mu and muZ once, with the final RPM and the real rotor radius.
+  c = resolveConditionAtRPM(c, baseGeom);
+  c.collectiveDeg = collective;
 
   return [baseGeom, c, "VALID"];
 }
 
 export function calculate(geom: RotorGeometry, cond: FlightCondition): RotorResults {
   const [resolvedGeom, resolvedCond, status] = resolveOperatingState(geom, cond);
+  const limits = inputLimitNotes(geom, cond, status === "VALID" ? resolvedGeom.rpm : resolvedCond.rpm);
   if (status !== "VALID") {
     const res = createEmptyResults();
     res.solutionValid = false;
     res.statusMessage = status;
+    res.validityWarning = limits;
     return res;
   }
-  return calculateCoreResolvedMode(resolvedGeom, resolvedCond, true);
+  const result = calculateCoreResolvedMode(resolvedGeom, resolvedCond, true);
+  result.validityWarning = joinWarnings(limits, result.validityWarning);
+  return result;
 }
 
 function createEmptyResults(): RotorResults {
@@ -1018,7 +1169,7 @@ function createEmptyResults(): RotorResults {
     effectiveLiftSlope: 0, trimmedRPM: 0, trimmedCollectiveDeg: 0, trimmedTheta0Deg: 0,
     operatingMu: 0, operatingMuZ: 0, operatingVx: 0, operatingVz: 0, operatingAlphaDeg: 0,
     altitudeM: 0, temperatureC: 0, densityRho: 0, pressurePa: 0, speedOfSound: 0,
-    solutionValid: false, compressibilityWarning: false, statusMessage: "INIT",
+    solutionValid: false, compressibilityWarning: false, statusMessage: "INIT", validityWarning: "",
     powerInducedKW: 0, powerProfileKW: 0, diskLoadingN_m2: 0, powerLoadingN_kW: 0,
     inducedVelocityM_s: 0, CTs: 0,
     aoaAdv25: 0, aoaRet25: 0, phiAdv25: 0, phiRet25: 0,
@@ -1026,6 +1177,11 @@ function createEmptyResults(): RotorResults {
     aoaAdv75: 0, aoaRet75: 0, phiAdv75: 0, phiRet75: 0,
     aoaAdvTip: 0, aoaRetTip: 0, phiAdvTip: 0, phiRetTip: 0,
   };
+}
+
+/** Adds a plain reason when the root cutout is at its upper limit and no inflow root exists. */
+function noRootMessage(g: RotorGeometry, base: string): string {
+  return g.rootCutout >= 0.95 ? `${base}. Root cutout x_0 is at the 0.95 limit` : base;
 }
 
 export function calculateCoreResolvedMode(
@@ -1061,7 +1217,8 @@ export function calculateCoreResolvedMode(
   res.pressurePa = c.pressurePa;
   res.speedOfSound = c.speedOfSound;
 
-  res.advancingTipMach = (vtip * (1.0 + c.mu)) / c.speedOfSound;
+  // The advancing blade sees Omega*r plus the in-plane flow speed |mu|*Omega*R in forward and rearward flight.
+  res.advancingTipMach = (vtip * (1.0 + Math.abs(c.mu))) / c.speedOfSound;
   res.effectiveLiftSlope = getLiftSlope(g, c.mu, c.speedOfSound);
   if (g.usePrandtlGlauert && res.advancingTipMach >= 0.8) {
     res.compressibilityWarning = true;
@@ -1075,7 +1232,7 @@ export function calculateCoreResolvedMode(
   let lambdaI = solveInflow(c.mu, c.muZ, g, c, bVal);
   if (lambdaI < 0) {
     res.solutionValid = false;
-    res.statusMessage = "INVALID: no physical inflow root bracketed";
+    res.statusMessage = noRootMessage(g, "INVALID: no physical inflow root bracketed");
     return res;
   }
   let lambdaTotal = c.muZ + lambdaI;
@@ -1104,7 +1261,7 @@ export function calculateCoreResolvedMode(
       lambdaI = solveInflow(c.mu, c.muZ, g, c, bVal);
       if (lambdaI < 0) {
         res.solutionValid = false;
-        res.statusMessage = "INVALID: no physical inflow root after tip-loss update";
+        res.statusMessage = noRootMessage(g, "INVALID: no physical inflow root after tip-loss update");
         return res;
       }
       lambdaTotal = c.muZ + lambdaI;
@@ -1124,6 +1281,7 @@ export function calculateCoreResolvedMode(
     res.wakeSkewChiDeg = denomChi > 1e-15 ? (2.0 * Math.atan(c.mu / denomChi) * 180.0) / Math.PI : 0.0;
   }
   res.bFactor = bVal;
+  if (res.inflowLambda < 0.0) res.validityWarning = VORTEX_RING_WARNING;
 
   if (!fullResults) {
     res.thrustN = ctVal * dynP;
@@ -1149,7 +1307,9 @@ export function calculateCoreResolvedMode(
   res.CH = res.CHi + res.CH0;
 
   // Induced torque and shaft power
-  res.CQi = c.kInd * lambdaI * ctVal + c.muZ * ctVal - c.mu * res.CHi;
+  res.CQi = c.inducedTorqueModel === "analytical_bet"
+    ? inducedTorqueBET(c.mu, lambdaTotal, lambda1c, lambda1s, g, bVal, res.effectiveLiftSlope)
+    : c.kInd * lambdaI * ctVal + c.muZ * ctVal - c.mu * res.CHi;
   res.CQ = res.CQi + res.CQ0;
   res.CPair = c.kInd * lambdaI * ctVal + c.muZ * ctVal + res.CQ0 + c.mu * res.CH0;
 
@@ -1181,6 +1341,7 @@ export function calculateCoreResolvedMode(
   res.powerShaftW = res.torqueNm * omega;
   res.powerShaftKW = res.powerShaftW / 1000.0;
   res.powerShaftHP = res.powerShaftW / 745.699872;
+  if (c.muZ < 0.0 && res.powerShaftW < 0.0) res.validityWarning = VORTEX_RING_WARNING;
 
   res.phiAdv25 = sectionPhi(g, res, 0.25, 1);
   res.phiRet25 = sectionPhi(g, res, 0.25, -1);

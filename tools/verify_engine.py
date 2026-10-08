@@ -59,6 +59,11 @@ def verify_b4a_source_contract() -> None:
         "res.TrimmedCollectiveDeg = c.CollectiveDeg",
         "res.OperatingVx = c.Mu * vtip",
         "res.OperatingVz = c.MuZ * vtip",
+        "ValidityWarning As String",
+        "Public Sub InputLimitNotes",
+        "geom.TipLossB = Max(geom.RootCutout + 0.01, Min(1.0, geom.TipLossB))",
+        "Outside model validity: vortex ring state / windmill region",
+        "c.FxColeman = Max(-5.0, Min(5.0, c.FxColeman))",
     ]
     missing = [token for token in required if token not in src]
     if missing:

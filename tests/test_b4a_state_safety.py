@@ -144,7 +144,7 @@ def test_conditions_present_atmosphere_and_equivalent_flow_inputs():
     assert 'btnAxialInput = RowLbl.Get("aflow")' in cond
     assert "lblHorizontalDerived" not in main
     assert "lblAxialDerived" not in main
-    for full in ("Pressure Altitude", "Ambient Temperature", "Advance Ratio", "Forward Airspeed",
+    for full in ("Pressure Altitude", "Outside Air Temperature", "Advance Ratio", "Forward Airspeed",
                  "Disk Angle of Attack", "Climb Speed", "Axial Flow Ratio"):
         assert f'"{full}"' in names
 
@@ -205,9 +205,9 @@ def test_conditions_expose_all_six_operating_pairs():
     main = text("RotorCalculator.b4a")
     engine = text("zBETEngine.bas")
     pairs = (
-        ("rpm_collective", "RPM + Δθ"),
-        ("rpm_ct", "RPM + C_T"),
-        ("rpm_thrust", "RPM + T"),
+        ("rpm_collective", "Ω + Δθ"),
+        ("rpm_ct", "Ω + C_T"),
+        ("rpm_thrust", "Ω + T"),
         ("collective_ct", "Δθ + C_T"),
         ("collective_thrust", "Δθ + T"),
         ("ct_thrust", "C_T + T"),
@@ -380,7 +380,9 @@ def test_plot_supports_custom_family_values():
     assert "Sub btnSweepValues_Click" in main
     assert "Edit Family Values" in main
     assert "Private Sub ParseSweepFamilyValues" in main
-    assert "Enter 1–9 comma-separated values" in main
+    assert "Separate values with a semicolon or a space" in main
+    assert "A comma is the decimal mark" in main
+    assert "IsFiniteValue" in main
     assert "SweepAlphaValues" in main
     assert "SweepVzValues" in main
     assert "SweepMuZValues" in main
@@ -406,13 +408,14 @@ def test_plot_supports_hover_only_trim_and_per_point_trim():
 def test_plot_table_csv_and_canvas_share_one_cached_dataset():
     main = text("RotorCalculator.b4a")
     popup = text("RotorPopups.bas")
-    assert "SweepSamplesCache = RotorPopups.BuildSweepSamples" in main
+    assert "RotorPopups.BuildSweepSamplesAsync(" in main
+    assert "SweepCacheKey" in main
     assert "DrawSweepPlot" in main and "SweepSamplesCache" in main
     assert "RotorPopups.BuildSweepTableRows(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, ExtraPrecision, False)" in main
     assert "RotorPopups.BuildSweepTableRows(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, ExtraPrecision, True)" in main
     assert "position:sticky;top:0" in main and "position:sticky;left:0" in main
     assert "Private Sub BuildSweepCsv As String" in main
-    assert "Public Sub BuildSweepSamples" in popup
+    assert "Public Sub BuildSweepSamplesAsync" in popup
     assert "Type SweepPoint" in popup
 
 
@@ -485,8 +488,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 15" in main
-    assert "#VersionName: 1.30" in main
+    assert "#VersionCode: 16" in main
+    assert "#VersionName: 1.31" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -708,9 +711,10 @@ def test_overflow_menu_is_themed_sheet_without_rspopupmenu():
 
 def test_settings_sections_and_rename_flow():
     main = text("RotorCalculator.b4a")
-    for hdr in ('"DISPLAY"', '"PLOTS"', '"ROTOR DATA"'):
-        assert f"AddSettingsHeader(scv.Panel, cardW, y, {hdr})" in main
-    assert '"Result Units (Outputs Only)"' in main
+    for hdr in ('"H|DISPLAY"', '"H|PLOTS"', '"H|ROTOR DATA"'):
+        assert hdr in main
+    assert "AddSettingsHeader(scv.Panel, cardW, y, p1(1))" in main
+    assert 'R|Result Units (Outputs Only)|' in main
     assert "Cycle between -1 decimal, standard, and +1 decimal" in main
     assert "btnSettingRestore" in main
     assert "ShowChoiceSwatches" in main
@@ -886,11 +890,11 @@ def test_release_version_is_130_everywhere():
     agents = text("AGENTS.md")
     readme = text("README.md")
     package = text("web/package.json")
-    assert "#VersionCode: 15" in main
-    assert "#VersionName: 1.30" in main
-    assert "RotorCalculator 1.30 (versionCode 15)" in agents
-    assert "Version 1.30 (versionCode 15)" in readme
-    assert '"version": "1.30.0"' in package
+    assert "#VersionCode: 16" in main
+    assert "#VersionName: 1.31" in main
+    assert "RotorCalculator 1.31 (versionCode 16)" in agents
+    assert "Version 1.31 (versionCode 16)" in readme
+    assert '"version": "1.31.0"' in package
 
 
 def test_disk_contour_catalog_uses_section_thrust_loading_not_reynolds():
@@ -929,5 +933,165 @@ def test_android_disk_contour_batch_export_writes_all_files_to_one_selected_fold
     assert 'intent.Initialize("android.intent.action.OPEN_DOCUMENT_TREE", "")' in batch
     assert 'docs.InitializeStatic("android.provider.DocumentsContract")' in batch
     assert 'docs.RunMethod("createDocument"' in batch
-    assert 'For Each k As String In keys' in batch
+    assert 'For i = 0 To keys.Size - 1' in batch
     assert 'btnDiskContourExportPng_Click' not in batch
+
+
+# ---------------------------------------------------------------------------
+# Android hardening: input parsing, sepia, haptics, storage safety, responsiveness
+# ---------------------------------------------------------------------------
+def test_unit_converter_accepts_comma_decimal():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Private Sub UpdateUnitConversion")
+    block = main[start:main.index("End Sub", start)]
+    assert "ParseInput(edtUnitValue.Text)" in block
+    assert "ParseDoubleDef" not in block
+    assert "lblUnitResult.Text = Dash" in block
+
+
+def test_sweep_family_list_uses_semicolons_and_rejects_non_finite():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Private Sub ParseSweepFamilyValues")
+    block = main[start:main.index("End Sub", start)]
+    assert 'Replace(";", " ")' in block
+    assert 'Regex.Split("\\s+"' in block
+    assert "IsFiniteValue(v) = False" in block
+    assert 'Regex.Split(","' not in block
+
+
+def test_copy_rotor_resolves_unsaved_geometry_first():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Sub btnGeometryCopy_Click")
+    block = main[start:main.index("End Sub", start)]
+    assert 'ResolveUnsavedGeometry("copying the rotor")' in block
+    assert block.index("ResolveUnsavedGeometry") < block.index("sheet.ShowInput")
+
+
+def test_factory_preset_overwrite_and_delete_are_guarded_with_undo():
+    main = text("RotorCalculator.b4a")
+    storage = text("RotorStorage.bas")
+    assert "Private Sub SaveWithPresetGuard" in main
+    assert "Save as copy" in main and "Overwrite preset" in main
+    assert "IsFactoryPresetAt" in main and "Public Sub IsFactoryPresetAt" in storage
+    assert "Sub btnUndoDelete_Click" in main and '"UNDO"' in main
+    assert "Public Sub InsertRotorAt" in storage
+    assert "Export a backup first" in main
+
+
+def test_sepia_theme_is_complete_in_sheets_tables_assets_and_swatches():
+    main = text("RotorCalculator.b4a")
+    sheet = text("clsSheet.bas")
+    assert "sheet.SetTheme(ThemeMode = 1 Or ThemeMode = 3, pal)" in main
+    for color in ("0xFFEFE8DC", "0xFF2D2319", "0xFF645747", "0xFFDDD2C0", "0xFF8C5A2B"):
+        assert color in main[main.index("Private Sub InitSheet"):main.index("Private Sub BuildAllPages")]
+    assert "dark As Boolean = (ThemeMode = 0 Or ThemeMode = 2)" in main
+    for color in ("#FAF6EE", "#2D2319", "#DDD2C0", "#645747"):
+        assert color in main
+    assert "(ThemeMode = 1 Or ThemeMode = 3)" in main
+    assert 'helpAsset = "physics_help_sepia.html"' in main
+    assert 'privacyAsset = "privacy_policy_sepia.html"' in main
+    assert 'privacyAsset = "privacy_policy_midnight.html"' in main
+    for name in ("physics_help_sepia.html", "privacy_policy_sepia.html", "privacy_policy_midnight.html"):
+        assert "=" + name in main
+        assert (ROOT / "Files" / name).exists()
+    assert "fontScale" not in sheet
+
+
+def test_theme_change_preserves_scroll_positions_and_page():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Private Sub RebuildApplicationUI")
+    block = main[start:main.index("Private Sub NoZoomControls", start)]
+    for token in ("SavedScroll0 = scvGeom.ScrollPosition", "SavedScroll1 = scvCond.ScrollPosition",
+                  "SavedScroll2 = scvRes.ScrollPosition", "RestoreScrolls", "ShowPage(CurrentPage, False)"):
+        assert token in block
+
+
+def test_haptic_vibrates_15_ms_and_manifest_declares_permission():
+    main = text("RotorCalculator.b4a")
+    names = text("RotorNames.bas")
+    assert "AddPermission(android.permission.VIBRATE)" in main
+    start = names.index("Public Sub Haptic")
+    block = names[start:names.index("End Sub", start)]
+    assert "createOneShot" in block and "Array As Object(15, -1)" in block
+    assert 'vib.RunMethod("vibrate", Array As Object(15))' in block
+    sheet = text("clsSheet.bas")
+    for sub in ("rowItem_Click", "btnAct_Click"):
+        s = sheet.index("Private Sub " + sub)
+        assert "RotorNames.Haptic(mParent)" in sheet[s:sheet.index("End Sub", s)]
+
+
+def test_sheet_dismiss_has_no_blocking_wait():
+    sheet = text("clsSheet.bas")
+    start = sheet.index("Private Sub Dismiss")
+    block = sheet[start:sheet.index("End Sub", start)]
+    assert "Sleep(" not in block
+    assert "tmrClose" in sheet
+
+
+def test_storage_backs_up_corrupt_library_and_strips_bom():
+    storage = text("RotorStorage.bas")
+    assert "rotors_db.corrupt-" in storage
+    assert 'BACKUP_FILENAME As String = "rotors_db.bak"' in storage
+    start = storage.index("Public Sub LoadRotors")
+    block = storage[start:storage.index("Public Sub GetActiveRotor", start)]
+    catch = block[block.index("Catch"):block.index("End Try")]
+    assert "SaveRotors" not in catch
+    assert "BackupCorruptFile" in block
+    assert "Public Sub StripBom" in storage and "0xFEFF" in storage
+    assert storage.count("StripBom(") >= 4
+    main = text("RotorCalculator.b4a")
+    assert "File too large (limit 2 MB)." in main
+
+
+def test_sweep_and_batch_export_are_resumable_with_progress_and_cancel():
+    main = text("RotorCalculator.b4a")
+    popup = text("RotorPopups.bas")
+    start = popup.index("Public Sub BuildSweepSamplesAsync")
+    block = popup[start:popup.index("End Sub", start)]
+    assert "As ResumableSub" in block and "Sleep(0)" in block
+    assert 'CallSub2(progressTarget, "SweepProgress"' in block
+    assert "Public Sub CancelSweep" in popup
+    assert "Sub btnBusyCancel_Click" in main
+    batch = main[main.index("Sub btnDiskContourExportAllPng_Click"):main.index("Private Sub ExportStamp")]
+    assert "Sleep(0)" in batch and "BusyCancel" in batch and "stamp" in batch
+    # marker-only redraw on touch, throttled
+    touch = main[main.index("Sub pnlSweepTouch_Touch"):main.index("Sub btnSweepParam_Click")]
+    assert "RedrawSweepMarker" in touch and "LastMarkerMs" in touch
+    assert "Public Sub DrawSweepCrosshair" in popup
+
+
+def test_session_is_saved_on_pause_and_focus_loss_not_per_keystroke():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Public Sub RecalculateRotor")
+    block = main[start:main.index("Private Sub FormatFixed", start)]
+    assert "SaveSessionState" not in block
+    assert "SessionDirty = True" in block
+    pause = main[main.index("Sub Activity_Pause"):main.index("Sub Activity_KeyPress")]
+    assert "SaveSessionState" in pause
+    assert "CommitFieldEdit" in main[main.index("Sub edtGeom_FocusChanged"):main.index("Sub edtGeom_EnterPressed")]
+
+
+def test_touch_targets_and_measured_sizes_for_large_fonts():
+    main = text("RotorCalculator.b4a")
+    assert "HeaderTabsH = 36dip" not in main
+    assert "btnH = 36dip" not in main and "btnFooterH = 34dip" not in main
+    assert "Dim chipH As Int = 36dip" not in main
+    assert "Max(48dip, MeasuredTextHeight(" in main
+    assert "Dim rowH As Int = 84dip" not in main
+    assert "Private Sub SettingsRowH" in main
+    assert "SettingsBtnW - 8dip" in main
+
+
+def test_results_show_reason_instead_of_unexplained_dashes_and_validity_warning():
+    main = text("RotorCalculator.b4a")
+    assert "r.ValidityWarning" in main
+    assert "Private Sub SetResultReason" in main
+    assert '"No result: "' in main
+    assert 'Return "Ω + C_T"' in main[main.index("Private Sub PairChipText"):main.index("Sub lblResultStatus_Click")]
+
+
+def test_web_view_is_released_on_close():
+    main = text("RotorCalculator.b4a")
+    assert "Private Sub DestroyWebView" in main
+    assert 'jo.RunMethod("destroy", Null)' in main
+    assert "DestroyWebView(wvHelp)" in main and "DestroyWebView(wvSweepTable)" in main

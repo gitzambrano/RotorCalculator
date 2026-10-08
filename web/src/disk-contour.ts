@@ -238,7 +238,7 @@ export function drawDiskContour(
   // Layout geometry: centered enlarged disk with horizontal colorbar below
   const centerX = Math.round(width / 2);
   const topSpace = includeTitle ? 54 : 36;
-  const bottomSpace = 76;
+  const bottomSpace = 94; // keeps the colorbar labels clear of the plot frame
   const sideSpace = 34;
 
   const availRadiusH = (width - 2 * sideSpace) / 2;
@@ -414,7 +414,7 @@ export function drawDiskContour(
   const cbWidth = Math.round(width * 0.84);
   const cbHeight = 16;
   const cbX = Math.round((width - cbWidth) / 2);
-  const cbY = centerY + maxRadius + 38;
+  const cbY = centerY + maxRadius + 36;
   
   const gradient = ctx.createLinearGradient(cbX, 0, cbX + cbWidth, 0);
   gradient.addColorStop(0, getJetColor(0));

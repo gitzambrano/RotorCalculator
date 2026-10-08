@@ -189,7 +189,8 @@ export function formatInputValue(key: string, value: number, unit = "", extraPre
     digits = 0;
     minimum = 0;
   } else if (key === "h") {
-    digits = 0;
+    // Metres and feet keep one decimal when present; kilometres need three to stay readable.
+    digits = unit === "km" ? 3 : 1;
     minimum = 0;
   } else if (key === "T0") {
     digits = 1;
@@ -236,4 +237,31 @@ export function formatInputValue(key: string, value: number, unit = "", extraPre
   let result = value.toFixed(digits);
   while (result.includes(".") && result.endsWith("0") && result.length - result.indexOf(".") - 1 > minimum) result = result.slice(0, -1);
   return result.endsWith(".") ? result.slice(0, -1) : result;
+}
+
+/**
+ * Parse a user-typed list of numbers. Items are separated by semicolons or
+ * whitespace. A comma is a decimal mark, so "2,5" is the single value 2.5.
+ * Returns null when any item is not a finite number.
+ */
+export function parseNumberList(text: string): number[] | null {
+  const items = text
+    .split(/[;\s]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+  if (items.length === 0) return null;
+  const values: number[] = [];
+  for (const item of items) {
+    const normalized = item.replace(",", ".");
+    if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(normalized)) return null;
+    const value = Number(normalized);
+    if (!Number.isFinite(value)) return null;
+    values.push(value);
+  }
+  return values;
+}
+
+/** Format a number list for the edit field, using a semicolon separator. */
+export function formatNumberList(values: number[]): string {
+  return values.map((v) => String(v)).join("; ");
 }

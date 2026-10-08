@@ -29,6 +29,16 @@ Sub Process_Globals
 	Private plotThemeIdx As Int = -1
 	Private dpIdx As Int
 	Private dpRem As Float
+	' Sweep compute run token (resumable build) and the cached plot layer used for marker-only redraws.
+	Private sweepRunId As Int
+	Private baseBmp As Bitmap
+	Private baseValid As Boolean
+	Private clLeft, clTop, clW, clH As Float
+	Private clXMax, clYScale, clYLo, clYHi As Double
+	Private clYDec As Int
+	Private clFs As Float
+	Private clColText, clColBg As Int
+	Private clLight As Boolean
 	Type SweepPoint (CurveLabel As String, Mu As Double, Vx As Double, AxialMode As String, AxialValue As Double, _
 		MuZ As Double, InflowModel As String, Value As Double, Valid As Boolean, RPM As Double, _
 		CollectiveDeg As Double, CT As Double, ThrustN As Double, MuLam As Double, _
@@ -658,15 +668,21 @@ End Sub
 ' ---------------------------------------------------------------------------
 ' Builds the single authoritative dataset used by plot, table and CSV (curve-major, 25 points per curve).
 ' trimMode: none | coll_all | rpm_all | coll_hover | rpm_hover (see SweepTrimModeKeys).
-Public Sub BuildSweepSamples( _
+' Resumable: yields to the UI thread between points (no ANR) and reports progress to progressTarget
+' through CallSub2(progressTarget, "SweepProgress", percent). Returns Null when cancelled or superseded
+' (CancelSweep or a newer call).
+Public Sub BuildSweepSamplesAsync( _
 	geom As RotorGeometry, _
 	cond As FlightCondition, _
 	paramKey As String, _
 	multiCurveMode As Int, _
 	maxMu As Double, _
 	familyValues As List, _
-	trimMode As String _
-) As List
+	trimMode As String, _
+	progressTarget As Object _
+) As ResumableSub
+	sweepRunId = sweepRunId + 1
+	Dim myRun As Int = sweepRunId
 	Dim samples As List
 	samples.Initialize
 	Dim nPoints As Int = SweepPointsPerCurve
@@ -735,6 +751,9 @@ Public Sub BuildSweepSamples( _
 		End If
 	End If
 
+	Dim totalPts As Int = Max(1, nCurves * nPoints)
+	Dim donePts As Int = 0
+	Dim lastPct As Int = -1
 	For curveIndex = 0 To nCurves - 1
 		Dim familyValue As Double = 0.0
 		If multiCurveMode >= 1 And multiCurveMode <= 3 And familyValues.IsInitialized And familyValues.Size > curveIndex Then
@@ -742,6 +761,15 @@ Public Sub BuildSweepSamples( _
 		End If
 		Dim curveLabel As String = SweepFamilyLabel(multiCurveMode, curveIndex, familyValue)
 		For pointIndex = 0 To nPoints - 1
+			' Yield after every point so touches, the cancel button and rendering stay responsive.
+			Dim pct As Int = 100 * donePts / totalPts
+			If pct <> lastPct And progressTarget <> Null Then
+				lastPct = pct
+				CallSub2(progressTarget, "SweepProgress", pct)
+			End If
+			Sleep(0)
+			If myRun <> sweepRunId Then Return Null
+			donePts = donePts + 1
 			Dim tempCond As FlightCondition = zBETEngine.CloneCondition(cond)
 			Dim muValue As Double = pointIndex * maxMu / (nPoints - 1)
 			tempCond.HorizontalMode = "mu"
@@ -830,7 +858,13 @@ Public Sub BuildSweepSamples( _
 			samples.Add(point)
 		Next
 	Next
+	If progressTarget <> Null Then CallSub2(progressTarget, "SweepProgress", 100)
 	Return samples
+End Sub
+
+' Cancels the running (or any pending) sweep build; its caller receives Null.
+Public Sub CancelSweep
+	sweepRunId = sweepRunId + 1
 End Sub
 
 ' ---------------------------------------------------------------------------
@@ -1065,6 +1099,7 @@ Public Sub DrawSweepPlot( _
 	bmp.InitializeMutable(widthPx, heightPx)
 	Dim cvs As Canvas
 	cvs.Initialize2(bmp)
+	baseValid = False
 
 	Dim colBg As Int
 	Dim colGrid As Int
@@ -1327,35 +1362,24 @@ Public Sub DrawSweepPlot( _
 	Next
 
 	' --- Crosshair ---
+	' Layout is cached so the caller can redraw only the marker layer (DrawSweepCrosshair).
+	clLeft = mLeft
+	clTop = mTop
+	clW = plotW
+	clH = plotH
+	clXMax = xMax
+	clYScale = yScale
+	clYLo = yLo
+	clYHi = yHi
+	clYDec = yDec
+	clFs = fs
+	clColText = colText
+	clColBg = colBg
+	clLight = lightTheme
+	Dim crossDrawn As Boolean = False
 	If IsNum(crossX) And crossX >= 0 And crossX <= xMax Then
-		Dim cx As Float = mLeft + crossX / xMax * plotW
-		Dim cdash() As Float = Array As Float(6dip, 4dip)
-		dpIdx = 0
-		dpRem = cdash(0)
-		DrawPatterned(cvs, cx, mTop, cx, mTop + plotH, colText, 1.2dip, cdash)
-		For curveIndex = 0 To nCurves - 1
-			Dim ni As Int = SweepNearestIndex(samples, curveIndex, xAxisMode, crossX)
-			If ni >= 0 Then
-				Dim pn As SweepPoint = samples.Get(ni)
-				Dim nx As Float = mLeft + PointX(pn, xAxisMode) / xMax * plotW
-				Dim ny As Float = mTop + plotH - (pn.Value / yScale - yLo) / (yHi - yLo) * plotH
-				Dim cc As Int = PlotColor(paletteIndex, curveIndex, lightTheme)
-				cvs.DrawCircle(nx, ny, 6dip, colBg, True, 1dip)
-				cvs.DrawCircle(nx, ny, 6dip, cc, False, 2dip)
-				cvs.DrawCircle(nx, ny, 2.5dip, cc, True, 1dip)
-				Dim vTxt As String = FmtNum(pn.Value / yScale, yDec)
-				Dim vw As Float = cvs.MeasureStringWidth(vTxt, Typeface.MONOSPACE, fs - 1)
-				Dim vx As Float = nx + 9dip
-				Dim vAlign As String = "LEFT"
-				If vx + vw > mLeft + plotW Then
-					vx = nx - 9dip
-					vAlign = "RIGHT"
-				End If
-				Dim vy As Float = Max(mTop + fs * 1dip, Min(mTop + plotH - 2dip, ny - 7dip))
-				cvs.DrawText(vTxt, vx + 1dip, vy + 1dip, Typeface.MONOSPACE, fs - 1, colBg, vAlign)
-				cvs.DrawText(vTxt, vx, vy, Typeface.MONOSPACE, fs - 1, cc, vAlign)
-			End If
-		Next
+		DrawCrosshairLayer(cvs, samples, xAxisMode, paletteIndex, crossX)
+		crossDrawn = True
 	End If
 
 	' --- Active operating point ---
@@ -1365,7 +1389,76 @@ Public Sub DrawSweepPlot( _
 		cvs.DrawCircle(liveCx, liveCy, 5dip, colCurrent, True, 1dip)
 		cvs.DrawCircle(liveCx, liveCy, 9dip, colCurrent, False, 1.5dip)
 	End If
+	If crossDrawn = False Then
+		baseBmp = bmp
+		baseValid = True
+	End If
 	Return bmp
+End Sub
+
+' True when the last DrawSweepPlot left a crosshair-free base layer for DrawSweepCrosshair.
+Public Sub CrosshairAvailable As Boolean
+	Return baseValid
+End Sub
+
+' Marker-only redraw: copies the cached base layer and draws the crosshair, nearest-point markers and values.
+' No sweep or engine computation happens here.
+Public Sub DrawSweepCrosshair(samples As List, xAxisMode As Int, paletteIndex As Int, crossX As Double) As Bitmap
+	Dim bmp As Bitmap
+	bmp.InitializeMutable(baseBmp.Width, baseBmp.Height)
+	Dim cvs As Canvas
+	cvs.Initialize2(bmp)
+	Dim dst As Rect
+	dst.Initialize(0, 0, baseBmp.Width, baseBmp.Height)
+	cvs.DrawBitmap(baseBmp, Null, dst)
+	If IsNum(crossX) And crossX >= 0 And crossX <= clXMax Then DrawCrosshairLayer(cvs, samples, xAxisMode, paletteIndex, crossX)
+	Return bmp
+End Sub
+
+Private Sub DrawCrosshairLayer(cvs As Canvas, samples As List, xAxisMode As Int, paletteIndex As Int, crossX As Double)
+	Dim nPoints As Int = SweepPointsPerCurve
+	Dim nCurves As Int = Max(1, samples.Size / nPoints)
+	Dim mLeft As Float = clLeft
+	Dim mTop As Float = clTop
+	Dim plotW As Float = clW
+	Dim plotH As Float = clH
+	Dim xMax As Double = clXMax
+	Dim yScale As Double = clYScale
+	Dim yLo As Double = clYLo
+	Dim yHi As Double = clYHi
+	Dim yDec As Int = clYDec
+	Dim fs As Float = clFs
+	Dim colText As Int = clColText
+	Dim colBg As Int = clColBg
+	Dim lightTheme As Boolean = clLight
+	Dim cx As Float = mLeft + crossX / xMax * plotW
+	Dim cdash() As Float = Array As Float(6dip, 4dip)
+	dpIdx = 0
+	dpRem = cdash(0)
+	DrawPatterned(cvs, cx, mTop, cx, mTop + plotH, colText, 1.2dip, cdash)
+	For curveIndex = 0 To nCurves - 1
+		Dim ni As Int = SweepNearestIndex(samples, curveIndex, xAxisMode, crossX)
+		If ni >= 0 Then
+			Dim pn As SweepPoint = samples.Get(ni)
+			Dim nx As Float = mLeft + PointX(pn, xAxisMode) / xMax * plotW
+			Dim ny As Float = mTop + plotH - (pn.Value / yScale - yLo) / (yHi - yLo) * plotH
+			Dim cc As Int = PlotColor(paletteIndex, curveIndex, lightTheme)
+			cvs.DrawCircle(nx, ny, 6dip, colBg, True, 1dip)
+			cvs.DrawCircle(nx, ny, 6dip, cc, False, 2dip)
+			cvs.DrawCircle(nx, ny, 2.5dip, cc, True, 1dip)
+			Dim vTxt As String = FmtNum(pn.Value / yScale, yDec)
+			Dim vw As Float = cvs.MeasureStringWidth(vTxt, Typeface.MONOSPACE, fs - 1)
+			Dim vx As Float = nx + 9dip
+			Dim vAlign As String = "LEFT"
+			If vx + vw > mLeft + plotW Then
+				vx = nx - 9dip
+				vAlign = "RIGHT"
+			End If
+			Dim vy As Float = Max(mTop + fs * 1dip, Min(mTop + plotH - 2dip, ny - 7dip))
+			cvs.DrawText(vTxt, vx + 1dip, vy + 1dip, Typeface.MONOSPACE, fs - 1, colBg, vAlign)
+			cvs.DrawText(vTxt, vx, vy, Typeface.MONOSPACE, fs - 1, cc, vAlign)
+		End If
+	Next
 End Sub
 
 

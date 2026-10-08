@@ -20,6 +20,9 @@ File25=privacy_policy.html
 File26=privacy_policy_light.html
 File27=physics_help_midnight.html
 File28=icon_header.png
+File29=physics_help_sepia.html
+File30=privacy_policy_midnight.html
+File31=privacy_policy_sepia.html
 File3=ic_action_cancel.png
 File4=icon_bezel_transp_green.png
 File5=icon_bezel_transp_white.png
@@ -45,6 +48,9 @@ FileGroup22=Default Group
 FileGroup23=Default Group
 FileGroup24=Default Group
 FileGroup28=Default Group
+FileGroup29=Default Group
+FileGroup30=Default Group
+FileGroup31=Default Group
 FileGroup3=Default Group
 FileGroup4=Default Group
 FileGroup5=Default Group
@@ -56,13 +62,13 @@ Group=Default Group
 Library1=core
 Library2=phone
 Library3=javaobject
-ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~'End of default text.~\n~~\n~
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetActivityAttribute(Main,  android:windowSoftInputMode, "stateHidden|adjustPan")~\n~AddManifestText(<uses-permission~\n~android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~android:maxSdkVersion="18" />)~\n~RemovePermission (android.permission.WRITE_EXTERNAL_STORAGE)~\n~AddPermission(android.permission.VIBRATE)~\n~'End of default text.~\n~~\n~
 Module1=RotorPopups
 Module2=RotorStorage
 Module3=zBETEngine
 Module4=RotorNames
 Module5=clsSheet
-NumberOfFiles=25
+NumberOfFiles=31
 NumberOfLibraries=3
 NumberOfModules=5
 Version=13
@@ -70,8 +76,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 15
-	#VersionName: 1.30
+	#VersionCode: 16
+	#VersionName: 1.31
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -145,9 +151,9 @@ Sub Process_Globals
 	Public SweepTrimMode As String = "coll_all"
 	Public InputUnits As Map
 	Public PlotPalette As Int = 0
-	Public SweepAlphaValues As String = "-10,-5,0,5,10"
-	Public SweepVzValues As String = "-10,-5,0,5,10"
-	Public SweepMuZValues As String = "-0.05,-0.025,0,0.025,0.05"
+	Public SweepAlphaValues As String = "-10; -5; 0; 5; 10"
+	Public SweepVzValues As String = "-10; -5; 0; 5; 10"
+	Public SweepMuZValues As String = "-0.05; -0.025; 0; 0.025; 0.05"
 	Public SweepParamSelectedKey As String = "CP"
 	Public SweepParamSelectedLabel As String = "Torque Coefficient C_Q"
 	Private ion As Object ' Storage Access Framework activity-result callback
@@ -291,6 +297,33 @@ Sub Globals
 	Private HeaderTabsH As Int
 	Private UiContentW As Int
 	Private UiContentLeft As Int
+	Private HeaderSingleRow As Boolean   ' landscape: title, tabs and menu share one 52dip row (48dip targets)
+	Private HeaderTabX0, HeaderTabW As Int
+	Private SettingsBtnW As Int
+	Private SessionDirty As Boolean
+	Private LimitMsg As String
+	Private LimitGen As Int
+	Private lblLimitHint As Label
+	Private pnlUndo As Panel
+	Private UndoOpen As Boolean
+	Private UndoGen As Int
+	Private UndoGeom As RotorGeometry
+	Private UndoIndex As Int
+	Private StatusChipsTop As Int
+	Private lblResultReason As Label
+	Private ReasonTop As Int
+	Private ReasonH As Int
+	Private pnlBusy As Panel
+	Private BusyOpen As Boolean
+	Private BusyCancel As Boolean
+	Private BusyGen As Int
+	Private pbBusy As ProgressBar
+	Private lblBusy As Label
+	Private SweepCacheKey As String
+	Private LastMarkerMs As Long
+	Private BusyStartMs As Long
+	Private wvSweepTable As WebView
+	Private SavedScroll0, SavedScroll1, SavedScroll2 As Int
 
 End Sub
 
@@ -335,8 +368,18 @@ Private Sub InitSheet
 		pal.Put("muted", 0xFF9DB2D6)
 		pal.Put("divider", 0xFF263B63)
 		pal.Put("code", 0xFF0B1630)
+	Else If ThemeMode = 3 Then
+		' Sepia: warm parchment surfaces (light family).
+		pal.Put("card", 0xFFEFE8DC)
+		pal.Put("title", 0xFF2D2319)
+		pal.Put("text", 0xFF2D2319)
+		pal.Put("muted", 0xFF645747)
+		pal.Put("divider", 0xFFDDD2C0)
+		pal.Put("accent", 0xFF8C5A2B)
+		pal.Put("scrim", 0x66281E14)
+		pal.Put("code", 0xFFE4DBD0)
 	End If
-	sheet.SetTheme(ThemeMode = 1, pal)
+	sheet.SetTheme(ThemeMode = 1 Or ThemeMode = 3, pal)
 End Sub
 
 Private Sub BuildAllPages
@@ -390,12 +433,22 @@ Private Sub BuildMainUi
 	End If
 	
 	' Compact landscape header; portrait preserves canonical proportions.
+	HeaderSingleRow = False
 	If ld = 1 Then
 		sc = 1
-		HeaderTopH = 38dip
-		HeaderTabsY = 38dip
-		HeaderTabsH = 36dip
-		HeaderHeight = 74dip
+		If root.Width >= 560dip Then
+			' One row: icon + title | three tabs | menu. Every target is 48dip or taller.
+			HeaderSingleRow = True
+			HeaderTopH = 52dip
+			HeaderTabsY = 0
+			HeaderTabsH = 52dip
+			HeaderHeight = 52dip
+		Else
+			HeaderTopH = 48dip
+			HeaderTabsY = 48dip
+			HeaderTabsH = 48dip
+			HeaderHeight = 96dip
+		End If
 	Else
 		HeaderTopH = 56dip * sc
 		HeaderTabsY = 56dip * sc
@@ -428,6 +481,7 @@ Sub Activity_Resume
 End Sub
 
 Sub Activity_Pause (UserClosed As Boolean)
+	SessionDirty = True
 	SaveSessionState
 End Sub
 
@@ -481,8 +535,8 @@ End Sub
 Sub ConfirmExit
 	Wait For (sheet.ShowConfirm("Unsaved Geometry", "Save the changes to " & ActiveGeom.Name & " before leaving RotorCalculator?", "Save", "Discard", "Cancel", False)) Complete (r As Int)
 	If r = DialogResponse.POSITIVE Then
-		SaveCurrentRotor
-		Activity.Finish
+		Wait For (SaveWithPresetGuard) Complete (saved As Boolean)
+		If saved Then Activity.Finish
 	Else If r = DialogResponse.NEGATIVE Then
 		ActiveGeom = RotorStorage.GetActiveRotor
 		GeometryDirty = False
@@ -496,7 +550,11 @@ Private Sub MapD(m As Map, key As String, def As Double) As Double
 	Return ParseDoubleDef("" & m.GetDefault(key, def), def)
 End Sub
 
+' Writes the session when something changed. RecalculateRotor only marks it dirty (no disk write per keystroke);
+' the write happens on pause, field focus loss, Enter, page change and selector commits.
 Private Sub SaveSessionState
+	If SessionDirty = False Then Return
+	SessionDirty = False
 	Try
 		Dim m As Map
 		m.Initialize
@@ -604,6 +662,14 @@ Private Sub BuildUnifiedHeader
 	' 3. App title uses the whole header between app icon and menu.
 	Dim titleLeft As Int = edge + iconSize + 8dip
 	Dim titleW As Int = root.Width - menuW - edge - titleLeft - 8dip
+	Dim tabsRight As Int = root.Width
+	HeaderTabX0 = 0
+	If HeaderSingleRow Then
+		titleW = 190dip
+		HeaderTabX0 = titleLeft + titleW + 8dip
+		tabsRight = root.Width - menuW - edge
+	End If
+	HeaderTabW = (tabsRight - HeaderTabX0) / 3
 	lblAppTitle.Initialize("")
 	lblAppTitle.Text = "RotorCalculator"
 	lblAppTitle.TextColor = ColorTitleText
@@ -623,13 +689,13 @@ Private Sub BuildUnifiedHeader
 	pnltitle.AddView(lblAppTitle, titleLeft, 0, titleW, HeaderTopH)
 	
 	' 4. Three large navigation tabs
-	Dim tabW As Int = root.Width / 3
+	Dim tabW As Int = HeaderTabW
 	Dim tabTextSize As Float = 14 * sc
 	' 14sp preferred; shrinks only as far as needed to keep CONDITIONS on one line at 320dp / 130% font
 	tabTextSize = RotorNames.FitTextSize("CONDITIONS", tabTextSize, 12, tabW - 12dip)
 	
 	btnTabGeom.Initialize("btnTabGeom")
-	pnltitle.AddView(btnTabGeom, 0, HeaderTabsY, tabW, HeaderTabsH)
+	pnltitle.AddView(btnTabGeom, HeaderTabX0, HeaderTabsY, tabW, HeaderTabsH)
 	btnTabGeom.Text = "GEOMETRY"
 	btnTabGeom.TextSize = tabTextSize
 	btnTabGeom.Typeface = Typeface.DEFAULT_BOLD
@@ -641,7 +707,7 @@ Private Sub BuildUnifiedHeader
 	AttachHelp(btnTabGeom)
 	
 	btnTabCond.Initialize("btnTabCond")
-	pnltitle.AddView(btnTabCond, tabW, HeaderTabsY, tabW, HeaderTabsH)
+	pnltitle.AddView(btnTabCond, HeaderTabX0 + tabW, HeaderTabsY, tabW, HeaderTabsH)
 	btnTabCond.Text = "CONDITIONS"
 	btnTabCond.TextSize = tabTextSize
 	btnTabCond.Typeface = Typeface.DEFAULT_BOLD
@@ -653,7 +719,7 @@ Private Sub BuildUnifiedHeader
 	AttachHelp(btnTabCond)
 	
 	btnTabRes.Initialize("btnTabRes")
-	pnltitle.AddView(btnTabRes, tabW * 2, HeaderTabsY, root.Width - tabW * 2, HeaderTabsH)
+	pnltitle.AddView(btnTabRes, HeaderTabX0 + tabW * 2, HeaderTabsY, tabsRight - (HeaderTabX0 + tabW * 2), HeaderTabsH)
 	btnTabRes.Text = "RESULTS"
 	btnTabRes.TextSize = tabTextSize
 	btnTabRes.Typeface = Typeface.DEFAULT_BOLD
@@ -672,7 +738,7 @@ Private Sub BuildUnifiedHeader
 	line2.Elevation = 5dip
 	
 	line.Initialize("line")
-	pnltitle.AddView(line, 0, HeaderHeight - 5dip, tabW, 4dip)
+	pnltitle.AddView(line, HeaderTabX0, HeaderHeight - 5dip, tabW, 4dip)
 	line.Color = ColorPnlLine
 	line.Elevation = 5dip
 End Sub
@@ -711,6 +777,8 @@ Sub HandleMenuItem(ItemId As Int)
 		Case 4
 			Dim privacyAsset As String = "privacy_policy.html"
 			If ThemeMode = 1 Then privacyAsset = "privacy_policy_light.html"
+			If ThemeMode = 2 Then privacyAsset = "privacy_policy_midnight.html"
+			If ThemeMode = 3 Then privacyAsset = "privacy_policy_sepia.html"
 			OpenHelpAsset(privacyAsset, "PRIVACY POLICY")
 	End Select
 End Sub
@@ -912,10 +980,32 @@ Private Sub OpenSettingsPopup
 
 	Dim cardW As Int = root.Width - 24dip
 	If cardW > 540dip Then cardW = 540dip
-	Dim rowH As Int = 84dip
-	Dim hdrH As Int = 44dip
-	Dim contentH As Int = 8dip + 3 * hdrH + 7 * rowH + 12dip
-	Dim cardH As Int = Min(52dip + contentH, root.Height - 24dip)
+	SettingsBtnW = cardW * 0.41
+	Dim textW As Int = cardW * 0.55 - 20dip
+	' "H|title" = section header, "R|title|subtitle|event" = row. Row heights come from measured text.
+	Dim defs() As String = Array As String( _
+		"H|DISPLAY", _
+		"R|Theme|Dark, Light, Midnight Blue or Sepia|btnSettingTheme", _
+		"R|Result Units (Outputs Only)|SI or Imperial for results; input rows keep their own units|btnSettingUnits", _
+		"R|Number Format|Cycle between -1 decimal, standard, and +1 decimal|btnSettingPrecision", _
+		"H|PLOTS", _
+		"R|Palette|Sweep curve colors|btnSettingPalette", _
+		"H|ROTOR DATA", _
+		"R|Import Geometries|Restore or merge a shared backup|btnSettingImportGeometries", _
+		"R|Export Geometries|Backup all saved rotor geometries|btnSettingExportGeometries", _
+		"R|Restore Factory Presets|Custom rotors are preserved|btnSettingRestore")
+	Dim contentH As Int = 8dip
+	For Each d0 As String In defs
+		Dim p0() As String = Regex.Split("\|", d0)
+		If p0(0) = "H" Then
+			contentH = contentH + 44dip
+		Else
+			contentH = contentH + SettingsRowH(p0(1), p0(2), textW)
+		End If
+	Next
+	contentH = contentH + 12dip
+	Dim hdrH As Int = 52dip
+	Dim cardH As Int = Min(hdrH + contentH, root.Height - 24dip)
 	Dim cardLeft As Int = (root.Width - cardW) / 2
 	Dim cardTop As Int = (root.Height - cardH) / 2
 	Dim card As Panel
@@ -949,25 +1039,22 @@ Private Sub OpenSettingsPopup
 	card.AddView(scv, 0, 52dip, cardW, cardH - 52dip)
 	' scv.Panel has no width yet: lay rows out against the card width.
 	Dim y As Int = 8dip
-	y = AddSettingsHeader(scv.Panel, cardW, y, "DISPLAY")
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Theme", "Dark, Light or Midnight Blue", "btnSettingTheme")
-	y = y + rowH
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Result Units (Outputs Only)", "SI or Imperial for results; input rows keep their own units", "btnSettingUnits")
-	y = y + rowH
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Number Format", "Cycle between -1 decimal, standard, and +1 decimal", "btnSettingPrecision")
-	y = y + rowH
-	y = AddSettingsHeader(scv.Panel, cardW, y, "PLOTS")
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Palette", "Sweep curve colors", "btnSettingPalette")
-	y = y + rowH
-	y = AddSettingsHeader(scv.Panel, cardW, y, "ROTOR DATA")
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Import Geometries", "Restore or merge a shared backup", "btnSettingImportGeometries")
-	y = y + rowH
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Export Geometries", "Backup all saved rotor geometries", "btnSettingExportGeometries")
-	y = y + rowH
-	AddSettingsRow(scv.Panel, cardW, y, rowH, "Restore Factory Presets", "Custom rotors are preserved", "btnSettingRestore")
-	y = y + rowH
+	For Each d1 As String In defs
+		Dim p1() As String = Regex.Split("\|", d1)
+		If p1(0) = "H" Then
+			y = AddSettingsHeader(scv.Panel, cardW, y, p1(1))
+		Else
+			y = y + AddSettingsRow(scv.Panel, cardW, y, p1(1), p1(2), p1(3))
+		End If
+	Next
 	scv.Panel.Height = y + 12dip
 	RefreshSettingsButtons
+End Sub
+
+' Row height from the measured wrapped text (honours 130% font scale); never below 72dip.
+Private Sub SettingsRowH(title As String, subtitle As String, textW As Int) As Int
+	Dim mh As Int = MeasuredTextHeight(title & CRLF & subtitle, 15, textW)
+	Return Max(72dip, mh + 20dip)
 End Sub
 
 Private Sub SetLetterSpacing(v As View, em As Float)
@@ -996,7 +1083,9 @@ Private Sub AddSettingsHeader(parent As Panel, cardW As Int, y As Int, title As 
 	Return y + 44dip
 End Sub
 
-Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, rowH As Int, title As String, subtitle As String, eventName As String)
+Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, title As String, subtitle As String, eventName As String) As Int
+	Dim textW As Int = cardW * 0.55 - 20dip
+	Dim rowH As Int = SettingsRowH(title, subtitle, textW)
 	Dim lbl As Label
 	lbl.Initialize("")
 	Dim cs As CSBuilder
@@ -1006,8 +1095,8 @@ Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, rowH As Int,
 	lbl.TextColor = ColorButText1
 	lbl.TextSize = 15
 	lbl.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	SetTextLines(lbl, 5)
-	parent.AddView(lbl, 14dip, y, cardW * 0.55 - 20dip, rowH)
+	SetTextLines(lbl, 8)
+	parent.AddView(lbl, 14dip, y, textW, rowH)
 	Dim b As Button
 	b.Initialize(eventName)
 	b.TextColor = ColorAccentCyan
@@ -1016,7 +1105,7 @@ Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, rowH As Int,
 	b.SingleLine = True
 	b.Padding = Array As Int(2dip, 0, 2dip, 0)
 	SetBtnBg(b, ButtonGradient(Array As Int(ColorBut1, ColorBut2), Array As Int(ColorBut1, ColorPnlTitle)))
-	parent.AddView(b, cardW * 0.55, y + (rowH - 48dip) / 2, cardW * 0.41, 48dip)
+	parent.AddView(b, cardW * 0.55, y + (rowH - 48dip) / 2, SettingsBtnW, 48dip)
 	If eventName = "btnSettingTheme" Then btnSettingTheme = b
 	If eventName = "btnSettingUnits" Then btnSettingUnits = b
 	If eventName = "btnSettingPrecision" Then btnSettingPrecision = b
@@ -1027,6 +1116,9 @@ Private Sub AddSettingsRow(parent As Panel, cardW As Int, y As Int, rowH As Int,
 	End If
 	If eventName = "btnSettingImportGeometries" Then b.Text = "IMPORT"
 	If eventName = "btnSettingExportGeometries" Then b.Text = "EXPORT"
+	' Fit against the known column width (the view width is not laid out yet on first open).
+	If b.Text.Length > 0 Then FitSettingBtn(b)
+	Return rowH
 End Sub
 
 Private Sub ThemeName(i As Int) As String
@@ -1039,7 +1131,7 @@ Private Sub ThemeName(i As Int) As String
 End Sub
 
 Private Sub FitSettingBtn(b As Button)
-	b.TextSize = RotorNames.FitTextSize(b.Text, 14, 10, b.Width - 8dip)
+	b.TextSize = RotorNames.FitTextSize(b.Text, 14, 10, SettingsBtnW - 8dip)
 End Sub
 
 Private Sub RefreshSettingsButtons
@@ -1049,6 +1141,7 @@ Private Sub RefreshSettingsButtons
 	End If
 	If btnSettingUnits.IsInitialized Then
 		If UnitSystem = 1 Then btnSettingUnits.Text = "IMPERIAL" Else btnSettingUnits.Text = "SI"
+		FitSettingBtn(btnSettingUnits)
 	End If
 	If btnSettingPrecision.IsInitialized Then
 		If ExtraPrecision = 1 Then
@@ -1114,7 +1207,7 @@ Sub btnSettingPalette_Click
 		items.Add(RotorPopups.PlotPaletteName(i))
 		Dim sw(4) As Int
 		For k = 0 To 3
-			sw(k) = RotorPopups.PlotColor(i, k, ThemeMode = 1)
+			sw(k) = RotorPopups.PlotColor(i, k, (ThemeMode = 1 Or ThemeMode = 3))
 		Next
 		cols.Add(sw)
 	Next
@@ -1129,23 +1222,38 @@ Sub btnSettingRestore_Click
 	Tick
 	Wait For (ResolveUnsavedGeometry("restoring factory presets")) Complete (ok As Boolean)
 	If ok = False Then Return
-	Wait For (sheet.ShowConfirm("Restore Factory Presets", "Restore the shipped factory rotor definitions?" & CRLF & CRLF & "Custom user rotors are preserved. Same-name factory presets are replaced by their original values.", "Restore", "Cancel", "", False)) Complete (r As Int)
-	If r = DialogResponse.POSITIVE Then
-		RotorStorage.RestoreFactoryPresets
-		AfterRotorChange
-		ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
+	Dim opts As List
+	opts.Initialize
+	opts.Add("Restore now|Same-name factory presets return to their original values. Custom rotors stay.")
+	opts.Add("Export a backup first|Save all rotors to a file, then restore.")
+	Wait For (sheet.ShowChoice("Restore Factory Presets", opts, -1)) Complete (choice As Int)
+	If choice < 0 Then Return
+	If choice = 1 Then
+		Wait For (ExportGeometriesFlow) Complete (backedUp As Boolean)
+		If backedUp = False Then
+			ToastMessageShow("Restore canceled. The backup was not saved.", False)
+			Return
+		End If
 	End If
+	RotorStorage.RestoreFactoryPresets
+	AfterRotorChange
+	ToastMessageShow("Factory presets restored; custom rotors preserved.", False)
 End Sub
 
 Sub btnSettingExportGeometries_Click
 	Tick
+	Wait For (ExportGeometriesFlow) Complete (done As Boolean)
+End Sub
+
+' Asks for the format, writes the library through the Storage Access Framework. Returns True when saved.
+Private Sub ExportGeometriesFlow As ResumableSub
 	Dim formats As List
 	formats.Initialize
 	formats.Add("JSON (.json)|Universal JSON format for web & backup")
 	formats.Add("Text (.txt)|Classic RotorCalculator backup")
 	Wait For (sheet.ShowChoice("Export Geometries", formats, 0)) Complete (choice As Int)
-	If choice < 0 Then Return
-	
+	If choice < 0 Then Return False
+
 	Dim isJson As Boolean = (choice = 0)
 	Dim ext As String = "txt"
 	Dim mime As String = "text/plain"
@@ -1157,7 +1265,7 @@ Sub btnSettingExportGeometries_Click
 	Else
 		content = RotorStorage.ExportDatabaseText
 	End If
-	
+
 	Dim count As Int = RotorStorage.Rotors.Size
 	Dim tempName As String = "rotorcalculator_geometries." & ext
 	File.WriteString(File.DirInternal, tempName, content)
@@ -1168,6 +1276,7 @@ Sub btnSettingExportGeometries_Click
 	Else
 		ToastMessageShow("Geometry export canceled or failed. 0 geometries exported.", False)
 	End If
+	Return Success
 End Sub
 
 Sub btnSettingImportGeometries_Click
@@ -1175,24 +1284,40 @@ Sub btnSettingImportGeometries_Click
 	Wait For (ResolveUnsavedGeometry("importing geometries")) Complete (ok As Boolean)
 	If ok = False Then Return
 	Wait For (ReadTextDocument("*/*")) Complete (Text As String)
+	If Text = "#TOO_LARGE#" Then
+		sheet.ShowMessage("Import Geometries", "File too large (limit 2 MB).")
+		Return
+	End If
 	If Text = "" Then
 		ToastMessageShow("Import canceled. No geometries imported.", False)
 		Return
 	End If
-	Dim imported As List
-	imported.Initialize
-	If Text.Length < 2000000 Then imported = RotorStorage.ParseDatabaseUniversal(Text)
+	' Some editors add a UTF-8 byte-order mark; remove it before parsing.
+	Text = RotorStorage.StripBom(Text)
+	If Text.Length > 2000000 Then
+		sheet.ShowMessage("Import Geometries", "File too large (limit 2 MB).")
+		Return
+	End If
+	Dim imported As List = RotorStorage.ParseDatabaseUniversal(Text)
 	If imported.Size = 0 Then
 		sheet.ShowMessage("Import Geometries", "No valid RotorCalculator geometries were found in this file (JSON or TXT).")
 		Return
 	End If
+	' Preview: list every rotor found and mark names that already exist.
 	Dim conflicts As Int = 0
+	Dim sbList As StringBuilder
+	sbList.Initialize
 	For i = 0 To imported.Size - 1
 		Dim ig As RotorGeometry = imported.Get(i)
-		If RotorStorage.FindRotorByName(ig.Name) >= 0 Then conflicts = conflicts + 1
+		Dim exists As Boolean = (RotorStorage.FindRotorByName(ig.Name) >= 0)
+		If exists Then conflicts = conflicts + 1
+		If i < 12 Then
+			sbList.Append(CRLF).Append(Chr(8226)).Append(" ").Append(ig.Name.Replace("_", " "))
+			If exists Then sbList.Append("  (name exists)")
+		End If
 	Next
-	Dim msg As String = "Found " & imported.Size & " valid geometries. Import them into the local rotor library?"
-	If conflicts > 0 Then msg = msg & CRLF & CRLF & conflicts & " use names that already exist."
+	If imported.Size > 12 Then sbList.Append(CRLF).Append(Chr(8230)).Append(" and ").Append(imported.Size - 12).Append(" more")
+	Dim msg As String = "Found " & imported.Size & " valid geometries (" & (imported.Size - conflicts) & " new, " & conflicts & " with an existing name):" & sbList.ToString
 	Wait For (sheet.ShowConfirm("Import Geometries", msg, "Import", "Cancel", "", False)) Complete (r As Int)
 	If r <> DialogResponse.POSITIVE Then
 		ToastMessageShow("Import canceled. 0 geometries imported.", False)
@@ -1205,7 +1330,7 @@ Sub btnSettingImportGeometries_Click
 		modes.Add("Rename imported duplicates|Keep both rotors")
 		modes.Add("Replace same-name local geometries|Overwrite the local rotors")
 		modes.Add("Skip same-name imported geometries|Keep the local rotors")
-		Wait For (sheet.ShowChoice("Name Conflicts", modes, 0)) Complete (choice As Int)
+		Wait For (sheet.ShowChoice("Name Conflicts (" & conflicts & ")", modes, 0)) Complete (choice As Int)
 		If choice < 0 Then
 			ToastMessageShow("Import canceled. 0 geometries imported.", False)
 			Return
@@ -1243,6 +1368,7 @@ Private Sub ReadTextDocument(MimeType As String) As ResumableSub
 			File.Copy2(input, output)
 			input.Close
 			output.Close
+			If File.Size(File.DirInternal, tempName) > 2000000 Then Return "#TOO_LARGE#"
 			Return File.ReadString(File.DirInternal, tempName)
 		End If
 	Catch
@@ -1252,6 +1378,7 @@ Private Sub ReadTextDocument(MimeType As String) As ResumableSub
 End Sub
 
 Sub btnCloseSettings_Click
+	Tick
 	CloseSettingsPopup
 End Sub
 
@@ -1263,11 +1390,18 @@ Private Sub CloseSettingsPopup
 End Sub
 
 Private Sub RebuildApplicationUI
+	' The pages are rebuilt from scratch: keep each page's scroll position and the current page.
+	If scvGeom.IsInitialized Then SavedScroll0 = scvGeom.ScrollPosition
+	If scvCond.IsInitialized Then SavedScroll1 = scvCond.ScrollPosition
+	If scvRes.IsInitialized Then SavedScroll2 = scvRes.ScrollPosition
 	If sheet.IsInitialized Then sheet.CloseAll
 	If HelpPopupOpen Then ClosePhysicsHelp
 	If SweepPopupOpen Then CloseSweepPopup
 	If DiskContourPopupOpen Then CloseDiskContourPopup
 	If UnitPopupOpen Then CloseUnitConverter
+	UndoOpen = False
+	LimitGen = LimitGen + 1
+	UndoGen = UndoGen + 1
 	root.RemoveAllViews
 	root.Color = ColorPnlInput5
 	Activity.Color = ColorPnlInput5
@@ -1278,6 +1412,15 @@ Private Sub RebuildApplicationUI
 	LoadConditionDataToFields
 	RecalculateRotor
 	ShowPage(CurrentPage, False)
+	RestoreScrolls
+	CallSubDelayed(Me, "RestoreScrolls")
+End Sub
+
+' Applied twice: right after the rebuild and again once the new scroll views are laid out.
+Sub RestoreScrolls
+	If scvGeom.IsInitialized Then scvGeom.ScrollPosition = SavedScroll0
+	If scvCond.IsInitialized Then scvCond.ScrollPosition = SavedScroll1
+	If scvRes.IsInitialized Then scvRes.ScrollPosition = SavedScroll2
 End Sub
 
 Private Sub NoZoomControls(wv As WebView)
@@ -1294,6 +1437,7 @@ Private Sub OpenPhysicsHelp
 	Dim helpAsset As String = "physics_help.html"
 	If ThemeMode = 1 Then helpAsset = "physics_help_light.html"
 	If ThemeMode = 2 Then helpAsset = "physics_help_midnight.html"
+	If ThemeMode = 3 Then helpAsset = "physics_help_sepia.html"
 	OpenHelpAsset(helpAsset, "PHYSICS & EQUATIONS")
 End Sub
 
@@ -1326,6 +1470,7 @@ Private Sub OpenHelpAsset(helpAsset As String, titleText As String)
 	btnClose.Color = Colors.Transparent
 	titleBar.AddView(btnClose, root.Width - 52dip, 2dip, 48dip, 48dip)
 	
+	If wvHelp.IsInitialized Then DestroyWebView(wvHelp)
 	wvHelp.Initialize("wvHelp")
 	NoZoomControls(wvHelp)
 	pnlHelpPopup.AddView(wvHelp, 0, titleH, root.Width, root.Height - titleH)
@@ -1348,14 +1493,29 @@ Sub wvHelp_OverrideUrl (Url As String) As Boolean
 End Sub
 
 Sub btnClosePhysicsHelp_Click
+	Tick
 	ClosePhysicsHelp
 End Sub
 
 Private Sub ClosePhysicsHelp
 	If HelpPopupOpen Then
+		DestroyWebView(wvHelp)
 		pnlHelpPopup.RemoveView
 		HelpPopupOpen = False
 	End If
+End Sub
+
+' Releases a WebView: blank page, detach from the parent, then destroy the native view.
+Private Sub DestroyWebView(wv As WebView)
+	Try
+		If wv.IsInitialized = False Then Return
+		wv.LoadUrl("about:blank")
+		wv.RemoveView
+		Dim jo As JavaObject = wv
+		jo.RunMethod("destroy", Null)
+	Catch
+		Log("WebView release: " & LastException.Message)
+	End Try
 End Sub
 
 ' ====================================================================
@@ -1456,6 +1616,7 @@ Private Sub UnitModeText(i As Int) As String
 End Sub
 
 Sub btnUnitMode_Click
+	Tick
 	Dim items As List
 	items.Initialize
 	For i = 0 To 13
@@ -1468,6 +1629,7 @@ Sub btnUnitMode_Click
 End Sub
 
 Sub btnUnitSwap_Click
+	Tick
 	' Modes come in forward/reverse pairs (0/1, 2/3, ...): swap flips the direction.
 	UnitModeIdx = Bit.Xor(UnitModeIdx, 1)
 	UpdateUnitConversion
@@ -1481,6 +1643,7 @@ Private Sub CloseUnitConverter
 End Sub
 
 Sub btnCloseUnitConverter_Click
+	Tick
 	CloseUnitConverter
 End Sub
 
@@ -1490,13 +1653,18 @@ End Sub
 
 Private Sub UpdateUnitConversion
 	If btnUnitMode.IsInitialized = False Or edtUnitValue.IsInitialized = False Or lblUnitResult.IsInitialized = False Then Return
-	Dim x As Double = ParseDoubleDef(edtUnitValue.Text, 0)
+	Dim x As Double = ParseInput(edtUnitValue.Text)
 	Dim y As Double
 	Dim unitText As String
 	Dim modeText As String = UnitModeText(UnitModeIdx)
 	Dim fromUnit As String = modeText.SubString2(0, modeText.IndexOf(" "))
 	btnUnitMode.Text = modeText & " " & Chr(9662)
 	lblUnitFrom.Text = "VALUE IN " & fromUnit
+	If x = NoVal Then
+		' ParseInput accepts a comma decimal separator; invalid or partial text shows a dash.
+		lblUnitResult.Text = Dash
+		Return
+	End If
 	Select UnitModeIdx
 		Case 0
 			y = x * 1.34102209 : unitText = "hp"
@@ -1759,6 +1927,65 @@ Private Sub ParseInput(txt As String) As Double
 	End Try
 End Sub
 
+' Records "Limited to X" when a typed value was clamped. The hint shows once, when the field loses focus.
+Private Sub NoteLimit(key As String, requested As Double, clamped As Double)
+	If Abs(requested - clamped) <= 0.000000000001 * Max(1.0, Abs(clamped)) Then
+		LimitMsg = ""
+		Return
+	End If
+	Dim u As String = CurUnit(key)
+	Dim ut As String = ""
+	If u <> Dash Then ut = " " & u
+	LimitMsg = "Limited to " & FormatKey(key, clamped) & ut
+End Sub
+
+Private Sub FlushLimitHint
+	If LimitMsg <> "" Then
+		Dim m As String = LimitMsg
+		LimitMsg = ""
+		ShowLimitHint(m)
+	End If
+End Sub
+
+' Called when a field loses focus or Enter is pressed: show a pending hint and persist the session.
+Private Sub CommitFieldEdit
+	FlushLimitHint
+	SessionDirty = True
+	SaveSessionState
+End Sub
+
+' Short inline pill near the bottom of the screen (replaces a toast); auto-hides.
+Private Sub ShowLimitHint(msg As String)
+	LimitGen = LimitGen + 1
+	Dim g As Int = LimitGen
+	Try
+		If lblLimitHint.IsInitialized Then lblLimitHint.RemoveView
+	Catch
+		Log("Hint remove: " & LastException.Message)
+	End Try
+	Dim w As Int = Min(UiContentW - 24dip, 360dip)
+	Dim h As Int = Max(44dip, MeasuredTextHeight(msg, 14, w - 24dip) + 16dip)
+	lblLimitHint.Initialize("")
+	lblLimitHint.Text = RotorNames.RichText(msg)
+	lblLimitHint.TextSize = 14
+	lblLimitHint.Typeface = Typeface.DEFAULT_BOLD
+	lblLimitHint.TextColor = ColorAccentAmber
+	lblLimitHint.Gravity = Gravity.CENTER
+	Dim cd As ColorDrawable
+	cd.Initialize2(ColorPnlTitle, 8dip, 1dip, ColorAccentAmber)
+	lblLimitHint.Background = cd
+	root.AddView(lblLimitHint, (root.Width - w) / 2, root.Height - h - 24dip, w, h)
+	lblLimitHint.BringToFront
+	Sleep(2600)
+	If g = LimitGen Then
+		Try
+			lblLimitHint.RemoveView
+		Catch
+			Log("Hint remove: " & LastException.Message)
+		End Try
+	End If
+End Sub
+
 Private Sub TruncateName(n As String) As String
 	If n.Length > 32 Then Return n.SubString2(0, 32)
 	Return n
@@ -1997,6 +2224,7 @@ Private Sub CreateReadOnlyValue(rowId As String) As Label
 End Sub
 
 Sub roValue_Click
+	Tick
 	Dim v As View = Sender
 	ShowHelpFor("" & v.Tag)
 End Sub
@@ -2388,12 +2616,16 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 	Select key
 		Case "a0"
 			ActiveGeom.LiftSlope0 = ClampD(si, 0.1, 10.0)
+			NoteLimit("a0", si, ActiveGeom.LiftSlope0)
 		Case "Cd0"
 			ActiveGeom.Cd0 = ClampD(si, 0.0, 0.5)
+			NoteLimit("Cd0", si, ActiveGeom.Cd0)
 		Case "B"
 			ActiveGeom.TipLossB = ClampD(si, ActiveGeom.RootCutout + 0.001, 1.0)
+			NoteLimit("B", si, ActiveGeom.TipLossB)
 		Case "rpmNom"
 			ActiveGeom.NominalRPM = ClampD(si, 1.0, 30000.0)
+			NoteLimit("rpmNom", si, ActiveGeom.NominalRPM)
 		Case Else
 			ActiveGeom = zBETEngine.SetGeometryQuantity(ActiveGeom, key, si)
 	End Select
@@ -2411,13 +2643,18 @@ Sub edtGeom_FocusChanged (HasFocus As Boolean)
 		FocusRow = rid
 	Else
 		If FocusRow = rid Then FocusRow = ""
-		If UpdatingUI = False Then RefreshGeomFields("")
+		If UpdatingUI = False Then
+			' Rewrite the field with the stored (clamped) value, then show "Limited to ...".
+			RefreshGeomFields("")
+			CommitFieldEdit
+		End If
 	End If
 End Sub
 
 Sub edtGeom_EnterPressed
 	FocusRow = ""
 	RefreshGeomFields("")
+	CommitFieldEdit
 	Dim p As Phone
 	p.HideKeyboard(Activity)
 End Sub
@@ -2521,7 +2758,7 @@ Sub btnActiveRotor_Click
 	Wait For (sheet.ShowChoice(RotorNames.PlainLabel("activeRotor", 0), items, selected)) Complete (idx As Int)
 	If idx < 0 Then Return
 	If idx = 0 Then
-		btnNewRotor_Click
+		NewRotorFlow
 		Return
 	End If
 	If idx = 1 Then
@@ -2550,6 +2787,11 @@ Private Sub RenameCurrentRotor
 End Sub
 
 Sub btnNewRotor_Click
+	Tick
+	NewRotorFlow
+End Sub
+
+Private Sub NewRotorFlow
 	Wait For (ResolveUnsavedGeometry("creating a new rotor")) Complete (ok As Boolean)
 	If ok = False Then Return
 	Dim idx As Int = RotorStorage.CreateNewRotor
@@ -2580,14 +2822,48 @@ Sub SaveCurrentRotor
 	ToastMessageShow("Rotor saved.", False)
 End Sub
 
+' Saves the editor into the library. A factory preset asks first: overwrite it, or save the changes as a new rotor.
+' Returns True when the changes were stored (overwrite or copy), False when the user canceled.
+Private Sub SaveWithPresetGuard As ResumableSub
+	CheckDirty
+	If GeometryDirty And RotorStorage.IsFactoryPresetAt(RotorStorage.ActiveIndex) Then
+		Dim presetGeom As RotorGeometry = RotorStorage.Rotors.Get(RotorStorage.ActiveIndex)
+		Dim msg As String = presetGeom.Name & " is a factory preset. Overwrite the preset, or save your changes as a new rotor?"
+		Wait For (sheet.ShowConfirm("Factory Preset", msg, "Save as copy", "Overwrite preset", "Cancel", False)) Complete (r As Int)
+		If r = DialogResponse.POSITIVE Then
+			Wait For (SaveAsCopyFlow) Complete (copied As Boolean)
+			Return copied
+		Else If r = DialogResponse.NEGATIVE Then
+			SaveCurrentRotor
+			Return True
+		End If
+		Return False
+	End If
+	SaveCurrentRotor
+	Return True
+End Sub
+
+' Stores ActiveGeom under a new name; the library entry it was based on stays unchanged.
+Private Sub SaveAsCopyFlow As ResumableSub
+	Dim suggested As String = TruncateName(RotorStorage.MakeCopyName(ActiveGeom.Name))
+	Wait For (sheet.ShowInput("Save as Copy", "Name for the new rotor (max 32 characters)", suggested, "Save", 32)) Complete (nm As String)
+	If nm.Length = 0 Then Return False
+	Dim copyGeom As RotorGeometry = zBETEngine.CloneGeometry(ActiveGeom)
+	copyGeom.Name = TruncateName(nm)
+	RotorStorage.AddRotor(copyGeom)
+	AfterRotorChange
+	ToastMessageShow("Rotor copied: " & ActiveGeom.Name, False)
+	Return True
+End Sub
+
 ' Returns True when it is safe to continue (nothing unsaved, or saved, or discarded).
 Private Sub ResolveUnsavedGeometry(ActionText As String) As ResumableSub
 	CheckDirty
 	If GeometryDirty = False Then Return True
 	Wait For (sheet.ShowConfirm("Unsaved Geometry", "Save the changes to " & ActiveGeom.Name & " before " & ActionText & "?", "Save", "Discard", "Cancel", False)) Complete (r As Int)
 	If r = DialogResponse.POSITIVE Then
-		SaveCurrentRotor
-		Return True
+		Wait For (SaveWithPresetGuard) Complete (saved As Boolean)
+		Return saved
 	Else If r = DialogResponse.NEGATIVE Then
 		ActiveGeom = RotorStorage.GetActiveRotor
 		GeometryDirty = False
@@ -2602,11 +2878,14 @@ End Sub
 
 Sub btnGeometrySave_Click
 	Tick
-	SaveCurrentRotor
+	Wait For (SaveWithPresetGuard) Complete (saved As Boolean)
 End Sub
 
 Sub btnGeometryCopy_Click
 	Tick
+	' Copy what is stored: settle unsaved edits first.
+	Wait For (ResolveUnsavedGeometry("copying the rotor")) Complete (ok As Boolean)
+	If ok = False Then Return
 	Dim suggested As String = TruncateName(RotorStorage.MakeCopyName(ActiveGeom.Name))
 	Wait For (sheet.ShowInput("Copy Rotor", "Name for the new rotor (max 32 characters)", suggested, "Copy", 32)) Complete (nm As String)
 	If nm.Length = 0 Then Return
@@ -2623,12 +2902,75 @@ Sub btnGeometryDelete_Click
 		ToastMessageShow("At least one rotor must remain.", False)
 		Return
 	End If
-	Wait For (sheet.ShowConfirm("Delete Rotor", "Delete " & ActiveGeom.Name & "? This removes the saved geometry from the local library.", "Delete", "Cancel", "", True)) Complete (r As Int)
+	Dim msg As String = "Delete " & ActiveGeom.Name & "? This removes the saved geometry from the local library."
+	If RotorStorage.IsFactoryPresetAt(RotorStorage.ActiveIndex) Then
+		msg = ActiveGeom.Name & " is a factory preset. Delete it from the library? Restore Factory Presets in Settings brings it back."
+	End If
+	Wait For (sheet.ShowConfirm("Delete Rotor", msg, "Delete", "Cancel", "", True)) Complete (r As Int)
 	If r <> DialogResponse.POSITIVE Then Return
+	UndoIndex = RotorStorage.ActiveIndex
+	UndoGeom = RotorStorage.CloneRotorAt(UndoIndex)
 	If RotorStorage.DeleteRotor(RotorStorage.ActiveIndex) Then
 		AfterRotorChange
-		ToastMessageShow("Rotor deleted.", False)
+		ShowUndoBar("Rotor deleted.")
 	End If
+End Sub
+
+' Snackbar with an UNDO action (about 7 s).
+Private Sub ShowUndoBar(msg As String)
+	HideUndoBar
+	UndoGen = UndoGen + 1
+	Dim g As Int = UndoGen
+	Dim w As Int = Min(UiContentW - 16dip, 420dip)
+	pnlUndo.Initialize("pnlUndo")
+	Dim bg As ColorDrawable
+	bg.Initialize2(ColorPnlTitle, 8dip, 1dip, ColorAccentCyan)
+	pnlUndo.Background = bg
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.Text = msg
+	lbl.TextColor = ColorButText1
+	lbl.TextSize = 15
+	lbl.Gravity = Gravity.CENTER_VERTICAL
+	pnlUndo.AddView(lbl, 16dip, 0, w - 16dip - 108dip, 56dip)
+	Dim b As Button
+	b.Initialize("btnUndoDelete")
+	b.Text = "UNDO"
+	b.TextColor = ColorAccentCyan
+	b.TextSize = 15
+	b.Typeface = Typeface.DEFAULT_BOLD
+	b.Color = Colors.Transparent
+	pnlUndo.AddView(b, w - 104dip, 4dip, 96dip, 48dip)
+	root.AddView(pnlUndo, (root.Width - w) / 2, root.Height - 56dip - 16dip, w, 56dip)
+	pnlUndo.BringToFront
+	UndoOpen = True
+	Sleep(7000)
+	If g = UndoGen Then HideUndoBar
+End Sub
+
+Private Sub HideUndoBar
+	If UndoOpen Then
+		UndoOpen = False
+		Try
+			pnlUndo.RemoveView
+		Catch
+			Log("Undo bar: " & LastException.Message)
+		End Try
+	End If
+End Sub
+
+Sub btnUndoDelete_Click
+	Tick
+	If UndoGeom.IsInitialized = False Then
+		HideUndoBar
+		Return
+	End If
+	Wait For (ResolveUnsavedGeometry("restoring the deleted rotor")) Complete (ok As Boolean)
+	If ok = False Then Return
+	RotorStorage.InsertRotorAt(UndoIndex, UndoGeom)
+	HideUndoBar
+	AfterRotorChange
+	ToastMessageShow("Rotor restored: " & ActiveGeom.Name, False)
 End Sub
 
 ' ====================================================================
@@ -2694,6 +3036,7 @@ Private Sub BuildPageCond
 End Sub
 
 Sub btnDragInfo_Click
+	Tick
 	sheet.ShowHelp("drag_numerical")
 End Sub
 
@@ -2733,6 +3076,14 @@ Private Sub BuildPageRes
 	btnViewDiskContour.SingleLine = True
 	StyleCta(btnViewDiskContour, ColorAccentCyan)
 	scvRes.Panel.AddView(btnViewDiskContour, UiContentLeft + UiContentW*3/100 + btnW + 8dip, 10dip, btnW, 52dip)
+
+	' Reason banner: shown only when no result exists, so dashes are never unexplained.
+	ReasonH = 0
+	ReasonTop = 68dip
+	lblResultReason = NewChip("lblResultReason", "status")
+	scvRes.Panel.AddView(lblResultReason, UiContentLeft + 8dip, ReasonTop, UiContentW - 16dip, 48dip)
+	StyleChip(lblResultReason, ColorAccentRed)
+	lblResultReason.Visible = False
 
 	Dim y As Int = 76dip
 
@@ -2807,7 +3158,8 @@ Private Sub BuildPageRes
 	Next
 	' Status block at the very end: operating solution (trim) then model validity.
 	y = AddSectionHeader(scvRes, y, "MODEL STATUS")
-	Dim chipH As Int = 36dip
+	' Chip height follows the measured text (UpdateStatusChips), never below a 48dip touch target.
+	Dim chipH As Int = 48dip
 	lblTrimSummary = NewChip("lblTrimSummary", "trim")
 	scvRes.Panel.AddView(lblTrimSummary, UiContentLeft + 8dip, y + 4dip, UiContentW - 16dip, chipH)
 	y = y + chipH + 10dip
@@ -2824,10 +3176,10 @@ Private Sub NewChip(ev As String, tg As String) As Label
 	l.TextSize = 12.5 * sc
 	l.Typeface = Typeface.DEFAULT
 	l.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	l.Padding = Array As Int(12dip, 1dip, 12dip, 1dip)
+	l.Padding = Array As Int(12dip, 6dip, 12dip, 6dip)
 	l.SingleLine = False
 	l.Text = Dash
-	SetTextLines(l, 2)
+	SetTextLines(l, 6)
 	AttachHelp(l)
 	Return l
 End Sub
@@ -2859,14 +3211,18 @@ Private Sub UpdateStatusChips
 	If r.SpeedOfSound > 0 Then tipMach = r.TipSpeed / r.SpeedOfSound
 	Dim txt As String
 	Dim col As Int
+	Dim reason As String = ""
 	If r.CompressibilityInvalid Then
 		col = ColorAccentRed
 		txt = "Advancing tip Mach M_adv = " & FormatSig(r.AdvancingTipMach, 3) & ": Prandtl-Glauert invalid"
+		If r.SolutionValid = False Then reason = "No result: the advancing tip Mach number reaches the Prandtl-Glauert limit (M = 1)."
 	Else If r.SolutionValid = False Then
 		col = ColorAccentRed
 		txt = "Invalid operating point"
 		Dim sm As String = r.StatusMessage.Replace("INVALID: ", "").Replace("INVALID:", "").Trim
 		If sm <> "" And sm.Contains("could not be trimmed") = False Then txt = txt & ": " & sm
+		If sm = "" Then sm = "Invalid operating point."
+		reason = "No result: " & sm
 	Else If r.AdvancingTipMach >= 0.9 Then
 		col = ColorAccentAmber
 		txt = "Advancing tip Mach M_adv = " & FormatSig(r.AdvancingTipMach, 3) & ": compressibility caution"
@@ -2877,24 +3233,77 @@ Private Sub UpdateStatusChips
 		col = 0
 		txt = "Model Valid: M_tip = " & FormatSig(tipMach, 3) & ", M_adv = " & FormatSig(r.AdvancingTipMach, 3)
 	End If
+	' Engine validity note: clamped inputs, vortex-ring state, negative power in descent.
+	Dim vw As String = r.ValidityWarning
+	If vw.Length > 0 Then
+		If col = 0 Then
+			col = ColorAccentAmber
+			txt = vw
+		Else
+			txt = txt & CRLF & vw
+		End If
+	End If
 	lblResultStatus.Text = RotorNames.RichText(txt)
 	StyleChip(lblResultStatus, col)
-	If lblTrimSummary.IsInitialized = False Then Return
-	Dim pairTxt As String = PairChipText(ActiveCond.OperatingPair)
-	If r.SolutionValid Then
-		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt)
-		StyleChip(lblTrimSummary, 0)
-	Else
-		lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt & ": no solution")
-		StyleChip(lblTrimSummary, ColorAccentRed)
+	If lblTrimSummary.IsInitialized Then
+		Dim pairTxt As String = PairChipText(ActiveCond.OperatingPair)
+		If r.SolutionValid Then
+			lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt)
+			StyleChip(lblTrimSummary, 0)
+		Else
+			lblTrimSummary.Text = RotorNames.RichText("Trim: " & pairTxt & ": no solution")
+			StyleChip(lblTrimSummary, ColorAccentRed)
+		End If
 	End If
+	SetResultReason(reason)
+	LayoutStatusChips
+End Sub
+
+' Sizes both chips from the measured wrapped text (130% font safe); the second chip follows the first.
+Private Sub LayoutStatusChips
+	If lblTrimSummary.IsInitialized = False Or lblResultStatus.IsInitialized = False Then Return
+	Dim w As Int = UiContentW - 16dip
+	Dim sz As Float = 12.5 * sc
+	Dim h1 As Int = Max(48dip, MeasuredTextHeight(lblTrimSummary.Text, sz, w - 24dip) + 16dip)
+	Dim h2 As Int = Max(48dip, MeasuredTextHeight(lblResultStatus.Text, sz, w - 24dip) + 16dip)
+	lblTrimSummary.Height = h1
+	lblResultStatus.Top = lblTrimSummary.Top + h1 + 10dip
+	lblResultStatus.Height = h2
+	scvRes.Panel.Height = lblResultStatus.Top + h2 + 40dip
+End Sub
+
+' Shows the reason banner above the result rows when there is no result (txt = ""), hides it otherwise.
+' Views below the banner move down by the banner height.
+Private Sub SetResultReason(txt As String)
+	If lblResultReason.IsInitialized = False Then Return
+	Dim newH As Int = 0
+	If txt <> "" Then
+		lblResultReason.Text = RotorNames.RichText(txt)
+		Dim bh As Int = Max(48dip, MeasuredTextHeight(txt, 12.5 * sc, UiContentW - 16dip - 24dip) + 16dip)
+		lblResultReason.Height = bh
+		newH = bh + 8dip
+	End If
+	lblResultReason.Visible = (txt <> "")
+	Dim delta As Int = newH - ReasonH
+	If delta = 0 Then Return
+	Dim limitTop As Int = 76dip + ReasonH
+	For i = 0 To scvRes.Panel.NumberOfViews - 1
+		Dim v As View = scvRes.Panel.GetView(i)
+		If v.Top >= limitTop Then v.Top = v.Top + delta
+	Next
+	ReasonH = newH
+	scvRes.Panel.Height = scvRes.Panel.Height + delta
+End Sub
+
+Sub lblResultReason_Click
+	lblResultStatus_Click
 End Sub
 
 Private Sub PairChipText(pair As String) As String
 	Select pair
-		Case "rpm_collective": Return "RPM + Δθ"
-		Case "rpm_ct": Return "RPM + C_T"
-		Case "rpm_thrust": Return "RPM + T"
+		Case "rpm_collective": Return "Ω + Δθ"
+		Case "rpm_ct": Return "Ω + C_T"
+		Case "rpm_thrust": Return "Ω + T"
 		Case "collective_ct": Return "Δθ + C_T"
 		Case "collective_thrust": Return "Δθ + T"
 		Case "ct_thrust": Return "C_T + T"
@@ -2903,6 +3312,7 @@ Private Sub PairChipText(pair As String) As String
 End Sub
 
 Sub lblResultStatus_Click
+	Tick
 	If ActiveRes.CompressibilityInvalid Then
 		sheet.ShowMessage("Prandtl-Glauert Invalid", "The advancing-tip Mach number has reached or passed the Prandtl-Glauert singularity (M = 1)." & CRLF & CRLF & _
 			"Lower the rotor speed or the forward speed, or switch Compressibility to Off in Geometry.")
@@ -2917,6 +3327,7 @@ Sub lblResultStatus_Click
 End Sub
 
 Sub lblTrimSummary_Click
+	Tick
 	sheet.ShowHelp("trim")
 End Sub
 
@@ -3058,10 +3469,12 @@ Private Sub ShowPage(Position As Int, Animated As Boolean)
 	pnlBack1.Visible = (Position = 1)
 	pnlBack2.Visible = (Position = 2)
 	
-	Dim tabW As Int = root.Width / 3
+	Dim tabW As Int = HeaderTabW
 	Dim duration As Int = 0
 	If Animated Then duration = 150
-	line.SetLayoutAnimated(duration, Position * tabW, HeaderHeight - 5dip, tabW, 4dip)
+	line.SetLayoutAnimated(duration, HeaderTabX0 + Position * tabW, HeaderHeight - 5dip, tabW, 4dip)
+	SessionDirty = True
+	SaveSessionState
 	
 	btnTabGeom.TextColor = ColorButText2
 	btnTabCond.TextColor = ColorButText2
@@ -3342,7 +3755,7 @@ Public Sub RecalculateRotor
 	ActiveRes = zBETEngine.Calculate(ActiveGeom, ActiveCond)
 	RefreshTipFactorRow
 	UpdateStatusChips
-	SaveSessionState
+	SessionDirty = True
 	Dim cellsReady As Boolean = ResKeys.IsInitialized
 	If cellsReady Then
 		For i = 0 To ResKeys.Size - 1
@@ -3580,8 +3993,14 @@ Sub edtCond_TextChanged (Old As String, New As String)
 	Dim dv As Double = ParseInput(New)
 	If dv = NoVal Then Return
 	Dim si As Double = InputToCanonical(key, dv)
-	If key = "h" Then ConditionAltitudeM = ClampD(si, -500.0, 11000.0)
-	If key = "T0" Then ConditionTemperatureC = ClampD(si, -80.0, 60.0)
+	If key = "h" Then
+		ConditionAltitudeM = ClampD(si, -500.0, 11000.0)
+		NoteLimit("h", si, ConditionAltitudeM)
+	End If
+	If key = "T0" Then
+		ConditionTemperatureC = ClampD(si, -80.0, 60.0)
+		NoteLimit("T0", si, ConditionTemperatureC)
+	End If
 	UpdateAtmosphere
 	RecalculateRotor
 End Sub
@@ -3592,7 +4011,16 @@ Sub edtHorizontalValue_TextChanged (Old As String, New As String)
 	If dv = NoVal Then Return
 	Dim key As String = HKey
 	ConditionHorizontalValue = InputToCanonical(key, dv)
-	If key = "mu" Then ConditionHorizontalValue = ClampD(ConditionHorizontalValue, -0.60, 0.60)
+	Dim hReq As Double = ConditionHorizontalValue
+	If key = "mu" Then
+		ConditionHorizontalValue = ClampD(ConditionHorizontalValue, -0.60, 0.60)
+		NoteLimit("mu", hReq, ConditionHorizontalValue)
+	Else If key = "Vx" Then
+		' The engine limits mu_x to +-0.60: apply the same limit to V_x so the field never shows an unused value.
+		Dim vMax As Double = 0.60 * RotorTipSpeed
+		ConditionHorizontalValue = ClampD(ConditionHorizontalValue, -vMax, vMax)
+		NoteLimit("Vx", hReq, ConditionHorizontalValue)
+	End If
 	ActiveCond.HorizontalMode = HorizontalInputMode
 	ActiveCond.HorizontalValue = ConditionHorizontalValue
 	RecalculateRotor
@@ -3611,6 +4039,7 @@ Sub edtAxialValue_TextChanged (Old As String, New As String)
 		Case "muz"
 			ConditionAxialValue = ClampD(raw, -0.50, 0.50)
 	End Select
+	NoteLimit(AKey, raw, ConditionAxialValue)
 	ActiveCond.AxialMode = AxialInputMode
 	ActiveCond.AxialValue = ConditionAxialValue
 	RecalculateRotor
@@ -3626,12 +4055,16 @@ Sub edtOperatingInput_TextChanged (Old As String, New As String)
 	Select key
 		Case "rpm"
 			ActiveCond.RPM = ClampD(value, 1.0, 30000.0)
+			NoteLimit("rpm", value, ActiveCond.RPM)
 		Case "coll"
 			ActiveCond.CollectiveDeg = ClampD(value, -60.0, 60.0)
+			NoteLimit("coll", value, ActiveCond.CollectiveDeg)
 		Case "CTtgt"
 			ActiveCond.TargetCT = ClampD(value, 0.000001, 0.20)
+			NoteLimit("CTtgt", value, ActiveCond.TargetCT)
 		Case "Ttgt"
 			ActiveCond.TargetThrustN = ClampD(value, 0.001, 1.0e8)
+			NoteLimit("Ttgt", value, ActiveCond.TargetThrustN)
 	End Select
 	RecalculateRotor
 End Sub
@@ -3641,6 +4074,7 @@ Sub edtKInd_TextChanged (Old As String, New As String)
 	Dim dv As Double = ParseInput(New)
 	If dv = NoVal Then Return
 	ActiveCond.KInd = ClampD(dv, 1.0, 3.0)
+	NoteLimit("kind", dv, ActiveCond.KInd)
 	RecalculateRotor
 End Sub
 
@@ -3648,31 +4082,47 @@ Private Sub CommitCondFields
 	Dim p As Phone
 	p.HideKeyboard(Activity)
 	LoadConditionDataToFields
+	CommitFieldEdit
 End Sub
 
 Sub edtCond_FocusChanged (HasFocus As Boolean)
 	SetFieldFocus(Sender, HasFocus)
-	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
+	If HasFocus = False And UpdatingUI = False Then
+		LoadConditionDataToFields
+		CommitFieldEdit
+	End If
 End Sub
 
 Sub edtHorizontalValue_FocusChanged (HasFocus As Boolean)
 	SetFieldFocus(Sender, HasFocus)
-	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
+	If HasFocus = False And UpdatingUI = False Then
+		LoadConditionDataToFields
+		CommitFieldEdit
+	End If
 End Sub
 
 Sub edtAxialValue_FocusChanged (HasFocus As Boolean)
 	SetFieldFocus(Sender, HasFocus)
-	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
+	If HasFocus = False And UpdatingUI = False Then
+		LoadConditionDataToFields
+		CommitFieldEdit
+	End If
 End Sub
 
 Sub edtOperatingInput_FocusChanged (HasFocus As Boolean)
 	SetFieldFocus(Sender, HasFocus)
-	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
+	If HasFocus = False And UpdatingUI = False Then
+		LoadConditionDataToFields
+		CommitFieldEdit
+	End If
 End Sub
 
 Sub edtKInd_FocusChanged (HasFocus As Boolean)
 	SetFieldFocus(Sender, HasFocus)
-	If HasFocus = False And UpdatingUI = False Then LoadConditionDataToFields
+	If HasFocus = False And UpdatingUI = False Then
+		LoadConditionDataToFields
+		CommitFieldEdit
+	End If
 End Sub
 
 Sub edtCond_EnterPressed
@@ -3849,16 +4299,17 @@ Sub btnViewPolarPlot_Click
 	Dim curLines As Int = 3
 	Dim rdLines As Int = 12
 	If ld = 1 Then
-		topBarH = 40dip
+		' Landscape keeps 48dip targets: one control row, taller footer.
 		gap = 4dip
-		btnH = 36dip
-		footerH = 42dip
-		btnFooterH = 34dip
+		btnH = 48dip
+		footerH = 56dip
+		btnFooterH = 48dip
 		btnFooterTop = 4dip
 		curLines = 2
 		rdLines = 10
 	End If
 	Dim controlsH As Int = 2 * btnH + 3 * gap
+	If ld = 1 Then controlsH = btnH + 2 * gap
 
 	Dim pnlHeader As Panel
 	pnlHeader.Initialize("")
@@ -3889,17 +4340,26 @@ Sub btnViewPolarPlot_Click
 	btnSweepParam = NewSweepButton("btnSweepParam")
 	btnSweepParam.TextSize = 14 * sc
 	btnSweepParam.Tag = "sweepParam"
-	pnlControls.AddView(btnSweepParam, 12dip, gap, root.Width - 24dip, btnH)
+	If ld = 0 Then pnlControls.AddView(btnSweepParam, 12dip, gap, root.Width - 24dip, btnH)
 	btnSweepMultiModel = NewSweepButton("btnSweepMultiModel")
 	btnSweepXAxis = NewSweepButton("btnSweepXAxis")
 	btnSweepMaxMu = NewSweepButton("btnSweepMaxMu")
 	btnSweepTrim = NewSweepButton("btnSweepTrim")
 	Dim bw As Int = (root.Width - 24dip - 3 * gap) / 4
 	Dim ry As Int = 2 * gap + btnH
-	pnlControls.AddView(btnSweepMultiModel, 12dip, ry, bw, btnH)
-	pnlControls.AddView(btnSweepXAxis, 12dip + bw + gap, ry, bw, btnH)
-	pnlControls.AddView(btnSweepMaxMu, 12dip + 2 * (bw + gap), ry, bw, btnH)
-	pnlControls.AddView(btnSweepTrim, 12dip + 3 * (bw + gap), ry, bw, btnH)
+	If ld = 1 Then
+		Dim uw As Int = (root.Width - 24dip - 4 * gap) / 6
+		pnlControls.AddView(btnSweepParam, 12dip, gap, 2 * uw, btnH)
+		pnlControls.AddView(btnSweepMultiModel, 12dip + 2 * uw + gap, gap, uw, btnH)
+		pnlControls.AddView(btnSweepXAxis, 12dip + 3 * uw + 2 * gap, gap, uw, btnH)
+		pnlControls.AddView(btnSweepMaxMu, 12dip + 4 * uw + 3 * gap, gap, uw, btnH)
+		pnlControls.AddView(btnSweepTrim, 12dip + 5 * uw + 4 * gap, gap, uw, btnH)
+	Else
+		pnlControls.AddView(btnSweepMultiModel, 12dip, ry, bw, btnH)
+		pnlControls.AddView(btnSweepXAxis, 12dip + bw + gap, ry, bw, btnH)
+		pnlControls.AddView(btnSweepMaxMu, 12dip + 2 * (bw + gap), ry, bw, btnH)
+		pnlControls.AddView(btnSweepTrim, 12dip + 3 * (bw + gap), ry, bw, btnH)
+	End If
 
 	' Scrollable body: plot, active operating point card, and full readout with vertical scroll.
 	Dim bodyTop As Int = topBarH + controlsH
@@ -3967,7 +4427,11 @@ Sub pnlSweepTouch_Touch(Action As Int, X As Float, Y As Float) As Boolean
 	If RotorPopups.LastPlotW > 1 And RotorPopups.LastXMax > 0 Then
 		Dim xv As Double = (X - RotorPopups.LastPlotLeft) / RotorPopups.LastPlotW * RotorPopups.LastXMax
 		SweepCrossX = ClampD(xv, 0, RotorPopups.LastXMax)
-		RedrawSweepPlot
+		' Move events are throttled (about 30 per second); down and up always redraw the final position.
+		Dim nowMs As Long = DateTime.Now
+		If Action = 2 And nowMs - LastMarkerMs < 33 Then Return True
+		LastMarkerMs = nowMs
+		RedrawSweepMarker
 	End If
 	Return True
 End Sub
@@ -4041,7 +4505,7 @@ Sub btnSweepMultiModel_Click
 	options.Add("Axial μz Family|Several axial flow ratios")
 	options.Add("Active Only|Only the current condition")
 	Dim hasValues As Boolean = (SweepMultiMode >= 1 And SweepMultiMode <= 3)
-	If hasValues Then options.Add("Edit Family Values…|Comma-separated list for the selected family")
+	If hasValues Then options.Add("Edit Family Values…|List separated by semicolons or spaces")
 	Wait For (sheet.ShowChoice(RotorNames.PlainLabel("family", 0), options, SweepMultiMode)) Complete (idx As Int)
 	If idx < 0 Then Return
 	If idx = 5 Then
@@ -4070,34 +4534,38 @@ Private Sub SetCurrentSweepFamilyText(value As String)
 	End Select
 End Sub
 
+' Values are separated by ";" or white space. A comma is the decimal mark ("1,5" = 1.5).
+' Empty list, more than 9 values, NaN, Infinity or any token that is not a finite number returns an empty list.
 Private Sub ParseSweepFamilyValues(raw As String) As List
 	Dim values As List
 	values.Initialize
-	Dim parts() As String = Regex.Split(",", raw)
+	Dim norm As String = raw.Replace(";", " ").Replace(Chr(13), " ").Replace(Chr(10), " ").Replace(Chr(9), " ").Trim
+	If norm.Length = 0 Then Return values
+	Dim parts() As String = Regex.Split("\s+", norm)
 	If parts.Length < 1 Or parts.Length > 9 Then Return values
 	For valueIndex = 0 To parts.Length - 1
-		Dim token As String = parts(valueIndex).Trim
-		If token = "" Then
+		Dim v As Double = ParseInput(parts(valueIndex))
+		If v = NoVal Or IsFiniteValue(v) = False Then
 			values.Clear
 			Return values
 		End If
-		Try
-			Dim v As Double = token
-			values.Add(v)
-		Catch
-			values.Clear
-			Return values
-		End Try
+		values.Add(v)
 	Next
 	Return values
+End Sub
+
+Private Sub IsFiniteValue(v As Double) As Boolean
+	If v <> v Then Return False
+	If Abs(v) > 1.0E300 Then Return False
+	Return True
 End Sub
 
 Private Sub CurrentSweepFamilyValues As List
 	Dim values As List
 	If SweepMultiMode >= 1 And SweepMultiMode <= 3 Then values = ParseSweepFamilyValues(CurrentSweepFamilyText) Else values.Initialize
-	If SweepMultiMode = 1 And values.Size = 0 Then values = ParseSweepFamilyValues("-10,-5,0,5,10")
-	If SweepMultiMode = 2 And values.Size = 0 Then values = ParseSweepFamilyValues("-10,-5,0,5,10")
-	If SweepMultiMode = 3 And values.Size = 0 Then values = ParseSweepFamilyValues("-0.05,-0.025,0,0.025,0.05")
+	If SweepMultiMode = 1 And values.Size = 0 Then values = ParseSweepFamilyValues("-10; -5; 0; 5; 10")
+	If SweepMultiMode = 2 And values.Size = 0 Then values = ParseSweepFamilyValues("-10; -5; 0; 5; 10")
+	If SweepMultiMode = 3 And values.Size = 0 Then values = ParseSweepFamilyValues("-0.05; -0.025; 0; 0.025; 0.05")
 	Return values
 End Sub
 
@@ -4111,11 +4579,20 @@ Sub btnSweepValues_Click
 	SweepValuesPopupOpen = True
 	pnlSweepValuesPopup.BringToFront
 	Dim cardW As Int = Min(root.Width - 24dip, 520dip)
-	Dim cardH As Int = 230dip
+	Dim hintTxt As String
+	If SweepMultiMode = 3 Then
+		hintTxt = "Enter 1 to 9 axial ratios. Separate values with a semicolon or a space. A comma is the decimal mark. Example: -0,05; 0; 0,05"
+	Else
+		hintTxt = "Enter 1 to 9 values. Separate values with a semicolon or a space. A comma is the decimal mark. Example: -10; -5; 0; 5; 10"
+	End If
+	Dim hintH As Int = MeasuredTextHeight(hintTxt, 12.5, cardW - 32dip) + 6dip
+	Dim edtTop As Int = 44dip + hintH + 8dip
+	Dim btnTop As Int = edtTop + 48dip + 16dip
+	Dim cardH As Int = btnTop + 48dip + 16dip
 	Dim card As Panel
 	card.Initialize("")
 	card.Color = ColorPnlInput5
-	pnlSweepValuesPopup.AddView(card, (root.Width-cardW)/2, (root.Height-cardH)/2, cardW, cardH)
+	pnlSweepValuesPopup.AddView(card, (root.Width-cardW)/2, Max(8dip, (root.Height-cardH)/2), cardW, cardH)
 	Dim title As Label
 	title.Initialize("")
 	Select SweepMultiMode
@@ -4129,36 +4606,37 @@ Sub btnSweepValues_Click
 	card.AddView(title, 16dip, 12dip, cardW-32dip, 28dip)
 	Dim hint As Label
 	hint.Initialize("")
-	If SweepMultiMode = 3 Then
-		hint.Text = "Enter 1–9 comma-separated axial ratios. Example: -0.05, 0, 0.05"
-	Else
-		hint.Text = "Enter 1–9 comma-separated values. Example: -10, -5, 0, 5, 10"
-	End If
+	hint.Text = hintTxt
 	hint.TextColor = ColorButText2
 	hint.TextSize = 12.5
 	hint.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
-	card.AddView(hint, 16dip, 44dip, cardW-32dip, 40dip)
+	card.AddView(hint, 16dip, 44dip, cardW-32dip, hintH)
 	edtSweepValues.Initialize("")
 	edtSweepValues.Text = CurrentSweepFamilyText
 	edtSweepValues.TextColor = ColorEdtText
 	edtSweepValues.Color = ColorEdt
 	edtSweepValues.TextSize = 15
 	edtSweepValues.SingleLine = True
-	card.AddView(edtSweepValues, 16dip, 90dip, cardW-32dip, 48dip)
+	card.AddView(edtSweepValues, 16dip, edtTop, cardW-32dip, 48dip)
 	Dim btnCancel As Button = CreateRowButton("CANCEL", "btnCancelSweepValues")
 	Dim btnApply As Button = CreateRowButton("APPLY", "btnApplySweepValues")
-	card.AddView(btnCancel, 16dip, 158dip, (cardW-38dip)/2, 48dip)
-	card.AddView(btnApply, 22dip+(cardW-38dip)/2, 158dip, (cardW-38dip)/2, 48dip)
+	card.AddView(btnCancel, 16dip, btnTop, (cardW-38dip)/2, 48dip)
+	card.AddView(btnApply, 22dip+(cardW-38dip)/2, btnTop, (cardW-38dip)/2, 48dip)
 End Sub
 
 Sub btnApplySweepValues_Click
+	Tick
 	Dim values As List = ParseSweepFamilyValues(edtSweepValues.Text)
 	If values.Size = 0 Then
-		ToastMessageShow("Enter 1–9 valid numbers separated by commas.", True)
+		ToastMessageShow("Enter 1 to 9 finite numbers. Separate them with a semicolon or a space. Use a comma only as the decimal mark.", True)
 		Return
 	End If
 	For familyIndex = 0 To values.Size - 1
 		Dim familyValue As Double = values.Get(familyIndex)
+		If IsFiniteValue(familyValue) = False Then
+			ToastMessageShow("Family values must be finite numbers.", True)
+			Return
+		End If
 		If SweepMultiMode = 1 And (familyValue <= -89 Or familyValue >= 89) Then
 			ToastMessageShow("α family values must stay between -89° and +89°.", True)
 			Return
@@ -4178,6 +4656,7 @@ Sub btnApplySweepValues_Click
 End Sub
 
 Sub btnCancelSweepValues_Click
+	Tick
 	CloseSweepValuesPopup
 End Sub
 
@@ -4238,10 +4717,13 @@ Sub btnSweepMaxMu_Click
 End Sub
 
 Sub btnCloseSweepPlot_Click
+	Tick
 	CloseSweepPopup
 End Sub
 
 Private Sub CloseSweepPopup
+	RotorPopups.CancelSweep
+	HideBusy(BusyGen)
 	If SweepValuesPopupOpen Then CloseSweepValuesPopup
 	If SweepTablePopupOpen Then CloseSweepTablePopup
 	If SweepPopupOpen Then
@@ -4252,14 +4734,127 @@ End Sub
 
 Sub UpdateSweepPlotView
 	If ivSweepPlot.IsInitialized = False Then Return
-	SyncConditionRepresentations
-	Dim familyValues As List = CurrentSweepFamilyValues
-	SweepSamplesCache = RotorPopups.BuildSweepSamples(ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepMultiMode, SweepMaxMuVal, familyValues, SweepTrimMode)
+	Wait For (EnsureSweepSamples) Complete (ok As Boolean)
+	If ok = False Or SweepPopupOpen = False Then Return
 	RefreshSweepControls
 	RedrawSweepPlot
 End Sub
 
-' Redraws the bitmap (with the crosshair, if any) from the cached samples and refreshes the text areas.
+' Cache key of everything the sweep dataset depends on. The dataset is rebuilt only when the key changes.
+Private Sub SweepKeyNow As String
+	Dim g As RotorGeometry = ActiveGeom
+	Dim c As FlightCondition = ActiveCond
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(SweepParamSelectedKey).Append("|").Append(SweepMultiMode).Append("|").Append(SweepMaxMuVal).Append("|")
+	sb.Append(SweepTrimMode).Append("|").Append(CurrentSweepFamilyText).Append("|")
+	sb.Append(g.Radius).Append("|").Append(g.NBlades).Append("|").Append(g.RootCutout).Append("|")
+	sb.Append(g.ChordRoot).Append("|").Append(g.ChordTip).Append("|").Append(g.ThetaRoot).Append("|")
+	sb.Append(g.ThetaTip).Append("|").Append(g.Theta0).Append("|").Append(g.LiftSlope0).Append("|")
+	sb.Append(g.Cd0).Append("|").Append(g.TipLossMode).Append("|").Append(g.TipLossB).Append("|").Append("" & g.UsePrandtlGlauert).Append("|")
+	sb.Append(c.AltitudeM).Append("|").Append(c.TemperatureC).Append("|").Append(c.Rho).Append("|").Append(c.SpeedOfSound).Append("|")
+	sb.Append(c.HorizontalMode).Append("|").Append(c.HorizontalValue).Append("|").Append(c.AxialMode).Append("|")
+	sb.Append(c.AxialValue).Append("|").Append(c.InflowModel).Append("|").Append(c.OperatingPair).Append("|")
+	sb.Append(c.RPM).Append("|").Append(c.CollectiveDeg).Append("|").Append(c.TargetCT).Append("|")
+	sb.Append(c.TargetThrustN).Append("|").Append(c.KInd)
+	Return sb.ToString
+End Sub
+
+' Returns True when SweepSamplesCache matches the current inputs (built now or still valid).
+' Building yields to the UI thread after every point; a busy card with progress and CANCEL appears after 250 ms.
+Private Sub EnsureSweepSamples As ResumableSub
+	SyncConditionRepresentations
+	Dim key As String = SweepKeyNow
+	If SweepSamplesCache.IsInitialized And SweepSamplesCache.Size > 0 And key = SweepCacheKey Then Return True
+	Dim familyValues As List = CurrentSweepFamilyValues
+	Dim gen As Int = ShowBusy("Computing sweep")
+	Wait For (RotorPopups.BuildSweepSamplesAsync(ActiveGeom, ActiveCond, SweepParamSelectedKey, SweepMultiMode, SweepMaxMuVal, familyValues, SweepTrimMode, Me)) Complete (res As List)
+	HideBusy(gen)
+	If res.IsInitialized = False Then
+		SweepCacheKey = ""
+		Return False
+	End If
+	' SweepSamplesCache = RotorPopups.BuildSweepSamplesAsync(...) result; one dataset for plot, table and CSV.
+	SweepSamplesCache = res
+	SweepCacheKey = key
+	Return True
+End Sub
+
+' Progress callback from RotorPopups.BuildSweepSamplesAsync.
+Sub SweepProgress(pct As Int)
+	UpdateBusy(pct, "Computing sweep")
+End Sub
+
+' ---- busy card: progress bar + CANCEL, shown after a short delay ----
+Private Sub ShowBusy(msg As String) As Int
+	If BusyOpen Then
+		Try
+			pnlBusy.RemoveView
+		Catch
+			Log("Busy card: " & LastException.Message)
+		End Try
+	End If
+	BusyGen = BusyGen + 1
+	BusyStartMs = DateTime.Now
+	BusyCancel = False
+	pnlBusy.Initialize("pnlBusy")
+	pnlBusy.Color = 0x99000000
+	root.AddView(pnlBusy, 0, 0, root.Width, root.Height)
+	Dim cw As Int = Min(root.Width - 48dip, 360dip)
+	Dim ch As Int = 168dip
+	Dim card As Panel
+	card.Initialize("")
+	card.Color = ColorPnlInput5
+	pnlBusy.AddView(card, (root.Width - cw) / 2, (root.Height - ch) / 2, cw, ch)
+	lblBusy.Initialize("")
+	lblBusy.Text = msg
+	lblBusy.TextColor = ColorTitleText
+	lblBusy.TextSize = 16
+	lblBusy.Typeface = Typeface.DEFAULT_BOLD
+	lblBusy.Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.LEFT)
+	card.AddView(lblBusy, 16dip, 12dip, cw - 32dip, 36dip)
+	pbBusy.Initialize("")
+	pbBusy.Progress = 0
+	card.AddView(pbBusy, 16dip, 58dip, cw - 32dip, 24dip)
+	Dim bc As Button = CreateRowButton("CANCEL", "btnBusyCancel")
+	card.AddView(bc, 16dip, ch - 64dip, cw - 32dip, 48dip)
+	pnlBusy.Visible = False
+	BusyOpen = True
+	pnlBusy.BringToFront
+	Return BusyGen
+End Sub
+
+Private Sub UpdateBusy(pct As Int, msg As String)
+	If BusyOpen = False Then Return
+	If pnlBusy.Visible = False And DateTime.Now - BusyStartMs > 250 Then
+		pnlBusy.Visible = True
+		pnlBusy.BringToFront
+	End If
+	pbBusy.Progress = Max(0, Min(100, pct))
+	lblBusy.Text = msg & " " & Max(0, Min(100, pct)) & "%"
+End Sub
+
+Private Sub HideBusy(gen As Int)
+	If BusyOpen = False Or gen <> BusyGen Then Return
+	BusyOpen = False
+	Try
+		pnlBusy.RemoveView
+	Catch
+		Log("Busy card: " & LastException.Message)
+	End Try
+End Sub
+
+Sub btnBusyCancel_Click
+	Tick
+	BusyCancel = True
+	RotorPopups.CancelSweep
+End Sub
+
+Sub pnlBusy_Click
+	' swallow taps on the dimmed background
+End Sub
+
+' Full redraw: base layer from the cached samples, then the crosshair layer when a crosshair is active.
 Private Sub RedrawSweepPlot
 	If ivSweepPlot.IsInitialized = False Then Return
 	If SweepSamplesCache.IsInitialized = False Then Return
@@ -4268,7 +4863,10 @@ Private Sub RedrawSweepPlot
 	If plotW <= 10 Then plotW = root.Width - 16dip
 	If plotH <= 10 Then plotH = plotW * 95 / 100
 	Dim bmp As Bitmap = RotorPopups.DrawSweepPlot(plotW, plotH, ActiveGeom, ActiveCond, SweepParamSelectedKey, _
-		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, ThemeMode = 1, ExtraPrecision, SweepSamplesCache, PlotPalette, SweepCrossX)
+		SweepMultiMode, SweepMaxMuVal, SweepXAxisMode, (ThemeMode = 1 Or ThemeMode = 3), ExtraPrecision, SweepSamplesCache, PlotPalette, -1)
+	If SweepCrossX >= 0 And RotorPopups.CrosshairAvailable Then
+		bmp = RotorPopups.DrawSweepCrosshair(SweepSamplesCache, SweepXAxisMode, PlotPalette, SweepCrossX)
+	End If
 	ivSweepPlot.Bitmap = bmp
 	If ActiveRes.SolutionValid Then
 		lblSweepCurrentVal.Text = RotorNames.RichText("Active point: μ_x = " & FormatSig(ActiveRes.OperatingMu, 3) & _
@@ -4276,6 +4874,22 @@ Private Sub RedrawSweepPlot
 	Else
 		lblSweepCurrentVal.Text = "Active point: invalid operating point"
 	End If
+	UpdateSweepReadout
+End Sub
+
+' Marker-only redraw while the finger moves: copies the cached base layer, no data or engine work.
+Private Sub RedrawSweepMarker
+	If ivSweepPlot.IsInitialized = False Then Return
+	If SweepSamplesCache.IsInitialized = False Then Return
+	If RotorPopups.CrosshairAvailable = False Then
+		RedrawSweepPlot
+		Return
+	End If
+	ivSweepPlot.Bitmap = RotorPopups.DrawSweepCrosshair(SweepSamplesCache, SweepXAxisMode, PlotPalette, SweepCrossX)
+	UpdateSweepReadout
+End Sub
+
+Private Sub UpdateSweepReadout
 	Dim t As String = "Tap or drag on the plot to read the curve values."
 	If SweepCrossX >= 0 And SweepSamplesCache.Size > 0 Then
 		t = RotorPopups.SweepReadout(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, SweepCrossX, ExtraPrecision)
@@ -4308,7 +4922,8 @@ End Sub
 
 Sub btnSweepTable_Click
 	Tick
-	If SweepSamplesCache.IsInitialized = False Or SweepSamplesCache.Size = 0 Then UpdateSweepPlotView
+	Wait For (EnsureSweepSamples) Complete (ok As Boolean)
+	If ok = False Then Return
 	OpenSweepTablePopup
 End Sub
 
@@ -4341,19 +4956,21 @@ Private Sub OpenSweepTablePopup
 	close.TextSize = 20
 	close.Color = Colors.Transparent
 	header.AddView(close, root.Width - 52dip, 2dip, 48dip, 48dip)
-	Dim wv As WebView
-	wv.Initialize("")
-	NoZoomControls(wv)
-	pnlSweepTablePopup.AddView(wv, 0, headerH, root.Width, root.Height - headerH)
-	wv.LoadHtml(BuildSweepTableHtml)
+	If wvSweepTable.IsInitialized Then DestroyWebView(wvSweepTable)
+	wvSweepTable.Initialize("")
+	NoZoomControls(wvSweepTable)
+	pnlSweepTablePopup.AddView(wvSweepTable, 0, headerH, root.Width, root.Height - headerH)
+	wvSweepTable.LoadHtml(BuildSweepTableHtml)
 End Sub
 
 Sub btnCloseSweepTable_Click
+	Tick
 	CloseSweepTablePopup
 End Sub
 
 Private Sub CloseSweepTablePopup
 	If SweepTablePopupOpen Then
+		DestroyWebView(wvSweepTable)
 		pnlSweepTablePopup.RemoveView
 		SweepTablePopupOpen = False
 	End If
@@ -4365,11 +4982,17 @@ End Sub
 
 ' Wide table with a sticky header row and a sticky first column; 15 px text, units in the headers.
 Private Sub BuildSweepTableHtml As String
-	Dim dark As Boolean = (ThemeMode <> 1)
+	Dim dark As Boolean = (ThemeMode = 0 Or ThemeMode = 2)
 	Dim bg As String = "#ffffff"
 	Dim fg As String = "#172033"
 	Dim grid As String = "#d5dce6"
 	Dim hint As String = "#5b6b82"
+	If ThemeMode = 3 Then
+		bg = "#FAF6EE"
+		fg = "#2D2319"
+		grid = "#DDD2C0"
+		hint = "#645747"
+	End If
 	If dark Then
 		bg = "#10141c"
 		fg = "#f1f5f9"
@@ -4430,6 +5053,8 @@ End Sub
 ' ====================================================================
 Sub btnSweepExportCsv_Click
 	Tick
+	Wait For (EnsureSweepSamples) Complete (dataOk As Boolean)
+	If dataOk = False Then Return
 	Dim options As List
 	options.Initialize
 	options.Add("Current Chart CSV|Table of plotted curve values vs advance ratio")
@@ -4440,7 +5065,6 @@ Sub btnSweepExportCsv_Click
 	Dim csv As String
 	Dim baseName As String = SweepExportBaseName
 	If choice = 1 Then
-		If SweepSamplesCache.IsInitialized = False Or SweepSamplesCache.Size = 0 Then UpdateSweepPlotView
 		csv = RotorPopups.BuildFullSweepCsv(ActiveGeom, ActiveCond, SweepSamplesCache, ExtraPrecision)
 		baseName = baseName & "_full"
 	Else
@@ -4488,7 +5112,6 @@ Private Sub SweepExportBaseName As String
 End Sub
 
 Private Sub BuildSweepCsv As String
-	If SweepSamplesCache.IsInitialized = False Or SweepSamplesCache.Size = 0 Then UpdateSweepPlotView
 	Dim rows As List = RotorPopups.BuildSweepTableRows(SweepSamplesCache, SweepParamSelectedKey, SweepXAxisMode, ExtraPrecision, True)
 	Dim sb As StringBuilder
 	sb.Initialize
@@ -4532,11 +5155,10 @@ Private Sub OpenDiskContourPopup
 	Dim btnFooterTop As Int = 5dip
 	Dim curLines As Int = 3
 	If ld = 1 Then
-		topBarH = 40dip
 		gap = 4dip
-		btnH = 36dip
-		footerH = 42dip
-		btnFooterH = 34dip
+		btnH = 48dip
+		footerH = 56dip
+		btnFooterH = 48dip
 		btnFooterTop = 4dip
 		curLines = 2
 	End If
@@ -4624,6 +5246,7 @@ Private Sub OpenDiskContourPopup
 End Sub
 
 Sub btnCloseDiskContourPlot_Click
+	Tick
 	CloseDiskContourPopup
 End Sub
 
@@ -4658,7 +5281,7 @@ Sub UpdateDiskContourPlotView
 	Dim plotH As Int = ivDiskContourPlot.Height
 	If plotW <= 0 Or plotH <= 0 Then Return
 
-	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(plotW, plotH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, ThemeMode = 1, False)
+	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(plotW, plotH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, (ThemeMode = 1 Or ThemeMode = 3), False)
 	ivDiskContourPlot.Bitmap = bmp
 
 	If ActiveRes.SolutionValid Then
@@ -4678,7 +5301,7 @@ Sub btnDiskContourExportPng_Click
 	End If
 	Dim exportW As Int = 600dip
 	Dim exportH As Int = 600dip
-	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, ThemeMode = 1, True)
+	Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, DiskContourParamSelectedKey, (ThemeMode = 1 Or ThemeMode = 3), True)
 	Dim tempName As String = "rotor_contour_export.png"
 	Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
 	bmp.WriteToStream(out, 100, "PNG")
@@ -4698,11 +5321,12 @@ Sub btnDiskContourExportAllPng_Click
 		Return
 	End If
 
-	' Select one destination folder, then write all 14 PNG files into it.
+	' Select one destination folder, then write all PNG files into it.
 	Dim intent As Intent
 	intent.Initialize("android.intent.action.OPEN_DOCUMENT_TREE", "")
 	Dim intentJO As JavaObject = intent
 	intentJO.RunMethod("addFlags", Array(1 + 2 + 64 + 128))
+	Dim gen As Int = 0
 	Try
 		StartActivityForResult(intent)
 		Wait For ion_Event (MethodName As String, Args() As Object)
@@ -4725,14 +5349,24 @@ Sub btnDiskContourExportAllPng_Click
 		Dim exportW As Int = 600dip
 		Dim exportH As Int = 600dip
 		Dim count As Int = 0
-		For Each k As String In keys
-			Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, k, ThemeMode = 1, True)
+		Dim stamp As String = ExportStamp
+		Dim light As Boolean = (ThemeMode = 1 Or ThemeMode = 3)
+		gen = ShowBusy("Exporting contour PNG files")
+		pnlBusy.Visible = True
+		' One file per step; Sleep(0) lets the progress card paint and the CANCEL button react (no ANR).
+		For i = 0 To keys.Size - 1
+			If BusyCancel Then Exit
+			Dim k As String = keys.Get(i)
+			UpdateBusy(100 * i / keys.Size, "Exporting " & (i + 1) & " of " & keys.Size)
+			Sleep(0)
+			If BusyCancel Then Exit
+			Dim bmp As Bitmap = RotorPopups.DrawDiskContourPlot(exportW, exportH, ActiveGeom, ActiveCond, ActiveRes, k, light, True)
 			Dim tempName As String = "rotor_contour_" & k & ".png"
 			Dim out As OutputStream = File.OpenOutput(File.DirInternal, tempName, False)
 			bmp.WriteToStream(out, 100, "PNG")
 			out.Close
 
-			Dim fileName As String = "rotorcalculator_contour_" & k & ".png"
+			Dim fileName As String = "rotorcalculator_contour_" & k & "_" & stamp & ".png"
 			Dim childUri As Object = docs.RunMethod("createDocument", Array(resolver, parentUri, "image/png", fileName))
 			If childUri <> Null Then
 				Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
@@ -4746,16 +5380,32 @@ Sub btnDiskContourExportAllPng_Click
 			End If
 			File.Delete(File.DirInternal, tempName)
 		Next
-
-		If count = keys.Size Then
+		Dim canceled As Boolean = BusyCancel
+		HideBusy(gen)
+		If canceled Then
+			ToastMessageShow("Export canceled. " & count & " of " & keys.Size & " contour PNG files saved.", True)
+		Else If count = keys.Size Then
 			ToastMessageShow(count & " contour PNG files exported.", False)
 		Else
 			ToastMessageShow("Exported " & count & " of " & keys.Size & " contour PNG files.", True)
 		End If
 	Catch
 		Log("Batch contour export failed: " & LastException.Message)
+		If gen > 0 Then HideBusy(gen)
 		ToastMessageShow("Contour PNG batch export failed.", True)
 	End Try
+End Sub
+
+' yyyyMMdd_HHmmss timestamp for exported file names.
+Private Sub ExportStamp As String
+	Dim oldD As String = DateTime.DateFormat
+	Dim oldT As String = DateTime.TimeFormat
+	DateTime.DateFormat = "yyyyMMdd"
+	DateTime.TimeFormat = "HHmmss"
+	Dim s As String = DateTime.Date(DateTime.Now) & "_" & DateTime.Time(DateTime.Now)
+	DateTime.DateFormat = oldD
+	DateTime.TimeFormat = oldT
+	Return s
 End Sub
 
 Private Sub SaveAs(Source As InputStream, MimeType As String, Title As String) As ResumableSub

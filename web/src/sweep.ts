@@ -23,7 +23,7 @@ export interface SweepParamMeta {
   symbol: string;
   unit: string;
   digits: number;
-  getValue: (res: RotorResults, geom?: RotorGeometry) => number;
+  getValue: (res: RotorResults, geom: RotorGeometry) => number;
 }
 
 export const SWEEP_TRIM_MODES = [
@@ -56,7 +56,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "C̄_L",
     unit: "–",
     digits: 4,
-    getValue: (r, g) => derivedClBar(r, (g && g.sigmaThrust > 0 ? g.sigmaThrust : g?.sigmaRef) || 0.0754),
+    getValue: (r, g) => derivedClBar(r, (g.sigmaThrust > 0 ? g.sigmaThrust : g.sigmaRef)),
   },
   { key: "vi", full: "Induced Velocity", short: "Induced Velocity", symbol: "v_i", unit: "m/s", digits: 2, getValue: (r) => derivedOutput(r, "vi") },
   { key: "Vztot", full: "Total Axial Speed", short: "Total Axial Speed", symbol: "V_{z,tot}", unit: "m/s", digits: 2, getValue: (r) => derivedOutput(r, "Vztot") },
@@ -86,7 +86,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "T_c",
     unit: "–",
     digits: 4,
-    getValue: (r, g) => derivedTc(r, g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18),
+    getValue: (r, g) => derivedTc(r, Math.PI * g.radius * g.radius),
   },
   {
     key: "Pc",
@@ -95,7 +95,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "P_c",
     unit: "–",
     digits: 4,
-    getValue: (r, g) => derivedPc(r, g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18),
+    getValue: (r, g) => derivedPc(r, Math.PI * g.radius * g.radius),
   },
   { key: "lambda", full: "Total Inflow Ratio", short: "Inflow Ratio", symbol: "λ", unit: "–", digits: 5, getValue: (r) => r.inflowLambda },
   { key: "lambda_i", full: "Induced Inflow Ratio", short: "Induced Inflow", symbol: "λ_i", unit: "–", digits: 5, getValue: (r) => r.inflowLambdaI },
@@ -120,7 +120,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "P_i",
     unit: "kW",
     digits: 2,
-    getValue: (r, g) => (r.CQi * r.densityRho * (g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18) * Math.pow(r.tipSpeed, 3)) / 1000,
+    getValue: (r, g) => (r.CQi * r.densityRho * (Math.PI * g.radius * g.radius) * Math.pow(r.tipSpeed, 3)) / 1000,
   },
   {
     key: "PowerProfKW",
@@ -129,7 +129,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "P_0",
     unit: "kW",
     digits: 2,
-    getValue: (r, g) => (r.CQ0 * r.densityRho * (g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18) * Math.pow(r.tipSpeed, 3)) / 1000,
+    getValue: (r, g) => (r.CQ0 * r.densityRho * (Math.PI * g.radius * g.radius) * Math.pow(r.tipSpeed, 3)) / 1000,
   },
   {
     key: "PowerAirKW",
@@ -138,7 +138,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "P_air",
     unit: "kW",
     digits: 2,
-    getValue: (r, g) => (r.CPair * r.densityRho * (g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18) * Math.pow(r.tipSpeed, 3)) / 1000,
+    getValue: (r, g) => (r.CPair * r.densityRho * (Math.PI * g.radius * g.radius) * Math.pow(r.tipSpeed, 3)) / 1000,
   },
   {
     key: "TorqueIndNm",
@@ -148,7 +148,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     unit: "N·m",
     digits: 2,
     getValue: (r, g) => {
-      const rad = g ? g.radius : 8.18;
+      const rad = g.radius;
       return r.CQi * r.densityRho * Math.PI * rad * rad * r.tipSpeed * r.tipSpeed * rad;
     },
   },
@@ -160,7 +160,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     unit: "N·m",
     digits: 2,
     getValue: (r, g) => {
-      const rad = g ? g.radius : 8.18;
+      const rad = g.radius;
       return r.CQ0 * r.densityRho * Math.PI * rad * rad * r.tipSpeed * r.tipSpeed * rad;
     },
   },
@@ -171,7 +171,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "H_i",
     unit: "N",
     digits: 2,
-    getValue: (r, g) => r.CHi * r.densityRho * (g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18) * r.tipSpeed * r.tipSpeed,
+    getValue: (r, g) => r.CHi * r.densityRho * (Math.PI * g.radius * g.radius) * r.tipSpeed * r.tipSpeed,
   },
   {
     key: "DragProfN",
@@ -180,7 +180,7 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
     symbol: "H_0",
     unit: "N",
     digits: 2,
-    getValue: (r, g) => r.CH0 * r.densityRho * (g ? Math.PI * g.radius * g.radius : Math.PI * 8.18 * 8.18) * r.tipSpeed * r.tipSpeed,
+    getValue: (r, g) => r.CH0 * r.densityRho * (Math.PI * g.radius * g.radius) * r.tipSpeed * r.tipSpeed,
   },
   { key: "B", full: "Tip-Loss Factor", short: "Tip Factor", symbol: "B", unit: "–", digits: 4, getValue: (r) => r.bFactor },
   { key: "TipSpeed", full: "Tip Speed", short: "Tip Speed", symbol: "ΩR", unit: "m/s", digits: 2, getValue: (r) => r.tipSpeed },
@@ -191,8 +191,8 @@ export const SWEEP_PARAMS: SweepParamMeta[] = [
   { key: "MuZ", full: "Axial Flow Ratio", short: "Axial Ratio", symbol: "μ_z", unit: "–", digits: 4, getValue: (r) => r.operatingMuZ },
   { key: "Vz", full: "Climb Speed", short: "Climb Speed", symbol: "V_z", unit: "m/s", digits: 2, getValue: (r) => r.operatingVz },
   { key: "Alpha", full: "Disk Angle of Attack", short: "Disk AoA", symbol: "α", unit: "deg", digits: 2, getValue: (r) => r.operatingAlphaDeg },
-  { key: "Altitude", full: "Pressure Altitude", short: "Altitude", symbol: "h", unit: "m", digits: 1, getValue: (r) => r.altitudeM },
-  { key: "Temperature", full: "Ambient Temperature", short: "Temperature", symbol: "T_amb", unit: "°C", digits: 1, getValue: (r) => r.temperatureC },
+  { key: "Altitude", full: "Pressure Altitude", short: "Altitude", symbol: "H_p", unit: "m", digits: 1, getValue: (r) => r.altitudeM },
+  { key: "Temperature", full: "Outside Air Temperature", short: "Temperature", symbol: "OAT", unit: "°C", digits: 1, getValue: (r) => r.temperatureC },
   { key: "Density", full: "Air Density", short: "Density", symbol: "ρ", unit: "kg/m³", digits: 4, getValue: (r) => r.densityRho },
   { key: "Pressure", full: "Ambient Pressure", short: "Pressure", symbol: "p", unit: "Pa", digits: 0, getValue: (r) => r.pressurePa },
   { key: "SoundSpeed", full: "Speed of Sound", short: "Sound Speed", symbol: "a", unit: "m/s", digits: 2, getValue: (r) => r.speedOfSound },
@@ -304,13 +304,14 @@ export function runParameterSweep(
   }
 
   // Thrust target: Conditions target (CT or T); fall back to current thrust
-  const pair = baseCond.operatingPair;
+  // Match whole tokens: "collective" contains the letters "ct" but is not a CT target.
+  const pairTokens = baseCond.operatingPair.split("_");
   let collKind: "ct" | "thrust" = "thrust";
   let collTgt = 0;
-  if (pair.includes("ct") && baseCond.targetCT && baseCond.targetCT > 0) {
+  if (pairTokens.includes("ct") && baseCond.targetCT && baseCond.targetCT > 0) {
     collKind = "ct";
     collTgt = baseCond.targetCT;
-  } else if (pair.includes("thrust") && baseCond.targetThrustN && baseCond.targetThrustN > 0) {
+  } else if (pairTokens.includes("thrust") && baseCond.targetThrustN && baseCond.targetThrustN > 0) {
     collKind = "thrust";
     collTgt = baseCond.targetThrustN;
   } else if (live.solutionValid) {

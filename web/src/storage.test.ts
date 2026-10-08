@@ -132,3 +132,68 @@ describe("Factory geometry matches Android definitions", () => {
     expect(evtol.chordRoot + (evtol.chordTip - evtol.chordRoot) * evtol.rootCutout).toBeCloseTo(0.14, 10);
   });
 });
+
+describe("Safe storage and per-entry validation", () => {
+  const values = new Map<string, string>();
+  beforeEach(() => {
+    values.clear();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    });
+  });
+
+  it("keeps valid rotors and skips malformed entries without wiping the library", async () => {
+    const { loadStoredRotors } = await import("./storage");
+    const presets = getFactoryPresets();
+    const custom = { id: "custom-1", name: "Mine", geom: { ...presets[0].geom, name: "Mine" } };
+    const broken = { id: "custom-2", name: "Broken" };
+    const bad = { id: "custom-3", name: "Bad", geom: { radius: -4 } };
+    values.set("rotorcalculator_rotors_v2", JSON.stringify([custom, broken, bad, null, 7]));
+    const loaded = loadStoredRotors();
+    expect(loaded.map((r) => r.id)).toEqual(["custom-1"]);
+    // The raw store is backed up before the cleaned list replaces it.
+    expect(values.get("rotorcalculator_rotors_v2_backup")).toContain("custom-3");
+  });
+
+  it("does not overwrite an unreadable store", async () => {
+    const { loadStoredRotors } = await import("./storage");
+    values.set("rotorcalculator_rotors_v2", "{not json");
+    const loaded = loadStoredRotors();
+    expect(loaded.length).toBe(getFactoryPresets().length);
+    expect(values.get("rotorcalculator_rotors_v2")).toBe("{not json");
+    expect(values.get("rotorcalculator_rotors_v2_backup")).toBe("{not json");
+  });
+
+  it("reports a failed write and falls back to memory", async () => {
+    const { saveStoredRotors, safeGet, safeSet } = await import("./storage");
+    vi.stubGlobal("localStorage", {
+      getItem: () => { throw new Error("blocked"); },
+      setItem: () => { throw new Error("quota"); },
+      removeItem: () => { throw new Error("blocked"); },
+    });
+    expect(saveStoredRotors(getFactoryPresets())).toBe(false);
+    expect(safeSet("unit_test_key", "value")).toBe(false);
+    expect(safeGet("unit_test_key")).toBe("value");
+  });
+
+  it("sanitizes names and makes names unique inside one import", () => {
+    const preset = getFactoryPresets()[0];
+    const a = { ...preset, name: "Rotor <b>X</b>|\nTwo" };
+    const b = { ...preset, name: "Rotor" };
+    const c = { ...preset, name: "rotor" };
+    const imported = importRotorsJSON(JSON.stringify([a, b, c]))!;
+    expect(imported[0].name).toBe("Rotor bX/b/ Two");
+    expect(imported[0].name).not.toMatch(/[<>|\n]/);
+    expect(imported[1].name).toBe("Rotor");
+    expect(imported[2].name).toBe("rotor 2");
+    expect(imported.every((r) => r.name === r.geom.name)).toBe(true);
+  });
+
+  it("limits imported names to 32 characters", () => {
+    const preset = getFactoryPresets()[0];
+    const imported = importRotorsJSON(JSON.stringify([{ ...preset, name: "N".repeat(80) }]))!;
+    expect(imported[0].name.length).toBe(32);
+  });
+});

@@ -99,8 +99,8 @@ Private Sub Ensure
 	Add("comp", "Compressibility Correction", "Compressibility", "", "", "ON: Prandtl-Glauert compressibility correction enabled. Scales the 2D lift-curve slope with the representative blade Mach number at 0.75R: a = a_0 / √(1 − M²), capped at M = 0.85. Increases thrust and power requirements as tip Mach increases. Valid for subsonic flow (M_adv < 1.0)." & CRLF & CRLF & "OFF: Incompressible aerodynamics (M = 0 baseline). Lift-curve slope remains constant at a_0 along the entire blade radius regardless of tip Mach number.", "a = a_0 / √(1 − M²)", "M_adv < 1.0")
 	Add("rpmNom", "Rotor Speed", "Rotor Speed", "Ω_nom", "rpm", "Nominal design rotational speed stored with the rotor definition. Seeds the initial rotor speed on the Conditions page.", "Ω = 2π·rpm / 60", "")
 	' ---------------- Conditions ----------------
-	Add("h", "Pressure Altitude", "Altitude", "h", "m", "Pressure altitude in the International Standard Atmosphere (ISA), determining ambient static pressure p." & CRLF & CRLF & "Air density ρ is calculated from p and ambient temperature T_amb using the ideal gas law.", "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}", "0 to 6000 m")
-	Add("T0", "Ambient Temperature", "Temperature", "T_amb", "°C", "Ambient static air temperature. Specified independently of altitude to model non-standard atmospheric conditions (e.g. hot-and-high)." & CRLF & CRLF & "Determines ambient air density ρ and local speed of sound a.", "ρ = p / (287.058·T),  a = √(1.4·287.058·T),  T in kelvin", "-40 to 50 °C")
+	Add("h", "Pressure Altitude", "Altitude", "H_p", "m", "Pressure altitude H_p in the International Standard Atmosphere (ISA). H_p sets the ambient static pressure p." & CRLF & CRLF & "The ideal gas law gives air density ρ from p and the outside air temperature OAT.", "p = 101325·(1 − 0.0065·H_p / 288.15)^{5.2561}", "0 to 6000 m")
+	Add("T0", "Outside Air Temperature", "Temperature", "OAT", "°C", "Outside air temperature (OAT) is the ambient static air temperature. Set OAT independently of H_p to model non-standard conditions (e.g. hot-and-high)." & CRLF & CRLF & "OAT sets the air density ρ and the local speed of sound a.", "ρ = p / (287.058·T),  a = √(1.4·287.058·T),  T = OAT + 273.15 K", "-40 to 50 °C")
 	Add("mu", "Advance Ratio", "Advance Ratio", "μ_x", "-", "Advance ratio in the rotor disk plane (tip-path plane), defined as in-plane free-stream airspeed over tip speed: μ_x = V_x / (ΩR)." & CRLF & CRLF & "Static hover corresponds to μ_x = 0.", "μ_x = V_x / (ΩR)", "0 to 0.5")
 	Add("Vx", "Forward Airspeed", "Airspeed", "V_x", "m/s", "Component of the free-stream airspeed parallel to the rotor disk plane. Alternative to the advance ratio: μ_x = V_x / (ΩR).", "V_x = μ_x·ΩR", "0 to 100 m/s")
 	Add("alpha", "Disk Angle of Attack", "Disk AoA", "α", "°", "Angle between oncoming flow and the rotor disk. Positive when relative flow is upward through the disk, tilting the disk aft and increasing thrust.", "μ_z = −μ_x·tan α", "-20° to 20°")
@@ -204,7 +204,7 @@ Private Sub Ensure
 	Add("Mtip", "Tip Mach", "Tip Mach", "M_tip", "-", "Tip speed over local speed of sound.", "M_tip = ΩR / a", "0.4 to 0.7")
 	Add("Madv", "Advancing Tip Mach", "Adv. Mach", "M_adv", "-", "Mach number of the advancing blade tip: M_adv = ΩR·(1 + μ_x) / a." & CRLF & CRLF & "Compressibility effects start near 0.8 to 0.9. Prandtl-Glauert is not valid at or above 1.0.", "M_adv = ΩR·(1 + μ_x) / a", "up to 0.9")
 	Add("rho", "Air Density", "Density", "ρ", "kg/m³", "Air density from the standard-atmosphere pressure and the temperature entered.", "ρ = p / (287.058·T)", "0.9 to 1.225 kg/m³")
-	Add("p", "Ambient Pressure", "Pressure", "p", "Pa", "Static pressure at the pressure altitude, from the standard atmosphere.", "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}", "")
+	Add("p", "Ambient Pressure", "Pressure", "p", "Pa", "Static pressure at the pressure altitude, from the standard atmosphere.", "p = 101325·(1 − 0.0065·h / 288.15)^{5.2561}", "")
 	Add("a", "Speed of Sound", "Sound Speed", "a", "m/s", "Local speed of sound at the ambient temperature.", "a = √(1.4·287.058·T)", "")
 	' ---------------- Option help: tip loss ----------------
 	Add("tip_none", "Tip Loss None", "None", "B", "", "No tip-loss correction. Aerodynamic blade loading is integrated across the full span to x = 1.0 (optimistic bound).", "B = 1", "")
@@ -534,8 +534,29 @@ Public Sub AddRipple(v As View, rippleColor As Int)
 	End Try
 End Sub
 
-' Light haptic tick (HapticFeedbackConstants.VIRTUAL_KEY = 1); needs no VIBRATE permission.
+' Haptic tick: vibrates 15 ms (AGENTS.md section 3.7). Needs android.permission.VIBRATE.
+' API 26+ uses VibrationEffect.createOneShot(15, DEFAULT_AMPLITUDE); older devices use vibrate(15).
+' Falls back to performHapticFeedback when no vibrator exists or the call fails.
 Public Sub Haptic(v As View)
+	Try
+		Dim ctxt As JavaObject
+		ctxt.InitializeContext
+		Dim vib As JavaObject = ctxt.RunMethodJO("getSystemService", Array As Object("vibrator"))
+		If vib.IsInitialized And vib.RunMethod("hasVibrator", Null) = True Then
+			Dim ph As Phone
+			If ph.SdkVersion >= 26 Then
+				Dim ve As JavaObject
+				ve.InitializeStatic("android.os.VibrationEffect")
+				Dim eff As Object = ve.RunMethod("createOneShot", Array As Object(15, -1))
+				vib.RunMethod("vibrate", Array As Object(eff))
+			Else
+				vib.RunMethod("vibrate", Array As Object(15))
+			End If
+			Return
+		End If
+	Catch
+		Log("Vibrate skipped: " & LastException.Message)
+	End Try
 	Try
 		Dim jo As JavaObject = v
 		jo.RunMethod("performHapticFeedback", Array(1))

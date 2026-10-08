@@ -141,7 +141,7 @@ $$\theta_{R,\text{op}} = \theta_R + \Delta\theta, \quad \theta_{T,\text{op}} = \
 
 ### 3.1 Atmospheric Conditions
 
-**COND-1** — Atmospheric inputs shall include Pressure Altitude $h$ [m] and Ambient Temperature $T_0$ [°C].
+**COND-1** — Atmospheric inputs shall include Pressure Altitude $H_p$ [m] and Outside Air Temperature OAT [°C].
 
 **COND-2** — Air density $\rho$, ambient pressure $p$, and speed of sound $a$ shall be calculated using the ISA 1976 atmospheric standard.
 
@@ -225,7 +225,7 @@ Section 5: **AERODYNAMIC COEFFICIENTS** — Thrust Coefficient $C_T$, Torque Coe
 Section 6: **TIP & FLOW VELOCITIES** — Advance Ratio $\mu_x$, Forward Airspeed $V_x$, Tip Speed $\Omega R$, Tip Mach $M_{\text{tip}}$, Advancing Tip Speed $V_{\text{adv}}$, Advancing Tip Mach $M_{\text{adv}}$, Retreating Tip Speed $V_{\text{ret}}$, Retreating Tip Mach $M_{\text{ret}}$, Total Axial Speed $V_{z,\text{tot}}$.  
 Section 7: **SECTIONAL ANGLE OF ATTACK** — Local angle of attack evaluated on advancing ($\psi = 90^\circ$) and retreating ($\psi = 270^\circ$) blades across four radial stations: $\alpha_{\text{adv},25}, \alpha_{\text{ret},25}, \alpha_{\text{adv},50}, \alpha_{\text{ret},50}, \alpha_{\text{adv},75}, \alpha_{\text{ret},75}, \alpha_{\text{adv,tip}}, \alpha_{\text{ret,tip}}$.  
 Section 8: **SECTIONAL INFLOW ANGLE** — Local inflow angle evaluated on advancing and retreating blades across four radial stations: $\phi_{\text{adv},25}, \phi_{\text{ret},25}, \phi_{\text{adv},50}, \phi_{\text{ret},50}, \phi_{\text{adv},75}, \phi_{\text{ret},75}, \phi_{\text{adv,tip}}, \phi_{\text{ret,tip}}$.  
-Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\Delta\theta$, Altitude $h$, Temperature $T_{\text{amb}}$, Density $\rho$, Pressure $p$, Sound Speed $a$, Induced Velocity $V_i$, Inflow Ratio $\lambda$, Induced Inflow $\lambda_i$, Hover Inflow $\lambda_h$, Advance-to-Inflow Ratio $\mu_x/\lambda$, Dynamic Tip Factor $B$, Wake Skew Angle $\chi$, Dynamic Thrust Coefficient $T_c$, Dynamic Power Coefficient $P_c$.
+Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\Delta\theta$, Altitude $H_p$, Temperature OAT, Density $\rho$, Pressure $p$, Sound Speed $a$, Induced Velocity $V_i$, Inflow Ratio $\lambda$, Induced Inflow $\lambda_i$, Hover Inflow $\lambda_h$, Advance-to-Inflow Ratio $\mu_x/\lambda$, Dynamic Tip Factor $B$, Wake Skew Angle $\chi$, Dynamic Thrust Coefficient $T_c$, Dynamic Power Coefficient $P_c$.
 
 **RES-1** — Results shall preserve the dedicated three-column format: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall remain strictly separated.
 

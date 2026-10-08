@@ -54,8 +54,8 @@ The single source is `RotorNames.bas` (labels, symbols, help text); this file mi
 ## Conditions
 | Key | Full | Short | Symbol |
 |---|---|---|---|
-| h | Pressure Altitude | Altitude | h |
-| T0 | Ambient Temperature | Temperature | T_amb |
+| h | Pressure Altitude | Altitude | H_p |
+| T0 | Outside Air Temperature | Temperature | OAT |
 | mu | Advance Ratio | Advance Ratio | μ_x |
 | Vx | Forward Airspeed | Airspeed | V_x |
 | alpha | Disk Angle of Attack | Disk AoA | α |
@@ -353,7 +353,7 @@ Regenerate using python tools/export_apk_label_catalog.py.
 - Responsive order: L (Full) → M (Short) → A (Abbreviated) → S (Narrow) → Minimum (Symbol only). Results also tests S before falling back to symbol-only.
 - Symbol always follows the descriptive name with mathematical subscripts; minimum level is symbol-only for quantities with a symbol.
 - sigmaT: A/S `Thr. Solidity σ_TR`; comp: A/S `Compres.`, minimum `Comp.`.
-- T0: S `Temp. T_amb`; drag: A/S `Integration`, minimum `Integ.`.
+- T0: S `Temp. OAT`; drag: A/S `Integration`, minimum `Integ.`.
 - LDe: A/S `Eff. (L/D)_e`, without repeating the ratio in the name.
 - rpmNom: L/M `Rotor Speed Ω_nom`, A/S `Rot. Speed Ω_nom`; rpm: A/S `Rot. Speed Ω`.
 - muLam: M/A/S `Advance/Inflow μ/λ`. Mtip: L `Tip Mach M_tip`; Madv: L `Advancing Tip Mach M_adv`. Omit "Number".

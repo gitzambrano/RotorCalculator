@@ -41,10 +41,14 @@ Sub Class_Globals
 	Private mInputText As String
 	Private mMaxLen As Int
 	Private mNote As String
+	Private tmrClose As Timer
+	Private mCloseGen As Int
 End Sub
 
 Public Sub Initialize(Parent As Panel)
 	mParent = Parent
+	tmrClose.Initialize("tmrClose", 170)
+	tmrClose.Enabled = False
 End Sub
 
 ' palette keys (all optional): scrim, card, title, text, muted, accent, green, amber, red, divider, code
@@ -460,8 +464,15 @@ Private Sub Dismiss(v As Int)
 		card.SetVisibleAnimated(160, False)
 	End If
 	scrim.SetColorAnimated(160, cScrim, 0)
-	Sleep(160)
-	If g = mGen And mOpen Then
+	' No blocking wait: a one-shot timer removes the scrim after the animation.
+	mCloseGen = g
+	tmrClose.Enabled = False
+	tmrClose.Enabled = True
+End Sub
+
+Private Sub tmrClose_Tick
+	tmrClose.Enabled = False
+	If mCloseGen = mGen And mOpen And mClosing Then
 		scrim.RemoveView
 		mOpen = False
 		mClosing = False
@@ -555,7 +566,8 @@ Private Sub BuildHeader(cw As Int, title As String, rich As CSBuilder, withClose
 	Return h
 End Sub
 
-' Type scale by screen width (compact at 320dp) and a clamp of the system font scale to 1.15 for sheet text.
+' Type scale by screen width (compact at 320dp). The system font scale is NOT clamped (130% font must work);
+' sheet bodies scroll and text rows are measured, so larger text only makes the sheet taller.
 Private Sub SheetK As Double
 	Dim wdp As Double = mParent.Width / 1dip
 	Dim k As Double = 1.0
@@ -566,15 +578,6 @@ Private Sub SheetK As Double
 	Else If wdp >= 600 Then
 		k = 1.06
 	End If
-	Try
-		Dim ctx As JavaObject
-		ctx.InitializeContext
-		Dim cfg As JavaObject = ctx.RunMethodJO("getResources", Null).RunMethodJO("getConfiguration", Null)
-		Dim fs As Double = cfg.GetField("fontScale")
-		If fs > 1.15 Then k = k * 1.15 / fs
-	Catch
-		Log("fontScale: " & LastException.Message)
-	End Try
 	Return k
 End Sub
 
@@ -666,12 +669,14 @@ Private Sub card_Click
 End Sub
 
 Private Sub rowItem_Click
+	RotorNames.Haptic(mParent)
 	Dim p As Panel = Sender
 	Dim idx As Int = p.Tag
 	Dismiss(idx)
 End Sub
 
 Private Sub btnAct_Click
+	RotorNames.Haptic(mParent)
 	Dim b As Button = Sender
 	Dim v As Int = b.Tag
 	If v = DialogResponse.POSITIVE And mEdt.IsInitialized Then mInputText = mEdt.Text.Trim
@@ -679,9 +684,11 @@ Private Sub btnAct_Click
 End Sub
 
 Private Sub btnCancel_Click
+	RotorNames.Haptic(mParent)
 	Dismiss(mCancel)
 End Sub
 
 Private Sub btnCloseX_Click
+	RotorNames.Haptic(mParent)
 	Dismiss(mCancel)
 End Sub

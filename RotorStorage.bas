@@ -11,6 +11,7 @@ Sub Process_Globals
 	Private Const ACTIVE_INDEX_FILENAME As String = "active_rotor.txt"
 	Private Const SCHEMA_TAG As String = "ROTORCALCULATOR_GEOMETRIES"
 	Private Const SCHEMA_VERSION As Int = 3
+	Private Const BACKUP_FILENAME As String = "rotors_db.bak"
 	Public Rotors As List
 	Public ActiveIndex As Int = 0
 End Sub
@@ -326,19 +327,28 @@ Public Sub ParseDatabaseJSON(jsonStr As String) As List
 	Return imported
 End Sub
 
+' Removes a UTF-8 byte-order mark (U+FEFF) that some editors and exporters put at the start of a file.
+Public Sub StripBom(Text As String) As String
+	Dim t As String = Text
+	Do While t.Length > 0 And Asc(t.CharAt(0)) = 0xFEFF
+		t = t.SubString(1)
+	Loop
+	Return t
+End Sub
+
 Public Sub ParseDatabaseUniversal(Text As String) As List
-	Dim t As String = Text.Trim
+	Dim t As String = StripBom(Text).Trim
 	If t.StartsWith("{") Or t.StartsWith("[") Then
 		Dim res As List = ParseDatabaseJSON(t)
 		If res.IsInitialized And res.Size > 0 Then Return res
 	End If
-	Return ParseDatabaseText(Text)
+	Return ParseDatabaseText(t)
 End Sub
 
 Public Sub ParseDatabaseText(Text As String) As List
 	Dim imported As List
 	imported.Initialize
-	Dim lines() As String = Regex.Split("\r?\n", Text)
+	Dim lines() As String = Regex.Split("\r?\n", StripBom(Text))
 	Dim version As Int = 0
 	For i = 0 To lines.Length - 1
 		Dim line As String = lines(i).Trim
@@ -363,9 +373,10 @@ Public Sub ParseDatabaseText(Text As String) As List
 End Sub
 
 Public Sub LoadRotors As List
+	Dim needRecovery As Boolean = False
 	If File.Exists(GetDataDir, FILENAME) Then
 		Try
-			Dim text As String = File.ReadString(GetDataDir, FILENAME)
+			Dim text As String = StripBom(File.ReadString(GetDataDir, FILENAME))
 			If text.StartsWith(SCHEMA_TAG & "|") Then
 				Rotors = ParseDatabaseText(text)
 			Else
@@ -379,11 +390,16 @@ Public Sub LoadRotors As List
 				' Persist migrated data once in v2 format.
 				If Rotors.Size > 0 Then SaveRotors
 			End If
+			If Rotors.Size = 0 Then needRecovery = True
 		Catch
-			Log("Rotor database could not be read; restoring factory presets.")
-			Rotors = CreateDefaultPresets
-			SaveRotors
+			Log("Rotor database could not be read: " & LastException.Message)
+			needRecovery = True
 		End Try
+		If needRecovery Then
+			' Never overwrite an unreadable library: keep a timestamped copy first.
+			BackupCorruptFile
+			Rotors = RecoverFromBackup
+		End If
 	Else
 		Rotors = CreateDefaultPresets
 		SaveRotors
@@ -396,7 +412,53 @@ Public Sub LoadRotors As List
 	Return Rotors
 End Sub
 
+' Copies the unreadable library to rotors_db.corrupt-<timestamp>.txt.
+Private Sub BackupCorruptFile
+	Try
+		If File.Exists(GetDataDir, FILENAME) Then
+			File.Copy(GetDataDir, FILENAME, GetDataDir, "rotors_db.corrupt-" & DateTime.Now & ".txt")
+		End If
+	Catch
+		Log("Corrupt library backup failed: " & LastException.Message)
+	End Try
+End Sub
+
+' Uses the rolling backup when it parses; otherwise factory presets. The corrupt copy already exists.
+Private Sub RecoverFromBackup As List
+	Dim res As List
+	res.Initialize
+	Try
+		If File.Exists(GetDataDir, BACKUP_FILENAME) Then
+			res = ParseDatabaseText(File.ReadString(GetDataDir, BACKUP_FILENAME))
+		End If
+	Catch
+		Log("Rolling backup unreadable: " & LastException.Message)
+	End Try
+	If res.Size = 0 Then res = CreateDefaultPresets
+	File.WriteString(GetDataDir, FILENAME, SerializeList(res))
+	Return res
+End Sub
+
+Private Sub SerializeList(items As List) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	sb.Append(SCHEMA_TAG).Append("|").Append(SCHEMA_VERSION).Append(CRLF)
+	For i = 0 To items.Size - 1
+		sb.Append(SerializeRotor(items.Get(i))).Append(CRLF)
+	Next
+	Return sb.ToString
+End Sub
+
+' Rolling backup: the previous readable library is kept as rotors_db.bak before each save.
 Public Sub SaveRotors
+	Try
+		If File.Exists(GetDataDir, FILENAME) Then
+			Dim old As String = File.ReadString(GetDataDir, FILENAME)
+			If StripBom(old).StartsWith(SCHEMA_TAG & "|") Then File.WriteString(GetDataDir, BACKUP_FILENAME, old)
+		End If
+	Catch
+		Log("Rolling backup skipped: " & LastException.Message)
+	End Try
 	File.WriteString(GetDataDir, FILENAME, ExportDatabaseText)
 End Sub
 
@@ -460,6 +522,29 @@ Public Sub DeleteRotor(index As Int) As Boolean
 	SaveRotors
 	SaveActiveIndex
 	Return True
+End Sub
+
+' Returns a clone of the rotor at index (uninitialized geometry when out of range).
+Public Sub CloneRotorAt(index As Int) As RotorGeometry
+	Dim none As RotorGeometry
+	If index < 0 Or index >= Rotors.Size Then Return none
+	Return zBETEngine.CloneGeometry(Rotors.Get(index))
+End Sub
+
+' Re-inserts a deleted rotor at its old position and makes it active (Undo delete).
+Public Sub InsertRotorAt(index As Int, g As RotorGeometry)
+	Dim pos As Int = Max(0, Min(index, Rotors.Size))
+	g.Name = MakeUniqueName(g.Name)
+	Rotors.InsertAt(pos, zBETEngine.CloneGeometry(g))
+	ActiveIndex = pos
+	SaveRotors
+	SaveActiveIndex
+End Sub
+
+Public Sub IsFactoryPresetAt(index As Int) As Boolean
+	If index < 0 Or index >= Rotors.Size Then Return False
+	Dim g As RotorGeometry = Rotors.Get(index)
+	Return IsFactoryPresetName(g.Name)
 End Sub
 
 Public Sub FindRotorByName(Name As String) As Int

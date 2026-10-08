@@ -254,20 +254,20 @@ export const APK_NOMENCLATURE = {
     "key": "h",
     "full": "Pressure Altitude",
     "short": "Altitude",
-    "sym": "h",
+    "sym": "H_p",
     "unit": "m",
-    "body": "Pressure altitude in the International Standard Atmosphere (ISA), determining ambient static pressure p.\n\nAir density ρ is calculated from p and ambient temperature T_amb using the ideal gas law.",
-    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}",
+    "body": "Pressure altitude H_p in the International Standard Atmosphere (ISA). H_p sets the ambient static pressure p.\n\nThe ideal gas law gives air density ρ from p and the outside air temperature OAT.",
+    "eq": "p = 101325·(1 − 0.0065·H_p / 288.15)^{5.2561}",
     "range": "0 to 6000 m"
   },
   "T0": {
     "key": "T0",
-    "full": "Ambient Temperature",
+    "full": "Outside Air Temperature",
     "short": "Temperature",
-    "sym": "T_amb",
+    "sym": "OAT",
     "unit": "°C",
-    "body": "Ambient static air temperature. Specified independently of altitude to model non-standard atmospheric conditions (e.g. hot-and-high).\n\nDetermines ambient air density ρ and local speed of sound a.",
-    "eq": "ρ = p / (287.058·T),  a = √(1.4·287.058·T),  T in kelvin",
+    "body": "Outside air temperature (OAT) is the ambient static air temperature. Set OAT independently of H_p to model non-standard conditions (e.g. hot-and-high).\n\nOAT sets the air density ρ and the local speed of sound a.",
+    "eq": "ρ = p / (287.058·T),  a = √(1.4·287.058·T),  T = OAT + 273.15 K",
     "range": "-40 to 50 °C"
   },
   "mu": {
@@ -1067,7 +1067,7 @@ export const APK_NOMENCLATURE = {
     "sym": "p",
     "unit": "Pa",
     "body": "Static pressure at the pressure altitude, from the standard atmosphere.",
-    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^{5.2559}",
+    "eq": "p = 101325·(1 − 0.0065·h / 288.15)^{5.2561}",
     "range": ""
   },
   "a": {
