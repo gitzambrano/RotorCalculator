@@ -13,6 +13,6 @@ Altitude-pressão H_p e temperatura externa OAT agora definem a densidade do ar 
 Velocidade Vx e razão de subida Vz usam o raio real do rotor.
 Mesmos limites operacionais em todos os motores. O app avisa quando limita uma entrada.
 Novo aviso para a região de anel de vórtice em descida acentuada.
-Biblioteca de rotores mais segura: backup automático, desfazer exclusão e prévia de importação.
-Melhor contraste, alvos de toque maiores e acesso completo por teclado.
+Biblioteca mais segura: backup, desfazer exclusão e prévia de importação.
+Mais contraste, alvos de toque maiores e acesso por teclado.
 </pt-BR>
