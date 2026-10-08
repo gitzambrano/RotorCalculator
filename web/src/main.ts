@@ -152,6 +152,10 @@ let activeCond: FlightCondition = createDefaultCondition();
 try {
   const savedCondJson = safeGet("rotorcalc_active_cond");
   if (savedCondJson) activeCond = mergeCondition(activeCond, JSON.parse(savedCondJson));
+  else if (currentRotor.name === "DJI Matrice 300 Drone") {
+    activeCond.operatingPair = "rpm_collective";
+    activeCond.collectiveDeg = 0;
+  }
 } catch {
   // fallback to default
 }
@@ -2042,9 +2046,27 @@ function refreshGeometrySelectors(): void {
 }
 
 // Load Rotor Data into Inputs
+// Save the previous trim settings while viewing the fixed-pitch DJI example.
+let priorVariablePitchTrim: { pair: FlightCondition["operatingPair"]; collective: number } | null = null;
 function loadRotorToUI(rotor: StoredRotor, preserveCondition = false): void {
   const nominalRpm = rotor.geom.nominalRpm ?? rotor.geom.rpm;
   if (!preserveCondition && nominalRpm > 0) activeCond.rpm = nominalRpm;
+  if (!preserveCondition) {
+    const enteringDJI = rotor.name === "DJI Matrice 300 Drone";
+    const leavingDJI = currentRotor.name === "DJI Matrice 300 Drone" && !enteringDJI;
+    if (enteringDJI) {
+      if (currentRotor.name !== rotor.name) {
+        priorVariablePitchTrim = { pair: activeCond.operatingPair, collective: activeCond.collectiveDeg };
+      }
+      // Fixed-pitch 2110 propeller: use RPM and zero collective offset to control thrust.
+      activeCond.operatingPair = "rpm_collective";
+      activeCond.collectiveDeg = 0;
+    } else if (leavingDJI && priorVariablePitchTrim) {
+      activeCond.operatingPair = priorVariablePitchTrim.pair;
+      activeCond.collectiveDeg = priorVariablePitchTrim.collective;
+      priorVariablePitchTrim = null;
+    }
+  }
   currentRotor = rotor;
   activeGeom = cloneGeometry(rotor.geom);
   isInternalSync = true;
