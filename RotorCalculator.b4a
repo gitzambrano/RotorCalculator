@@ -76,8 +76,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 16
-	#VersionName: 1.31
+	#VersionCode: 17
+	#VersionName: 1.32
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region
@@ -373,9 +373,9 @@ Private Sub InitSheet
 		pal.Put("card", 0xFFEFE8DC)
 		pal.Put("title", 0xFF2D2319)
 		pal.Put("text", 0xFF2D2319)
-		pal.Put("muted", 0xFF645747)
+		pal.Put("muted", 0xFF5A4D3D)
 		pal.Put("divider", 0xFFDDD2C0)
-		pal.Put("accent", 0xFF8C5A2B)
+		pal.Put("accent", 0xFF7A4E22)
 		pal.Put("scrim", 0x66281E14)
 		pal.Put("code", 0xFFE4DBD0)
 	End If
@@ -910,16 +910,16 @@ Private Sub ApplyThemePalette
 			' Sepia: warm parchment, sober pastel tones, high readability.
 			ColorPnlTitle = 0xFFEFE8DC
 			ColorTitleText = 0xFF2D2319
-			ColorPnlLine = 0xFF8C5A2B
+			ColorPnlLine = 0xFF7A4E22
 			ColorPnlLine2 = 0xFFDDD2C0
 			ColorPnlLine3 = 0xFFE7DECE
-			ColorButText2 = 0xFF7A6E5F
-			ColorButText3 = 0xFF8C5A2B
+			ColorButText2 = 0xFF5A4D3D
+			ColorButText3 = 0xFF7A4E22
 			ColorBut1 = 0xFFEDE5D8
 			ColorBut2 = 0xFFE4DBD0
 			ColorButText1 = 0xFF2D2319
 			ColorEdt = 0xFFF0E9DC
-			ColorEdtText = 0xFF8C5A2B
+			ColorEdtText = 0xFF7A4E22
 			ColorEdtHint = 0xFF8C8070
 			ColorPnlInput1 = 0xFFFAF6EE
 			ColorPnlInput2 = 0xFFF4EFE6
@@ -927,14 +927,14 @@ Private Sub ApplyThemePalette
 			ColorPnlInput4 = 0xFFF4EFE6
 			ColorPnlInput5 = 0xFFEAE3D5
 			ColorSelectedRow = 0xFFFAF6EE
-			ColorAccentCyan = 0xFF8C5A2B
-			ColorAccentGreen = 0xFF3B6E4A
-			ColorAccentAmber = 0xFF9E6728
-			ColorAccentRed = 0xFFA63D32
+			ColorAccentCyan = 0xFF7A4E22
+			ColorAccentGreen = 0xFF2F5E3E
+			ColorAccentAmber = 0xFF7A4E17
+			ColorAccentRed = 0xFF9A3328
 			ColorFieldFill = 0xFFF0E9DC
-			ColorFieldBorder = 0x598C5A2B
+			ColorFieldBorder = 0x597A4E22
 			ColorResultText = 0xFF2D2319
-			ColorCtaFill = 0xFF8C5A2B
+			ColorCtaFill = 0xFF7A4E22
 			ColorCtaText = 0xFFFAF6EE
 		Case Else
 			ColorPnlTitle = 0xFF0D121B
@@ -1856,8 +1856,11 @@ End Sub
 
 Private Sub KeyDigits(key As String, disp As Double) As Int
 	Select key
-		Case "Nb", "h"
+		Case "Nb"
 			Return 0
+		Case "h"
+			If CurUnit("h") = "km" Then Return 3
+			Return 1
 		Case "T0"
 			Return 1
 		Case "mu"
@@ -1866,7 +1869,10 @@ Private Sub KeyDigits(key As String, disp As Double) As Int
 			Return 3
 		Case "sigmaRef", "sigmaAct", "sigmaT", "Cd0", "muz"
 			Return 4
-		Case "AR", "a0", "Vx", "Vz"
+		Case "a0"
+			If CurUnit("a0").StartsWith("deg") Then Return 4
+			Return 2
+		Case "AR", "Vx", "Vz"
 			Return 2
 		Case "CTtgt"
 			Return 5
@@ -1936,7 +1942,7 @@ Private Sub NoteLimit(key As String, requested As Double, clamped As Double)
 	Dim u As String = CurUnit(key)
 	Dim ut As String = ""
 	If u <> Dash Then ut = " " & u
-	LimitMsg = "Limited to " & FormatKey(key, clamped) & ut
+	LimitMsg = "Limited to " & FormatKey(key, clamped) & ut & "."
 End Sub
 
 Private Sub FlushLimitHint
@@ -2620,8 +2626,28 @@ Sub edtGeom_TextChanged (Old As String, New As String)
 		Case "Cd0"
 			ActiveGeom.Cd0 = ClampD(si, 0.0, 0.5)
 			NoteLimit("Cd0", si, ActiveGeom.Cd0)
+		Case "Nb"
+			If dv <> Floor(dv) Then
+				LimitMsg = "Enter a whole number from 1 to 16."
+				Return
+			End If
+			Dim nbC As Double = ClampD(dv, 1.0, 16.0)
+			ActiveGeom = zBETEngine.SetGeometryQuantity(ActiveGeom, key, nbC)
+			NoteLimit("Nb", dv, nbC)
+		Case "R"
+			Dim rC As Double = ClampD(si, 0.02, 50.0)
+			ActiveGeom = zBETEngine.SetGeometryQuantity(ActiveGeom, key, rC)
+			NoteLimit("R", si, rC)
+		Case "x0"
+			Dim x0C As Double = ClampD(si, 0.0, 0.95)
+			ActiveGeom = zBETEngine.SetGeometryQuantity(ActiveGeom, key, x0C)
+			NoteLimit("x0", si, x0C)
+		Case "c0", "c1"
+			Dim cC As Double = ClampD(si, 0.0001, 2.0 * ActiveGeom.Radius)
+			ActiveGeom = zBETEngine.SetGeometryQuantity(ActiveGeom, key, cC)
+			NoteLimit(key, si, cC)
 		Case "B"
-			ActiveGeom.TipLossB = ClampD(si, ActiveGeom.RootCutout + 0.001, 1.0)
+			ActiveGeom.TipLossB = ClampD(si, ActiveGeom.RootCutout + 0.01, 1.0)
 			NoteLimit("B", si, ActiveGeom.TipLossB)
 		Case "rpmNom"
 			ActiveGeom.NominalRPM = ClampD(si, 1.0, 30000.0)
@@ -3340,7 +3366,7 @@ Private Sub SetBtnBg(v As View, d As StateListDrawable)
 	RotorNames.AddRipple(v, Bit.Or(0x40000000, Bit.And(ColorAccentCyan, 0xFFFFFF)))
 End Sub
 
-' Light haptic tick for toggles, unit/selector taps and tabs (no VIBRATE permission needed).
+' Light haptic tick for toggles, unit/selector taps and tabs (manifest declares VIBRATE; Haptic vibrates 15 ms).
 Private Sub Tick
 	RotorNames.Haptic(root)
 End Sub
@@ -4619,7 +4645,9 @@ Sub btnSweepValues_Click
 	edtSweepValues.SingleLine = True
 	card.AddView(edtSweepValues, 16dip, edtTop, cardW-32dip, 48dip)
 	Dim btnCancel As Button = CreateRowButton("CANCEL", "btnCancelSweepValues")
+	btnCancel.Text = "CANCEL"
 	Dim btnApply As Button = CreateRowButton("APPLY", "btnApplySweepValues")
+	btnApply.Text = "APPLY"
 	card.AddView(btnCancel, 16dip, btnTop, (cardW-38dip)/2, 48dip)
 	card.AddView(btnApply, 22dip+(cardW-38dip)/2, btnTop, (cardW-38dip)/2, 48dip)
 End Sub
@@ -4774,7 +4802,6 @@ Private Sub EnsureSweepSamples As ResumableSub
 		SweepCacheKey = ""
 		Return False
 	End If
-	' SweepSamplesCache = RotorPopups.BuildSweepSamplesAsync(...) result; one dataset for plot, table and CSV.
 	SweepSamplesCache = res
 	SweepCacheKey = key
 	Return True
@@ -4817,6 +4844,7 @@ Private Sub ShowBusy(msg As String) As Int
 	pbBusy.Progress = 0
 	card.AddView(pbBusy, 16dip, 58dip, cw - 32dip, 24dip)
 	Dim bc As Button = CreateRowButton("CANCEL", "btnBusyCancel")
+	bc.Text = "CANCEL"
 	card.AddView(bc, 16dip, ch - 64dip, cw - 32dip, 48dip)
 	pnlBusy.Visible = False
 	BusyOpen = True
@@ -4991,7 +5019,7 @@ Private Sub BuildSweepTableHtml As String
 		bg = "#FAF6EE"
 		fg = "#2D2319"
 		grid = "#DDD2C0"
-		hint = "#645747"
+		hint = "#5A4D3D"
 	End If
 	If dark Then
 		bg = "#10141c"
@@ -5072,7 +5100,8 @@ Sub btnSweepExportCsv_Click
 	End If
 	
 	Dim tempName As String = "rotor_sweep_export.csv"
-	File.WriteString(File.DirInternal, tempName, csv)
+	' UTF-8 BOM so Excel shows the Greek symbols correctly (same as web).
+	File.WriteString(File.DirInternal, tempName, Chr(0xFEFF) & csv)
 	Dim input As InputStream = File.OpenInput(File.DirInternal, tempName)
 	Wait For (SaveAs(input, "text/csv", baseName & ".csv")) Complete (Success As Boolean)
 	If Success Then

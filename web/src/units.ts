@@ -207,7 +207,11 @@ export function formatInputValue(key: string, value: number, unit = "", extraPre
   } else if (["sigmaRef", "sigmaAct", "sigmaT", "Cd0", "muz"].includes(key)) {
     digits = 4;
     minimum = 4;
-  } else if (["AR", "a0", "Vx", "Vz"].includes(key)) {
+  } else if (key === "a0") {
+    // 0.1 deg⁻¹ is a typical value: 2 decimals would lose it. Keep 4 decimals for deg⁻¹.
+    digits = unit === "deg⁻¹" ? 4 : 2;
+    minimum = digits;
+  } else if (["AR", "Vx", "Vz"].includes(key)) {
     digits = 2;
     minimum = 2;
   } else if (key === "CTtgt") {

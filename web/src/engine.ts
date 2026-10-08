@@ -896,7 +896,6 @@ export function solveCollective(
   let prevObj = candidateResidual(baseGeom, sourceCond, rpm, prevX, targetKind, targetValue);
   let found = false;
   let fLo = prevObj[1] ? prevObj[0] : 0.0;
-  let fHi = 0.0;
 
   for (let i = 1; i <= 48; i++) {
     const x = lo + (i * (hi - lo)) / 48.0;
@@ -908,7 +907,6 @@ export function solveCollective(
       if ((fLo <= 0 && f >= 0) || (fLo >= 0 && f <= 0)) {
         lo = prevX;
         hi = x;
-        fHi = f;
         found = true;
         break;
       }

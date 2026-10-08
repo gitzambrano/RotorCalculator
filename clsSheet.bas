@@ -22,6 +22,7 @@ Sub Class_Globals
 	Private mOpen As Boolean
 	Private mClosing As Boolean
 	Private mPending As Boolean
+	Private mScrollTo As Int ' top of the selected choice row; Present scrolls it into view
 	Private mBottom As Boolean
 	Private mCancel As Int
 	Private mGen As Int
@@ -224,6 +225,7 @@ Private Sub BuildChoice(title As String, items As List, selectedIndex As Int, wi
 		Dim sec As String = ""
 		If parts.Length > 1 Then sec = parts(1).Trim
 		Dim sel As Boolean = (i = selectedIndex)
+		If sel Then mScrollTo = y
 		Dim row As Panel
 		row.Initialize("rowItem")
 		row.Tag = i
@@ -432,6 +434,7 @@ Private Sub BuildConfirm(title As String, message As String, positive As String,
 End Sub
 
 Private Sub Begin(bottom As Boolean)
+	mScrollTo = 0
 	If mOpen Then
 		Resolve(mCancel)
 		If scrim.IsInitialized Then scrim.RemoveView
@@ -518,6 +521,7 @@ Private Sub Present(cw As Int, header As Panel, body As Panel, footer As Panel)
 		sv.Panel.Color = Colors.Transparent
 		sv.Panel.AddView(body, 0, 0, cw, bh)
 		card.AddView(sv, 0, hh, cw, bodyH)
+		If mScrollTo > bodyH / 2 Then ScrollSheetTo(sv, Min(bh - bodyH, mScrollTo - bodyH / 3))
 	Else
 		card.AddView(body, 0, hh, cw, bh)
 	End If
@@ -528,6 +532,12 @@ Private Sub Present(cw As Int, header As Panel, body As Panel, footer As Panel)
 	Else
 		card.SetVisibleAnimated(180, True)
 	End If
+End Sub
+
+' Applies the scroll after the first layout pass; a ScrollView ignores ScrollPosition before layout.
+Private Sub ScrollSheetTo(sv As ScrollView, pos As Int)
+	Sleep(0)
+	If sv.IsInitialized Then sv.ScrollToNow(pos)
 End Sub
 
 Private Sub BuildHeader(cw As Int, title As String, rich As CSBuilder, withClose As Boolean, withHandle As Boolean) As Panel

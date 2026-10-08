@@ -700,13 +700,14 @@ Public Sub BuildSweepSamplesAsync( _
 	End If
 
 	' Thrust target: Conditions target (CT or T); fall back to current thrust.
-	Dim pair As String = cond.OperatingPair
+	' Match whole "_" tokens: "collective" contains the letters "ct" but is not a CT target.
+	Dim pair As String = "_" & cond.OperatingPair & "_"
 	Dim collKind As String = "thrust"
 	Dim collTgt As Double = 0
-	If pair.Contains("ct") And cond.TargetCT > 0 Then
+	If pair.Contains("_ct_") And cond.TargetCT > 0 Then
 		collKind = "ct"
 		collTgt = cond.TargetCT
-	Else If pair.Contains("thrust") And cond.TargetThrustN > 0 Then
+	Else If pair.Contains("_thrust_") And cond.TargetThrustN > 0 Then
 		collKind = "thrust"
 		collTgt = cond.TargetThrustN
 	Else If live.SolutionValid Then
@@ -1114,8 +1115,8 @@ Public Sub DrawSweepPlot( _
 		colBg = 0xFFFAF6EE
 		colGrid = 0xFFDDD2C0
 		colText = 0xFF2D2319
-		colCurrent = 0xFF8C5A2B
-		colAccent = 0xFF8C5A2B
+		colCurrent = 0xFF7A4E22
+		colAccent = 0xFF7A4E22
 	Else If lightTheme Then
 		colBg = 0xFFFFFFFF
 		colGrid = 0xFFD9E1EA
@@ -1676,12 +1677,14 @@ Public Sub DrawDiskContourPlot( _
 	Dim colGrid As Int
 	Dim colText As Int
 	Dim colMuted As Int
-	Dim isSepia As Boolean
-	isSepia = (plotThemeIdx = 3)
-	Dim isMid As Boolean
-	isMid = (plotThemeIdx = 2)
-	If plotThemeIdx = 1 Or isSepia Then lightTheme = True
-	If plotThemeIdx = 0 Or isMid Then lightTheme = False
+	' Single source of truth: the global plot theme when set, otherwise the lightTheme argument.
+	Dim themeIdx As Int = plotThemeIdx
+	If themeIdx < 0 Then
+		If lightTheme Then themeIdx = 1 Else themeIdx = 0
+	End If
+	Dim isSepia As Boolean = (themeIdx = 3)
+	Dim isMid As Boolean = (themeIdx = 2)
+	lightTheme = (themeIdx = 1 Or isSepia)
 
 	If isSepia Then
 		colBg = 0xFFFAF6EE

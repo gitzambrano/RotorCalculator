@@ -106,7 +106,7 @@ def verify_ui_source_contract() -> None:
         'sheet.ShowChoice("Y-Axis Result", items, selected)',
         "Sub pnlSweepTouch_Touch",
         "RotorPopups.BuildSweepTableRows(",
-        "SweepSamplesCache = RotorPopups.BuildSweepSamples",
+        "Wait For (RotorPopups.BuildSweepSamplesAsync(",
         "Private Sub BuildSweepCsv As String",
     ]
     missing = [token for token in required_main if token not in main]

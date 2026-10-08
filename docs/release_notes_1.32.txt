@@ -1,0 +1,18 @@
+<en-US>
+RotorCalculator 1.32.
+Pressure altitude H_p and outside air temperature OAT now set air density and speed of sound.
+Airspeed Vx and climb rate Vz use the real rotor radius.
+Same operating limits in all engines. The app shows a hint when it limits an input.
+New warning for the vortex ring state region in steep descent.
+Safer rotor library: automatic backup, undo delete and import preview.
+Better contrast, larger touch targets and full keyboard access.
+</en-US>
+<pt-BR>
+RotorCalculator 1.32.
+Altitude-pressão H_p e temperatura externa OAT agora definem a densidade do ar e a velocidade do som.
+Velocidade Vx e razão de subida Vz usam o raio real do rotor.
+Mesmos limites operacionais em todos os motores. O app avisa quando limita uma entrada.
+Novo aviso para a região de anel de vórtice em descida acentuada.
+Biblioteca de rotores mais segura: backup automático, desfazer exclusão e prévia de importação.
+Melhor contraste, alvos de toque maiores e acesso completo por teclado.
+</pt-BR>

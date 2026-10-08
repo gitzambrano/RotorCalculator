@@ -12,12 +12,9 @@ import { renderEquationMathML } from "./math-renderer";
 import { getHelpSvg } from "./help-illustrations";
 import { computeDiskContourData, drawDiskContour, DISK_CONTOUR_PARAMS } from "./disk-contour";
 import "./style.css";
-import iconUrl from "./assets/icon.png";
 import headerIconUrl from "./assets/icon_header.png";
 import {
-  activeBladeArea,
   calculate,
-  cloneCondition,
   cloneGeometry,
   createDefaultCondition,
   createDefaultGeometry,
@@ -28,18 +25,12 @@ import {
   derivedPc,
   derivedTc,
   getGeometryQuantity,
-  referenceAspectRatio,
-  referenceBladeArea,
   alphaFromMuZ,
   OPERATING_LIMITS,
   sanitizeCondition,
   updateAtmosphere,
   resolveSolidity,
-  scaleChordsToAspectRatio,
-  scaleChordsToSigmaRef,
-  scaleRadiusPreserveReference,
   setGeometryQuantity,
-  taperRatio,
   type FlightCondition,
   type RotorGeometry,
   type RotorResults,
@@ -51,7 +42,6 @@ import {
   getActiveRotorId,
   getFactoryPresets,
   hasDraft,
-  importRotorsJSON,
   importRotorsUniversal,
   loadDraft,
   loadStoredRotors,
@@ -67,7 +57,6 @@ import {
 } from "./storage";
 import {
   convertValue,
-  formatResultValue,
   formatInputValue,
   formatSig,
   formatFixed,
@@ -77,7 +66,6 @@ import {
   UNIT_TABLE,
 } from "./units";
 import {
-  buildSweepTableRows,
   drawSweepCanvas,
   generateSweepCSV,
   getSweepReadoutText,
@@ -88,23 +76,16 @@ import {
   type SweepTrimModeKey,
 } from "./sweep";
 import {
-  ABBREVIATIONS,
-  CANONICAL_NOMENCLATURE,
   COND_KEYS,
   GEOM_KEYS,
-  RES_KEYS,
   chooseLevel,
   fitLabelSize,
   formatDescriptionSymbol,
   formatSubscripts,
   getNomenclature,
-  getPlainLabel,
-  getResponsiveInputLabel,
-  getResultDisplayLabel,
   getRichLabelHtml,
   measureTextWidth,
   resultLabelHtml,
-  resultPlainLabel,
 } from "./labels";
 
 // Option Selector Interface
@@ -239,7 +220,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.31</span>
+            <span class="version-badge">v1.32</span>
           </div>
         </div>
         <div class="header-actions">
@@ -719,7 +700,7 @@ app.innerHTML = `
         </div>
         <div class="modal-body" style="padding: 16px 20px;">
           <p id="sweep-values-hint" style="font-size: 0.8438rem; color: var(--text-muted); margin-bottom: 12px;">Enter values for the curve family. Separate values with semicolons or spaces. A comma is a decimal mark.</p>
-          <input class="row-input" id="inp-sweep-values" type="text" aria-describedby="sweep-values-hint sweep-values-error" style="width: 100%; height: 48px; margin-bottom: 8px; font-family: monospace; font-size: 0.875rem; text-align: left;" />
+          <input class="row-input" id="inp-sweep-values" type="text" aria-label="Curve family values" aria-describedby="sweep-values-hint sweep-values-error" style="width: 100%; height: 48px; margin-bottom: 8px; font-family: monospace; font-size: 0.875rem; text-align: left;" />
           <div class="field-error" id="sweep-values-error" role="alert" hidden></div>
           <div style="height: 8px;"></div>
           <div style="display: flex; gap: 8px;">
@@ -953,7 +934,7 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.31</div><div class="settings-row-sub">Install the verified production Android build</div></div>
+              <div class="settings-row-info"><div class="settings-row-title">Android App 1.32</div><div class="settings-row-sub">Install the verified production Android build</div></div>
               <a class="settings-btn" href="https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator" target="_blank" rel="noopener">PLAY</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
@@ -990,7 +971,7 @@ app.innerHTML = `
           <button class="modal-close-btn" data-close="modal-about">×</button>
         </div>
         <div class="modal-body about-body">
-          <p>RotorCalculator v1.31</p>
+          <p>RotorCalculator v1.32</p>
           <p>Rotor performance calculator based on analytical blade-element theory.</p>
           <p>Developed by Gustavo Zambrano</p>
           <button class="action-btn" data-close="modal-about" style="width: 100%; height: 48px;">OK</button>
@@ -1327,13 +1308,54 @@ function limitValue(
 
 // Toast and storage warnings
 let toastTimer: number | undefined;
-function showToast(message: string): void {
+function showToast(message: string, action?: { label: string; onClick: () => void }, durationMs = 4000): void {
   const el = document.getElementById("app-toast");
   if (!el) return;
-  el.textContent = message;
+  el.textContent = "";
+  const text = document.createElement("span");
+  text.className = "app-toast-text";
+  text.textContent = message;
+  el.appendChild(text);
+  el.classList.toggle("has-action", !!action);
+  if (action) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "app-toast-action";
+    btn.id = "btn-toast-action";
+    btn.textContent = action.label;
+    btn.addEventListener("click", () => {
+      window.clearTimeout(toastTimer);
+      el.classList.remove("visible");
+      action.onClick();
+    });
+    el.appendChild(btn);
+  }
   el.classList.add("visible");
   window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => el.classList.remove("visible"), 4000);
+  toastTimer = window.setTimeout(() => el.classList.remove("visible"), durationMs);
+}
+
+const UNDO_DELETE_MS = 7000;
+
+/** Remove a rotor and offer a 7-second UNDO that restores it at its index and active state. */
+function deleteRotorWithUndo(rotor: StoredRotor): void {
+  const index = storedRotors.findIndex((r) => r.id === rotor.id);
+  if (index < 0) return;
+  const wasActive = currentRotor.id === rotor.id;
+  storedRotors = storedRotors.filter((r) => r.id !== rotor.id);
+  if (!saveStoredRotors(storedRotors)) reportStorageFailure();
+  if (wasActive) activateRotor(storedRotors[0]);
+  renderRotorManagerList();
+  showToast(`Deleted "${rotor.name}".`, {
+    label: "UNDO",
+    onClick: () => {
+      if (storedRotors.some((r) => r.id === rotor.id)) return;
+      storedRotors.splice(Math.min(index, storedRotors.length), 0, rotor);
+      if (!saveStoredRotors(storedRotors)) reportStorageFailure();
+      if (wasActive) activateRotor(rotor);
+      renderRotorManagerList();
+    },
+  }, UNDO_DELETE_MS);
 }
 
 let storageWarned = false;
@@ -3052,7 +3074,21 @@ async function chooseExportFormat(): Promise<void> {
   if (choice === "json" || choice === "txt") downloadGeometriesBackup(choice);
 }
 
-const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+const IMPORT_PREVIEW_MAX_NAMES = 12;
+
+/** Preview of an import file: up to 12 names, then the new and name-exists counts (names escaped in html). */
+function buildImportPreview(list: StoredRotor[], existing: number): { text: string; html: string } {
+  const shown = list.slice(0, IMPORT_PREVIEW_MAX_NAMES).map((r) => r.name);
+  const more = list.length - shown.length;
+  const counts = `${list.length - existing} new, ${existing} name exists.`;
+  const head = `The file has ${list.length} rotor${list.length === 1 ? "" : "s"}.`;
+  const moreText = more > 0 ? `\n+ ${more} more` : "";
+  const text = `${head}\n${counts}\n\n${shown.join("\n")}${moreText}`;
+  const html = `${escapeHTML(head)}<br><strong>${escapeHTML(counts)}</strong><br><br><em>${shown.map(escapeHTML).join("<br>")}${more > 0 ? `<br>+ ${more} more` : ""}</em>`;
+  return { text, html };
+}
+
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
 /** Save the active rotor under a unique name. Returns false when storage refuses the write. */
 function commitActiveRotor(): boolean {
@@ -3089,7 +3125,10 @@ function bindRotorActionButtons(): void {
     }
   });
 
-  byId("btn-geom-copy").addEventListener("click", () => { void copyRotorGeometry(activeGeom); });
+  byId("btn-geom-copy").addEventListener("click", () => {
+    // Copying activates the copy, so unsaved edits need the same decision as the manager copy.
+    resolveUnsavedGeometry("copying a rotor", () => { void copyRotorGeometry(activeGeom); });
+  });
 
   byId("btn-geom-delete").addEventListener("click", () => {
     void (async () => {
@@ -3098,9 +3137,7 @@ function bindRotorActionButtons(): void {
         return;
       }
       if (await showConfirm("Delete Rotor", `Delete current rotor "${activeGeom.name}"?`, "DELETE", true)) {
-        storedRotors = storedRotors.filter((r) => r.id !== currentRotor.id);
-        if (!saveStoredRotors(storedRotors)) reportStorageFailure();
-        activateRotor(storedRotors[0]);
+        deleteRotorWithUndo(currentRotor);
       }
     })();
   });
@@ -3133,7 +3170,7 @@ function bindRotorActionButtons(): void {
     input.value = "";
     if (!file) return;
     if (file.size > MAX_IMPORT_BYTES) {
-      void showNotice("Import Failed", "The file is larger than 5 MB. Choose a RotorCalculator backup file.");
+      void showNotice("Import Failed", "File too large (limit 2 MB).");
       return;
     }
     const reader = new FileReader();
@@ -3146,18 +3183,21 @@ function bindRotorActionButtons(): void {
         return;
       }
       resolveUnsavedGeometry("importing geometries", () => {
-        const conflicting = imported.filter((imp) =>
-          storedRotors.some((loc) => loc.name.toLowerCase() === imp.name.toLowerCase())
-        );
+        const exists = (r: StoredRotor) => storedRotors.some((loc) => loc.name.toLowerCase() === r.name.toLowerCase());
+        const conflicting = imported.filter(exists);
+        const preview = buildImportPreview(imported, conflicting.length);
         if (conflicting.length === 0) {
-          storedRotors.push(...imported);
-          if (!saveStoredRotors(storedRotors)) reportStorageFailure();
-          activateRotor(imported[0]);
-          renderRotorManagerList();
-          showToast(`Imported ${imported.length} rotor geometries.`);
+          void (async () => {
+            if (!(await showConfirm("Import Rotors", preview.text, "IMPORT"))) return;
+            storedRotors.push(...imported);
+            if (!saveStoredRotors(storedRotors)) reportStorageFailure();
+            activateRotor(imported[0]);
+            renderRotorManagerList();
+            showToast(`Imported ${imported.length} rotor geometries.`);
+          })();
         } else {
           pendingImportList = imported;
-          byId("import-conflict-msg").innerHTML = `Found <strong>${imported.length} valid geometries</strong>.<br><br><strong>${conflicting.length} conflict(s)</strong> detected with existing local rotors:<br><em>${conflicting.map((c) => escapeHTML(c.name)).join(", ")}</em>.<br><br>How would you like to handle conflicting rotors?`;
+          byId("import-conflict-msg").innerHTML = `${preview.html}<br><br>How would you like to handle conflicting rotors?`;
           openModal("modal-import-conflict");
         }
       });
@@ -3335,10 +3375,7 @@ function renderRotorManagerList(): void {
       if (storedRotors.length <= 1) return;
       void (async () => {
         if (!(await showConfirm("Delete Rotor", `Delete rotor "${rotor.name}"?`, "DELETE", true))) return;
-        storedRotors = storedRotors.filter((r) => r.id !== rotor.id);
-        if (!saveStoredRotors(storedRotors)) reportStorageFailure();
-        if (currentRotor.id === rotor.id) activateRotor(storedRotors[0]);
-        renderRotorManagerList();
+        deleteRotorWithUndo(rotor);
       })();
     });
 
@@ -3684,7 +3721,6 @@ function initSweepModal(): void {
   };
 
   byId("btn-sweep-export-all-png").onclick = () => {
-    triggerHapticFeedback();
     for (const p of SWEEP_PARAMS) {
       const { curves, currentOpPoint } = runParameterSweep(
         activeGeom, activeCond, p.key, sweepMultiMode, sweepMaxMu, 25,
@@ -3701,8 +3737,6 @@ function initSweepModal(): void {
 }
 
 function openDiskContour() {
-  triggerHapticFeedback();
-
   const select = byId<HTMLSelectElement>("disk-contour-variable");
   select.innerHTML = "";
   DISK_CONTOUR_PARAMS.forEach(p => {
@@ -3776,7 +3810,6 @@ function openDiskContour() {
   select.onchange = updateContour;
 
   byId("btn-disk-contour-export-png").onclick = () => {
-    triggerHapticFeedback();
     if (!activeResults.solutionValid) return;
     const varKey = select.value;
     const meta = DISK_CONTOUR_PARAMS.find(p => p.key === varKey) || DISK_CONTOUR_PARAMS[0];
@@ -3788,7 +3821,6 @@ function openDiskContour() {
   };
 
   byId("btn-disk-contour-export-all-png").onclick = () => {
-    triggerHapticFeedback();
     if (!activeResults.solutionValid) return;
     const canvas = byId<HTMLCanvasElement>("disk-contour-canvas");
     for (const p of DISK_CONTOUR_PARAMS) {

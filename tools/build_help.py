@@ -7,7 +7,7 @@ src = (root / "tools/help_src/physics_help_base.html").read_text(encoding="utf-8
 THEMES = {
  "": ("dark", None),
  "_light": ("light", "--bg:#F4F7FA;--card:#FFFFFF;--card2:#E8F0F7;--text:#0F1A24;--muted:#4A5B6C;--accent:#0E7490;--green:#047857;--line:#CBD5E1;--warn:#B45309;--fill:#DCEAF5;--red:#B91C1C"),
- "_sepia": ("light", "--bg:#FAF6EE;--card:#EFE8DC;--card2:#EBE3D5;--text:#2D2319;--muted:#645747;--accent:#8C5A2B;--green:#3F6B2F;--line:#DDD2C0;--warn:#8A5A00;--fill:#E8DCC6;--red:#A32A2A"),
+ "_sepia": ("light", "--bg:#FAF6EE;--card:#EFE8DC;--card2:#EBE3D5;--text:#2D2319;--muted:#5A4D3D;--accent:#7A4E22;--green:#3F6B2F;--line:#DDD2C0;--warn:#8A5A00;--fill:#E8DCC6;--red:#A32A2A"),
  "_midnight": ("dark", "--bg:#0D1B2A;--card:#13263B;--card2:#1B3350;--text:#E3ECF6;--muted:#9FB3C8;--accent:#5CC8FF;--green:#4ADE9A;--line:#2A4361;--warn:#FBBF24;--fill:#1E3A5A;--red:#FB7185"),
 }
 
@@ -96,7 +96,7 @@ for suffix, (scheme, root_vars) in THEMES.items():
 PRIVACY = {
  "_light": ("#f7fafc", "#172c3a", "#006d7a"),
  "_midnight": ("#0D1B2A", "#E3ECF6", "#5CC8FF"),
- "_sepia": ("#FAF6EE", "#2D2319", "#8C5A2B"),
+ "_sepia": ("#FAF6EE", "#2D2319", "#7A4E22"),
 }
 base = (root / "Files/privacy_policy.html").read_text(encoding="utf-8")
 for suffix, (bg, fg, h2) in PRIVACY.items():

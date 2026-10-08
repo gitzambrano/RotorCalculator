@@ -1,8 +1,0 @@
-{
-  "version": "1.31",
-  "versionCode": 16,
-  "package": "flightdyn.rotorcalculator",
-  "apkSha256": null,
-  "verification": "RotorCalculator 1.31 release baseline. Full Sepia theme support across APK and Web, parameter sweep expansions (alpha, Vz, mu_z), enhanced landscape layout responsiveness, undo state management, and complete physics help integration.",
-  "qaReport": "release_notes_1.31.txt"
-}

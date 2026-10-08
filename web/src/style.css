@@ -198,14 +198,14 @@
   --row-1: #FAF6EE;
   --row-2: #F4EFE6;
   --row-border: #E7DECE;
-  --accent: #8C5A2B;
-  --accent-rgb: 140, 90, 43;
-  --accent-green: #3B6E4A;
-  --accent-amber: #8A5A1F;
-  --accent-red: #A63D32;
+  --accent: #7A4E22;
+  --accent-rgb: 122, 78, 34;
+  --accent-green: #2F5E3E;
+  --accent-amber: #7A4E17;
+  --accent-red: #9A3328;
   --text-main: #2D2319;
-  --text-muted: #645747;
-  --text-dim: #6F5F49;
+  --text-muted: #5A4D3D;
+  --text-dim: #5F513D;
   --border: #DDD2C0;
   --input-bg: #F0E9DC;
   --btn-top: #EDE5D8;
@@ -214,14 +214,14 @@
   --btn-hover: #E2D7C8;
   --modal-overlay: rgba(45, 35, 25, 0.45);
   --card-border: #DDD2C0;
-  --text-sub: #645747;
+  --text-sub: #5A4D3D;
   --btn-bg: #EDE5D8;
   --btn-bg-hover: #E4DBD0;
   --input-border: #DDD2C0;
-  --input-focus: #8C5A2B;
-  --badge-bg: rgba(140, 90, 43, 0.12);
-  --badge-border: rgba(140, 90, 43, 0.28);
-  --badge-color: #8C5320;
+  --input-focus: #7A4E22;
+  --badge-bg: rgba(122, 78, 34, 0.12);
+  --badge-border: rgba(122, 78, 34, 0.28);
+  --badge-color: #7A4A18;
   --table-border: #DDD2C0;
   --table-stripe: #F4EFE6;
   --overlay-bg: rgba(45, 35, 25, 0.45);
@@ -485,7 +485,7 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
   gap: 6px;
 
-  height: 38px;
+  height: 48px;
 
   padding: 0 12px;
 
@@ -527,9 +527,9 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 
 .icon-btn {
 
-  width: 44px;
+  width: 48px;
 
-  height: 44px;
+  height: 48px;
 
   border-radius: 8px;
 
@@ -556,12 +556,12 @@ math, math *, math mi, math mrow, math mtext, math mo, math mn, math msub, math 
 }
 
 #btn-install-app {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  max-width: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
   font-size: 1.125rem !important;
   padding: 0 !important;
   margin-right: 4px;
@@ -1771,6 +1771,10 @@ button.result-label:hover {
 
   line-height: 1;
 
+  min-width: 48px;
+
+  min-height: 48px;
+
 }
 
 
@@ -1975,7 +1979,7 @@ button.result-label:hover {
 
   max-width: 100%;
 
-  height: 42px;
+  height: 48px;
 
   border-radius: 6px;
 
@@ -2045,7 +2049,7 @@ button.result-label:hover {
 }
 
 .sweep-footer-actions .action-btn {
-  min-height: 40px;
+  min-height: 48px;
   padding: 0 16px;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -2571,7 +2575,7 @@ button.result-label:hover {
 
 .help-btn-open-tab {
 
-  height: 36px;
+  height: 48px;
 
   padding: 0 10px;
 
@@ -2811,9 +2815,9 @@ button.result-label:hover {
 
   .icon-btn {
 
-    width: 38px;
+    width: 48px;
 
-    height: 38px;
+    height: 48px;
 
     font-size: 1.25rem;
 
@@ -3043,9 +3047,9 @@ button.result-label:hover {
 
   .icon-btn {
 
-    width: 44px;
+    width: 48px;
 
-    height: 44px;
+    height: 48px;
 
     font-size: 1.25rem;
 
@@ -3451,7 +3455,7 @@ input[type="number"] {
   .engineering-row + .section-header { margin-top: 6px; }
 
   .header-actions .icon-btn { border: none; background: transparent; font-size: 1.75rem; }
-  .header-actions #btn-install-app { font-size: 1.125rem !important; width: 34px !important; height: 34px !important; min-width: 34px !important; }
+  .header-actions #btn-install-app { font-size: 1.125rem !important; width: 48px !important; height: 48px !important; min-width: 48px !important; }
 
 }
 
@@ -3948,15 +3952,15 @@ input[type="number"] {
 
 @media (max-width: 767px) and (orientation: landscape) {
   #modal-sweep .modal-header,
-  #modal-disk-contour .modal-header { height: 40px; min-height: 40px; }
+  #modal-disk-contour .modal-header { height: 48px; min-height: 48px; }
 
   #modal-sweep .sweep-controls-grid,
   #modal-disk-contour .sweep-controls-grid { gap: 4px; padding: 4px 12px; }
 
   #modal-sweep .sweep-mobile-selector,
-  #modal-disk-contour .sweep-mobile-selector { height: 36px; min-height: 36px; }
+  #modal-disk-contour .sweep-mobile-selector { height: 48px; min-height: 48px; }
 
-  #modal-sweep .sweep-canvas-wrapper { height: max(140px, calc(100dvh - 264px)); min-height: 140px; }
+  #modal-sweep .sweep-canvas-wrapper { height: max(140px, calc(100dvh - 298px)); min-height: 140px; }
 
   /* Keep the square rotor disk fully visible between the compact landscape
      header/selector and the fixed export footer. */
@@ -3964,12 +3968,12 @@ input[type="number"] {
   #modal-disk-contour .disk-contour-canvas-wrapper {
     flex: 1 1 auto;
     min-height: 0;
-    height: calc(100dvh - 176px);
+    height: calc(100dvh - 210px);
     margin: 2px auto;
   }
   #modal-disk-contour #disk-contour-canvas {
-    width: min(500px, calc(100dvh - 176px), calc(100vw - 32px)) !important;
-    max-width: min(500px, calc(100dvh - 176px), calc(100vw - 32px)) !important;
+    width: min(500px, calc(100dvh - 210px), calc(100vw - 32px)) !important;
+    max-width: min(500px, calc(100dvh - 210px), calc(100vw - 32px)) !important;
     height: auto !important;
   }
   #modal-disk-contour .sweep-info-cards {
@@ -3983,10 +3987,10 @@ input[type="number"] {
   }
 
   #modal-sweep .sweep-footer-actions,
-  #modal-disk-contour .sweep-footer-actions { min-height: 42px; padding: 4px 12px; }
+  #modal-disk-contour .sweep-footer-actions { min-height: 56px; padding: 4px 12px; }
 
-  #modal-sweep .sweep-footer-actions .action-btn { height: 34px !important; }
-  #modal-disk-contour .sweep-footer-actions .action-btn { height: 34px !important; font-size: 0.75rem !important; }
+  #modal-sweep .sweep-footer-actions .action-btn { height: 48px !important; }
+  #modal-disk-contour .sweep-footer-actions .action-btn { height: 48px !important; font-size: 0.75rem !important; }
 }
 
 /* Low-height landscape includes wide phones (for example 915x412) and
@@ -4004,8 +4008,8 @@ input[type="number"] {
   }
 
   #modal-disk-contour .modal-header {
-    height: 40px;
-    min-height: 40px;
+    height: 48px;
+    min-height: 48px;
   }
 
   #modal-disk-contour .modal-body {
@@ -4025,21 +4029,21 @@ input[type="number"] {
 
   #modal-disk-contour .sweep-select,
   #modal-disk-contour .sweep-mobile-selector {
-    height: 36px;
-    min-height: 36px;
+    height: 48px;
+    min-height: 48px;
   }
 
   #modal-disk-contour .disk-contour-canvas-wrapper {
     flex: 1 1 auto;
     min-height: 0;
     width: 100%;
-    height: calc(100dvh - 176px);
+    height: calc(100dvh - 210px);
     margin: 2px auto;
   }
 
   #modal-disk-contour #disk-contour-canvas {
-    width: min(500px, calc(100dvh - 176px), calc(100vw - 48px)) !important;
-    max-width: min(500px, calc(100dvh - 176px), calc(100vw - 48px)) !important;
+    width: min(500px, calc(100dvh - 210px), calc(100vw - 48px)) !important;
+    max-width: min(500px, calc(100dvh - 210px), calc(100vw - 48px)) !important;
     height: auto !important;
   }
 
@@ -4055,13 +4059,13 @@ input[type="number"] {
   }
 
   #modal-disk-contour .sweep-footer-actions {
-    flex: 0 0 42px;
-    min-height: 42px;
+    flex: 0 0 56px;
+    min-height: 56px;
     padding: 4px 12px;
   }
 
   #modal-disk-contour .sweep-footer-actions .action-btn {
-    height: 34px !important;
+    height: 48px !important;
     font-size: 0.75rem !important;
   }
 }
@@ -4221,7 +4225,7 @@ input[type="number"] {
 .icon-btn { position: relative; }
 .icon-btn::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 48px; height: 48px; transform: translate(-50%, -50%); }
 @media (max-width: 360px) {
-  .icon-btn { min-width: 38px; }
+  .icon-btn { min-width: 48px; }
 }
 
 /* Option rows are buttons. */
@@ -4337,6 +4341,23 @@ input[type="number"] {
   z-index: 10000;
 }
 .app-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+.app-toast.has-action { display: flex; align-items: center; gap: 12px; width: min(92vw, 420px); }
+.app-toast.has-action.visible { pointer-events: auto; }
+.app-toast-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.app-toast-action {
+  flex: 0 0 auto;
+  min-width: 64px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
 
 /* Disk contour: the app selector sheet replaces the native select on every width. */
 #modal-disk-contour .sweep-control-group > select { display: none !important; }

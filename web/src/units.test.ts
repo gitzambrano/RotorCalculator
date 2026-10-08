@@ -15,6 +15,12 @@ describe("Android input unit parity", () => {
     expect(formatInputValue("alpha", 0, "deg")).toBe("0.0");
     expect(formatInputValue("CTtgt", 0.0065)).toBe("0.00650");
   });
+  it("formats the lift slope a0 with unit-aware decimals", () => {
+    expect(formatInputValue("a0", 5.73, "rad⁻¹")).toBe("5.73");
+    expect(formatInputValue("a0", 5.7, "rad⁻¹")).toBe("5.70");
+    expect(formatInputValue("a0", convertValue(5.73, "rad⁻¹", "deg⁻¹"), "deg⁻¹")).toBe("0.1000");
+    expect(formatInputValue("a0", 0.0987, "deg⁻¹")).toBe("0.0987");
+  });
   it("converts rotation speed between rpm and radians per second", () => {
     expect(convertValue(60, "rpm", "rad/s")).toBeCloseTo(2 * Math.PI, 12);
     expect(convertValue(2 * Math.PI, "rad/s", "rpm")).toBeCloseTo(60, 12);

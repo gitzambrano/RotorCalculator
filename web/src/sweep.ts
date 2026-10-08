@@ -1,7 +1,6 @@
 import {
   calculate,
   cloneCondition,
-  cloneGeometry,
   derivedClBar,
   derivedLambdaH,
   derivedMuOverLambda,
@@ -799,8 +798,8 @@ export function drawSweepCanvas(
   const bgCol = isSepia ? "#FAF6EE" : isLight ? "#FFFFFF" : isMid ? "#0D1B2A" : "#10141C";
   const gridCol = isSepia ? "#DDD2C0" : isLight ? "#D9E1EA" : isMid ? "#2A4361" : "#2A3544";
   const textCol = isSepia ? "#2D2319" : isLight ? "#344054" : isMid ? "#B9CBE0" : "#B4BFCE";
-  const currentMarkerCol = isSepia ? "#8C5A2B" : isLight ? "#AA5A00" : "#FFB300";
-  const titleCol = isSepia ? "#8C5A2B" : isLight ? "#007F95" : "#00E5FF";
+  const currentMarkerCol = isSepia ? "#7A4E22" : isLight ? "#AA5A00" : "#FFB300";
+  const titleCol = isSepia ? "#7A4E22" : isLight ? "#007F95" : "#00E5FF";
 
   // Background
   ctx.fillStyle = bgCol;
@@ -813,7 +812,6 @@ export function drawSweepCanvas(
   };
 
   // Determine Min & Max bounds
-  let xMin = 0;
   let xMax = 0.01;
   let yMin = Infinity;
   let yMax = -Infinity;

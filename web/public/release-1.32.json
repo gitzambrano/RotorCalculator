@@ -1,0 +1,8 @@
+{
+  "version": "1.32",
+  "versionCode": 17,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": null,
+  "verification": "RotorCalculator 1.32 release. Correct airspeed and climb-rate conversion, altitude and temperature effect on density, unified operating limits across engines, input limit hints, model validity warnings, safer rotor library, accessibility and contrast fixes.",
+  "qaReport": "release_notes_1.32.txt"
+}

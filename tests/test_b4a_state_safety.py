@@ -488,8 +488,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 16" in main
-    assert "#VersionName: 1.31" in main
+    assert "#VersionCode: 17" in main
+    assert "#VersionName: 1.32" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -890,11 +890,11 @@ def test_release_version_is_130_everywhere():
     agents = text("AGENTS.md")
     readme = text("README.md")
     package = text("web/package.json")
-    assert "#VersionCode: 16" in main
-    assert "#VersionName: 1.31" in main
-    assert "RotorCalculator 1.31 (versionCode 16)" in agents
-    assert "Version 1.31 (versionCode 16)" in readme
-    assert '"version": "1.31.0"' in package
+    assert "#VersionCode: 17" in main
+    assert "#VersionName: 1.32" in main
+    assert "RotorCalculator 1.32 (versionCode 17)" in agents
+    assert "Version 1.32 (versionCode 17)" in readme
+    assert '"version": "1.32.0"' in package
 
 
 def test_disk_contour_catalog_uses_section_thrust_loading_not_reynolds():
@@ -982,10 +982,10 @@ def test_sepia_theme_is_complete_in_sheets_tables_assets_and_swatches():
     main = text("RotorCalculator.b4a")
     sheet = text("clsSheet.bas")
     assert "sheet.SetTheme(ThemeMode = 1 Or ThemeMode = 3, pal)" in main
-    for color in ("0xFFEFE8DC", "0xFF2D2319", "0xFF645747", "0xFFDDD2C0", "0xFF8C5A2B"):
+    for color in ("0xFFEFE8DC", "0xFF2D2319", "0xFF5A4D3D", "0xFFDDD2C0", "0xFF7A4E22"):
         assert color in main[main.index("Private Sub InitSheet"):main.index("Private Sub BuildAllPages")]
     assert "dark As Boolean = (ThemeMode = 0 Or ThemeMode = 2)" in main
-    for color in ("#FAF6EE", "#2D2319", "#DDD2C0", "#645747"):
+    for color in ("#FAF6EE", "#2D2319", "#DDD2C0", "#5A4D3D"):
         assert color in main
     assert "(ThemeMode = 1 Or ThemeMode = 3)" in main
     assert 'helpAsset = "physics_help_sepia.html"' in main
@@ -1095,3 +1095,53 @@ def test_web_view_is_released_on_close():
     assert "Private Sub DestroyWebView" in main
     assert 'jo.RunMethod("destroy", Null)' in main
     assert "DestroyWebView(wvHelp)" in main and "DestroyWebView(wvSweepTable)" in main
+
+
+def test_fix132_sweep_pair_uses_whole_tokens():
+    pop = text("RotorPopups.bas")
+    assert 'Dim pair As String = "_" & cond.OperatingPair & "_"' in pop
+    assert 'pair.Contains("_ct_") And cond.TargetCT > 0' in pop
+    assert 'pair.Contains("_thrust_") And cond.TargetThrustN > 0' in pop
+    assert 'pair.Contains("ct")' not in pop
+
+
+def test_fix132_geometry_clamps_and_limit_hints():
+    main = text("RotorCalculator.b4a")
+    assert "ClampD(si, ActiveGeom.RootCutout + 0.01, 1.0)" in main
+    assert "RootCutout + 0.001" not in main
+    assert 'LimitMsg = "Enter a whole number from 1 to 16."' in main
+    assert "If dv <> Floor(dv) Then" in main
+    for key in ("Nb", "R", "x0"):
+        assert f'NoteLimit("{key}"' in main
+    assert "NoteLimit(key, si, cC)" in main
+    assert "ClampD(si, 0.02, 50.0)" in main
+    assert "ClampD(si, 0.0001, 2.0 * ActiveGeom.Radius)" in main
+    assert '& ut & "."' in main
+
+
+def test_fix132_key_digits_altitude_and_a0():
+    main = text("RotorCalculator.b4a")
+    start = main.index("Private Sub KeyDigits")
+    body = main[start:main.index("End Sub", start)]
+    assert 'If CurUnit("h") = "km" Then Return 3' in body
+    assert 'Case "Nb"\n\t\t\tReturn 0' in body.replace("\r\n", "\n")
+    assert 'CurUnit("a0").StartsWith("deg")' in body
+    assert 'Case "AR", "Vx", "Vz"' in body
+
+
+def test_fix132_csv_bom_haptic_comment_and_contour_theme():
+    main = text("RotorCalculator.b4a")
+    pop = text("RotorPopups.bas")
+    assert "Chr(0xFEFF) & csv" in main
+    assert "no VIBRATE permission needed" not in main
+    start = pop.index("Public Sub DrawDiskContourPlot")
+    body = pop[start:pop.index("End Sub", start)]
+    assert "Dim themeIdx As Int = plotThemeIdx" in body
+    assert "plotThemeIdx = 1 Or" not in body
+
+
+def test_row_buttons_used_as_actions_have_visible_text():
+    main = text("RotorCalculator.b4a")
+    assert 'bc.Text = "CANCEL"' in main
+    assert 'btnCancel.Text = "CANCEL"' in main
+    assert 'btnApply.Text = "APPLY"' in main

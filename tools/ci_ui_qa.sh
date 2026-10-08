@@ -225,7 +225,7 @@ wait_geometry_ready() {
   local OUTDIR="$1" W="$2" H="$3" attempt
   for attempt in $(seq 1 20); do
     python3 /tmp/ui_node.py "$OUTDIR/ready-$attempt.xml" > "$OUTDIR/ready-$attempt.json"
-    if grep -Fqi '"text": "BLADE GEOMETRY"' "$OUTDIR/ready-$attempt.json"; then return 0; fi
+    if grep -Eqi '"text": "(ROTOR|PLANFORM)"' "$OUTDIR/ready-$attempt.json"; then return 0; fi
     # A prior Activity can restore Geometry's scroll offset after relaunch.
     # Return toward the start of the form, checking the heading each step.
     if grep -Fqi '"text": "ACTIVE ROTOR' "$OUTDIR/ready-$attempt.json"; then
