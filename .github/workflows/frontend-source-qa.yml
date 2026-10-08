@@ -1,5 +1,8 @@
 name: Frontend Source QA
 
+# Lightweight mechanical checks only. Emulator UI QA, B4A compilation and
+# visual verification run offline (AGENTS.md section 5, Gates 1 and 2).
+
 on:
   workflow_dispatch:
   push:
@@ -14,7 +17,8 @@ on:
       - "clsSheet.bas"
       - "web/**"
       - "tests/**"
-      - "tools/ci_ui_qa.sh"
+      - "tools/zBET.py"
+      - "tools/verify_engine.py"
       - ".github/workflows/frontend-source-qa.yml"
 
 concurrency:
@@ -23,397 +27,36 @@ concurrency:
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
-  cleanup-stale-qa:
-    name: cancel-stale-experimental-qa
-    runs-on: ubuntu-22.04
-    timeout-minutes: 5
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Cancel stale experimental workflow runs
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Cancelling stale ui/frontend-5-star workflow runs..."
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs?branch=ui/frontend-5-star&per_page=100"             --jq '.workflow_runs[] | select(.status == "queued" or .status == "in_progress" or .status == "pending") | .id'           | while read -r id; do
-              [ -z "$id" ] && continue
-              echo "Cancel run $id"
-              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/cancel" >/dev/null 2>&1 || true
-              gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/force-cancel" >/dev/null 2>&1 || true
-            done
-
-
   engine-qa:
-    name: zbet-engine-regression
-    needs: cleanup-stale-qa
+    name: engine-and-source-contract
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Install numerical test dependencies
+          python-version: "3.11"
+      - name: Install Python dependencies
         run: python -m pip install --disable-pip-version-check numpy pandas matplotlib pytest
-      - name: Verify zBET reference cases
+      - name: Verify engine reference and source contract
         run: python tools/verify_engine.py
-      - name: Run rotor engine tests
+      - name: Static and engine tests
         run: python -m pytest -q tests
 
-  build-b4a:
-    name: build-b4a-source
-    needs: cleanup-stale-qa
-    runs-on: windows-2025
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install B4A 14
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          Invoke-WebRequest "https://www.b4x.com/android/files/B4A.exe" -OutFile "$env:RUNNER_TEMP\B4A.exe"
-          Start-Process "$env:RUNNER_TEMP\B4A.exe" -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/SP-" -Wait
-          $candidates = @(
-            "C:\Program Files\Anywhere Software\B4A\B4ABuilder.exe",
-            "C:\Program Files\Anywhere Software\Basic4android\B4ABuilder.exe",
-            "C:\Program Files (x86)\Anywhere Software\Basic4android\B4ABuilder.exe"
-          )
-          $builder = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          if (-not $builder) { throw "B4ABuilder.exe not found after install" }
-          "B4A_BUILDER=$builder" | Out-File -FilePath $env:GITHUB_ENV -Append
-          $nativeLibs = Join-Path (Split-Path -Parent $builder) "Libraries"
-          New-Item -ItemType Directory -Force -Path $nativeLibs | Out-Null
-          "B4A_NATIVE_LIBS=$nativeLibs" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "B4A builder: $builder"
-          Write-Host "B4A native libraries: $nativeLibs"
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '19'
-
-      - name: Configure Java path for B4A
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $javac = Get-Command javac -ErrorAction Stop
-          $javaBin = Split-Path -Parent $javac.Source
-          "JAVA_BIN=$javaBin" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "JavaBin=$javaBin"
-
-      - name: Restore B4A Android SDK resources
-        id: b4a-sdk-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: C:\Android
-          key: b4a-android-resources-7-25-v1
-
-      - name: Install B4A Android SDK resources
-        if: steps.b4a-sdk-cache.outputs.cache-hit != 'true'
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          Invoke-WebRequest "https://github.com/AnywhereSoftware/B4A/releases/download/7_25/resources_7_25.zip" -OutFile "$env:RUNNER_TEMP\android-resources.zip"
-          New-Item -ItemType Directory -Force -Path "C:\Android" | Out-Null
-          & 7z x "$env:RUNNER_TEMP\android-resources.zip" "-oC:\Android" -y | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw "7z failed extracting Android resources" }
-
-      - name: Restore Android command-line tools
-        id: android-cli-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: C:\Android\cmdline-tools
-          key: b4a-commandlinetools-win-13114758-v1
-
-      - name: Install Android command-line tools required by B4A
-        if: steps.android-cli-cache.outputs.cache-hit != 'true'
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $archive = "$env:RUNNER_TEMP\commandlinetools.zip"
-          $url = "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip"
-          curl.exe -fL --retry 4 --retry-delay 2 --output $archive $url
-          if ($LASTEXITCODE -ne 0) { throw "Failed downloading Android command-line tools" }
-          New-Item -ItemType Directory -Force -Path "C:\Android" | Out-Null
-          & 7z x $archive "-oC:\Android" -y | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw "7z failed extracting Android command-line tools" }
-          if (-not (Test-Path "C:\Android\cmdline-tools\bin\sdkmanager.bat")) {
-            throw "B4A command-line tools layout invalid: sdkmanager.bat not found"
-          }
-
-      - name: Save Android command-line tools cache
-        if: steps.android-cli-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: C:\Android\cmdline-tools
-          key: b4a-commandlinetools-win-13114758-v1
-
-      - name: Resolve B4A Android platform
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-          $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse |
-            Where-Object { $_.FullName -match "android-36" } | Select-Object -First 1
-          if (-not $androidJar) {
-            $androidJar = Get-ChildItem "C:\Android" -Filter android.jar -Recurse |
-              Sort-Object FullName -Descending | Select-Object -First 1
-          }
-          if (-not $androidJar) { throw "android.jar not found in B4A resources" }
-          "PLATFORM_FOLDER=$($androidJar.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-          $sdkManager = "C:\Android\cmdline-tools\bin\sdkmanager.bat"
-          if (-not (Test-Path $sdkManager)) { throw "sdkmanager.bat not found at B4A official path" }
-          $toolsFolder = "C:\Android\cmdline-tools"
-          "TOOLS_FOLDER=$toolsFolder" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-          Write-Host "PlatformFolder=$($androidJar.Directory.FullName)"
-          Write-Host "ToolsFolder=$toolsFolder"
-          Write-Host "SdkManager=$sdkManager"
-
-      - name: Save B4A Android SDK resources cache
-        if: steps.b4a-sdk-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: C:\Android
-          key: b4a-android-resources-7-25-v1
-
-      - name: Configure B4A and compile source
-        shell: powershell
-        run: |
-          $ErrorActionPreference = "Stop"
-
-          # Stage only the external library still referenced by RotorCalculator.
-          $addRoot = Join-Path $env:RUNNER_TEMP "B4X-Additional"
-          $addB4A = Join-Path $addRoot "B4A"
-          New-Item -ItemType Directory -Force -Path $addB4A | Out-Null
-          Copy-Item "$env:GITHUB_WORKSPACE\Libraries\RSPopupMenu.*" $addB4A -Force
-          Copy-Item "$env:GITHUB_WORKSPACE\Libraries\RSPopupMenu.*" $env:B4A_NATIVE_LIBS -Force
-
-          # Use B4A's own INI defaults when present, then override only path settings.
-          $iniCandidates = @(
-            (Join-Path $env:APPDATA "Anywhere Software\Basic4android\b4xV5.ini"),
-            (Join-Path $env:APPDATA "Anywhere Software\b4xV5.ini"),
-            (Join-Path (Split-Path -Parent $env:B4A_BUILDER) "b4xV5.ini")
-          )
-          $sourceIni = $iniCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-          $ini = Join-Path $env:RUNNER_TEMP "RotorCalculator-b4xV5.ini"
-          if ($sourceIni) {
-            Copy-Item $sourceIni $ini -Force
-            Write-Host "Base INI: $sourceIni"
-          } else {
-            New-Item -ItemType File -Force -Path $ini | Out-Null
-            Write-Host "No default INI found; creating complete build INI."
-          }
-
-          function Set-IniValue([string]$Path,[string]$Key,[string]$Value) {
-            $text = ""
-            if (Test-Path $Path) { $text = Get-Content $Path -Raw }
-            $pattern = "(?m)^" + [regex]::Escape($Key) + "=.*$"
-            $line = $Key + "=" + $Value
-            if ($text -match $pattern) {
-              $text = [regex]::Replace($text,$pattern,[System.Text.RegularExpressions.MatchEvaluator]{ param($m) $line })
-            } else {
-              if ($text.Length -gt 0 -and -not $text.EndsWith([Environment]::NewLine)) { $text += [Environment]::NewLine }
-              $text += $line + [Environment]::NewLine
-            }
-            [IO.File]::WriteAllText($Path,$text,[Text.Encoding]::UTF8)
-          }
-
-          Set-IniValue $ini "AdditionalLibrariesFolder" $addRoot
-          Set-IniValue $ini "JavaBin" $env:JAVA_BIN
-          Set-IniValue $ini "PlatformFolder" $env:PLATFORM_FOLDER
-          Set-IniValue $ini "ToolsFolder" $env:TOOLS_FOLDER
-          Set-IniValue $ini "SharedModulesFolder" ""
-          Set-IniValue $ini "MaxRamForDex" "2048"
-          Set-IniValue $ini "ProcessesTimeoutSeconds" "180"
-
-          Write-Host "Effective B4A build paths:"
-          Select-String -Path $ini -Pattern "^(JavaBin|PlatformFolder|ToolsFolder|AdditionalLibrariesFolder)=" | ForEach-Object { Write-Host $_.Line }
-
-          Push-Location $env:GITHUB_WORKSPACE
-          try {
-            & $env:B4A_BUILDER "-Task=Build" "-NoSign=True" "-ShowWarnings=True" "-BaseFolder=$env:GITHUB_WORKSPACE" "-Project=RotorCalculator.b4a" "-INI=$ini"
-            if ($LASTEXITCODE -ne 0) { throw "B4A builder failed with exit code $LASTEXITCODE" }
-          } finally {
-            Pop-Location
-          }
-
-          # B4ABuilder with -NoSign=True leaves the unsigned package as Objects\bin\temp.ap_.
-          # Align and sign it with an ephemeral CI-only key so the exact build can be installed.
-          $unsigned = Join-Path $env:GITHUB_WORKSPACE "Objects\bin\temp.ap_"
-          if (-not (Test-Path $unsigned)) { throw "Unsigned B4A package not found: $unsigned" }
-
-          $buildTools = Get-ChildItem "C:\Android\build-tools" -Directory | Sort-Object Name -Descending | Select-Object -First 1
-          if (-not $buildTools) { throw "Android build-tools directory not found" }
-          $zipalign = Join-Path $buildTools.FullName "zipalign.exe"
-          $apksigner = Join-Path $buildTools.FullName "apksigner.bat"
-          if (-not (Test-Path $zipalign)) { throw "zipalign.exe not found in $($buildTools.FullName)" }
-          if (-not (Test-Path $apksigner)) { throw "apksigner.bat not found in $($buildTools.FullName)" }
-
-          $outDir = Join-Path $env:GITHUB_WORKSPACE "ci-build"
-          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $aligned = Join-Path $outDir "RotorCalculator-ci-aligned.apk"
-          $signed = Join-Path $outDir "RotorCalculator-ci.apk"
-          & $zipalign -f -p 4 $unsigned $aligned
-          if ($LASTEXITCODE -ne 0) { throw "zipalign failed with exit code $LASTEXITCODE" }
-
-          $ciKey = Join-Path $env:RUNNER_TEMP "rotorcalculator-ci.jks"
-          $ciPass = "rotorcalculator-ci-only"
-          $keytool = Join-Path $env:JAVA_BIN "keytool.exe"
-          & $keytool -genkeypair -noprompt -keystore $ciKey -storepass $ciPass -keypass $ciPass -alias ci -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=RotorCalculator CI,OU=QA,O=RotorCalculator,L=CI,S=CI,C=US"
-          if ($LASTEXITCODE -ne 0) { throw "keytool failed with exit code $LASTEXITCODE" }
-
-          & $apksigner sign --ks $ciKey --ks-key-alias ci --ks-pass "pass:$ciPass" --key-pass "pass:$ciPass" --out $signed $aligned
-          if ($LASTEXITCODE -ne 0) { throw "apksigner failed with exit code $LASTEXITCODE" }
-          & $apksigner verify --verbose $signed
-          if ($LASTEXITCODE -ne 0) { throw "apksigner verification failed with exit code $LASTEXITCODE" }
-
-          $apk = Get-Item $signed
-          Write-Host "Built installable QA APK: $($apk.FullName) ($($apk.Length) bytes)"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: RotorCalculator-b4a-build
-          path: ci-build/RotorCalculator-ci.apk
-          if-no-files-found: error
-          retention-days: 7
-
-  ui-qa:
-    name: real-apk-all-screens
-    needs: [build-b4a, engine-qa]
+  web-qa:
+    name: web-typecheck-and-unit-tests
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: RotorCalculator-b4a-build
-          path: ci-apk
-
-      - name: Enable KVM
-        shell: bash
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Prepare QA helpers
-        shell: bash
-        run: |
-          mkdir -p qa-results
-          cat > /tmp/ui_node.py <<'PY'
-          import subprocess, sys, xml.etree.ElementTree as ET, re, json
-          out = sys.argv[1]
-          subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
-          subprocess.run(["adb","pull","/sdcard/window.xml",out], check=True, stdout=subprocess.DEVNULL)
-          root = ET.parse(out).getroot()
-          def bounds(s):
-              m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",s or "")
-              return tuple(map(int,m.groups())) if m else None
-          nodes=[]
-          for n in root.iter("node"):
-              text=(n.attrib.get("text") or "").strip()
-              desc=(n.attrib.get("content-desc") or "").strip()
-              if text or desc:
-                  nodes.append({
-                    "text":text, "desc":desc, "bounds":bounds(n.attrib.get("bounds")),
-                    "clickable":n.attrib.get("clickable"), "enabled":n.attrib.get("enabled")
-                  })
-          print(json.dumps(nodes,ensure_ascii=False,indent=2))
-          PY
-
-          cat > /tmp/tap_text.py <<'PY'
-          import subprocess, sys, xml.etree.ElementTree as ET, re, tempfile
-          needle=sys.argv[1].strip().lower()
-          xml=tempfile.NamedTemporaryFile(delete=False,suffix=".xml").name
-          subprocess.run(["adb","shell","uiautomator","dump","/sdcard/window.xml"], check=False, stdout=subprocess.DEVNULL)
-          subprocess.run(["adb","pull","/sdcard/window.xml",xml], check=True, stdout=subprocess.DEVNULL)
-          root=ET.parse(xml).getroot()
-
-          candidates=[]
-          for order,n in enumerate(root.iter("node")):
-              text=(n.attrib.get("text") or "").strip()
-              desc=(n.attrib.get("content-desc") or "").strip()
-              values=[v for v in (text,desc) if v]
-              if not values:
-                  continue
-              m=re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib.get("bounds",""))
-              if not m:
-                  continue
-              x1,y1,x2,y2=map(int,m.groups())
-              if x2<=x1 or y2<=y1:
-                  continue
-              exact=any(v.lower()==needle for v in values)
-              partial=any(needle in v.lower() for v in values)
-              if not partial:
-                  continue
-              clickable=n.attrib.get("clickable","false")=="true"
-              enabled=n.attrib.get("enabled","true")!="false"
-              if not enabled:
-                  continue
-              # Exact clickable controls win. Then exact labels, clickable partials,
-              # and only finally passive substring matches.
-              priority=(0 if exact and clickable else
-                        1 if exact else
-                        2 if clickable else
-                        3)
-              candidates.append((priority,order,x1,y1,x2,y2,text,desc))
-
-          if candidates:
-              candidates.sort(key=lambda c:(c[0],c[1]))
-              _,_,x1,y1,x2,y2,_,_=candidates[0]
-              subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-              sys.exit(0)
-          print("NOT_FOUND",sys.argv[1]); sys.exit(2)
-          PY
-
-          cat > /tmp/check_bounds.py <<'PY'
-          import sys, json, glob, os, struct
-          png=sys.argv[1]
-          with open(png,"rb") as fh:
-              header=fh.read(24)
-          if header[:8] != b"\x89PNG\r\n\x1a\n":
-              raise SystemExit("Invalid PNG: "+png)
-          w,h=struct.unpack(">II",header[16:24])
-          issues=[]
-          for jf in glob.glob(os.path.join(sys.argv[2],"*.json")):
-              for n in json.load(open(jf,encoding="utf-8")):
-                  b=n.get("bounds")
-                  if not b: continue
-                  x1,y1,x2,y2=b
-                  if x1<0 or y1<0 or x2>w or y2>h or x2<=x1 or y2<=y1:
-                      issues.append({"file":os.path.basename(jf),"text":n.get("text"),"bounds":b})
-          json.dump(issues,open(os.path.join(sys.argv[2],"bounds-issues.json"),"w"),ensure_ascii=False,indent=2)
-          print("bounds issues:",len(issues))
-          if issues:
-              print(json.dumps(issues[:30],ensure_ascii=False))
-              sys.exit(1)
-          PY
-
-      - name: Run freshly built APK through target screens
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          target: default
-          arch: x86_64
-          profile: pixel_2
-          emulator-build: '7425822'
-          emulator-boot-timeout: 420
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: |
-            bash tools/ci_ui_qa.sh
-
-      - name: Upload screenshots and UI hierarchy
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-source-ui-qa
-          path: qa-results
-          if-no-files-found: warn
-          retention-days: 7
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npm test

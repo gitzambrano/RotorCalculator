@@ -10,6 +10,8 @@ import {
   resetToFactoryPresets,
   setActiveRotorId,
   getActiveRotorId,
+  resolveImportConflicts,
+  type ImportConflictDecision,
 } from "./storage";
 
 describe("Rotor Storage & Import/Export Parity", () => {
@@ -195,5 +197,54 @@ describe("Safe storage and per-entry validation", () => {
     const preset = getFactoryPresets()[0];
     const imported = importRotorsJSON(JSON.stringify([{ ...preset, name: "N".repeat(80) }]))!;
     expect(imported[0].name.length).toBe(32);
+  });
+});
+
+describe("Per-item import conflict resolution", () => {
+  const mk = (id: string, name: string, radius = 5) => {
+    const preset = getFactoryPresets()[0];
+    return { id, name, geom: { ...preset.geom, name, radius } };
+  };
+  const existing = [mk("a", "Alpha", 1), mk("b", "Beta", 2)];
+
+  it("imports non-conflicting rotors without a decision", () => {
+    const r = resolveImportConflicts(existing, [mk("x", "Gamma")], [undefined]);
+    expect(r.rotors.map((x) => x.name)).toEqual(["Alpha", "Beta", "Gamma"]);
+    expect(r.added).toBe(1);
+    expect(r.first?.name).toBe("Gamma");
+    expect(existing).toHaveLength(2);
+  });
+
+  it("applies a different decision to each conflict", () => {
+    const imported = [mk("1", "alpha", 9), mk("2", "Beta", 9), mk("3", "Delta", 9)];
+    const decisions: (ImportConflictDecision | undefined)[] = ["replace", "skip", undefined];
+    const r = resolveImportConflicts(existing, imported, decisions);
+    expect(r.rotors.map((x) => x.name)).toEqual(["alpha", "Beta", "Delta"]);
+    expect(r.rotors[0].id).toBe("a");
+    expect(r.rotors[0].geom.radius).toBe(9);
+    expect(r.rotors[1].geom.radius).toBe(2);
+    expect(r).toMatchObject({ added: 1, replaced: 1, skipped: 1 });
+    expect(r.first?.id).toBe("a");
+  });
+
+  it("renames with a unique name and keeps both rotors", () => {
+    const r = resolveImportConflicts(existing, [mk("1", "Alpha", 9), mk("2", "Alpha", 8)], ["rename", "rename"]);
+    expect(r.rotors.map((x) => x.name)).toEqual(["Alpha", "Beta", "Alpha (Imported)", "Alpha (2)"]);
+    expect(r.rotors.every((x) => x.name === x.geom.name)).toBe(true);
+    expect(r.first?.name).toBe("Alpha (Imported)");
+  });
+
+  it("makes no change when every conflict is skipped", () => {
+    const r = resolveImportConflicts(existing, [mk("1", "Alpha"), mk("2", "Beta")], ["skip", "skip"]);
+    expect(r.rotors).toEqual(existing);
+    expect(r.first).toBeUndefined();
+    expect(r.skipped).toBe(2);
+  });
+
+  it("limits renamed names to 32 characters", () => {
+    const long = "N".repeat(32);
+    const r = resolveImportConflicts([mk("a", long)], [mk("1", long)], ["rename"]);
+    expect(r.rotors[1].name.length).toBeLessThanOrEqual(32);
+    expect(r.rotors[1].name).not.toBe(long);
   });
 });

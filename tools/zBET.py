@@ -698,6 +698,9 @@ def solve_operating_pair(
     Profile drag is always numerical-vectorial in this RotorCalculator reference path.
     """
 
+    # Operating contract shared with the web and Android engines.
+    k_ind = max(1.0, min(3.0, float(k_ind)))
+
     def evaluate(candidate_rpm, candidate_collective, *, loading_only=False):
         geom = geometry.with_rpm(float(candidate_rpm))
         mu, mu_z = _operating_flow(

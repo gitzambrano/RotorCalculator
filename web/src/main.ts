@@ -47,6 +47,8 @@ import {
   loadStoredRotors,
   MAX_ROTOR_NAME_LENGTH,
   resetToFactoryPresets,
+  resolveImportConflicts,
+  type ImportConflictDecision,
   safeGet,
   safeSet,
   sanitizeRotorName,
@@ -205,7 +207,6 @@ let sweepUpdateFn: (() => void) | null = null;
 let isInternalSync = false;
 let isGeometryDirty = hasDraft();
 let pendingUnsavedAction: (() => void) | null = null;
-let pendingImportList: StoredRotor[] = [];
 let deferredInstallPrompt: any = null;
 
 // Initialize Root App DOM
@@ -754,25 +755,6 @@ app.innerHTML = `
             <button class="action-btn" id="btn-unsaved-save" style="height: 48px; font-weight: 700; color: var(--accent-green);">SAVE CHANGES</button>
             <button class="action-btn" id="btn-unsaved-discard" style="height: 48px; font-weight: 700; color: var(--accent-red);">DISCARD CHANGES</button>
             <button class="action-btn" id="btn-unsaved-cancel" style="height: 48px; font-weight: 600;">CANCEL</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL: IMPORT CONFLICT RESOLUTION -->
-    <div class="modal-overlay" id="modal-import-conflict">
-      <div class="modal-card" style="max-width: 480px;">
-        <div class="modal-header">
-          <div class="modal-title">Import Geometries</div>
-          <button class="modal-close-btn" data-close="modal-import-conflict">×</button>
-        </div>
-        <div class="modal-body" style="padding: 16px 20px;">
-          <p id="import-conflict-msg" style="margin-bottom: 16px; font-size: 0.875rem; line-height: 1.5; color: var(--text-main);"></p>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button class="action-btn" id="btn-import-rename" style="height: 48px; font-weight: 700; color: var(--accent);">RENAME (Keep both with unique names)</button>
-            <button class="action-btn" id="btn-import-replace" style="height: 48px; font-weight: 700; color: var(--accent-amber);">REPLACE (Overwrite local rotors)</button>
-            <button class="action-btn" id="btn-import-skip" style="height: 48px; font-weight: 700; color: var(--accent-red);">SKIP (Keep local rotors unchanged)</button>
-            <button class="action-btn" id="btn-import-cancel" style="height: 48px;">CANCEL IMPORT</button>
           </div>
         </div>
       </div>
@@ -3088,6 +3070,55 @@ function buildImportPreview(list: StoredRotor[], existing: number): { text: stri
   return { text, html };
 }
 
+const IMPORT_CONFLICT_CHOICES: { id: string; label: string; decision: ImportConflictDecision; all: boolean }[] = [
+  { id: "rename", label: "RENAME", decision: "rename", all: false },
+  { id: "replace", label: "REPLACE", decision: "replace", all: false },
+  { id: "skip", label: "SKIP", decision: "skip", all: false },
+  { id: "rename-all", label: "RENAME ALL REMAINING", decision: "rename", all: true },
+  { id: "replace-all", label: "REPLACE ALL REMAINING", decision: "replace", all: true },
+  { id: "skip-all", label: "SKIP ALL REMAINING", decision: "skip", all: true },
+];
+
+/** Preview, then one decision per conflicting rotor. Cancel at any point changes nothing. */
+async function runImportFlow(imported: StoredRotor[]): Promise<void> {
+  const exists = (r: StoredRotor) => storedRotors.some((loc) => loc.name.toLowerCase() === r.name.toLowerCase());
+  const conflictCount = imported.filter(exists).length;
+  const preview = buildImportPreview(imported, conflictCount);
+  if (!(await showConfirm("Import Rotors", preview.text, "IMPORT"))) return;
+  const decisions: (ImportConflictDecision | undefined)[] = [];
+  let allDecision: ImportConflictDecision | null = null;
+  for (let i = 0; i < imported.length; i++) {
+    if (!exists(imported[i])) continue;
+    if (allDecision) {
+      decisions[i] = allDecision;
+      continue;
+    }
+    const picked = await showDialog(
+      "Name Conflict",
+      `Rotor '${imported[i].name}' already exists.`,
+      [
+        ...IMPORT_CONFLICT_CHOICES.map((c) => ({ id: c.id, label: c.label, kind: c.id === "rename" ? ("primary" as const) : undefined })),
+        { id: "cancel", label: "CANCEL IMPORT" },
+      ],
+      "cancel"
+    );
+    const choice = IMPORT_CONFLICT_CHOICES.find((c) => c.id === picked);
+    if (!choice) {
+      showToast("Import canceled. 0 geometries imported.");
+      return;
+    }
+    decisions[i] = choice.decision;
+    if (choice.all) allDecision = choice.decision;
+  }
+  const result = resolveImportConflicts(storedRotors, imported, decisions);
+  storedRotors.splice(0, storedRotors.length, ...result.rotors);
+  if (!saveStoredRotors(storedRotors)) reportStorageFailure();
+  if (result.first) activateRotor(result.first);
+  renderRotorManagerList();
+  const count = result.added + result.replaced;
+  showToast(`${count} of ${imported.length} rotor geometries imported.`);
+}
+
 const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
 /** Save the active rotor under a unique name. Returns false when storage refuses the write. */
@@ -3183,23 +3214,7 @@ function bindRotorActionButtons(): void {
         return;
       }
       resolveUnsavedGeometry("importing geometries", () => {
-        const exists = (r: StoredRotor) => storedRotors.some((loc) => loc.name.toLowerCase() === r.name.toLowerCase());
-        const conflicting = imported.filter(exists);
-        const preview = buildImportPreview(imported, conflicting.length);
-        if (conflicting.length === 0) {
-          void (async () => {
-            if (!(await showConfirm("Import Rotors", preview.text, "IMPORT"))) return;
-            storedRotors.push(...imported);
-            if (!saveStoredRotors(storedRotors)) reportStorageFailure();
-            activateRotor(imported[0]);
-            renderRotorManagerList();
-            showToast(`Imported ${imported.length} rotor geometries.`);
-          })();
-        } else {
-          pendingImportList = imported;
-          byId("import-conflict-msg").innerHTML = `${preview.html}<br><br>How would you like to handle conflicting rotors?`;
-          openModal("modal-import-conflict");
-        }
+        void runImportFlow(imported);
       });
     };
     reader.readAsText(file);
@@ -3234,75 +3249,6 @@ function bindRotorActionButtons(): void {
   byId("btn-unsaved-cancel").addEventListener("click", () => {
     pendingUnsavedAction = null;
     closeModal("modal-unsaved-confirm");
-  });
-
-  // Modal: Import Conflict Resolution Listeners.
-  // Every path activates the first imported rotor as it exists in the library afterwards.
-  const finishImport = (target: StoredRotor | undefined, message: string) => {
-    if (!saveStoredRotors(storedRotors)) reportStorageFailure();
-    if (target) activateRotor(target);
-    renderRotorManagerList();
-    closeModal("modal-import-conflict");
-    pendingImportList = [];
-    showToast(message);
-  };
-  const newId = () => `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-
-  byId("btn-import-rename").addEventListener("click", () => {
-    if (!pendingImportList.length) return;
-    let first: StoredRotor | undefined;
-    pendingImportList.forEach((imp) => {
-      let candidateName = imp.name;
-      let counter = 1;
-      while (storedRotors.some((r) => r.name.toLowerCase() === candidateName.toLowerCase())) {
-        const tail = ` (${counter === 1 ? "Imported" : counter})`;
-        candidateName = `${imp.name.slice(0, MAX_ROTOR_NAME_LENGTH - tail.length).trim()}${tail}`;
-        counter++;
-      }
-      const rotor: StoredRotor = { id: newId(), name: candidateName, geom: { ...cloneGeometry(imp.geom), name: candidateName } };
-      storedRotors.push(rotor);
-      first = first || rotor;
-    });
-    finishImport(first, `Imported ${pendingImportList.length} rotor geometries with unique names.`);
-  });
-
-  byId("btn-import-replace").addEventListener("click", () => {
-    if (!pendingImportList.length) return;
-    let first: StoredRotor | undefined;
-    pendingImportList.forEach((imp) => {
-      const matchIdx = storedRotors.findIndex((r) => r.name.toLowerCase() === imp.name.toLowerCase());
-      let rotor: StoredRotor;
-      if (matchIdx >= 0) {
-        rotor = { id: storedRotors[matchIdx].id, name: imp.name, geom: cloneGeometry(imp.geom) };
-        storedRotors[matchIdx] = rotor;
-      } else {
-        rotor = { id: newId(), name: imp.name, geom: cloneGeometry(imp.geom) };
-        storedRotors.push(rotor);
-      }
-      first = first || rotor;
-    });
-    finishImport(first, `Imported ${pendingImportList.length} rotor geometries. Matching local rotors were replaced.`);
-  });
-
-  byId("btn-import-skip").addEventListener("click", () => {
-    if (!pendingImportList.length) return;
-    let added = 0;
-    let first: StoredRotor | undefined;
-    pendingImportList.forEach((imp) => {
-      const exists = storedRotors.some((r) => r.name.toLowerCase() === imp.name.toLowerCase());
-      if (!exists) {
-        const rotor: StoredRotor = { id: newId(), name: imp.name, geom: cloneGeometry(imp.geom) };
-        storedRotors.push(rotor);
-        first = first || rotor;
-        added++;
-      }
-    });
-    finishImport(first, `Imported ${added} new rotors. Conflicting local rotors stay unchanged.`);
-  });
-
-  byId("btn-import-cancel").addEventListener("click", () => {
-    pendingImportList = [];
-    closeModal("modal-import-conflict");
   });
 }
 

@@ -14,6 +14,7 @@ Sub Process_Globals
 	Private Const BACKUP_FILENAME As String = "rotors_db.bak"
 	Public Rotors As List
 	Public ActiveIndex As Int = 0
+	Public LastImportFirstIndex As Int = -1
 End Sub
 
 Private Sub GetDataDir As String
@@ -573,6 +574,23 @@ Public Sub MakeCopyName(SourceName As String) As String
 	Return MakeUniqueName(base & " Copy")
 End Sub
 
+' Import rename rule shared with web (storage.ts uniqueImportedName):
+' "Name", then "Name (Imported)", "Name (2)", "Name (3)"... within 32 characters.
+Public Sub MakeImportedName(BaseName As String) As String
+	Dim clean As String = CleanName(BaseName)
+	Dim candidate As String = clean
+	Dim counter As Int = 1
+	Do While FindRotorByName(candidate) >= 0
+		Dim tail As String
+		If counter = 1 Then tail = " (Imported)" Else tail = " (" & counter & ")"
+		Dim stem As String = clean
+		If stem.Length > 32 - tail.Length Then stem = stem.SubString2(0, 32 - tail.Length)
+		candidate = stem.Trim & tail
+		counter = counter + 1
+	Loop
+	Return candidate
+End Sub
+
 Public Sub MakeUniqueName(BaseName As String) As String
 	Dim clean As String = CleanName(BaseName)
 	If FindRotorByName(clean) < 0 Then Return clean
@@ -595,7 +613,7 @@ Public Sub MergeImportedRotors(imported As List, conflictMode As String) As Int
 					UpdateRotor(existing, g)
 					added = added + 1
 				Case "rename"
-					g.Name = MakeUniqueName(g.Name)
+					g.Name = MakeImportedName(g.Name)
 					Rotors.Add(zBETEngine.CloneGeometry(g))
 					added = added + 1
 				Case Else
@@ -604,6 +622,40 @@ Public Sub MergeImportedRotors(imported As List, conflictMode As String) As Int
 		Else
 			Rotors.Add(zBETEngine.CloneGeometry(g))
 			added = added + 1
+		End If
+	Next
+	If added > 0 Then SaveRotors
+	Return added
+End Sub
+
+' decisions: one String per imported rotor ("rename", "replace" or "skip"; "" = no conflict decision).
+' A conflict without a decision is renamed. LastImportFirstIndex receives the library index of the
+' first imported or replaced rotor (-1 when none). Returns number imported or replaced.
+Public Sub MergeImportedRotorsEach(imported As List, decisions As List) As Int
+	Dim added As Int = 0
+	LastImportFirstIndex = -1
+	For i = 0 To imported.Size - 1
+		Dim g As RotorGeometry = imported.Get(i)
+		Dim decision As String = ""
+		If i < decisions.Size Then decision = decisions.Get(i)
+		Dim existing As Int = FindRotorByName(g.Name)
+		Dim target As Int = -1
+		If existing < 0 Then
+			Rotors.Add(zBETEngine.CloneGeometry(g))
+			target = Rotors.Size - 1
+		Else If decision = "skip" Then
+			' keep the local rotor
+		Else If decision = "replace" Then
+			UpdateRotor(existing, g)
+			target = existing
+		Else
+			g.Name = MakeImportedName(g.Name)
+			Rotors.Add(zBETEngine.CloneGeometry(g))
+			target = Rotors.Size - 1
+		End If
+		If target >= 0 Then
+			added = added + 1
+			If LastImportFirstIndex < 0 Then LastImportFirstIndex = target
 		End If
 	Next
 	If added > 0 Then SaveRotors

@@ -119,6 +119,7 @@ Validation requirements are separated into two distinct operational gates:
 - Never retain an APK or AAB in the repository that was built from an older source commit.
 - Commit a release APK/AAB only after compiling the exact main source commit locally and validating its build artifacts.
 - GitHub Actions serves as an auxiliary CI validator; it does not promote binaries or bypass local engineering verification.
+- CI runs only lightweight mechanical checks: `tools/verify_engine.py`, `pytest`, `tsc --noEmit` and `npm test`. B4A compilation, emulator UI QA (`tools/ci_ui_qa.sh`) and visual verification run offline.
 
 ---
 

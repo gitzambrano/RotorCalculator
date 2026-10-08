@@ -324,6 +324,8 @@ Sub Globals
 	Private BusyStartMs As Long
 	Private wvSweepTable As WebView
 	Private SavedScroll0, SavedScroll1, SavedScroll2 As Int
+	' Scroll anchors per page: index of the top-visible view, its offset and the panel view count.
+	Private AnchorIdx(3), AnchorOff(3), AnchorCount(3) As Int
 
 End Sub
 
@@ -1323,22 +1325,45 @@ Sub btnSettingImportGeometries_Click
 		ToastMessageShow("Import canceled. 0 geometries imported.", False)
 		Return
 	End If
-	Dim mode As String = "rename"
-	If conflicts > 0 Then
-		Dim modes As List
-		modes.Initialize
-		modes.Add("Rename imported duplicates|Keep both rotors")
-		modes.Add("Replace same-name local geometries|Overwrite the local rotors")
-		modes.Add("Skip same-name imported geometries|Keep the local rotors")
-		Wait For (sheet.ShowChoice("Name Conflicts (" & conflicts & ")", modes, 0)) Complete (choice As Int)
-		If choice < 0 Then
-			ToastMessageShow("Import canceled. 0 geometries imported.", False)
-			Return
+	' One decision per conflicting rotor: Rename, Replace or Skip, or the same for all remaining ones.
+	Dim decisions As List
+	decisions.Initialize
+	Dim allDecision As String = ""
+	For i = 0 To imported.Size - 1
+		Dim cg As RotorGeometry = imported.Get(i)
+		Dim decision As String = ""
+		If RotorStorage.FindRotorByName(cg.Name) >= 0 Then
+			If allDecision <> "" Then
+				decision = allDecision
+			Else
+				Dim modes As List
+				modes.Initialize
+				modes.Add("Rename|Keep both rotors")
+				modes.Add("Replace|Overwrite the local rotor")
+				modes.Add("Skip|Keep the local rotor")
+				modes.Add("Rename all remaining|Apply to the other conflicts")
+				modes.Add("Replace all remaining|Apply to the other conflicts")
+				modes.Add("Skip all remaining|Apply to the other conflicts")
+				Wait For (sheet.ShowChoice("Rotor '" & cg.Name & "' already exists.", modes, -1)) Complete (choice As Int)
+				If choice < 0 Then
+					ToastMessageShow("Import canceled. 0 geometries imported.", False)
+					Return
+				End If
+				Select choice Mod 3
+					Case 0
+						decision = "rename"
+					Case 1
+						decision = "replace"
+					Case Else
+						decision = "skip"
+				End Select
+				If choice >= 3 Then allDecision = decision
+			End If
 		End If
-		If choice = 1 Then mode = "replace"
-		If choice = 2 Then mode = "skip"
-	End If
-	Dim added As Int = RotorStorage.MergeImportedRotors(imported, mode)
+		decisions.Add(decision)
+	Next
+	Dim added As Int = RotorStorage.MergeImportedRotorsEach(imported, decisions)
+	If RotorStorage.LastImportFirstIndex >= 0 Then RotorStorage.SetActiveRotor(RotorStorage.LastImportFirstIndex)
 	ActiveGeom = RotorStorage.GetActiveRotor
 	GeometryDirty = False
 	RotorStorage.ClearDraft
@@ -1394,6 +1419,9 @@ Private Sub RebuildApplicationUI
 	If scvGeom.IsInitialized Then SavedScroll0 = scvGeom.ScrollPosition
 	If scvCond.IsInitialized Then SavedScroll1 = scvCond.ScrollPosition
 	If scvRes.IsInitialized Then SavedScroll2 = scvRes.ScrollPosition
+	If scvGeom.IsInitialized Then CaptureScrollAnchor(scvGeom, 0)
+	If scvCond.IsInitialized Then CaptureScrollAnchor(scvCond, 1)
+	If scvRes.IsInitialized Then CaptureScrollAnchor(scvRes, 2)
 	If sheet.IsInitialized Then sheet.CloseAll
 	If HelpPopupOpen Then ClosePhysicsHelp
 	If SweepPopupOpen Then CloseSweepPopup
@@ -1417,10 +1445,36 @@ Private Sub RebuildApplicationUI
 End Sub
 
 ' Applied twice: right after the rebuild and again once the new scroll views are laid out.
+' The same row stays at the top, even when row positions or the page height change.
 Sub RestoreScrolls
-	If scvGeom.IsInitialized Then scvGeom.ScrollPosition = SavedScroll0
-	If scvCond.IsInitialized Then scvCond.ScrollPosition = SavedScroll1
-	If scvRes.IsInitialized Then scvRes.ScrollPosition = SavedScroll2
+	If scvGeom.IsInitialized Then ApplyScrollAnchor(scvGeom, 0, SavedScroll0)
+	If scvCond.IsInitialized Then ApplyScrollAnchor(scvCond, 1, SavedScroll1)
+	If scvRes.IsInitialized Then ApplyScrollAnchor(scvRes, 2, SavedScroll2)
+End Sub
+
+Private Sub CaptureScrollAnchor(scv As ScrollView, slot As Int)
+	Dim pos As Int = scv.ScrollPosition
+	Dim best As Int = -1
+	Dim bestTop As Int = -1
+	For i = 0 To scv.Panel.NumberOfViews - 1
+		Dim v As View = scv.Panel.GetView(i)
+		If v.Visible And v.Top <= pos And v.Top >= bestTop Then
+			best = i
+			bestTop = v.Top
+		End If
+	Next
+	AnchorIdx(slot) = best
+	AnchorCount(slot) = scv.Panel.NumberOfViews
+	If best >= 0 Then AnchorOff(slot) = pos - bestTop Else AnchorOff(slot) = pos
+End Sub
+
+Private Sub ApplyScrollAnchor(scv As ScrollView, slot As Int, fallbackPos As Int)
+	If AnchorIdx(slot) >= 0 And AnchorIdx(slot) < scv.Panel.NumberOfViews And AnchorCount(slot) = scv.Panel.NumberOfViews Then
+		Dim v As View = scv.Panel.GetView(AnchorIdx(slot))
+		scv.ScrollPosition = Max(0, v.Top + AnchorOff(slot))
+	Else
+		scv.ScrollPosition = fallbackPos
+	End If
 End Sub
 
 Private Sub NoZoomControls(wv As WebView)

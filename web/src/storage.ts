@@ -1,4 +1,4 @@
-import { resolveSolidity, type RotorGeometry } from "./engine";
+import { cloneGeometry, resolveSolidity, type RotorGeometry } from "./engine";
 
 export interface StoredRotor {
   id: string;
@@ -79,6 +79,81 @@ export function dedupeRotorNames(list: StoredRotor[]): StoredRotor[] {
     rotor.geom = { ...rotor.geom, name: candidate };
   }
   return list;
+}
+
+export type ImportConflictDecision = "rename" | "replace" | "skip";
+
+export interface ImportResolution {
+  /** New library list. The input list is not changed. */
+  rotors: StoredRotor[];
+  /** First imported (or replaced) rotor as it exists in the new list. */
+  first: StoredRotor | undefined;
+  added: number;
+  replaced: number;
+  skipped: number;
+}
+
+function nameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/** Return a name that is not in `taken` (case-insensitive). Adds " (Imported)", then " (2)", " (3)", ... */
+export function uniqueImportedName(name: string, taken: Set<string>): string {
+  let candidate = name;
+  let counter = 1;
+  while (taken.has(nameKey(candidate))) {
+    const tail = ` (${counter === 1 ? "Imported" : counter})`;
+    candidate = `${name.slice(0, MAX_ROTOR_NAME_LENGTH - tail.length).trim()}${tail}`;
+    counter++;
+  }
+  return candidate;
+}
+
+/**
+ * Merge imported rotors into the library. `decisions[i]` is the choice for imported[i]
+ * when its name already exists. Rotors without a name conflict import unchanged.
+ * A conflict without a decision is renamed, so no rotor is lost or replaced by accident.
+ */
+export function resolveImportConflicts(
+  existing: StoredRotor[],
+  imported: StoredRotor[],
+  decisions: ReadonlyArray<ImportConflictDecision | undefined>,
+  makeId: () => string = () => `custom-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+): ImportResolution {
+  const rotors = existing.slice();
+  const taken = new Set(rotors.map((r) => nameKey(r.name)));
+  let first: StoredRotor | undefined;
+  let added = 0;
+  let replaced = 0;
+  let skipped = 0;
+  imported.forEach((imp, i) => {
+    const matchIdx = rotors.findIndex((r) => nameKey(r.name) === nameKey(imp.name));
+    if (matchIdx < 0) {
+      const rotor: StoredRotor = { id: makeId(), name: imp.name, geom: cloneGeometry({ ...imp.geom, name: imp.name }) };
+      rotors.push(rotor);
+      taken.add(nameKey(rotor.name));
+      first = first || rotor;
+      added++;
+      return;
+    }
+    const decision = decisions[i] ?? "rename";
+    if (decision === "skip") {
+      skipped++;
+    } else if (decision === "replace") {
+      const rotor: StoredRotor = { id: rotors[matchIdx].id, name: imp.name, geom: cloneGeometry({ ...imp.geom, name: imp.name }) };
+      rotors[matchIdx] = rotor;
+      first = first || rotor;
+      replaced++;
+    } else {
+      const name = uniqueImportedName(imp.name, taken);
+      const rotor: StoredRotor = { id: makeId(), name, geom: cloneGeometry({ ...imp.geom, name }) };
+      rotors.push(rotor);
+      taken.add(nameKey(name));
+      first = first || rotor;
+      added++;
+    }
+  });
+  return { rotors, first, added, replaced, skipped };
 }
 
 export function getFactoryPresets(): StoredRotor[] {

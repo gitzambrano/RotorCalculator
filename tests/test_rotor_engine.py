@@ -439,3 +439,17 @@ if __name__ == "__main__":
     test_operating_flow_limits_match_android_contract()
     test_analytical_bet_induced_torque_differs_from_energy_balance_only_in_cqi()
     print("All RotorCalculator reference tests passed.")
+
+
+def test_operating_pair_clamps_k_ind_like_compiled_engines():
+    """k_ind below 1 or above 3 uses the clamp value, as in the web and Android engines."""
+    geom = make_geometry(rpm=430.0, pg=True, tip_loss="fixed")
+    common = dict(pair="rpm_collective", rpm=430.0, collective_deg=4.0, target_ct=0.0,
+                  target_thrust_n=0.0, theta_root_deg=12.0, theta_tip_deg=2.0)
+    low = zBET.solve_operating_pair(geom, k_ind=0.0, **common)
+    one = zBET.solve_operating_pair(geom, k_ind=1.0, **common)
+    high = zBET.solve_operating_pair(geom, k_ind=9.0, **common)
+    three = zBET.solve_operating_pair(geom, k_ind=3.0, **common)
+    assert math.isclose(low["results"]["CQ"], one["results"]["CQ"], rel_tol=1e-12)
+    assert math.isclose(high["results"]["CQ"], three["results"]["CQ"], rel_tol=1e-12)
+    assert three["results"]["CQ"] > one["results"]["CQ"]

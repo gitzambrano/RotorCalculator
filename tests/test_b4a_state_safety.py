@@ -357,9 +357,28 @@ def test_settings_include_geometry_import_export():
 
 def test_import_conflicts_are_explicit():
     main = text("RotorCalculator.b4a")
-    assert "Rename imported duplicates" in main
-    assert "Replace same-name local geometries" in main
-    assert "Skip same-name imported geometries" in main
+    storage = text("RotorStorage.bas")
+    assert "\"' already exists.\"" in main
+    for label in ("Rename|", "Replace|", "Skip|", "Rename all remaining|", "Replace all remaining|", "Skip all remaining|"):
+        assert f'modes.Add("{label}' in main
+    # One decision per conflicting rotor; cancel aborts before any merge.
+    assert "RotorStorage.MergeImportedRotorsEach(imported, decisions)" in main
+    cancel = main.index("If choice < 0 Then", main.index("' already exists."))
+    assert cancel < main.index("MergeImportedRotorsEach(imported, decisions)")
+    assert "Import canceled. 0 geometries imported." in main
+    assert "RotorStorage.SetActiveRotor(RotorStorage.LastImportFirstIndex)" in main
+    assert "Public Sub MergeImportedRotorsEach(imported As List, decisions As List) As Int" in storage
+    assert "Public LastImportFirstIndex As Int" in storage
+    assert "Rename imported duplicates" not in main
+
+
+def test_theme_rebuild_restores_scroll_by_row_anchor():
+    main = text("RotorCalculator.b4a")
+    assert "Private Sub CaptureScrollAnchor(scv As ScrollView, slot As Int)" in main
+    assert "Private Sub ApplyScrollAnchor(scv As ScrollView, slot As Int, fallbackPos As Int)" in main
+    rebuild = main[main.index("Private Sub RebuildApplicationUI"):main.index("Sub RestoreScrolls")]
+    assert "CaptureScrollAnchor(scvRes, 2)" in rebuild
+    assert 'CallSubDelayed(Me, "RestoreScrolls")' in rebuild
 
 
 def test_plot_catalog_contains_results_and_operating_scalars():
@@ -1145,3 +1164,11 @@ def test_row_buttons_used_as_actions_have_visible_text():
     assert 'bc.Text = "CANCEL"' in main
     assert 'btnCancel.Text = "CANCEL"' in main
     assert 'btnApply.Text = "APPLY"' in main
+
+
+def test_import_rename_rule_matches_web():
+    storage = text("RotorStorage.bas")
+    web = text("web/src/storage.ts")
+    assert 'If counter = 1 Then tail = " (Imported)" Else tail = " (" & counter & ")"' in storage
+    assert storage.count("g.Name = MakeImportedName(g.Name)") == 2
+    assert '` (${counter === 1 ? "Imported" : counter})`' in web
