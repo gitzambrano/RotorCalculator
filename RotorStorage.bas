@@ -72,11 +72,11 @@ Public Sub CreateDefaultPresets As List
 	Dim presets As List
 	presets.Initialize
 	presets.Add(NewPreset("Sikorsky UH-60 Black Hawk", 8.18, 4, 0.15, 0.53, 0.53, 14.0, -4.0, 5.73, 0.0088, "sissingh", 0.97, True, 258.0))
-	presets.Add(NewPreset("Bell 206 JetRanger", 5.08, 2, 0.12, 0.33, 0.33, 12.0, 2.0, 5.73, 0.0090, "fixed", 0.97, False, 394.0))
+	presets.Add(NewPreset("Bell 206 JetRanger", 5.08, 2, 0.12, 0.33, 0.33, 12.0, 2.0, 5.73, 0.0090, "fixed", 0.97, True, 394.0))
 	presets.Add(NewPreset("Eurocopter Bo 105", 4.92, 4, 0.14, 0.27, 0.27, 11.0, 3.0, 5.73, 0.0092, "sissingh", 0.97, True, 424.0))
-	presets.Add(NewPreset("Robinson R44", 5.03, 2, 0.10, 0.25, 0.25, 10.0, 4.0, 5.73, 0.0090, "fixed", 0.97, False, 408.0))
-	' Legacy DJI/eVTOL presets defined root chord at the cutout. These c0 values preserve that active-span law.
-	presets.Add(NewPreset("DJI Matrice 300 Drone", 0.27, 2, 0.10, 0.0472222222, 0.025, 16.0, 4.0, 5.65, 0.0120, "none", 1.0, False, 5300.0))
+	presets.Add(NewPreset("Robinson R44", 5.03, 2, 0.10, 0.254, 0.269, 10.0, 4.0, 5.73, 0.0090, "fixed", 0.97, True, 408.0))
+	' DJI/eVTOL reference-axis chords preserve the existing active-span planform. DJI pitch approximates the 21 x 10 in propeller at 75% radius.
+	presets.Add(NewPreset("DJI Matrice 300 Drone", 0.267, 2, 0.10, 0.0472222222, 0.025, 25.0, 6.25, 5.65, 0.0120, "sissingh", 0.97, False, 5300.0))
 	presets.Add(NewPreset("eVTOL Conceptual Rotor", 1.40, 5, 0.15, 0.1488235294, 0.09, 18.0, 4.0, 5.85, 0.0095, "sissingh", 0.97, True, 1160.0))
 	Return presets
 End Sub
