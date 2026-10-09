@@ -90,7 +90,7 @@ $$\text{GUI / Input Controls} \longrightarrow \text{Validation \& SI Conversion}
    - Increment `#VersionCode` (strictly increasing integer) and update `#VersionName` before building release packages.
    - Generate signed Android App Bundles (`.aab`) targeting Android 16 (API 36) with backward compatibility to Android 7.0+ (API 24+).
    - Use `tools/upload_playstore.py` with the service account key to validate and publish releases to the Google Play Developer API.
-   - AI agents run `--validate-only` and give the exact upload command to the maintainer. The maintainer runs the production upload.
+   - When requested by the maintainer, the AI agent can execute releases directly using `tools/upload_playstore.py`.
    - Release notes (`docs/release_notes_<version>.txt`) hold en-US and pt-BR text. Each language has a maximum of 500 characters.
    - Use `python tools/play_status.py` to read the uploaded bundles and track releases. The script does not publish.
 
