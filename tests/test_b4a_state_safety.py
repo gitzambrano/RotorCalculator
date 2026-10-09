@@ -507,8 +507,8 @@ def test_reference_python_has_six_pair_solver_and_numerical_profile_drag():
 def test_release_source_version_and_binary_hygiene():
     main = text("RotorCalculator.b4a")
     ignore = text(".gitignore")
-    assert "#VersionCode: 17" in main
-    assert "#VersionName: 1.32" in main
+    assert "#VersionCode: 18" in main
+    assert "#VersionName: 1.33" in main
     # A local QA build must be allowed; release hygiene concerns tracked binaries.
     import subprocess
     tracked = subprocess.run(
@@ -909,11 +909,11 @@ def test_release_version_is_130_everywhere():
     agents = text("AGENTS.md")
     readme = text("README.md")
     package = text("web/package.json")
-    assert "#VersionCode: 17" in main
-    assert "#VersionName: 1.32" in main
-    assert "RotorCalculator 1.32 (versionCode 17)" in agents
-    assert "Version 1.32 (versionCode 17)" in readme
-    assert '"version": "1.32.0"' in package
+    assert "#VersionCode: 18" in main
+    assert "#VersionName: 1.33" in main
+    assert "RotorCalculator 1.33 (versionCode 18)" in agents
+    assert "Version 1.33 (versionCode 18)" in readme
+    assert '"version": "1.33.0"' in package
 
 
 def test_disk_contour_catalog_uses_section_thrust_loading_not_reynolds():

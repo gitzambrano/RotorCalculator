@@ -1,4 +1,4 @@
-const CACHE_NAME = "rotorcalculator-web-1.32.0-f081b1777e";
+const CACHE_NAME = "rotorcalculator-web-1.33.0-64533c2525";
 const PRECACHE = [
   "./",
   "./.nojekyll",
@@ -25,7 +25,7 @@ const PRECACHE = [
   "./privacy_policy_light.html",
   "./privacy_policy_midnight.html",
   "./privacy_policy_sepia.html",
-  "./release-1.32.json"
+  "./release-1.33.json"
 ];
 const APP_SHELL = "./index.html";
 

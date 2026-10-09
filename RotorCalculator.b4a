@@ -76,8 +76,8 @@ Version=13
 #Region  Project Attributes 
 	#ApplicationLabel: Rotor Calculator
 	#MultiDex: False
-	#VersionCode: 17
-	#VersionName: 1.32
+	#VersionCode: 18
+	#VersionName: 1.33
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: True
 #End Region

@@ -1,0 +1,14 @@
+<en-US>
+RotorCalculator 1.33.
+Factory rotor library updated: Robinson R44 and DJI Matrice 300 blade planforms and twist match published references.
+DJI Matrice 300 automatically selects RPM-controlled fixed-pitch operating mode.
+Physics help manuals clarified for climb relative-flow sign conventions.
+Consistent tip loss and compressibility flags across all factory presets.
+</en-US>
+<pt-BR>
+RotorCalculator 1.33.
+Biblioteca de fábrica atualizada: R44 e DJI Matrice 300 com cordas e torções alinhadas a dados publicados.
+DJI Matrice 300 seleciona automaticamente modo de rotação variável com passo fixo.
+Manuais de física corrigidos quanto à convenção de sinal de fluxo na subida.
+Perda de ponta e compressibilidade padronizadas em todos os rotores de fábrica.
+</pt-BR>

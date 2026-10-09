@@ -6,7 +6,7 @@ Developed by Gustavo José Zambrano.
 
 - **Web Application:** [Open RotorCalculator](https://gitzambrano.github.io/RotorCalculator/)
 - **Google Play:** [RotorCalculator on Google Play](https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator)
-- **Production Target:** Version 1.32 (versionCode 17)
+- **Production Target:** Version 1.33 (versionCode 18)
 
 ---
 

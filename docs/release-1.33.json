@@ -1,0 +1,8 @@
+{
+  "version": "1.33",
+  "versionCode": 18,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": null,
+  "verification": "RotorCalculator 1.33 release. Factory preset alignment with published literature (R44, DJI 2110), fixed-pitch RPM operating mode for DJI drone, physics help climb sign clarifications.",
+  "qaReport": "release_notes_1.33.txt"
+}
