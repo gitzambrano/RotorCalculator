@@ -243,6 +243,10 @@ Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\
 
 **RES-8** — Tapping any Results label button shall open comprehensive contextual help with mathematical definitions and governing equations.
 
+**RES-8a** — Tapping a dimensional Results unit label shall open the existing modal unit selector without changing the visual style or adding a visible button. Each result shall retain an independent unit selection, persisted across sessions. Dimensionless coefficients shall retain the neutral dash and no unit choices. Conversions shall use unrounded canonical engine values and shall not change physics or trim.
+
+**RES-8b** — Unit families shall include force (N, kN, kgf, lbf), moment (N·m, kgf·m, lbf·ft), power (W, kW, MW, hp), speed (m/s, ft/s, kt, km/h, mph, ft/min), pressure, temperature, density, altitude, angle, rotor speed, disk loading, and power loading. Geometry area selectors shall include metric and imperial area units.
+
 **RES-9** — In Results, the Trim Condition banner and the Model Validity banner shall share equal vertical height (36–38 px), compact typography, and neutral styling across all themes.
 
 ---
@@ -378,7 +382,7 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 
 **SET-1** — Settings shall provide user preferences for:
 - **Theme**: Default Dark, Light, Midnight Blue, Sepia
-- **Result Units**: Metric (SI) / Imperial (US Customary)
+- **Reset All Units**: Select SI or Imperial defaults for both inputs and outputs. Individual result unit choices remain editable until the next reset.
 - **Output Format**: Standard / +1 Decimal
 - **Database Backup**: Import Geometries and Export Geometries
 
@@ -424,7 +428,7 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 
 **UX-21** — Clickable Geometry/Conditions labels and units shall be native actionable button controls with pressed and focus feedback; a passive Label styled to imitate a button does not satisfy this requirement.
 
-**UX-24** — Results shall use three aligned columns: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall never be concatenated.
+**UX-24** — Results shall use three aligned columns: **symbol-first quantity | numerical value | unit**. Numerical values and unit strings shall never be concatenated. A unit label shall act as a touch target without adding a visible button border or changing row styling.
 
 **UX-28** — The UI shall prefer vertical scrolling over shrinking text or touch targets. Normal engineering labels, values, units and Results shall remain approximately 15–16 sp on phone layouts; critical status/section text shall remain comfortably readable and shall not use 10–11 sp caption sizing.
 
@@ -433,6 +437,8 @@ All azimuth annotations shall maintain safe clearances preventing edge clipping 
 **UX-44** — The application shall support horizontal swipe gestures across the three primary tabs (`GEOMETRY` $\longleftrightarrow$ `CONDITIONS` $\longleftrightarrow$ `RESULTS`) with velocity and diagonal angle thresholds to reject vertical scrolling conflicts.
 
 **UX-45** — Interactive button clicks, label taps, and unit selections shall trigger 15 ms haptic feedback on Android devices.
+
+**UX-46** — The Settings reset selector shall offer SI and Imperial choices even when the selected system is already active; choosing one shall clear individual input and output unit overrides without changing canonical values.
 
 **UX-53** — Contextual help dialogs shall separate independent facts and editing consequences into distinct paragraphs without semicolons in editing instructions.
 
