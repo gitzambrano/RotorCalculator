@@ -1,4 +1,4 @@
-name: One-shot native B4A unsigned compilation check
+name: Native B4A QA build (temporary signing key)
 on:
   push:
     branches: [main]
@@ -88,24 +88,39 @@ jobs:
           Write-Host "B4A settings:"
           Get-Content $userIni
           "B4A_INI=$userIni" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
-      - name: Compile unsigned APK from exact main source commit
+      - name: Generate ephemeral CI signing key (not for Google Play)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $keystore = Join-Path $env:RUNNER_TEMP "rotorcalculator-ci-test-only.keystore"
+          $keytool = Join-Path $env:JAVA_HOME "bin\keytool.exe"
+          $password = "rotorCI_ephemeral_2026"
+          & $keytool -genkeypair -noprompt -alias rotorci -keyalg RSA -keysize 2048 -validity 2 -storetype JKS -keystore $keystore -storepass $password -keypass $password -dname "CN=RotorCalculator CI QA, OU=Temporary Test, O=CI, C=BR"
+          if ($LASTEXITCODE -ne 0) { throw "Temporary CI keystore creation failed." }
+          Add-Content -Path $env:B4A_INI -Value @(
+            "SignKeyFile=$keystore",
+            "SignKeyPassword=$password",
+            "SignKeyAlias=rotorci"
+          )
+      - name: Compile QA APK from exact main source commit
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           Push-Location $env:GITHUB_WORKSPACE
           try {
-            & $env:B4A_BUILDER "-Task=Build" "-NoSign=True" "-ShowWarnings=True" "-INI=$env:B4A_INI" "-BaseFolder=$env:GITHUB_WORKSPACE" "-Project=RotorCalculator.b4a"
+            & $env:B4A_BUILDER "-Task=Build" "-NoSign=False" "-ShowWarnings=True" "-INI=$env:B4A_INI" "-BaseFolder=$env:GITHUB_WORKSPACE" "-Project=RotorCalculator.b4a" "-Output=RotorCalculator-1.35-CI.apk"
             if ($LASTEXITCODE -ne 0) { throw "B4A compiler failed with $LASTEXITCODE. Inspect compiler diagnostic output." }
           } finally {
             Pop-Location
           }
-          $apk = Get-ChildItem Objects -Filter "*.apk" -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $apk) { throw "B4A returned success but no unsigned APK was produced." }
-          Write-Host "Unsigned Android compile succeeded: $($apk.FullName)"
-      - name: Store unsigned engineering-check APK
+          $apks = @(Get-ChildItem Objects -Filter "*.apk" -File -Recurse -ErrorAction SilentlyContinue)
+          Write-Host "APK files: $($apks.FullName -join ', ')"
+          if ($apks.Count -eq 0) { throw "B4A compiled but did not produce an APK with the temporary CI signature." }
+          Write-Host "Native QA APK successfully built: $($apks[0].FullName)"
+      - name: Store temporary-signed QA APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: rotorcalculator-1.35-unsigned-compiler-check
-          path: Objects/*.apk
+          name: rotorcalculator-1.35-temp-signed-qa-apk
+          path: Objects/**/*.apk
           retention-days: 3
