@@ -1512,8 +1512,8 @@ function renderResults(): void {
     }
     if (unitEl) {
       unitEl.textContent = resultUnit(key, unitSystem, resultOutputUnits);
-      if (resultUnitChoices(key).length) { unitEl.setAttribute("role", "button"); unitEl.tabIndex = 0; unitEl.setAttribute("aria-label", `Choose unit for ${key}`); }
-      else { unitEl.removeAttribute("role"); unitEl.removeAttribute("tabindex"); unitEl.removeAttribute("aria-label"); }
+      if (resultUnitChoices(key).length) { unitEl.setAttribute("role", "button"); unitEl.tabIndex = 0; unitEl.setAttribute("aria-label", `Choose unit for ${key}`); unitEl.title = "Tap to change unit"; }
+      else { unitEl.removeAttribute("role"); unitEl.removeAttribute("tabindex"); unitEl.removeAttribute("aria-label"); unitEl.removeAttribute("title"); }
     }
   });
 
