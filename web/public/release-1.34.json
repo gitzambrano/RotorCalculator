@@ -1,0 +1,9 @@
+{
+  "version": "1.34",
+  "versionCode": 19,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": null,
+  "verification": "Source release candidate; signed Android APK/AAB must still be compiled, signed, and validated before Google Play upload. Web and physics test gates are tracked by CI.",
+  "qaReport": "release_notes_1.34.txt",
+  "androidArtifactStatus": "pending-signed-build"
+}
