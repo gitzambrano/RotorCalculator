@@ -119,6 +119,9 @@ Validation requirements are separated into two distinct operational gates:
 
 ## 6. Release Artifact Hygiene
 
+**Git workflow — main only:** All development, bug fixes, tests, version bumps, release preparation, compiled web assets, and verified production artifacts shall be committed directly to `main`. Do not create a release, feature, staging, or temporary Git branch unless the maintainer explicitly asks for one. The local `scratch/` directory provides isolation for build and QA experiments without creating branches. Do not open PRs for changes made by the maintainer's agent unless requested. Verify `main` is current before each write and do not force-push it.
+
+
 - The next production candidate is **RotorCalculator 1.34 (versionCode 19)**; an Android release is not complete until a signed APK/AAB is compiled and verified.
 - Release delivery does not require creating or packaging ZIP files. Deliverables are committed source, verified release APK/AAB for Android, and GitHub Pages deployment for Web.
 - Never retain an APK or AAB in the repository that was built from an older source commit.
