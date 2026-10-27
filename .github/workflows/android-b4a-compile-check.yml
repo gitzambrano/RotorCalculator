@@ -1,0 +1,82 @@
+name: One-shot native B4A unsigned compilation check
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/android-b4a-compile-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-compile:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "19"
+      - name: Install official free B4A for unsigned compile test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $installer = Join-Path $env:RUNNER_TEMP "B4A-Official.exe"
+          Invoke-WebRequest -Uri "https://www.b4x.com/android/files/B4A.exe" -OutFile $installer -MaximumRedirection 6
+          if ((Get-Item $installer).Length -lt 1000000) { throw "Official B4A download is unexpectedly small." }
+          $p = Start-Process -FilePath $installer -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-") -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw "B4A installer exited with $($p.ExitCode)" }
+          $candidates = @(
+            "C:\Program Files\Anywhere Software\B4A\B4ABuilder.exe",
+            "C:\Program Files (x86)\Anywhere Software\B4A\B4ABuilder.exe",
+            "C:\Program Files\Anywhere Software\Basic4android\B4ABuilder.exe",
+            "C:\Program Files (x86)\Anywhere Software\Basic4android\B4ABuilder.exe"
+          )
+          $builder = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $builder) { throw "B4ABuilder.exe not found after official installation." }
+          "B4A_BUILDER=$builder" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "B4A compiler found: $builder"
+      - name: Verify Android SDK and configure transient B4A settings
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { $env:ANDROID_SDK_ROOT }
+          if (-not $sdk -or -not (Test-Path $sdk)) { throw "Hosted Windows Android SDK is unavailable." }
+          $platform = Join-Path $sdk "platforms\android-36"
+          if (-not (Test-Path (Join-Path $platform "android.jar"))) {
+            $mgr = Get-ChildItem (Join-Path $sdk "cmdline-tools") -Filter sdkmanager.bat -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $mgr) { throw "Android 36 SDK missing and sdkmanager unavailable." }
+            & $mgr.FullName --install "platforms;android-36" "build-tools;36.0.0"
+            if ($LASTEXITCODE -ne 0) { throw "Android SDK installation failed ($LASTEXITCODE)." }
+          }
+          $userIni = Join-Path $env:APPDATA "Anywhere Software\Basic4android\b4xV5.ini"
+          New-Item -ItemType Directory -Path (Split-Path $userIni) -Force | Out-Null
+          @(
+            "JavaBin=$(Join-Path $env:JAVA_HOME 'bin')",
+            "PlatformFolder=$platform",
+            "AdditionalLibrariesFolder=$(Join-Path $env:GITHUB_WORKSPACE 'Libraries')"
+          ) | Set-Content -Path $userIni -Encoding UTF8
+          "B4A_INI=$userIni" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+      - name: Compile unsigned APK from exact main source commit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Push-Location $env:GITHUB_WORKSPACE
+          try {
+            & $env:B4A_BUILDER "-Task=Build" "-NoSign=True" "-ShowWarnings=True" "-INI=$env:B4A_INI" "-BaseFolder=$env:GITHUB_WORKSPACE" "-Project=RotorCalculator.b4a"
+            if ($LASTEXITCODE -ne 0) { throw "B4A compiler failed with $LASTEXITCODE. Inspect compiler diagnostic output." }
+          } finally {
+            Pop-Location
+          }
+          $apk = Get-ChildItem Objects -Filter "*.apk" -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $apk) { throw "B4A returned success but no unsigned APK was produced." }
+          Write-Host "Unsigned Android compile succeeded: $($apk.FullName)"
+      - name: Store unsigned engineering-check APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rotorcalculator-1.35-unsigned-compiler-check
+          path: Objects/*.apk
+          retention-days: 3
