@@ -82,4 +82,5 @@ def test_web_result_picker_keeps_visuals_and_avoids_help_modal():
     assert 'if ((event.target as HTMLElement).closest(".result-unit")) return' in main
     assert 'safeSet("rotor_result_units", JSON.stringify(resultOutputUnits))' in main
     assert 'function resetAllUnits(system: "si" | "imperial")' in main
-    assert 'resetAllUnits(unitSystem === "si" ? "imperial" : "si")' in main
+    assert 'showOptionPicker("Reset All Units"' in main
+    assert 'selected => resetAllUnits(selected === "imperial" ? "imperial" : "si")' in main
