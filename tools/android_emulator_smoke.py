@@ -55,11 +55,18 @@ def tap_node(node: dict[str, str]) -> None:
 def main(apk: str) -> None:
     print(adb("install", "-r", apk, timeout=160), flush=True)
     adb("shell", "am", "force-stop", "flightdyn.rotorcalculator")
-    launch = adb("shell", "monkey", "-p", "flightdyn.rotorcalculator", "-c",
-                 "android.intent.category.LAUNCHER", "1", timeout=60)
-    print("Launch:", launch.splitlines()[-3:], flush=True)
+    # Start B4A's actual main activity directly, bypassing test-image launcher.
+    print(adb("shell", "am", "start", "-W", "-n", "flightdyn.rotorcalculator/.main", timeout=75), flush=True)
     time.sleep(4)
+    # The device boot may still be completing, so tolerate a transient system ANR.
     home = capture("android-home")
+    if matches(home, "Pixel Launcher isn't responding", contains=True):
+        close = matches(home, "Close app")
+        if close:
+            tap_node(close[0])
+        adb("shell", "am", "start", "-W", "-n", "flightdyn.rotorcalculator/.main", timeout=75)
+        time.sleep(3)
+        home = capture("android-home-after-launcher-recovery")
     results_tab = matches(home, "RESULTS")
     assert results_tab, f"No RESULTS tab in Android accessibility tree. Visible text: {[x.get('text') for x in home if x.get('text')]}"
     tap_node(results_tab[0])
