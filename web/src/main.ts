@@ -2271,7 +2271,8 @@ function bindInputListeners(): void {
       activeCond.horizontalValue = convertValue(value, unitOf("unit-horiz-val", "m/s"), "m/s");
       clearFieldHint("inp-horiz-val");
     } else {
-      activeCond.horizontalValue = limitValue("inp-horiz-val", "mu", value, OPERATING_LIMITS.mu, "");
+      activeCond.horizontalValue = value;
+      clearFieldHint("inp-horiz-val");
     }
     recalculate();
   });
