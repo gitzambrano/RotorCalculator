@@ -10,9 +10,9 @@ import { UNIT_TABLE } from "./units";
 type UnitKind = "force"|"moment"|"power"|"speed"|"angle"|"rpm"|"pressure"|"temperature"|"density"|"altitude"|"diskLoading"|"powerLoading";
 
 const GROUPS: Record<UnitKind, readonly string[]> = {
-  force: ["T","H","Hi","H0","Y","Tc"],
+  force: ["T","H","Hi","H0","Y"],
   moment: ["Q","Qi","Q0","Mx","My"],
-  power: ["P","Pi","P0","Pair","Pc"],
+  power: ["P","Pi","P0","Pair"],
   speed: ["vi","Vztot","Vz","Vx","OmR","Vadv","Vret","a"],
   angle: ["chi","alpha","coll","aoaAdv25","aoaRet25","aoaAdv50","aoaRet50","aoaAdv75","aoaRet75","aoaAdvTip","aoaRetTip","phiAdv25","phiRet25","phiAdv50","phiRet50","phiAdv75","phiRet75","phiAdvTip","phiRetTip"],
   rpm: ["rpm"],
@@ -93,7 +93,6 @@ export function canonicalResultValue(key:string, r:RotorResults, g:RotorGeometry
     case "Hi": return r.CHi * q;
     case "H0": return r.CH0 * q;
     case "Y": return r.sideForceYN;
-    case "Tc": return r.CT * q;
     case "Q": return r.torqueNm;
     case "Qi": return r.CQi * q * g.radius;
     case "Q0": return r.CQ0 * q * g.radius;
@@ -103,7 +102,6 @@ export function canonicalResultValue(key:string, r:RotorResults, g:RotorGeometry
     case "Pi": return r.CQi * powerScale;
     case "P0": return r.CQ0 * powerScale;
     case "Pair": return r.CPair * powerScale;
-    case "Pc": return r.CQ * powerScale;
     case "DL": return area > 0 ? r.thrustN / area : NaN;
     case "PL": return r.powerShaftKW > 0.000001 ? r.thrustN / r.powerShaftKW : NaN;
     case "vi": return r.inflowLambdaI * r.tipSpeed;
