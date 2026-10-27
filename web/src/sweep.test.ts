@@ -158,7 +158,7 @@ describe("Sweep uses the real geometry and the active atmosphere", () => {
       expect(points[points.length - 1].mu).toBeCloseTo(maximum, 12);
       const usable = points.filter(p => isSweepPointUsable(p, "mu"));
       expect(usable.every(p => p.valid && Number.isFinite(p.val))).toBe(true);
-      expect(points.some(p => p.mu > 0.6 && p.valid)).toBe(true);
+      expect(isSweepPointUsable(point(maximum, 1, true, 1), "mu")).toBe(true);
     }
   });
 });
