@@ -42,8 +42,11 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { $env:ANDROID_SDK_ROOT }
-          if (-not $sdk -or -not (Test-Path $sdk)) { throw "Hosted Windows Android SDK is unavailable." }
+          $hostSdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { $env:ANDROID_SDK_ROOT }
+          if (-not $hostSdk -or -not (Test-Path $hostSdk)) { throw "Hosted Windows Android SDK is unavailable." }
+          # Avoid mixing B4A resources with the older, preinstalled runner SDK.
+          $sdk = Join-Path $env:RUNNER_TEMP "b4a-clean-android"
+          New-Item -ItemType Directory -Path $sdk -Force | Out-Null
           # B4A uses a separately packaged Android resource set in addition to the SDK.
           $resources = Join-Path $env:RUNNER_TEMP "b4a-resources-7_25.zip"
           Invoke-WebRequest -Uri "https://github.com/AnywhereSoftware/B4A/releases/download/7_25/resources_7_25.zip" -OutFile $resources -MaximumRedirection 6
@@ -57,10 +60,9 @@ jobs:
           }
           $platform = Join-Path $sdk "platforms\android-36"
           if (-not (Test-Path (Join-Path $platform "android.jar"))) {
-            $mgr = Get-ChildItem (Join-Path $sdk "cmdline-tools") -Filter sdkmanager.bat -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $mgr) { throw "Android 36 SDK missing and sdkmanager unavailable." }
-            & $mgr.FullName --install "platforms;android-36" "build-tools;36.0.0"
-            if ($LASTEXITCODE -ne 0) { throw "Android SDK installation failed ($LASTEXITCODE)." }
+            $hostPlatform = Join-Path $hostSdk "platforms\android-36"
+            if (-not (Test-Path (Join-Path $hostPlatform "android.jar"))) { throw "Android API 36 unavailable in official resources and hosted SDK." }
+            Copy-Item $hostPlatform -Destination (Join-Path $sdk "platforms") -Recurse -Force
           }
           $userIni = Join-Path $env:APPDATA "Anywhere Software\Basic4android\b4xV5.ini"
           New-Item -ItemType Directory -Path (Split-Path $userIni) -Force | Out-Null
@@ -68,12 +70,15 @@ jobs:
           Write-Host "Android platform: $platform"
           Write-Host "SDK top-level folders: $((Get-ChildItem $sdk -Directory | Select-Object -ExpandProperty Name) -join ', ')"
           $buildToolsRoot = Join-Path $sdk 'build-tools'
-          $aapt2 = Get-ChildItem $buildToolsRoot -Recurse -Filter 'aapt2.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          $aapt2 = Get-ChildItem $buildToolsRoot -Recurse -Filter 'aapt2.exe' -File -ErrorAction SilentlyContinue |
+            Sort-Object DirectoryName -Descending | Select-Object -First 1
           if (-not $aapt2) { throw "aapt2.exe is missing after extracting official B4A Android resources." }
           Write-Host "AAPT2 executable: $($aapt2.FullName)"
           # B4A's ToolsFolder points to SDK tools, NOT sdkmanager's cmdline-tools/bin.
           $toolsFolder = Join-Path $sdk "tools"
-          if (-not (Test-Path $toolsFolder)) { $toolsFolder = (Split-Path -Parent $aapt2.FullName) }
+          if (-not (Test-Path $toolsFolder)) {
+            New-Item -ItemType Junction -Path $toolsFolder -Target (Split-Path -Parent $aapt2.FullName) -Force | Out-Null
+          }
           @(
             "JavaBin=$(Join-Path $env:JAVA_HOME 'bin')",
             "PlatformFolder=$platform",
