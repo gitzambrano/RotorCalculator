@@ -4125,16 +4125,7 @@ Sub edtHorizontalValue_TextChanged (Old As String, New As String)
 	If dv = NoVal Then Return
 	Dim key As String = HKey
 	ConditionHorizontalValue = InputToCanonical(key, dv)
-	Dim hReq As Double = ConditionHorizontalValue
-	If key = "mu" Then
-		ConditionHorizontalValue = ClampD(ConditionHorizontalValue, -0.60, 0.60)
-		NoteLimit("mu", hReq, ConditionHorizontalValue)
-	Else If key = "Vx" Then
-		' The engine limits mu_x to +-0.60: apply the same limit to V_x so the field never shows an unused value.
-		Dim vMax As Double = 0.60 * RotorTipSpeed
-		ConditionHorizontalValue = ClampD(ConditionHorizontalValue, -vMax, vMax)
-		NoteLimit("Vx", hReq, ConditionHorizontalValue)
-	End If
+	' Keep requested μ_x or V_x without saturation, including μ_x > 1.
 	ActiveCond.HorizontalMode = HorizontalInputMode
 	ActiveCond.HorizontalValue = ConditionHorizontalValue
 	RecalculateRotor
@@ -4396,7 +4387,6 @@ End Sub
 Sub btnViewPolarPlot_Click
 	Tick
 	If SweepPopupOpen Then CloseSweepPopup
-	If SweepMaxMuVal > 0.6 Then SweepMaxMuVal = 0.6
 	pnlSweepPopup.Initialize("pnlSweepPopup")
 	pnlSweepPopup.Color = ColorPnlInput5
 	root.AddView(pnlSweepPopup, 0, 0, root.Width, root.Height)
@@ -4815,19 +4805,15 @@ End Sub
 
 Sub btnSweepMaxMu_Click
 	Tick
-	' The zBET engine clamps mu_x to +-0.60, so larger ranges would plot constant values.
-	Dim vals() As Double = Array As Double(0.3, 0.4, 0.5, 0.6)
-	Dim options As List
-	options.Initialize
-	Dim selected As Int = 1
-	For i = 0 To vals.Length - 1
-		options.Add("μ_x max = " & NumberFormat2(vals(i), 1, 2, 2, False))
-		If Abs(SweepMaxMuVal - vals(i)) < 0.001 Then selected = i
-	Next
-	sheet.SetNote("μ_x ≤ 0.60 (model limit)")
-	Wait For (sheet.ShowChoice("Sweep Range", options, selected)) Complete (idx As Int)
-	If idx < 0 Or idx >= vals.Length Then Return
-	SweepMaxMuVal = vals(idx)
+	Dim initial As String = NumberFormat2(SweepMaxMuVal, 1, 3, 3, False)
+	Wait For (sheet.ShowInput("Sweep Range", "Maximum μ_x (positive, no fixed upper limit)", initial, "Apply", 16)) Complete (txt As String)
+	If txt.Length = 0 Then Return
+	Dim requested As Double = ParseInput(txt)
+	If requested = NoVal Or requested <= 0 Then
+		ToastMessageShow("Enter a positive advance ratio.", False)
+		Return
+	End If
+	SweepMaxMuVal = requested
 	SweepCrossX = -1
 	UpdateSweepPlotView
 End Sub
