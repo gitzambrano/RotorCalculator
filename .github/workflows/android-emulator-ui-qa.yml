@@ -36,13 +36,14 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
-          target: google_apis
+          target: aosp_atd
           arch: x86_64
-          profile: pixel_4
+          profile: Nexus 6
           cores: 2
-          ram-size: 2048M
+          ram-size: 4096M
           heap-size: 512M
           disable-animations: true
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect -camera-back none
           script: |
             python3 tools/android_emulator_smoke.py "$(find scratch/native-qa -type f -name '*.apk' -print -quit)"
       - name: Save real Android screenshots and accessibility trees
