@@ -44,7 +44,7 @@ Every requirement in this specification has a unique alphanumeric identifier. Re
 
 **GEO-6** — Geometry shall expose **SAVE**, **COPY**, and **DELETE** action buttons directly on the page.
 
-**GEO-7** — SAVE shall persist current edits to internal application storage and clear the unsaved indicator. COPY shall duplicate the current geometry under an auto-generated unique name. DELETE shall remove the current rotor after user confirmation and shall be disabled when only one rotor exists.
+**GEO-7** — SAVE shall always request a rotor name. The existing name shall overwrite that rotor. A different unique name shall save a copy and preserve the original. Cancel shall not save changes. COPY shall duplicate the current geometry under a unique name. DELETE shall remove the current rotor after user confirmation and shall be disabled when only one rotor exists.
 
 **GEO-8** — Selecting another rotor or exiting the screen with unsaved edits shall display an unsaved changes modal offering Save, Discard, and Cancel options.
 
@@ -257,7 +257,7 @@ Section 9: **ATMOSPHERE & INFLOW** — Rotor Speed $\Omega$, Collective Pitch $\
 
 **PLOT-3** — The horizontal axis (X-axis) shall support Advance Ratio $\mu_x$, Forward Airspeed $V_x$, and Advance-to-Inflow Ratio $\mu_x/\lambda$.
 
-**PLOT-4** — Maximum sweep range shall provide user choices of $0.30$, $0.40$, $0.50$, and $0.60$.
+**PLOT-4** — Maximum sweep range shall accept any finite positive user-entered value of $\mu_{x,\max}$, including values greater than 0.60. Plots, tables, readouts, and CSV exports shall preserve points up to that maximum when the solver produces valid results.
 
 **PLOT-5** — The active operating point shall be displayed as an interactive marker when within current plot bounds.
 
