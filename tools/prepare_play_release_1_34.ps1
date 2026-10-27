@@ -88,7 +88,9 @@ foreach ($pattern in @("name='flightdyn.rotorcalculator'", "versionCode='19'", "
     if (-not $Badging.Contains($pattern)) { throw "APK metadata mismatch: expected $pattern in $Badging" }
 }
 $JarSigner = Get-Command "jarsigner.exe" -ErrorAction SilentlyContinue
-if (-not $JarSigner) { throw "JDK jarsigner.exe is required to verify the AAB signature." }
+if (-not $JarSigner) { throw "JDK jarsigner.exe is required to sign and verify the AAB." }
+& $JarSigner.Source -keystore $KeyFile -storepass $KeyPassword -digestalg SHA-256 -sigalg SHA256withRSA $Aab $KeyAlias | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "AAB re-signing with SHA-256 failed." }
 $JarOutput = & $JarSigner.Source -verify $Aab 2>&1
 if ($LASTEXITCODE -ne 0 -or (-not (($JarOutput | Out-String) -match "jar verified"))) {
     throw "AAB signing verification failed: $($JarOutput | Out-String)"
