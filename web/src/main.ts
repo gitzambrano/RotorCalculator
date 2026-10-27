@@ -225,7 +225,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.34</span>
+            <span class="version-badge">v1.35</span>
           </div>
         </div>
         <div class="header-actions">
