@@ -59,11 +59,11 @@ Developed by Gustavo José Zambrano.
   - Cardinal flight orientation azimuth labels ($180^\circ$ Fore, $0^\circ$ Aft, $90^\circ$ Adv., $270^\circ$ Ret.) with safe viewport clearances.
   - Prominent horizontal Jet colorbar with strictly 2 significant figures across min, mid, and max legend values.
   - Real-time active operating point banner ($\mu_x, V_x, \mu_z$) and single/batch PNG export ("EXPORT PNG", "EXPORT ALL PNG").
-- **Universal Parameter Sweeps:** Generates multi-curve parametric sweeps vs advance ratio ($\mu_x$) across all 61 output quantities:
+- **Universal Parameter Sweeps:** Generates multi-curve parametric sweeps vs advance ratio ($\mu_x$) across all 61 output quantities, with a user-defined sweep maximum (including $\mu_x > 1$):
   - Five curve families: Inflow Models, Constant $\alpha$ set, Constant $V_z$ set, Constant $\mu_z$ set, and Active Rotor.
   - Five trim modes: No Trim (Fixed Controls), Trimmed Collective (Every Point), Trimmed Rotor Speed (Every Point), Fixed Collective (Hover Only), Fixed Rotor Speed (Hover Only).
   - Interactive static plots with tap readouts, multi-theme palettes, and single/batch PNG export ("EXPORT PNG", "EXPORT ALL PNG") plus CSV export.
-- **Rotor Management and Storage:**
+- **Rotor Management and Storage:** Every SAVE opens a rotor-name dialog; reusing the active name overwrites it, and choosing a different name creates a separate rotor.
   - Built-in factory presets: UH-60 Black Hawk, Bell 206 JetRanger, Bo 105, Robinson R44, DJI Matrice 300, and Generic eVTOL.
   - Full CRUD operations: Create, Read, Update, Duplicate, and Delete custom rotors.
   - Versioned database backup and sharing via structured text files (`.txt`) and JSON (`.json`) with interactive conflict resolution (Rename, Replace, Skip).
