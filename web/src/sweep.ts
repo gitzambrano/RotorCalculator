@@ -774,7 +774,8 @@ export function drawSweepCanvas(
   theme: "dark" | "light" | "midnight" | "sepia" = "dark",
   hoverCoord: { x: number; y: number } | null = null,
   crossX = -1,
-  extraPrecision = 0
+  extraPrecision = 0,
+  requestedMuMax = Number.NaN
 ): { plotLeft: number; plotWidth: number; xMax: number } {
   currentOpPoint = visibleSweepMarker(curves, currentOpPoint, xAxisMode);
   const ctx = canvas.getContext("2d");
@@ -841,7 +842,11 @@ export function drawSweepCanvas(
     yMax = 1;
   }
 
-  if (xAxisMode !== "mu") {
+  // μ-axis is a user-selected domain, not just the extent of valid solver points.
+  if (xAxisMode === "mu") {
+    const sweepMax = curves.reduce((max, curve) => Math.max(max, ...curve.points.map(p => p.mu)), 0);
+    xMax = Number.isFinite(requestedMuMax) && requestedMuMax > 0 ? requestedMuMax : Math.max(0.01, sweepMax);
+  } else {
     const xnStep = niceStep(xMax / 4);
     xMax = Math.ceil(xMax / xnStep - 0.0001) * xnStep;
   }
