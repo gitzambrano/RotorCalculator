@@ -2955,7 +2955,7 @@ bindResultUnitPickers();
 
 function bindUnitButtons(): void {
   const length = ["m", "ft", "in", "cm", "mm"];
-  const area = ["m²", "ft²", "in²", "cm²"];
+  const area = ["m²", "ft²", "in²", "cm²", "mm²", "yd²", "km²"];
   const configs: { btnId: string; fieldName: string; units: string[] | (() => string[]); onlyWhen?: () => boolean }[] = [
     { btnId: "unit-radius", fieldName: "Radius R", units: length },
     { btnId: "unit-chord-root", fieldName: "Root Chord c0", units: length },
