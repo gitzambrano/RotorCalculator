@@ -127,6 +127,30 @@ All modifications must pass formal automated test suites:
 
 GitHub Actions runs only the lightweight checks of steps 1 and 2 (`verify_engine.py`, `pytest`, `tsc --noEmit`, `npm test`). B4A compilation, emulator UI QA (`tools/ci_ui_qa.sh`) and visual verification run offline. `python tools/play_status.py` shows the Google Play bundles and tracks without changing anything.
 
+### Preparing the signed Android 1.35 submission
+
+On a Windows workstation with B4A, JDK, Android SDK, the original Play upload keystore, and B4A dependencies, run from the exact checked-out `main` source. **Do not place signing passwords, keystores, or service-account JSON in Git.**
+
+```powershell
+$env:B4A_BUILDER = "C:\Program Files\Anywhere Software\B4A\B4ABuilder.exe"
+$env:B4A_KEY_FILE = "Key\rotorcalculator.keystore"
+$env:B4A_KEY_ALIAS = "rotorcalculator"
+$env:B4A_KEY_PASSWORD = "<read securely from your local credential manager>"
+$env:ANDROID_HOME = "C:\Android\sdk"
+.\tools\prepare_play_release.ps1
+```
+
+The script checks Android/web/release version parity, compiles a **signed APK and a signed AAB**, verifies APK metadata and both signatures, then generates a SHA-256 manifest in the ignored `scratch/release-1.35/artifacts/` directory. Complete Gate 2 device/emulator QA before uploading.
+
+To validate a candidate upload (requires your private Play service-account key), use:
+
+```powershell
+python tools/upload_playstore.py --aab scratch/release-1.35/artifacts/RotorCalculator-1.35-signed.aab --track internal --status draft --validate-only
+```
+
+Keep the release in draft and submit to a Google Play track only after the package has passed validation. The source repository cannot create a legitimately signed AAB without the existing private upload key and licensed B4A build environment.
+
+
 ---
 
 ## License
