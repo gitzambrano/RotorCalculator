@@ -48,6 +48,37 @@ jobs:
       - name: Static and engine tests
         run: python -m pytest -q tests
 
+  web-browser-smoke:
+    name: web-browser-unit-smoke
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install web and browser test dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Real browser acceptance tests (phone and desktop)
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4173 --strictPort > ../scratch/browser-smoke.log 2>&1 &
+          DEV_PID=$!
+          trap 'kill "$DEV_PID" 2>/dev/null || true' EXIT
+          node scripts/browser-smoke-units.mjs
+      - name: Upload browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rotor-browser-smoke-diagnostics
+          path: scratch/browser-smoke.log
+          if-no-files-found: ignore
+
   web-qa:
     name: web-typecheck-and-unit-tests
     runs-on: ubuntu-22.04
