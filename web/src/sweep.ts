@@ -727,10 +727,10 @@ export function sweepPointX(point: { mu: number; vx: number; muLam?: number }, a
   return axis === "vx" ? point.vx : axis === "muLam" ? point.muLam ?? NaN : point.mu;
 }
 
-/** RotorPopups.XOk: the chosen axis must describe a finite, supported solution. */
+/** RotorPopups.XOk: the chosen axis must describe a finite solution. */
 export function isSweepPointUsable(point: SweepPointData, axis: SweepXAxis): boolean {
   const x = sweepPointX(point, axis);
-  return point.valid && point.mu <= 0.6001 && Number.isFinite(point.val) && Number.isFinite(x) && (axis !== "muLam" || x >= 0);
+  return point.valid && Number.isFinite(point.mu) && Number.isFinite(point.val) && Number.isFinite(x) && (axis !== "muLam" || x >= 0);
 }
 
 /** RotorPopups.CurveOrder retains original indices to avoid joining across invalid samples. */
