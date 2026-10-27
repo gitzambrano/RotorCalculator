@@ -242,7 +242,9 @@ def test_trim_is_at_current_flight_condition_and_candidate_rpm_recomputes_mu():
     engine = text("zBETEngine.bas")
     assert "Public Sub ResolveConditionAtRPM" in engine
     assert 'If c.HorizontalMode = "vx" Then' in engine
-    assert "c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue / vtip))" in engine
+    assert "c.Mu = c.HorizontalValue / vtip" in engine
+    assert "c.Mu = c.HorizontalValue" in engine
+    assert "Max(-0.60" not in engine
     assert "ResolveMuZ(c.Mu, c.AxialMode, c.AxialValue, vtip)" in engine
     assert "Private Sub CandidateResult" in engine
     assert "Private Sub SolveCollective" in engine
@@ -742,13 +744,14 @@ def test_settings_sections_and_rename_flow():
     assert "#ApplicationLabel: Rotor Calc" in main
 
 
-def test_sweep_range_is_limited_to_engine_mu_limit():
+def test_sweep_range_accepts_any_positive_mu():
     main = text("RotorCalculator.b4a")
     start = main.index("Sub btnSweepMaxMu_Click")
     block = main[start:main.index("End Sub", start)]
-    assert "Array As Double(0.3, 0.4, 0.5, 0.6)" in block
-    assert "0.8" not in block and "1.0)" not in block
-    assert "model limit" in block
+    assert 'sheet.ShowInput("Sweep Range"' in block
+    assert "requested <= 0" in block
+    assert "SweepMaxMuVal = requested" in block
+    assert "model limit" not in block
     assert "th:nth-child(" in main  # frozen x columns in the sweep table
 
 
@@ -990,7 +993,9 @@ def test_factory_preset_overwrite_and_delete_are_guarded_with_undo():
     main = text("RotorCalculator.b4a")
     storage = text("RotorStorage.bas")
     assert "Private Sub SaveWithPresetGuard" in main
-    assert "Save as copy" in main and "Overwrite preset" in main
+    assert 'sheet.ShowInput("Save Rotor"' in main and "Overwrite preset" in main
+    assert "If nm.ToLowerCase <> current.Name.ToLowerCase Then" in main
+    assert "RotorStorage.AddRotor(copyGeom)" in main
     assert "IsFactoryPresetAt" in main and "Public Sub IsFactoryPresetAt" in storage
     assert "Sub btnUndoDelete_Click" in main and '"UNDO"' in main
     assert "Public Sub InsertRotorAt" in storage
