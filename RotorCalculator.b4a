@@ -1866,7 +1866,7 @@ Private Sub UnitChoices(key As String) As List
 		Case "len"
 			If key = "h" Then out.AddAll(Array As String("m", "ft", "km")) Else out.AddAll(Array As String("m", "ft", "in", "cm", "mm"))
 		Case "area"
-			out.AddAll(Array As String("m²", "ft²", "in²", "cm²"))
+			out.AddAll(Array As String("m²", "ft²", "in²", "cm²", "mm²", "yd²", "km²"))
 		Case "ang"
 			out.AddAll(Array As String("deg", "rad"))
 		Case "a0"
@@ -1894,6 +1894,9 @@ Private Sub UnitFactor(u As String) As Double
 		Case "ft²": Return 0.09290304
 		Case "in²": Return 0.00064516
 		Case "cm²": Return 0.0001
+		Case "mm²": Return 0.000001
+		Case "yd²": Return 0.83612736
+		Case "km²": Return 1000000.0
 		Case "deg": Return cPI / 180.0
 		Case "deg⁻¹": Return 180.0 / cPI
 		Case "ft/s": Return 0.3048
