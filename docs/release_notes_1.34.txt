@@ -1,0 +1,12 @@
+<en-US>
+RotorCalculator 1.34.
+Removed the advance-ratio limit of 0.60 for input by μx or forward speed Vx.
+Sweep plots now accept a custom maximum μx, including values above 1, with matching table and CSV output.
+Saving a rotor always asks for its name. A different name creates a copy without replacing the original.
+</en-US>
+<pt-BR>
+RotorCalculator 1.34.
+Removido o limite de μx = 0,60 nas entradas por μx ou velocidade Vx.
+Os gráficos de varredura aceitam qualquer μx máximo positivo, inclusive acima de 1, com tabela e CSV coerentes.
+Salvar um rotor sempre solicita um nome. Um nome diferente cria uma cópia e preserva o original.
+</pt-BR>
