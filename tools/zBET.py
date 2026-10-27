@@ -654,7 +654,6 @@ def _operating_flow(geometry, horizontal_mode, horizontal_value, axial_mode, axi
         mu = float(horizontal_value)
     else:
         raise ValueError("horizontal_mode must be 'mu' or 'vx'")
-    mu = max(-0.60, min(0.60, mu))
 
     if axial_mode == "vz":
         mu_z, _ = axial_condition(mu, axial_value, "w", geometry)
