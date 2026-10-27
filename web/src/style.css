@@ -4220,6 +4220,13 @@ input[type="number"] {
 /* The whole result row is the help button. */
 .result-row { position: relative; min-height: 48px; }
 .result-label::after { content: ""; position: absolute; inset: 0; }
+/* The full-row label-help hit area must never cover a selectable result unit.
+   Preserve the original label visual appearance: only hit testing changes. */
+#page-results .result-unit[role="button"] {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+}
 
 /* Icon buttons keep their look but get a 48px hit area. */
 .icon-btn { position: relative; }
