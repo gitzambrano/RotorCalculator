@@ -270,24 +270,26 @@ describe("Operating contract (Android / Python parity)", () => {
     expect(trimmed.operatingMu).toBeCloseTo(40 / trimmed.tipSpeed, 9);
   });
 
-  it("limits mu to [-0.60, 0.60] and reports the value used", () => {
+  it("preserves advance ratios beyond 0.6, including reverse flow and dimensional Vx", () => {
     const g = refGeom();
-    const edgeHi = calculate(g, refCond({ horizontalValue: 0.6 }));
-    expect(edgeHi.operatingMu).toBe(0.6);
-    expect(edgeHi.validityWarning).toBe("");
-    const over = calculate(g, refCond({ horizontalValue: 0.61 }));
-    expect(over.operatingMu).toBe(0.6);
-    expect(over.CT).toBeCloseTo(edgeHi.CT, 14);
-    expect(over.validityWarning).toBe("Input limited: μx = 0.60");
-    const edgeLo = calculate(g, refCond({ horizontalValue: -0.6 }));
-    expect(edgeLo.operatingMu).toBe(-0.6);
-    expect(edgeLo.validityWarning).toBe("");
-    const under = calculate(g, refCond({ horizontalValue: -0.7 }));
-    expect(under.operatingMu).toBe(-0.6);
-    expect(under.validityWarning).toBe("Input limited: μx = -0.60");
-    const viaVx = calculate(g, refCond({ horizontalMode: "vx", horizontalValue: 1000 }));
-    expect(viaVx.operatingMu).toBe(0.6);
-    expect(viaVx.validityWarning).toContain("μx = 0.60");
+    const high = calculate(g, refCond({ horizontalValue: 1.918 }));
+    expect(high.operatingMu).toBeCloseTo(1.918, 12);
+    expect(high.operatingVx).toBeCloseTo(1.918 * high.tipSpeed, 10);
+    expect(high.validityWarning).not.toContain("μx =");
+
+    const backward = calculate(g, refCond({ horizontalValue: -1.918 }));
+    expect(backward.operatingMu).toBeCloseTo(-1.918, 12);
+    expect(backward.operatingVx).toBeLessThan(0);
+    expect(backward.validityWarning).not.toContain("μx =");
+
+    const speed = 82 * 0.5144444444444445;
+    const small = { ...g, radius: 1.4, rpm: 150, nominalRpm: 150 };
+    const dimensional = calculate(small, refCond({ horizontalMode: "vx", horizontalValue: speed }));
+    const expected = speed / (150 * 2 * Math.PI / 60 * 1.4);
+    expect(expected).toBeCloseTo(1.918, 2);
+    expect(dimensional.operatingMu).toBeCloseTo(expected, 11);
+    expect(dimensional.operatingVx).toBeCloseTo(speed, 9);
+    expect(dimensional.validityWarning).not.toContain("μx =");
   });
 
   it("does not turn negative mu into hover (matches tools/zBET.py)", () => {
