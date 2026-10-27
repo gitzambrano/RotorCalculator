@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/android-emulator-ui-qa.yml"
+      - "tools/android_emulator_smoke.py"
   workflow_dispatch:
 
 permissions:
