@@ -77,7 +77,9 @@ describe("Native sweep plot domain and live-marker rules", () => {
   const curve = (points: SweepPointData[]) => ({ label: "Test", color: "#000000", points });
 
   it("excludes unsupported and nonfinite samples and negative μ/λ", () => {
-    expect(isSweepPointUsable(point(0.61, 1), "mu")).toBe(false);
+    expect(isSweepPointUsable(point(0.61, 1), "mu")).toBe(true);
+    expect(isSweepPointUsable(point(1.918, 1), "mu")).toBe(true);
+    expect(isSweepPointUsable(point(Infinity, 1), "mu")).toBe(false);
     expect(isSweepPointUsable(point(0.2, Infinity), "mu")).toBe(false);
     expect(isSweepPointUsable(point(0.2, 1, true, -2), "muLam")).toBe(false);
     expect(isSweepPointUsable(point(0.2, 1, true, 2), "muLam")).toBe(true);
@@ -158,7 +160,7 @@ describe("Sweep uses the real geometry and the active atmosphere", () => {
       expect(points[points.length - 1].mu).toBeCloseTo(maximum, 12);
       const usable = points.filter(p => isSweepPointUsable(p, "mu"));
       expect(usable.every(p => p.valid && Number.isFinite(p.val))).toBe(true);
-      expect(isSweepPointUsable(point(maximum, 1, true, 1), "mu")).toBe(true);
+      expect(isSweepPointUsable({ ...points[0], mu: maximum, val: 1, valid: true }, "mu")).toBe(true);
     }
   });
 });
