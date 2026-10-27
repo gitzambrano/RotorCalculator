@@ -1,0 +1,9 @@
+{
+  "version": "1.35",
+  "versionCode": 20,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": null,
+  "verification": "Source prepared. Signed Android APK/AAB and on-device validation pending. Web built from main through GitHub Actions.",
+  "qaReport": "release_notes_1.35.txt",
+  "androidArtifactStatus": "pending-signed-build"
+}
