@@ -3591,7 +3591,8 @@ function initSweepModal(): void {
       currentTheme,
       null,
       sweepCrossX,
-      extraPrecision
+      extraPrecision,
+      sweepMaxMu
     );
     const readoutEl = byId("sweep-readout");
     if (readoutEl) {
