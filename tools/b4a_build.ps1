@@ -11,7 +11,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-if (-not $KeyAlias) { $KeyAlias = "b4a" }
+if (-not $KeyAlias) { $KeyAlias = "rotorcalculator" }
 
 if (-not $B4ABuilder) {
     $candidatePaths = @(
@@ -28,8 +28,7 @@ if (-not $B4ABuilder) {
 }
 
 if (-not $B4ABuilder -or -not (Test-Path $B4ABuilder)) {
-    Write-Warning "B4ABuilder.exe não foi encontrado automaticamente. Defina a variável de ambiente B4A_BUILDER ou passe o parâmetro -B4ABuilder."
-    return
+    throw "B4ABuilder.exe não foi encontrado. Defina B4A_BUILDER ou use -B4ABuilder; a compilação não ocorreu."
 }
 
 $B4ABuilder = (Resolve-Path $B4ABuilder).Path
@@ -51,6 +50,7 @@ if ($iniText -match 'AdditionalLibrariesFolder=[^\r\n]*') {
 }
 
 $NoSign = $true
+if ($KeyFile -and -not (Test-Path $KeyFile)) { throw "Arquivo de assinatura não encontrado: $KeyFile" }
 if ($KeyFile -and (Test-Path $KeyFile)) {
     $NoSign = $false
     $resolvedKey = (Resolve-Path $KeyFile).Path
