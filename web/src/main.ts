@@ -662,6 +662,11 @@ app.innerHTML = `
                 <option value="0.4" selected>μ_x max = 0.40</option>
                 <option value="0.5">μ_x max = 0.50</option>
                 <option value="0.6">μ_x max = 0.60</option>
+                <option value="0.8">μ_x max = 0.80</option>
+                <option value="1">μ_x max = 1.00</option>
+                <option value="1.5">μ_x max = 1.50</option>
+                <option value="2">μ_x max = 2.00</option>
+                <option value="custom">Custom μ_x max…</option>
               </select>
             </div>
             <div class="sweep-control-group" id="sweep-group-trim-mode">
@@ -2942,12 +2947,13 @@ function promptRotorName(
   title: string,
   initial: string,
   positive: string,
-  validate?: (name: string) => string | null
+  validate?: (name: string) => string | null,
+  fieldLabel = `Name (max ${MAX_ROTOR_NAME_LENGTH} characters)`
 ): Promise<string | null> {
   return new Promise(resolve => {
     const overlay = document.createElement("div");
     overlay.id = "modal-name-input"; overlay.className = "modal-overlay";
-    overlay.innerHTML = `<form class="modal-card rotor-name-dialog" role="dialog" aria-modal="true" aria-labelledby="name-dialog-title"><div class="modal-header"><div class="modal-title" id="name-dialog-title">${escapeHTML(title)}</div><button type="button" class="modal-close-btn" aria-label="Close">×</button></div><div class="modal-body"><label for="name-dialog-input">Name (max ${MAX_ROTOR_NAME_LENGTH} characters)</label><input class="row-input" id="name-dialog-input" maxlength="${MAX_ROTOR_NAME_LENGTH}" autocomplete="off" aria-describedby="name-dialog-error"><div class="field-error" id="name-dialog-error" role="alert" hidden></div><div class="name-dialog-actions"><button type="button" class="action-btn" id="name-dialog-cancel">Cancel</button><button type="submit" class="action-btn save">${escapeHTML(positive)}</button></div></div></form>`;
+    overlay.innerHTML = `<form class="modal-card rotor-name-dialog" role="dialog" aria-modal="true" aria-labelledby="name-dialog-title"><div class="modal-header"><div class="modal-title" id="name-dialog-title">${escapeHTML(title)}</div><button type="button" class="modal-close-btn" aria-label="Close">×</button></div><div class="modal-body"><label for="name-dialog-input">${escapeHTML(fieldLabel)}</label><input class="row-input" id="name-dialog-input" maxlength="${MAX_ROTOR_NAME_LENGTH}" autocomplete="off" aria-describedby="name-dialog-error"><div class="field-error" id="name-dialog-error" role="alert" hidden></div><div class="name-dialog-actions"><button type="button" class="action-btn" id="name-dialog-cancel">Cancel</button><button type="submit" class="action-btn save">${escapeHTML(positive)}</button></div></div></form>`;
     document.body.append(overlay);
     const input = overlay.querySelector<HTMLInputElement>("input")!;
     const error = overlay.querySelector<HTMLElement>("#name-dialog-error")!;
@@ -3143,9 +3149,20 @@ async function runImportFlow(imported: StoredRotor[]): Promise<void> {
 
 const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
-/** Save the active rotor under a unique name. Returns false when storage refuses the write. */
-function commitActiveRotor(): boolean {
-  const name = uniqueRotorName(activeGeom.name, currentRotor.id);
+/** A new name creates a rotor. The source is only overwritten when the name is unchanged. */
+function commitActiveRotor(name: string): boolean {
+  if (name.trim().toLowerCase() !== currentRotor.name.trim().toLowerCase()) {
+    if (duplicateNameProblem(name, currentRotor.id)) return false;
+    const saved: StoredRotor = { id: `custom-${Date.now()}`, name, geom: cloneGeometry({ ...activeGeom, name }) };
+    storedRotors.push(saved);
+    if (!saveStoredRotors(storedRotors)) {
+      storedRotors.pop();
+      return false;
+    }
+    activateRotor(saved);
+    return true;
+  }
+
   const previousName = currentRotor.name;
   const previousGeom = currentRotor.geom;
   currentRotor.name = name;
@@ -3162,20 +3179,30 @@ function commitActiveRotor(): boolean {
   return true;
 }
 
+/** Every Save action asks for a name, including Save from the unsaved-changes dialog. */
+async function saveActiveRotorWithNamePrompt(): Promise<"saved" | "canceled" | "failed"> {
+  const name = await promptRotorName(
+    "Save Rotor", activeGeom.name, "Save",
+    candidate => duplicateNameProblem(candidate, currentRotor.id),
+    "Rotor name · same name overwrites, different name saves as a copy"
+  );
+  if (!name) return "canceled";
+  return commitActiveRotor(name) ? "saved" : "failed";
+}
+
 const SAVE_FAILED_TEXT = "The browser did not save the rotor. Storage is full or blocked.\nExport a backup to keep your data.";
 
 // Rotor Actions (Save, Copy, Delete, New, Import, Export)
 function bindRotorActionButtons(): void {
   byId("btn-geom-save").addEventListener("click", () => {
-    const saveBtn = byId("btn-geom-save");
-    if (commitActiveRotor()) {
-      saveBtn.textContent = "SAVED ✓";
-      window.setTimeout(() => (saveBtn.textContent = "SAVE"), 1500);
-    } else {
-      saveBtn.textContent = "NOT SAVED";
-      window.setTimeout(() => (saveBtn.textContent = "SAVE"), 2500);
-      void showNotice("Save Failed", SAVE_FAILED_TEXT);
-    }
+    void (async () => {
+      const result = await saveActiveRotorWithNamePrompt();
+      if (result === "canceled") return;
+      const saveBtn = byId("btn-geom-save");
+      saveBtn.textContent = result === "saved" ? "SAVED ✓" : "NOT SAVED";
+      window.setTimeout(() => (saveBtn.textContent = "SAVE"), result === "saved" ? 1500 : 2500);
+      if (result === "failed") await showNotice("Save Failed", SAVE_FAILED_TEXT);
+    })();
   });
 
   byId("btn-geom-copy").addEventListener("click", () => {
@@ -3244,8 +3271,11 @@ function bindRotorActionButtons(): void {
 
   // Modal: Unsaved Changes Confirm Listeners
   byId("btn-unsaved-save").addEventListener("click", () => {
-    if (!commitActiveRotor()) {
-      void showNotice("Save Failed", SAVE_FAILED_TEXT);
+    void (async () => {
+    const result = await saveActiveRotorWithNamePrompt();
+    if (result === "canceled") return;
+    if (result === "failed") {
+      await showNotice("Save Failed", SAVE_FAILED_TEXT);
       return;
     }
     closeModal("modal-unsaved-confirm");
@@ -3254,6 +3284,7 @@ function bindRotorActionButtons(): void {
       pendingUnsavedAction = null;
       act();
     }
+    })();
   });
 
   byId("btn-unsaved-discard").addEventListener("click", () => {
@@ -3574,7 +3605,8 @@ function initSweepModal(): void {
     safeSet("rotor_sweep_family", String(sweepMultiMode));
     sweepXAxisMode = (byId<HTMLSelectElement>("sweep-select-xaxis").value as "mu" | "vx" | "muLam") || "mu";
     safeSet("rotor_sweep_xaxis", sweepXAxisMode);
-    sweepMaxMu = parseFloat(byId<HTMLSelectElement>("sweep-select-maxmu").value) || 0.4;
+    const requestedMaxMu = Number(byId<HTMLSelectElement>("sweep-select-maxmu").value);
+    if (Number.isFinite(requestedMaxMu) && requestedMaxMu > 0) sweepMaxMu = requestedMaxMu;
 
     computeSweep();
     const meta = sweepMeta();
@@ -3636,7 +3668,34 @@ function initSweepModal(): void {
   selectParam.onchange = onParamChange;
   byId("sweep-select-family").onchange = onParamChange;
   byId("sweep-select-xaxis").onchange = onParamChange;
-  byId("sweep-select-maxmu").onchange = onParamChange;
+  byId("sweep-select-maxmu").onchange = () => {
+    const selector = byId<HTMLSelectElement>("sweep-select-maxmu");
+    if (selector.value !== "custom") { onParamChange(); return; }
+    void (async () => {
+      const input = await promptRotorName(
+        "Sweep Range", String(sweepMaxMu), "Apply",
+        value => Number.isFinite(Number(value.replace(",", "."))) && Number(value.replace(",", ".")) > 0
+          ? null : "Enter a positive, finite advance ratio.",
+        "Maximum advance ratio μ_x (no fixed upper limit)"
+      );
+      if (input !== null) {
+        const value = String(Number(input.replace(",", ".")));
+        let customOption = selector.querySelector<HTMLOptionElement>('option[data-custom="true"]');
+        if (!customOption) {
+          customOption = document.createElement("option");
+          customOption.dataset.custom = "true";
+          selector.add(customOption, selector.options.length - 1);
+        }
+        customOption.value = value;
+        customOption.textContent = `μ_x max = ${Number(value).toPrecision(4)}`;
+        selector.value = value;
+      } else {
+        const original = Array.from(selector.options).find(opt => Number(opt.value) === sweepMaxMu);
+        selector.value = original ? original.value : "0.4";
+      }
+      onParamChange();
+    })();
+  };
 
   const handlePointer = (clientX: number) => {
     const rect = canvas.getBoundingClientRect();
