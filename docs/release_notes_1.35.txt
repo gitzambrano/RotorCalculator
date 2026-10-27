@@ -1,0 +1,12 @@
+<en-US>
+RotorCalculator 1.35.
+Tap a result's unit label to select its display unit independently, without changing the engineering calculation or the results layout.
+Added SI and Imperial choices for force, moment, power, airspeed, altitude, temperature, pressure, density, angles, rotor speed, disk loading and power loading.
+Settings > Reset All Units restores input and output defaults. Added kgf for target thrust.
+</en-US>
+<pt-BR>
+RotorCalculator 1.35.
+Toque na unidade de um resultado para escolher sua unidade individual, sem alterar os cálculos nem o layout.
+Novas opções SI e imperiais para forças, momentos, potências, velocidades, altitude, temperatura, pressão, densidade, ângulos, RPM e carregamentos.
+A opção Reset All Units redefine entradas e saídas. Empuxo alvo agora aceita kgf.
+</pt-BR>
