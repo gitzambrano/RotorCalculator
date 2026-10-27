@@ -12,6 +12,7 @@ import { renderEquationMathML } from "./math-renderer";
 import { getHelpSvg } from "./help-illustrations";
 import { computeDiskContourData, drawDiskContour, DISK_CONTOUR_PARAMS } from "./disk-contour";
 import "./style.css";
+import { canonicalResultValue, convertResultFromCanonical, defaultResultUnit, readResultUnitPreferences, resultKind, resultUnit, resultUnitChoices } from "./result-units";
 import headerIconUrl from "./assets/icon_header.png";
 import {
   calculate,
@@ -182,6 +183,7 @@ let currentPage: "geometry" | "conditions" | "results" = savedPage === "conditio
 let currentTheme: "dark" | "light" | "midnight" | "sepia" = storedChoice("rotor_theme", ["dark", "light", "midnight", "sepia"] as const, "dark");
 let unitSystem: "si" | "imperial" = storedChoice("rotor_units", ["si", "imperial"] as const, "si");
 let extraPrecision: number = storedInt("rotor_extra_precision", -1, 1, 0);
+let resultOutputUnits: Record<string,string> = readResultUnitPreferences(safeGet("rotor_result_units"));
 
 // Preferred Output Units
 let prefThrustUnit = storedUnit("rotor_pref_thrust", ["N", "kN", "lbf", "kgf"], unitSystem === "imperial" ? "lbf" : "N");
@@ -865,8 +867,8 @@ app.innerHTML = `
             </div>
             <div class="settings-row">
               <div class="settings-row-info">
-                <div class="settings-row-title">Result Units (Outputs Only)</div>
-                <div class="settings-row-sub">SI or Imperial for results; input rows keep their own units</div>
+                <div class="settings-row-title">Reset All Units (Inputs &amp; Outputs)</div>
+                <div class="settings-row-sub">Reset all input and output units to SI or Imperial defaults</div>
               </div>
               <button type="button" class="settings-btn" id="btn-setting-units">SI</button>
             </div>
@@ -1494,7 +1496,14 @@ function renderResults(): void {
     const valEl = row.querySelector<HTMLElement>(".result-val");
     const unitEl = row.querySelector<HTMLElement>(".result-unit");
     if (valEl) {
-      valEl.textContent = resTextFor(key, r, activeGeom, imp, extraPrecision);
+      const selected = resultUnit(key, unitSystem, resultOutputUnits);
+      if (r.solutionValid && resultUnitChoices(key).length && selected !== defaultResultUnit(key, unitSystem)) {
+        const si = canonicalResultValue(key, r, activeGeom);
+        const converted = si === null ? NaN : convertResultFromCanonical(key, si, selected);
+        valEl.textContent = Number.isFinite(converted) ? formatSig(converted, Math.max(1,4+extraPrecision)) : "---";
+      } else {
+        valEl.textContent = resTextFor(key, r, activeGeom, imp, extraPrecision);
+      }
       if (r.solutionValid && valEl.textContent === "---") {
         valEl.title = key === "FM" ? "Figure of merit applies to hover only." : "Not defined for this operating point.";
       } else {
@@ -1502,7 +1511,9 @@ function renderResults(): void {
       }
     }
     if (unitEl) {
-      unitEl.textContent = resUnitFor(key, imp);
+      unitEl.textContent = resultUnit(key, unitSystem, resultOutputUnits);
+      if (resultUnitChoices(key).length) { unitEl.setAttribute("role", "button"); unitEl.tabIndex = 0; unitEl.setAttribute("aria-label", `Choose unit for ${key}`); }
+      else { unitEl.removeAttribute("role"); unitEl.removeAttribute("tabindex"); unitEl.removeAttribute("aria-label"); }
     }
   });
 
@@ -2877,9 +2888,71 @@ function bindSelectorButtons(): void {
   });
 }
 
+/** Results share the existing modal picker. Unit labels retain their original visual styling. */
+function bindResultUnitPickers(): void {
+  const open = (unitEl: HTMLElement) => {
+    const row = unitEl.closest<HTMLElement>("#page-results .result-row[data-key]");
+    const key = row?.dataset.key;
+    if (!key) return;
+    const choices = resultUnitChoices(key);
+    if (!choices.length) return;
+    const title = row.querySelector<HTMLElement>(".result-label")?.textContent?.trim() || key;
+    showOptionPicker("Unit · " + title, choices.map(u => ({id:u,label:u})), resultUnit(key,unitSystem,resultOutputUnits), selected => {
+      resultOutputUnits[key] = selected;
+      safeSet("rotor_result_units", JSON.stringify(resultOutputUnits));
+      renderResults();
+    });
+  };
+  document.querySelector("#page-results")?.addEventListener("click", event => {
+    const el = (event.target as HTMLElement).closest<HTMLElement>(".result-unit");
+    if (el) open(el);
+  });
+  document.querySelector("#page-results")?.addEventListener("keydown", event => {
+    const e = event as KeyboardEvent;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("result-unit")) { e.preventDefault(); open(target); }
+  });
+}
+
+/** SI / Imperial in Settings is an explicit reset of every input and output selection. */
+function resetAllUnits(system: "si" | "imperial"): void {
+  unitSystem = system;
+  resultOutputUnits = {};
+  safeSet("rotor_result_units", "{}");
+  safeSet("rotor_units", system);
+  prefThrustUnit = system === "imperial" ? "lbf" : "N";
+  prefSpeedUnit = system === "imperial" ? "kt" : "m/s";
+  safeSet("rotor_pref_thrust", prefThrustUnit);
+  safeSet("rotor_pref_speed", prefSpeedUnit);
+  const imp = system === "imperial";
+  const defaults: Record<string,string> = {
+    "unit-radius": imp?"ft":"m", "unit-chord-root":imp?"ft":"m", "unit-chord-tip":imp?"ft":"m",
+    "unit-disk-area":imp?"ft²":"m²", "unit-blade-area-ref":imp?"ft²":"m²", "unit-blade-area":imp?"ft²":"m²",
+    "unit-theta-root":"deg","unit-theta-tip":"deg","unit-twist":"deg","unit-lift-slope":"rad⁻¹",
+    "unit-altitude":imp?"ft":"m", "unit-temperature":imp?"°F":"°C",
+    "unit-rpm-nom":"rpm"
+  };
+  for(const [id,value] of Object.entries(defaults)) { const el = document.getElementById(id); if(el) el.textContent=value; }
+  const horiz = document.getElementById("unit-horiz-val");
+  if(horiz) horiz.textContent = activeCond.horizontalMode === "vx" ? (imp?"kt":"m/s") : "–";
+  const axial = document.getElementById("unit-axial-val");
+  if(axial) axial.textContent = activeCond.axialMode === "vz" ? (imp?"ft/min":"m/s") : activeCond.axialMode === "alpha"?"deg":"–";
+  for(const id of ["unit-operating-1","unit-operating-2"]) {
+    const el = document.getElementById(id);
+    const slotKey = document.getElementById(id.replace("unit-","lbl-"))?.dataset.key;
+    if(el) el.textContent = slotKey === "Ttgt" ? prefThrustUnit : slotKey === "rpm"?"rpm":slotKey === "coll"?"deg":"–";
+  }
+  refreshSettingsButtons();
+  refreshInputPresentation();
+  recalculate();
+}
+
 // Unit Buttons Binding with Modal Picker
 // Picking a unit only changes how a value is shown. The model keeps SI values,
 // so every field is redrawn from the model with the shared input formatter.
+bindResultUnitPickers();
+
 function bindUnitButtons(): void {
   const length = ["m", "ft", "in", "cm", "mm"];
   const area = ["m²", "ft²", "in²", "cm²"];
@@ -4041,10 +4114,7 @@ function bindSettingsListeners(): void {
 
   // 2. Units Button
   byId("btn-setting-units")?.addEventListener("click", () => {
-    unitSystem = unitSystem === "si" ? "imperial" : "si";
-    safeSet("rotor_units", unitSystem);
-    refreshSettingsButtons();
-    recalculate();
+    resetAllUnits(unitSystem === "si" ? "imperial" : "si");
   });
 
   // 3. Precision Button
