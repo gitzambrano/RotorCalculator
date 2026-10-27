@@ -152,6 +152,7 @@ Sub Process_Globals
 	Public SweepMaxMuVal As Double = 0.40
 	Public SweepTrimMode As String = "coll_all"
 	Public InputUnits As Map
+	Private ResultUnitOverrides As Map
 	Public PlotPalette As Int = 0
 	Public SweepAlphaValues As String = "-10; -5; 0; 5; 10"
 	Public SweepVzValues As String = "-10; -5; 0; 5; 10"
@@ -796,9 +797,17 @@ End Sub
 ' SETTINGS / THEME / OUTPUT FORMAT
 ' ====================================================================
 Private Sub LoadUiSettings
+	If ResultUnitOverrides.IsInitialized = False Then ResultUnitOverrides.Initialize
 	If File.Exists(File.DirInternal, "ui_settings.txt") = False Then Return
 	Try
 		Dim m As Map = File.ReadMap(File.DirInternal, "ui_settings.txt")
+		For Each storedKey As String In m.Keys
+			If storedKey.StartsWith("result.") Then
+				Dim rk As String = storedKey.SubString(7)
+				Dim ru As String = "" & m.Get(storedKey)
+				If ResultUnitChoices(rk).IndexOf(ru) >= 0 Then ResultUnitOverrides.Put(rk, ru)
+			End If
+		Next
 		ThemeMode = Max(0, Min(3, ParseIntDef("" & m.GetDefault("theme", 0), 0)))
 		UnitSystem = Max(0, Min(1, ParseIntDef("" & m.GetDefault("units", 0), 0)))
 		ExtraPrecision = Max(-1, Min(1, ParseIntDef("" & m.GetDefault("precision", 0), 0)))
@@ -821,6 +830,12 @@ Private Sub SaveUiSettings
 	m.Put("precision", ExtraPrecision)
 	m.Put("palette", PlotPalette)
 	m.Put("swtrim", SweepTrimMode)
+	If ResultUnitOverrides.IsInitialized Then
+		For Each rk As String In ResultUnitOverrides.Keys
+			Dim ru As String = "" & ResultUnitOverrides.Get(rk)
+			If ResultUnitChoices(rk).IndexOf(ru) >= 0 Then m.Put("result." & rk, ru)
+		Next
+	End If
 	File.WriteMap(File.DirInternal, "ui_settings.txt", m)
 End Sub
 
@@ -994,7 +1009,7 @@ Private Sub OpenSettingsPopup
 	Dim defs() As String = Array As String( _
 		"H|DISPLAY", _
 		"R|Theme|Dark, Light, Midnight Blue or Sepia|btnSettingTheme", _
-		"R|Result Units (Outputs Only)|SI or Imperial for results; input rows keep their own units|btnSettingUnits", _
+		"R|Reset All Units|Set SI or Imperial defaults for inputs and outputs|btnSettingUnits", _
 		"R|Number Format|Cycle between -1 decimal, standard, and +1 decimal|btnSettingPrecision", _
 		"H|PLOTS", _
 		"R|Palette|Sweep curve colors|btnSettingPalette", _
@@ -1188,8 +1203,13 @@ End Sub
 Sub btnSettingUnits_Click
 	Tick
 	UnitSystem = 1 - UnitSystem
+	InitializeInputUnitMaps
+	InputUnits.Clear
+	If ResultUnitOverrides.IsInitialized = False Then ResultUnitOverrides.Initialize
+	ResultUnitOverrides.Clear
 	SaveUiSettings
 	RefreshSettingsButtons
+	RefreshAllInputFields
 	RecalculateRotor
 End Sub
 
@@ -1797,7 +1817,7 @@ End Sub
 
 Private Sub DefaultUnit(key As String) As String
 	' Input rows default to SI; Settings > Result Units only affects outputs.
-	Dim imp As Boolean = False
+	Dim imp As Boolean = (UnitSystem = 1)
 	Select UnitKind(key)
 		Case "len"
 			If imp Then Return "ft"
@@ -1858,7 +1878,7 @@ Private Sub UnitChoices(key As String) As List
 		Case "rpm"
 			out.AddAll(Array As String("rpm", "rad/s"))
 		Case "thr"
-			out.AddAll(Array As String("N", "kN", "lbf"))
+			out.AddAll(Array As String("N", "kN", "kgf", "lbf"))
 	End Select
 	Return out
 End Sub
@@ -1882,6 +1902,7 @@ Private Sub UnitFactor(u As String) As Double
 		Case "rad/s": Return 60.0 / (2.0 * cPI)
 		Case "kN": Return 1000.0
 		Case "lbf": Return 4.4482216
+		Case "kgf": Return 9.80665
 	End Select
 	Return 1.0
 End Sub
@@ -3270,7 +3291,8 @@ Private Sub BuildPageRes
 		lblResults(i).Gravity = Bit.Or(Gravity.CENTER_VERTICAL, Gravity.RIGHT)
 		lblResults(i).SingleLine = True
 		row.AddView(lblResults(i), nameW, 0, valW, rowH)
-		lblResultUnits(i).Initialize("")
+		lblResultUnits(i).Initialize("resultUnit")
+		lblResultUnits(i).Tag = k
 		lblResultUnits(i).Text = ResUnitFor(k)
 		lblResultUnits(i).TextColor = ColorButText2
 		lblResultUnits(i).Typeface = Typeface.DEFAULT_BOLD
@@ -3639,7 +3661,7 @@ End Sub
 ' ====================================================================
 ' AERODYNAMIC CALCULATION & TELEMETRY MAPPING
 ' ====================================================================
-Private Sub ResUnitFor(key As String) As String
+Private Sub DefaultResUnitFor(key As String) As String
 	Dim imp As Boolean = (UnitSystem = 1)
 	If key.CompareTo("p") = 0 Then
 		If imp Then Return "inHg" Else Return "hPa"
@@ -3675,8 +3697,155 @@ Private Sub ResUnitFor(key As String) As String
 	End Select
 End Sub
 
-' Formatted result value in the active unit system (engine values stay SI).
+' Each result keeps an independent unit choice; no extra visual button is added.
+Private Sub ResultUnitChoices(key As String) As List
+	Dim out As List
+	out.Initialize
+	Select key
+		Case "T", "H", "Hi", "H0", "Y"
+			out.AddAll(Array As String("N", "kN", "kgf", "lbf"))
+		Case "Q", "Qi", "Q0", "Mx", "My"
+			out.AddAll(Array As String("N·m", "kgf·m", "lbf·ft"))
+		Case "P", "Pi", "P0", "Pair"
+			out.AddAll(Array As String("W", "kW", "MW", "hp"))
+		Case "DL"
+			out.AddAll(Array As String("N/m²", "kN/m²", "kgf/m²", "lbf/ft²"))
+		Case "PL"
+			out.AddAll(Array As String("N/kW", "N/W", "kgf/kW", "lbf/hp"))
+		Case "vi", "OmR", "Vx", "Vz", "Vztot", "Vadv", "Vret", "a"
+			out.AddAll(Array As String("m/s", "ft/s", "kt", "km/h", "mph", "ft/min"))
+		Case "chi", "alpha", "coll", _
+			"aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+			"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip"
+			out.AddAll(Array As String("deg", "rad"))
+		Case "rpm"
+			out.AddAll(Array As String("rpm", "rad/s"))
+		Case "p"
+			out.AddAll(Array As String("Pa", "hPa", "kPa", "bar", "mbar", "inHg", "psi", "atm", "mmHg"))
+		Case "h"
+			out.AddAll(Array As String("m", "ft", "km"))
+		Case "T0"
+			out.AddAll(Array As String("°C", "°F", "K"))
+		Case "rho"
+			out.AddAll(Array As String("kg/m³", "slug/ft³", "lb/ft³"))
+	End Select
+	Return out
+End Sub
+
+Private Sub ResUnitFor(key As String) As String
+	If ResultUnitOverrides.IsInitialized And ResultUnitOverrides.ContainsKey(key) Then
+		Dim choice As String = "" & ResultUnitOverrides.Get(key)
+		If ResultUnitChoices(key).IndexOf(choice) >= 0 Then Return choice
+	End If
+	Return DefaultResUnitFor(key)
+End Sub
+
+Sub resultUnit_Click
+	Tick
+	Dim lbl As Label = Sender
+	Dim key As String = "" & lbl.Tag
+	Dim options As List = ResultUnitChoices(key)
+	If options.Size = 0 Then Return
+	Dim selected As Int = Max(0, options.IndexOf(ResUnitFor(key)))
+	Wait For (sheet.ShowChoice("Unit · " & RotorNames.PlainLabel(key, 0), options, selected)) Complete (idx As Int)
+	If idx < 0 Or idx >= options.Size Then Return
+	If ResultUnitOverrides.IsInitialized = False Then ResultUnitOverrides.Initialize
+	ResultUnitOverrides.Put(key, "" & options.Get(idx))
+	SaveUiSettings
+	RecalculateRotor
+End Sub
+
+' Return the unrounded canonical result, independent of the current SI/Imperial view.
+Private Sub ResultRawValue(key As String) As Double
+	Dim r As RotorResults = ActiveRes
+	Dim area As Double = cPI * ActiveGeom.Radius * ActiveGeom.Radius
+	Dim q As Double = r.DensityRho * area * r.TipSpeed * r.TipSpeed
+	Select key
+		Case "T": Return r.ThrustN
+		Case "H": Return r.DragHN
+		Case "Hi": Return r.CHi * q
+		Case "H0": Return r.CH0 * q
+		Case "Y": Return r.SideForceYN
+		Case "Q": Return r.TorqueNm
+		Case "Qi": Return r.CQi * q * ActiveGeom.Radius
+		Case "Q0": Return r.CQ0 * q * ActiveGeom.Radius
+		Case "Mx": Return r.RollMomentNm
+		Case "My": Return r.PitchMomentNm
+		Case "P": Return r.PowerShaftW
+		Case "Pi": Return r.CQi * q * r.TipSpeed
+		Case "P0": Return r.CQ0 * q * r.TipSpeed
+		Case "Pair": Return r.CPair * q * r.TipSpeed
+		Case "DL": Return r.ThrustN / area
+		Case "PL"
+			If r.PowerShaftKW <= 0.000001 Then Return NoVal
+			Return r.ThrustN / r.PowerShaftKW
+		Case "vi": Return r.InflowLambdaI * r.TipSpeed
+		Case "Vx": Return r.OperatingVx
+		Case "Vz": Return r.OperatingVz
+		Case "OmR": Return r.TipSpeed
+		Case "a": Return r.SpeedOfSound
+		Case "Vztot", "Vadv", "Vret": Return zBETEngine.DerivedOutput(r, key)
+		Case "rpm": Return r.TrimmedRPM
+		Case "coll": Return r.TrimmedCollectiveDeg
+		Case "alpha": Return r.OperatingAlphaDeg
+		Case "chi": Return r.WakeSkewChiDeg
+		Case "T0": Return r.TemperatureC
+		Case "rho": Return r.DensityRho
+		Case "p": Return r.PressurePa
+		Case "h": Return r.AltitudeM
+		Case "aoaAdv25", "aoaRet25", "aoaAdv50", "aoaRet50", "aoaAdv75", "aoaRet75", "aoaAdvTip", "aoaRetTip", _
+			"phiAdv25", "phiRet25", "phiAdv50", "phiRet50", "phiAdv75", "phiRet75", "phiAdvTip", "phiRetTip"
+			Return zBETEngine.DerivedOutput(r, key)
+	End Select
+	Return NoVal
+End Sub
+
+Private Sub ResultConvertValue(v As Double, unit As String) As Double
+	Select unit
+		Case "N", "N·m", "W", "N/m²", "N/kW", "m/s", "deg", "rpm", "Pa", "m", "°C", "kg/m³": Return v
+		Case "kN", "kN/m²", "kPa": Return v / 1000.0
+		Case "kgf", "kgf·m", "kgf/m²", "kgf/kW": Return v / 9.80665
+		Case "lbf": Return v / 4.4482216152605
+		Case "lbf·ft": Return v * 0.737562149
+		Case "kW": Return v / 1000.0
+		Case "MW": Return v / 1000000.0
+		Case "hp": Return v / 745.699872
+		Case "lbf/ft²": Return v * 0.020885434273
+		Case "N/W": Return v / 1000.0
+		Case "lbf/hp": Return v * 0.224808943 / 1.34102209
+		Case "ft", "ft/s": Return v / 0.3048
+		Case "km": Return v / 1000.0
+		Case "kt": Return v / 0.514444444444
+		Case "km/h": Return v * 3.6
+		Case "mph": Return v * 2.23693629
+		Case "ft/min": Return v * 196.8503937
+		Case "rad": Return v * cPI / 180.0
+		Case "rad/s": Return v * 2.0 * cPI / 60.0
+		Case "hPa", "mbar": Return v / 100.0
+		Case "bar": Return v / 100000.0
+		Case "inHg": Return v / 3386.389
+		Case "psi": Return v / 6894.757293
+		Case "atm": Return v / 101325.0
+		Case "mmHg": Return v / 133.322387415
+		Case "°F": Return v * 1.8 + 32.0
+		Case "K": Return v + 273.15
+		Case "slug/ft³": Return v * 0.0019403203
+		Case "lb/ft³": Return v * 0.06242796
+	End Select
+	Return v
+End Sub
+
 Private Sub ResTextFor(key As String) As String
+	Dim unit As String = ResUnitFor(key)
+	If ResultUnitChoices(key).Size = 0 Or unit = DefaultResUnitFor(key) Then Return ResTextDefault(key)
+	Dim raw As Double = ResultRawValue(key)
+	If raw = NoVal Or raw <> raw Then Return Dash
+	Dim v As Double = ResultConvertValue(raw, unit)
+	Return FormatSig(v, Max(1, 4 + ExtraPrecision))
+End Sub
+
+' Formatted result value in the active unit system (engine values stay SI).
+Private Sub ResTextDefault(key As String) As String
 	Dim r As RotorResults = ActiveRes
 	Dim imp As Boolean = (UnitSystem = 1)
 	Dim sg As Int = Max(1, 4 + ExtraPrecision)
