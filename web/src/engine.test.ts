@@ -284,7 +284,7 @@ describe("Operating contract (Android / Python parity)", () => {
 
     const speed = 82 * 0.5144444444444445;
     const small = { ...g, radius: 1.4, rpm: 150, nominalRpm: 150 };
-    const dimensional = calculate(small, refCond({ horizontalMode: "vx", horizontalValue: speed }));
+    const dimensional = calculate(small, refCond({ rpm: 150, horizontalMode: "vx", horizontalValue: speed }));
     const expected = speed / (150 * 2 * Math.PI / 60 * 1.4);
     expect(expected).toBeCloseTo(1.918, 2);
     expect(dimensional.operatingMu).toBeCloseTo(expected, 11);
