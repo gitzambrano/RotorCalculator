@@ -1202,7 +1202,12 @@ End Sub
 
 Sub btnSettingUnits_Click
 	Tick
-	UnitSystem = 1 - UnitSystem
+	Dim options As List
+	options.Initialize
+	options.AddAll(Array As String("SI|Reset all input and output units to SI defaults", "Imperial|Reset all input and output units to Imperial defaults"))
+	Wait For (sheet.ShowChoice("Reset All Units", options, UnitSystem)) Complete (selected As Int)
+	If selected < 0 Or selected > 1 Then Return
+	UnitSystem = selected
 	InitializeInputUnitMaps
 	InputUnits.Clear
 	If ResultUnitOverrides.IsInitialized = False Then ResultUnitOverrides.Initialize
