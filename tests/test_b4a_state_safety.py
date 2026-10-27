@@ -735,7 +735,7 @@ def test_settings_sections_and_rename_flow():
     for hdr in ('"H|DISPLAY"', '"H|PLOTS"', '"H|ROTOR DATA"'):
         assert hdr in main
     assert "AddSettingsHeader(scv.Panel, cardW, y, p1(1))" in main
-    assert 'R|Result Units (Outputs Only)|' in main
+    assert 'R|Reset All Units|' in main
     assert "Cycle between -1 decimal, standard, and +1 decimal" in main
     assert "btnSettingRestore" in main
     assert "ShowChoiceSwatches" in main
