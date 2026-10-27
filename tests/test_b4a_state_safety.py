@@ -666,7 +666,7 @@ def test_sweep_axis_and_range_are_explicit_selectors():
     main = text("RotorCalculator.b4a")
     assert "InputList" not in main
     assert 'sheet.ShowChoice(RotorNames.PlainLabel("xAxis", 0), options, SweepXAxisMode)' in main
-    assert 'sheet.ShowChoice("Sweep Range", options, selected)' in main
+    assert 'sheet.ShowInput("Sweep Range"' in main
     assert 'sheet.ShowChoice("Y-Axis Result", items, selected)' in main
     # two-row control grid: Y-axis selector, then four equal-width selectors
     assert 'btnSweepParam = NewSweepButton("btnSweepParam")' in main
