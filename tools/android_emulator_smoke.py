@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ET
+from PIL import Image
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -87,7 +88,12 @@ def main(apk: str) -> None:
     time.sleep(1)
     changed = capture("android-kgf-selected")
     assert matches(changed, "kgf"), "Selected unit kgf is not reflected immediately in Results."
-    print("PASS native Android: launch, tabs, results, N -> kgf picker, immediate label change", flush=True)
+    # Image-capable emulator requirement: black framebuffers cannot satisfy UI layout QA.
+    for shot in ("android-home", "android-results", "android-unit-picker", "android-kgf-selected"):
+        img = Image.open(OUT / (shot + ".png")).convert("RGB")
+        if img.getbbox() is None:
+            raise AssertionError(f"Visual QA cannot pass: the emulator rendered an all-black screenshot ({shot}).")
+    print("PASS native Android: launch, tabs, results, N -> kgf picker, immediate label change and visible PNG screenshots", flush=True)
 
 
 if __name__ == "__main__":
