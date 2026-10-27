@@ -64,12 +64,24 @@ jobs:
           }
           $userIni = Join-Path $env:APPDATA "Anywhere Software\Basic4android\b4xV5.ini"
           New-Item -ItemType Directory -Path (Split-Path $userIni) -Force | Out-Null
+          Write-Host "Android SDK: $sdk"
+          Write-Host "Android platform: $platform"
+          Write-Host "SDK top-level folders: $((Get-ChildItem $sdk -Directory | Select-Object -ExpandProperty Name) -join ', ')"
+          $buildToolsRoot = Join-Path $sdk 'build-tools'
+          $aapt2 = Get-ChildItem $buildToolsRoot -Recurse -Filter 'aapt2.exe' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $aapt2) { throw "aapt2.exe is missing after extracting official B4A Android resources." }
+          Write-Host "AAPT2 executable: $($aapt2.FullName)"
+          # B4A's ToolsFolder points to SDK tools, NOT sdkmanager's cmdline-tools/bin.
+          $toolsFolder = Join-Path $sdk "tools"
+          if (-not (Test-Path $toolsFolder)) { $toolsFolder = (Split-Path -Parent $aapt2.FullName) }
           @(
             "JavaBin=$(Join-Path $env:JAVA_HOME 'bin')",
             "PlatformFolder=$platform",
-            "ToolsFolder=$(Join-Path $sdk 'cmdline-tools\bin')",
+            "ToolsFolder=$toolsFolder",
             "AdditionalLibrariesFolder=$(Join-Path $env:GITHUB_WORKSPACE 'Libraries')"
           ) | Set-Content -Path $userIni -Encoding UTF8
+          Write-Host "B4A settings:"
+          Get-Content $userIni
           "B4A_INI=$userIni" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
       - name: Compile unsigned APK from exact main source commit
         shell: pwsh
