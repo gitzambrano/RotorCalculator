@@ -3160,6 +3160,7 @@ function commitActiveRotor(name: string): boolean {
       return false;
     }
     activateRotor(saved);
+    renderRotorManagerList();
     return true;
   }
 
