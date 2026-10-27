@@ -151,12 +151,14 @@ describe("Sweep uses the real geometry and the active atmosphere", () => {
     expect(sweep.curves[0].points[0].thrustN).toBeCloseTo(live.thrustN, 0);
   });
 
-  it("drops samples above the supported mu range of 0.60", () => {
-    const sweep = runParameterSweep(geom, base, "CT", 0, 0.8, 9);
-    const points = sweep.curves[0].points;
-    expect(points[points.length - 1].mu).toBeCloseTo(0.8, 12);
-    expect(points[points.length - 1].valid).toBe(true);
-    expect(isSweepPointUsable(points[points.length - 1], "mu")).toBe(false);
-    expect(isSweepPointUsable(points[6], "mu")).toBe(true); // mu = 0.6
+  it("keeps sweep samples and X-axis beyond mu 0.6 up to any requested maximum", () => {
+    for (const maximum of [0.8, 1.918, 3]) {
+      const sweep = runParameterSweep(geom, base, "CT", 0, maximum, 9);
+      const points = sweep.curves[0].points;
+      expect(points[points.length - 1].mu).toBeCloseTo(maximum, 12);
+      const usable = points.filter(p => isSweepPointUsable(p, "mu"));
+      expect(usable.every(p => p.valid && Number.isFinite(p.val))).toBe(true);
+      expect(points.some(p => p.mu > 0.6 && p.valid)).toBe(true);
+    }
   });
 });
