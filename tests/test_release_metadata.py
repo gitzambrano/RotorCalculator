@@ -46,7 +46,7 @@ def test_google_play_release_notes_languages_and_lengths():
 
 def test_release_builder_is_fail_closed():
     helper = (ROOT / "tools/b4a_build.ps1").read_text(encoding="utf-8")
-    prep = (ROOT / "tools/prepare_play_release_1_34.ps1").read_text(encoding="utf-8")
+    prep = (ROOT / "tools/prepare_play_release.ps1").read_text(encoding="utf-8")
     assert 'throw "B4ABuilder.exe' in helper
     assert 'if (-not $KeyPassword)' in prep
     assert "Get-BuiltArtifact" in prep
@@ -54,3 +54,32 @@ def test_release_builder_is_fail_closed():
     assert "jarsigner.exe" in prep
     assert "Get-FileHash" in prep
     assert "playUpload = \"not-started\"" in prep
+
+
+def test_android_result_unit_picker_and_global_reset_contract():
+    src = (ROOT / "RotorCalculator.b4a").read_text(encoding="utf-8-sig")
+    assert 'lblResultUnits(i).Initialize("resultUnit")' in src
+    assert "Sub resultUnit_Click" in src
+    assert 'sheet.ShowChoice("Unit · "' in src
+    assert 'ResultUnitOverrides.Put(key, "" & options.Get(idx))' in src
+    assert 'm.Put("result." & rk, ru)' in src
+    assert "ResultUnitOverrides.Clear" in src
+    assert "InputUnits.Clear" in src
+    assert 'Case "kgf": Return 9.80665' in src
+    assert 'Array As String("N", "kN", "kgf", "lbf")' in src
+    assert '"lbf/ft²"' in src
+    assert '"slug/ft³"' in src
+    assert '"inHg"' in src
+    assert "Return ResTextDefault(key)" in src
+    assert "ResultRawValue(key)" in src
+    assert "ResultConvertValue(raw, unit)" in src
+
+
+def test_web_result_picker_keeps_visuals_and_avoids_help_modal():
+    main = (ROOT / "web/src/main.ts").read_text(encoding="utf-8")
+    assert 'function bindResultUnitPickers()' in main
+    assert 'showOptionPicker("Unit · " + title' in main
+    assert 'if ((event.target as HTMLElement).closest(".result-unit")) return' in main
+    assert 'safeSet("rotor_result_units", JSON.stringify(resultOutputUnits))' in main
+    assert 'function resetAllUnits(system: "si" | "imperial")' in main
+    assert 'resetAllUnits(unitSystem === "si" ? "imperial" : "si")' in main
