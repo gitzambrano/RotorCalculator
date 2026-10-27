@@ -225,7 +225,7 @@ app.innerHTML = `
           <img class="brand-icon" src="${headerIconUrl}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.32</span>
+            <span class="version-badge">v1.34</span>
           </div>
         </div>
         <div class="header-actions">
@@ -925,7 +925,7 @@ app.innerHTML = `
               <a class="settings-btn" href="./rotorcalculator-offline.zip" download="rotorcalculator-offline.zip">DOWNLOAD</a>
             </div>
             <div class="settings-row">
-              <div class="settings-row-info"><div class="settings-row-title">Android App 1.32</div><div class="settings-row-sub">Install the verified production Android build</div></div>
+              <div class="settings-row-info"><div class="settings-row-title">Android App on Google Play</div><div class="settings-row-sub">Install the currently published Android version</div></div>
               <a class="settings-btn" href="https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator" target="_blank" rel="noopener">PLAY</a>
             </div>
             <div class="settings-row" style="margin-top: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 14px;">
