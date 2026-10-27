@@ -2939,20 +2939,34 @@ End Sub
 ' Saves the editor into the library. A factory preset asks first: overwrite it, or save the changes as a new rotor.
 ' Returns True when the changes were stored (overwrite or copy), False when the user canceled.
 Private Sub SaveWithPresetGuard As ResumableSub
-	CheckDirty
-	If GeometryDirty And RotorStorage.IsFactoryPresetAt(RotorStorage.ActiveIndex) Then
-		Dim presetGeom As RotorGeometry = RotorStorage.Rotors.Get(RotorStorage.ActiveIndex)
-		Dim msg As String = presetGeom.Name & " is a factory preset. Overwrite the preset, or save your changes as a new rotor?"
-		Wait For (sheet.ShowConfirm("Factory Preset", msg, "Save as copy", "Overwrite preset", "Cancel", False)) Complete (r As Int)
-		If r = DialogResponse.POSITIVE Then
-			Wait For (SaveAsCopyFlow) Complete (copied As Boolean)
-			Return copied
-		Else If r = DialogResponse.NEGATIVE Then
-			SaveCurrentRotor
-			Return True
+	' Always ask for the target name. A different name creates a new rotor; the source is not overwritten.
+	Dim current As RotorGeometry = RotorStorage.Rotors.Get(RotorStorage.ActiveIndex)
+	Dim nm As String
+	Do While True
+		Wait For (sheet.ShowInput("Save Rotor", "Name (same = overwrite, different = Save As; max 32 characters)", TruncateName(ActiveGeom.Name), "Save", 32)) Complete (entered As String)
+		If entered.Length = 0 Then Return False
+		nm = TruncateName(entered.Replace("|", "/").Replace(Chr(13), " ").Replace(Chr(10), " ").Trim)
+		If nm.Length = 0 Then
+			ToastMessageShow("Enter a rotor name.", False)
+		Else
+			Dim other As Int = RotorStorage.FindRotorByName(nm)
+			If other < 0 Or other = RotorStorage.ActiveIndex Then Exit
+			ToastMessageShow("A rotor named " & nm & " already exists.", False)
 		End If
-		Return False
+	Loop
+	If nm.ToLowerCase <> current.Name.ToLowerCase Then
+		Dim copyGeom As RotorGeometry = zBETEngine.CloneGeometry(ActiveGeom)
+		copyGeom.Name = nm
+		RotorStorage.AddRotor(copyGeom)
+		AfterRotorChange
+		ToastMessageShow("Rotor saved as: " & ActiveGeom.Name, False)
+		Return True
 	End If
+	If RotorStorage.IsFactoryPresetAt(RotorStorage.ActiveIndex) Then
+		Wait For (sheet.ShowConfirm("Factory Preset", "Overwrite factory preset " & current.Name & "?", "Overwrite preset", "Cancel", "", True)) Complete (r As Int)
+		If r <> DialogResponse.POSITIVE Then Return False
+	End If
+	ActiveGeom.Name = nm
 	SaveCurrentRotor
 	Return True
 End Sub
