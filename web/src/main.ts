@@ -1889,7 +1889,9 @@ export function showContextualHelpCustom(title: string, message: string): void {
 
 function bindResultRowTooltips(): void {
   document.querySelectorAll<HTMLElement>(".result-row").forEach((row) => {
-    row.addEventListener("click", () => {
+    row.addEventListener("click", (event) => {
+      // A tap on the unit must open only the unit picker, not the help dialog.
+      if ((event.target as HTMLElement).closest(".result-unit")) return;
       const key = row.dataset.key;
       if (key) showContextualHelp(key);
     });
