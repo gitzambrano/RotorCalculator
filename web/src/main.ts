@@ -4116,7 +4116,10 @@ function bindSettingsListeners(): void {
 
   // 2. Units Button
   byId("btn-setting-units")?.addEventListener("click", () => {
-    resetAllUnits(unitSystem === "si" ? "imperial" : "si");
+    showOptionPicker("Reset All Units", [
+      { id: "si", label: "SI", desc: "Reset every input and output to SI defaults" },
+      { id: "imperial", label: "Imperial", desc: "Reset every input and output to Imperial defaults" },
+    ], unitSystem, selected => resetAllUnits(selected === "imperial" ? "imperial" : "si"));
   });
 
   // 3. Precision Button
