@@ -26,7 +26,7 @@ const GROUPS: Record<UnitKind, readonly string[]> = {
 
 const CHOICES: Record<UnitKind, readonly string[]> = {
   force: ["N","kN","kgf","lbf"],
-  moment: ["N·m","kgf·m","lb·ft"],
+  moment: ["N·m","kgf·m","lbf·ft"],
   power: ["W","kW","MW","hp"],
   speed: ["m/s","ft/s","kt","km/h","mph","ft/min"],
   angle: ["deg","rad"],
@@ -52,7 +52,7 @@ export function defaultResultUnit(key: string, system: "si"|"imperial"): string 
   const imperial = system === "imperial";
   switch(kind) {
     case "force": return imperial ? "lbf" : "N";
-    case "moment": return imperial ? "lb·ft" : "N·m";
+    case "moment": return imperial ? "lbf·ft" : "N·m";
     case "power": return imperial ? "hp" : "kW";
     case "speed": return imperial ? "ft/s" : "m/s";
     case "angle": return "deg";
