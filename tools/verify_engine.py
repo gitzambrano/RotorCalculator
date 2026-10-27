@@ -157,7 +157,7 @@ def verify_ui_source_contract() -> None:
     for key in result_keys:
         if f'Add("{key}"' not in names:
             raise AssertionError(f"Results key missing from RotorNames: {key}")
-        value_map = main.split('Private Sub ResTextFor', 1)[1].split('End Sub', 1)[0]
+        value_map = main.split('Private Sub ResTextDefault', 1)[1].split('End Sub', 1)[0]
         cases = re.findall(r'(?m)^\s*Case ([^\n]+)', value_map)
         mapped_keys = {k for line in cases for k in re.findall(r'"([^"]+)"', line)}
         if key not in mapped_keys and key not in ("p", "h"):
