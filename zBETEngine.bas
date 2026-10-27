@@ -265,7 +265,7 @@ Public Sub SanitizeCondition(src As FlightCondition) As FlightCondition
 	c.SpeedOfSound = Max(100.0, Min(500.0, c.SpeedOfSound))
 	c.RPM = Max(1.0, Min(30000.0, c.RPM))
 	c.CollectiveDeg = Max(-60.0, Min(60.0, c.CollectiveDeg))
-	c.Mu = Max(-0.60, Min(0.60, c.Mu))
+	' Advance ratio is not clamped: the user may evaluate reverse-flow regimes.
 	c.MuZ = Max(-0.50, Min(0.50, c.MuZ))
 	c.TargetThrustN = Max(0.0, Min(1.0e8, c.TargetThrustN))
 	c.TargetCT = Max(0.0, Min(0.20, c.TargetCT))
@@ -284,7 +284,7 @@ End Sub
 ' ---------------------------------------------------------------------------
 ' Input limit notes (parity with inputLimitNotes in web/src/engine.ts).
 ' Returns "" when no input is limited. Otherwise returns a short STE message,
-' for example "Input limited: μx = 0.60". Pass the raw geometry/condition and
+' for example "Input limited: μz = 0.50". Pass the raw geometry/condition and
 ' the operating RPM that resolves Vx and Vz.
 ' ---------------------------------------------------------------------------
 Private Sub LimitedItem(items As List, label As String, raw As Double, lo As Double, hi As Double, digits As Int)
@@ -341,8 +341,7 @@ Public Sub InputLimitNotes(geom As RotorGeometry, cond As FlightCondition, rpm A
 	Dim vtip As Double = Max(1.0e-9, Max(1.0, Min(30000.0, rpm)) * 2.0 * cPI / 60.0 * radius)
 	Dim rawMu As Double = cond.HorizontalValue
 	If cond.HorizontalMode = "vx" Then rawMu = cond.HorizontalValue / vtip
-	LimitedItem(items, Chr(956) & "x", rawMu, -0.60, 0.60, 2)
-	Dim mu As Double = Max(-0.60, Min(0.60, rawMu))
+	Dim mu As Double = rawMu
 	Dim axialMode As String = cond.AxialMode
 	If axialMode <> "alpha" And axialMode <> "vz" And axialMode <> "muz" Then axialMode = "alpha"
 	LimitedItem(items, Chr(956) & "z", ResolveMuZ(mu, axialMode, cond.AxialValue, vtip), -0.50, 0.50, 2)
@@ -838,9 +837,9 @@ Public Sub ResolveConditionAtRPM(src As FlightCondition, geom As RotorGeometry) 
 	Dim omega As Double = geom.RPM * 2.0 * cPI / 60.0
 	Dim vtip As Double = Max(1.0e-9, omega * geom.Radius)
 	If c.HorizontalMode = "vx" Then
-		c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue / vtip))
+		c.Mu = c.HorizontalValue / vtip
 	Else
-		c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue))
+		c.Mu = c.HorizontalValue
 	End If
 	c.MuZ = Max(-0.50, Min(0.50, ResolveMuZ(c.Mu, c.AxialMode, c.AxialValue, vtip)))
 	c.RPM = geom.RPM
