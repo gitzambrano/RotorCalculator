@@ -44,6 +44,17 @@ jobs:
           $ErrorActionPreference = "Stop"
           $sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { $env:ANDROID_SDK_ROOT }
           if (-not $sdk -or -not (Test-Path $sdk)) { throw "Hosted Windows Android SDK is unavailable." }
+          # B4A uses a separately packaged Android resource set in addition to the SDK.
+          $resources = Join-Path $env:RUNNER_TEMP "b4a-resources-7_25.zip"
+          Invoke-WebRequest -Uri "https://github.com/AnywhereSoftware/B4A/releases/download/7_25/resources_7_25.zip" -OutFile $resources -MaximumRedirection 6
+          if ((Get-Item $resources).Length -lt 1000000) { throw "Official B4A resource package is unexpectedly small." }
+          $seven = Get-Command 7z.exe -ErrorAction SilentlyContinue
+          if ($seven) {
+            & $seven.Source x $resources ("-o" + $sdk) -y | Select-Object -Last 8
+            if ($LASTEXITCODE -ne 0) { throw "B4A required resources extraction failed ($LASTEXITCODE)." }
+          } else {
+            Expand-Archive -LiteralPath $resources -DestinationPath $sdk -Force
+          }
           $platform = Join-Path $sdk "platforms\android-36"
           if (-not (Test-Path (Join-Path $platform "android.jar"))) {
             $mgr = Get-ChildItem (Join-Path $sdk "cmdline-tools") -Filter sdkmanager.bat -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -56,6 +67,7 @@ jobs:
           @(
             "JavaBin=$(Join-Path $env:JAVA_HOME 'bin')",
             "PlatformFolder=$platform",
+            "ToolsFolder=$(Join-Path $sdk 'cmdline-tools\bin')",
             "AdditionalLibrariesFolder=$(Join-Path $env:GITHUB_WORKSPACE 'Libraries')"
           ) | Set-Content -Path $userIni -Encoding UTF8
           "B4A_INI=$userIni" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
