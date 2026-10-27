@@ -394,12 +394,14 @@ def test_tip_loss_b_is_clamped_to_root_cutout_and_one():
 
 
 def test_operating_flow_limits_match_android_contract():
-    """mu in [-0.60, 0.60], mu_z in [-0.50, 0.50] at every candidate RPM."""
+    """mu is unrestricted, while mu_z remains in [-0.50, 0.50] at every RPM."""
     geom = make_geometry(rpm=420.0)
     mu, mu_z = zBET._operating_flow(geom, "mu", 0.9, "muz", 0.9)
-    assert (mu, mu_z) == (0.6, 0.5)
+    assert (mu, mu_z) == (0.9, 0.5)
     mu, mu_z = zBET._operating_flow(geom, "mu", -0.9, "muz", -0.9)
-    assert (mu, mu_z) == (-0.6, -0.5)
+    assert (mu, mu_z) == (-0.9, -0.5)
+    mu, _ = zBET._operating_flow(geom, "mu", 1.918, "muz", 0)
+    assert mu == 1.918
     vx = 0.2 * geom.vtip
     mu, _ = zBET._operating_flow(geom, "vx", vx, "alpha", 0.0)
     assert math.isclose(mu, 0.2, rel_tol=0, abs_tol=1e-14)

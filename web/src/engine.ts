@@ -719,7 +719,6 @@ export const OPERATING_LIMITS = {
   speedOfSound: [100.0, 500.0],
   rpm: [1.0, 30000.0],
   collectiveDeg: [-60.0, 60.0],
-  mu: [-0.6, 0.6],
   muZ: [-0.5, 0.5],
   targetThrustN: [0.0, 1.0e8],
   targetCT: [0.0, 0.2],
@@ -746,7 +745,6 @@ export function sanitizeCondition(cond: FlightCondition): FlightCondition {
   c.speedOfSound = clampTo(c.speedOfSound, L.speedOfSound);
   c.rpm = clampTo(c.rpm, L.rpm);
   c.collectiveDeg = clampTo(c.collectiveDeg, L.collectiveDeg);
-  c.mu = clampTo(c.mu, L.mu);
   c.muZ = clampTo(c.muZ, L.muZ);
   c.targetThrustN = clampTo(c.targetThrustN, L.targetThrustN);
   c.targetCT = clampTo(c.targetCT, L.targetCT);
@@ -784,7 +782,7 @@ export function resolveConditionAtRPM(src: FlightCondition, geom: RotorGeometry)
   const c = sanitizeCondition(src);
   const vtip = geometryTipSpeed(geom);
   const rawMu = c.horizontalMode === "vx" ? c.horizontalValue / vtip : c.horizontalValue;
-  c.mu = clampTo(rawMu, OPERATING_LIMITS.mu);
+  c.mu = rawMu;
   c.muZ = clampTo(resolveMuZ(c.mu, c.axialMode, c.axialValue, vtip), OPERATING_LIMITS.muZ);
   c.rpm = geom.rpm;
   return c;
@@ -807,7 +805,7 @@ function limitedItem(items: string[], label: string, raw: number, range: readonl
 
 /**
  * Lists every input that the engine limits. Returns "" when nothing is limited,
- * otherwise a short STE message such as "Input limited: μx = 0.60".
+ * otherwise a short STE message such as "Input limited: μz = 0.50".
  * Pass the raw (caller) geometry and condition, and the operating RPM that resolves Vx and Vz.
  */
 export function inputLimitNotes(geom: RotorGeometry, cond: FlightCondition, rpm: number): string {
@@ -849,8 +847,7 @@ export function inputLimitNotes(geom: RotorGeometry, cond: FlightCondition, rpm:
   const vtip = Math.max(1.0e-9, ((clampTo(rpm, L.rpm) * 2.0 * Math.PI) / 60.0) * radius);
   const base = sanitizeCondition(cond);
   const rawMu = base.horizontalMode === "vx" ? base.horizontalValue / vtip : base.horizontalValue;
-  limitedItem(items, "μx", rawMu, L.mu, 2);
-  const mu = clampTo(rawMu, L.mu);
+  const mu = rawMu;
   limitedItem(items, "μz", resolveMuZ(mu, base.axialMode, base.axialValue, vtip), L.muZ, 2);
 
   return items.length > 0 ? `Input limited: ${items.join("; ")}` : "";

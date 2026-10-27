@@ -880,7 +880,6 @@ End Sub
 ' Point usable on the current X axis: valid solution, finite value, finite (and for mu/lambda, non-negative) x.
 Private Sub XOk(p As SweepPoint, xAxisMode As Int) As Boolean
 	If p.Valid = False Then Return False
-	If p.Mu > 0.6001 Then Return False ' engine clamps mu to +-0.60 (zBET.py); points beyond are not a solution
 	If IsNum(p.Value) = False Then Return False
 	Dim x As Double = PointX(p, xAxisMode)
 	If IsNum(x) = False Then Return False

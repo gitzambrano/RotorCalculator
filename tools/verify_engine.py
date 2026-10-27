@@ -39,7 +39,7 @@ def verify_b4a_source_contract() -> None:
         "g.ThetaRoot = baseGeom.ThetaRoot + dtheta",
         "g.ThetaTip = baseGeom.ThetaTip + dtheta",
         'If c.HorizontalMode = "vx" Then',
-        "c.Mu = Max(-0.60, Min(0.60, c.HorizontalValue / vtip))",
+        "c.Mu = c.HorizontalValue / vtip",
         "ResolveMuZ(c.Mu, c.AxialMode, c.AxialValue, vtip)",
         'ProfileDrag(c.Mu, c.MuZ, g, "numerical_vectorial")',
         "c.KInd = Max(1.0, Min(3.0, c.KInd))",
