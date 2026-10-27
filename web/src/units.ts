@@ -55,6 +55,7 @@ export const UNIT_TABLE: Record<string, UnitConversion> = {
   // Torque (base: N·m)
   "N·m": { fromSI: (v) => v, toSI: (v) => v },
   "lb·ft": { fromSI: (v) => v * 0.737562149, toSI: (v) => v / 0.737562149 },
+  "lbf·ft": { fromSI: (v) => v * 0.737562149, toSI: (v) => v / 0.737562149 },
   "kgf·m": { fromSI: (v) => v / 9.80665, toSI: (v) => v * 9.80665 },
 
   // Angle (base: deg or rad)
