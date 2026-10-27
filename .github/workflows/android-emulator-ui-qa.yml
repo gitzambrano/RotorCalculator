@@ -44,8 +44,7 @@ jobs:
           heap-size: 512M
           disable-animations: true
           script: |
-            APK=$(find scratch/native-qa -type f -name '*.apk' -print -quit)
-            python3 tools/android_emulator_smoke.py "$APK"
+            python3 tools/android_emulator_smoke.py "$(find scratch/native-qa -type f -name '*.apk' -print -quit)"
       - name: Save real Android screenshots and accessibility trees
         if: always()
         uses: actions/upload-artifact@v4
