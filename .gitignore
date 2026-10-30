@@ -33,6 +33,7 @@ Desktop.ini
 .DS_Store
 .idea/
 .vscode/
+.claude/
 *.bak
 *.tmp
 
