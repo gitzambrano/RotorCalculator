@@ -44,6 +44,8 @@ if ((Test-Path -LiteralPath $SourceStoreIcon -PathType Leaf) -and
     (Test-Path -LiteralPath $SourceHeaderEmblem -PathType Leaf)) {
     & python (Join-Path $PSScriptRoot "prepare_launcher_icon.py") --root $BaseFolder
     if ($LASTEXITCODE -ne 0) { throw "Canonical launcher icon generation failed." }
+    & python (Join-Path $PSScriptRoot "verify_launcher_icon.py") --root $BaseFolder
+    if ($LASTEXITCODE -ne 0) { throw "Canonical launcher source verification failed." }
 } elseif (-not (Test-Path -LiteralPath $LauncherLegacyIcon -PathType Leaf)) {
     throw "Android launcher icon resources missing in staged source: $LauncherLegacyIcon"
 }
