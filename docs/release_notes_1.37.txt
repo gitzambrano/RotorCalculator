@@ -1,0 +1,12 @@
+<en-US>
+RotorCalculator 1.37.
+Added native monochrome icon layer for Android Themed Icons and Material You.
+Replaced legacy fallback launcher drawables with official rotor artwork.
+No changes to aerodynamic calculations.
+</en-US>
+<pt-BR>
+RotorCalculator 1.37.
+Adicionada camada monocromatica nativa para icones com tema do Android e Samsung One UI.
+Substituidos drawables legados de fallback pela arte oficial do rotor.
+Sem alteracoes nos calculos aerodinamicos.
+</pt-BR>

@@ -4,6 +4,9 @@
 store/icon.png is the canonical Play Store image. The adaptive foreground
 uses the same rotor emblem from Files/icon_header.png, centered transparently
 within the Android 108dp layer and 72dp safe zone.
+Android 13+ monochrome layer provides the native silhouette for Themed Icons.
+Fallback drawables in Objects/res/drawable* are pre-populated to eliminate
+any default B4A template icon injection.
 """
 from __future__ import annotations
 
@@ -44,6 +47,33 @@ def make_foreground(header: Path) -> tuple[Image.Image, Image.Image]:
     return high, low
 
 
+def make_monochrome(high: Image.Image, low: Image.Image) -> tuple[Image.Image, Image.Image]:
+    """Make 432px xxxhdpi and 108px baseline monochrome layers for Android Themed Icons."""
+    high_mono = Image.new("RGBA", high.size, (255, 255, 255, 255))
+    high_mono.putalpha(high.getchannel("A"))
+    low_mono = Image.new("RGBA", low.size, (255, 255, 255, 255))
+    low_mono.putalpha(low.getchannel("A"))
+    return high_mono, low_mono
+
+
+def pre_populate_drawables(root: Path, official: Path) -> None:
+    """Pre-populate Objects/res/drawable* so B4A never writes its default hdpi_icon."""
+    densities = {
+        "drawable": 96,
+        "drawable-mdpi": 48,
+        "drawable-hdpi": 72,
+        "drawable-xhdpi": 96,
+        "drawable-xxhdpi": 144,
+        "drawable-xxxhdpi": 192,
+    }
+    with Image.open(official) as im:
+        for folder, size in densities.items():
+            dest = root / "Objects/res" / folder / "icon.png"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            resized = im.resize((size, size), Image.Resampling.LANCZOS)
+            resized.save(dest, format="PNG", optimize=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parent.parent)
@@ -58,19 +88,34 @@ def main() -> None:
     if not legacy.exists() or legacy.read_bytes() != official.read_bytes():
         shutil.copyfile(official, legacy)
     print(f"Launcher resource: {legacy.relative_to(root)}")
+
+    # Keep Files/icon.png aligned
+    files_icon = root / "Files/icon.png"
+    if not files_icon.exists() or files_icon.read_bytes() != official.read_bytes():
+        shutil.copyfile(official, files_icon)
+        print(f"Updated Files/icon.png from canonical store artwork")
+
     high, low = make_foreground(header)
+    high_mono, low_mono = make_monochrome(high, low)
+
     for asset, path in (
         (high, root / "icon/mipmap-xxxhdpi/foreground.png"),
         (low, root / "icon/mipmap/foreground.png"),
+        (high_mono, root / "icon/mipmap-xxxhdpi/monochrome.png"),
+        (low_mono, root / "icon/mipmap/monochrome.png"),
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
         asset.save(path, format="PNG", optimize=True)
         print(f"Launcher resource: {path.relative_to(root)}")
+
     xml = root / "icon/values/rotor_launcher_background.xml"
     xml.parent.mkdir(parents=True, exist_ok=True)
     if not xml.exists() or xml.read_text(encoding="utf-8") != BACKGROUND_XML:
         xml.write_text(BACKGROUND_XML, encoding="utf-8", newline="\n")
     print(f"Launcher resource: {xml.relative_to(root)}")
+
+    pre_populate_drawables(root, official)
+    print("Pre-populated Objects/res/drawable* with canonical rotor icons")
 
 
 if __name__ == "__main__":

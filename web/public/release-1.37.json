@@ -1,0 +1,9 @@
+{
+  "version": "1.37",
+  "versionCode": 22,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": null,
+  "verification": "Native monochrome layer and pre-populated canonical fallback drawables configured and gated.",
+  "qaReport": "release_notes_1.37.txt",
+  "androidArtifactStatus": "pending-signed-build"
+}

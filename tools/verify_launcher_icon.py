@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 import zlib
 from pathlib import Path
-from prepare_launcher_icon import make_foreground
+from prepare_launcher_icon import make_foreground, make_monochrome
 
 PNG_SIG = b"\x89PNG\r\n\x1a\n"
 
@@ -23,7 +23,7 @@ def fail(message: str) -> None:
 
 
 def pixels(blob: bytes) -> tuple[tuple[int, int], bytes]:
-    """Decode 8-bit RGB/RGBA/indexed PNG, including lossless AAPT recompression."""
+    """Decode 8-bit RGB/RGBA/indexed PNG, normalizing fully-transparent pixels across palette repackers."""
     if not blob.startswith(PNG_SIG):
         fail("Launcher asset is not PNG")
     pos, idats, palette, alpha = 8, [], b"", b""
@@ -79,18 +79,26 @@ def pixels(blob: bytes) -> tuple[tuple[int, int], bytes]:
                 fail(f"Unsupported PNG filter {filter_type}")
             row[i] = (row[i] + correction) & 255
         if ctype == 6:
-            out.extend(row)
+            for i in range(0, len(row), 4):
+                if row[i + 3] == 0:
+                    out.extend((0, 0, 0, 0))
+                else:
+                    out.extend(row[i:i + 4])
         elif ctype == 2:
             for i in range(0, len(row), 3):
                 out.extend(row[i:i + 3])
                 out.append(255)
         else:
             for idx in row:
-                base = idx * 3
-                if base + 3 > len(palette):
-                    fail("Invalid PNG palette index")
-                out.extend(palette[base:base + 3])
-                out.append(alpha[idx] if idx < len(alpha) else 255)
+                a = alpha[idx] if idx < len(alpha) else 255
+                if a == 0:
+                    out.extend((0, 0, 0, 0))
+                else:
+                    base = idx * 3
+                    if base + 3 > len(palette):
+                        fail("Invalid PNG palette index")
+                    out.extend(palette[base:base + 3])
+                    out.append(a)
         prev = row
     return (w, h), bytes(out)
 
@@ -104,6 +112,7 @@ def check_sources(root: Path) -> None:
         'CreateResource(mipmap-anydpi-v26, ic_launcher.xml,',
         '@color/rotor_launcher_background',
         '@mipmap/foreground',
+        '@mipmap/monochrome',
     )
     for item in required:
         if item not in content:
@@ -114,6 +123,7 @@ def check_sources(root: Path) -> None:
     if pixels(legacy)[0] != (512, 512):
         fail("Official Store launcher image must be 512x512")
     high, low = make_foreground(root / "Files/icon_header.png")
+    high_mono, low_mono = make_monochrome(high, low)
     if (root / "web/public/icon.png").read_bytes() != legacy:
         fail("Web and Play Store source icons diverged")
     if (root / "icon/mipmap/ic_launcher.png").read_bytes() != legacy:
@@ -121,6 +131,8 @@ def check_sources(root: Path) -> None:
     for relative, expected in (
         ("icon/mipmap/foreground.png", low),
         ("icon/mipmap-xxxhdpi/foreground.png", high),
+        ("icon/mipmap/monochrome.png", low_mono),
+        ("icon/mipmap-xxxhdpi/monochrome.png", high_mono),
     ):
         result = BytesIO()
         expected.save(result, format="PNG", optimize=True)
@@ -132,8 +144,8 @@ def check_sources(root: Path) -> None:
         fail("Adaptive launcher background color is missing")
     version = re.search(r"#VersionName:\s*([\d.]+)", content)
     code = re.search(r"#VersionCode:\s*(\d+)", content)
-    if not version or not code or int(code.group(1)) < 21:
-        fail("Android versionCode must exceed published 1.35 (20)")
+    if not version or not code or int(code.group(1)) < 22:
+        fail("Android versionCode must exceed published 1.36 (21)")
     meta = json.loads((root / f"docs/release-{version.group(1)}.json").read_text(encoding="utf-8"))
     web = json.loads((root / "web/package.json").read_text(encoding="utf-8"))
     if meta["versionCode"] != int(code.group(1)) or web["version"] != version.group(1) + ".0":
@@ -143,17 +155,18 @@ def check_sources(root: Path) -> None:
 
 def check_archive(path: Path, root: Path, prefix: str) -> None:
     """Compare the compiled PNG pixels; AAPT2 appends -v4 to density folders."""
-    targets = {
-        "mipmap": ("ic_launcher.png", root / "store/icon.png"),
-        "mipmap-xxxhdpi": ("foreground.png", root / "icon/mipmap-xxxhdpi/foreground.png"),
-    }
+    targets = [
+        ("mipmap", "ic_launcher.png", root / "store/icon.png"),
+        ("mipmap-xxxhdpi", "foreground.png", root / "icon/mipmap-xxxhdpi/foreground.png"),
+        ("mipmap-xxxhdpi", "monochrome.png", root / "icon/mipmap-xxxhdpi/monochrome.png"),
+    ]
     with zipfile.ZipFile(path) as zf:
         names = set(zf.namelist())
         icon_entries = sorted(n for n in names if n.startswith(f"{prefix}res/mipmap"))
         descriptor = f"{prefix}res/mipmap-anydpi-v26/ic_launcher.xml"
         if descriptor not in names:
             fail(f"{path.name}: missing adaptive launcher descriptor {descriptor}; found: {icon_entries}")
-        for folder, (basename, expected_file) in targets.items():
+        for folder, basename, expected_file in targets:
             expression = re.compile(
                 re.escape(f"{prefix}res/{folder}") + r"(?:-v\d+)?/" + re.escape(basename)
             )
@@ -167,6 +180,14 @@ def check_archive(path: Path, root: Path, prefix: str) -> None:
             if pixels(zf.read(entry)) != pixels(expected_file.read_bytes()):
                 fail(f"{path.name}: wrong PACKAGED launcher pixels in {entry}")
             print(f"PASS {path.name}: {entry} decoded pixels match canonical artwork")
+
+        # Verify no default B4A template icon exists in drawables
+        for name in names:
+            if name.endswith("drawable/icon.png") or name.endswith("drawable-hdpi/icon.png"):
+                b4a_hdpi = Path(r"C:\Program Files\Anywhere Software\B4A\hdpi_icon.png")
+                if b4a_hdpi.exists() and pixels(zf.read(name)) == pixels(b4a_hdpi.read_bytes()):
+                    fail(f"{path.name}: packaged default B4A template icon in {name}!")
+
     print(f"PASS {path.name}: Android launcher and adaptive assets validated")
 
 
@@ -178,7 +199,7 @@ def check_aapt(apk: Path, aapt: Path) -> None:
     if not re.search(r"application-icon-\d+:'res/mipmap", badging):
         fail("APK does not advertise a mipmap launcher icon")
     resources = output("dump", "resources")
-    for name in ("mipmap/ic_launcher", "mipmap/foreground", "color/rotor_launcher_background"):
+    for name in ("mipmap/ic_launcher", "mipmap/foreground", "mipmap/monochrome", "color/rotor_launcher_background"):
         if name not in resources:
             fail(f"aapt resources missing {name}")
     print(f"PASS {apk.name}: Android resource table points to adaptive mipmap icon")

@@ -357,7 +357,7 @@ Compressibility effects start near 0.8 to 0.9. Prandtl-Glauert is not valid at o
           <img class="brand-icon" src="${Xa}" alt="RotorCalculator Icon" />
           <div class="brand-title">
             RotorCalculator
-            <span class="version-badge">v1.36</span>
+            <span class="version-badge">v1.37</span>
           </div>
         </div>
         <div class="header-actions">

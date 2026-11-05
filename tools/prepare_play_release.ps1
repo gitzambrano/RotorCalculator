@@ -54,6 +54,12 @@ Get-ChildItem -LiteralPath $Root -File | Where-Object {
 Copy-Item -LiteralPath (Join-Path $Root "Files") -Destination $ProjectDir -Recurse
 Copy-Item -LiteralPath (Join-Path $Root "icon") -Destination $ProjectDir -Recurse
 Copy-Item -LiteralPath (Join-Path $Root "Libraries") -Destination $ProjectDir -Recurse
+$RootRes = Join-Path $Root "Objects/res"
+if (Test-Path -LiteralPath $RootRes) {
+    $ProjRes = Join-Path $ProjectDir "Objects/res"
+    New-Item -Path (Split-Path -Parent $ProjRes) -ItemType Directory -Force | Out-Null
+    Copy-Item -LiteralPath $RootRes -Destination $ProjRes -Recurse
+}
 
 $BuilderArgs = @{
     Project = (Join-Path $ProjectDir "RotorCalculator.b4a")
