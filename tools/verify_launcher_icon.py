@@ -142,21 +142,32 @@ def check_sources(root: Path) -> None:
 
 
 def check_archive(path: Path, root: Path, prefix: str) -> None:
+    """Compare the compiled PNG pixels; AAPT2 appends -v4 to density folders."""
     targets = {
-        f"{prefix}res/mipmap/ic_launcher.png": root / "store/icon.png",
-        f"{prefix}res/mipmap-xxxhdpi/foreground.png": root / "icon/mipmap-xxxhdpi/foreground.png",
+        "mipmap": ("ic_launcher.png", root / "store/icon.png"),
+        "mipmap-xxxhdpi": ("foreground.png", root / "icon/mipmap-xxxhdpi/foreground.png"),
     }
-    descriptor = f"{prefix}res/mipmap-anydpi-v26/ic_launcher.xml"
     with zipfile.ZipFile(path) as zf:
         names = set(zf.namelist())
+        icon_entries = sorted(n for n in names if n.startswith(f"{prefix}res/mipmap"))
+        descriptor = f"{prefix}res/mipmap-anydpi-v26/ic_launcher.xml"
         if descriptor not in names:
-            fail(f"{path.name}: missing adaptive launcher descriptor {descriptor}")
-        for entry, expected_file in targets.items():
-            if entry not in names:
-                fail(f"{path.name}: missing packaged launcher asset {entry}")
+            fail(f"{path.name}: missing adaptive launcher descriptor {descriptor}; found: {icon_entries}")
+        for folder, (basename, expected_file) in targets.items():
+            expression = re.compile(
+                re.escape(f"{prefix}res/{folder}") + r"(?:-v\\d+)?/" + re.escape(basename)
+            )
+            entries = sorted(n for n in icon_entries if expression.fullmatch(n))
+            if len(entries) != 1:
+                fail(
+                    f"{path.name}: expected exactly one packaged {folder}/{basename}, "
+                    f"found {entries}; mipmap entries: {icon_entries}"
+                )
+            entry = entries[0]
             if pixels(zf.read(entry)) != pixels(expected_file.read_bytes()):
                 fail(f"{path.name}: wrong PACKAGED launcher pixels in {entry}")
-    print(f"PASS {path.name}: launcher pixels match official Play Store artwork")
+            print(f"PASS {path.name}: {entry} decoded pixels match canonical artwork")
+    print(f"PASS {path.name}: Android launcher and adaptive assets validated")
 
 
 def check_aapt(apk: Path, aapt: Path) -> None:
