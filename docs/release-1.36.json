@@ -1,0 +1,9 @@
+{
+  "version": "1.36",
+  "versionCode": 21,
+  "package": "flightdyn.rotorcalculator",
+  "apkSha256": null,
+  "verification": "Canonical launcher resources configured and gated. Signed APK/AAB compilation and on-device verification pending.",
+  "qaReport": "release_notes_1.36.txt",
+  "androidArtifactStatus": "pending-signed-build"
+}
