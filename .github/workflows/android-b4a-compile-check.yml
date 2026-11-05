@@ -142,9 +142,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Compiled APK icon gate failed." }
           Write-Host "QA APK ready: $($apk.FullName) ($($apk.Length) bytes)"
       - name: Store temporary-signed QA APK
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rotorcalculator-1.36-temp-signed-qa-apk
           path: Objects/**/*.apk
-          retention-days: 3
+          retention-days: 7
+          if-no-files-found: warn
