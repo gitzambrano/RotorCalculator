@@ -6,7 +6,7 @@ Developed by Gustavo José Zambrano.
 
 - **Web Application:** [Open RotorCalculator](https://gitzambrano.github.io/RotorCalculator/)
 - **Google Play:** [RotorCalculator on Google Play](https://play.google.com/store/apps/details?id=flightdyn.rotorcalculator)
-- **Next Android release:** 1.35 (versionCode 20; signed APK/AAB build and Play upload pending). Web source and bundle target: 1.35.0.
+- **Next Android release:** 1.36 (versionCode 21; signed APK/AAB build and Play upload pending). Web source and bundle target: 1.36.0.
 
 ---
 
@@ -127,7 +127,17 @@ All modifications must pass formal automated test suites:
 
 GitHub Actions runs only the lightweight checks of steps 1 and 2 (`verify_engine.py`, `pytest`, `tsc --noEmit`, `npm test`). B4A compilation, emulator UI QA (`tools/ci_ui_qa.sh`) and visual verification run offline. `python tools/play_status.py` shows the Google Play bundles and tracks without changing anything.
 
-### Preparing the signed Android 1.35 submission
+### Preparing the signed Android 1.36 submission
+
+The canonical Play Store launcher artwork is `store/icon.png` (identical to
+`web/public/icon.png`); `web/public/icon-maskable-512.png` is the adaptive
+foreground. `tools/prepare_launcher_icon.py` generates B4A `icon/` resources
+before scripted builds (this output is deliberately Git-ignored). For a manual
+B4A IDE compilation run `python tools/prepare_launcher_icon.py` first.
+
+`tools/verify_launcher_icon.py` checks source images and verifies **decoded
+pixels actually packaged** in the APK and AAB against the canonical artwork;
+wrong or missing icons fail the release gate.
 
 On a Windows workstation with B4A, JDK, Android SDK, the original Play upload keystore, and B4A dependencies, run from the exact checked-out `main` source. **Do not place signing passwords, keystores, or service-account JSON in Git.**
 
@@ -140,12 +150,12 @@ $env:ANDROID_HOME = "C:\Android\sdk"
 .\tools\prepare_play_release.ps1
 ```
 
-The script checks Android/web/release version parity, compiles a **signed APK and a signed AAB**, verifies APK metadata and both signatures, then generates a SHA-256 manifest in the ignored `scratch/release-1.35/artifacts/` directory. Complete Gate 2 device/emulator QA before uploading.
+The script checks Android/web/release version parity, compiles a **signed APK and a signed AAB**, verifies APK metadata and both signatures, then generates a SHA-256 manifest in the ignored `scratch/release-1.36/artifacts/` directory. Complete Gate 2 device/emulator QA before uploading.
 
 To validate a candidate upload (requires your private Play service-account key), use:
 
 ```powershell
-python tools/upload_playstore.py --aab scratch/release-1.35/artifacts/RotorCalculator-1.35-signed.aab --track internal --status draft --validate-only
+python tools/upload_playstore.py --aab scratch/release-1.36/artifacts/RotorCalculator-1.36-signed.aab --track internal --status draft --validate-only
 ```
 
 Keep the release in draft and submit to a Google Play track only after the package has passed validation. The source repository cannot create a legitimately signed AAB without the existing private upload key and licensed B4A build environment.
