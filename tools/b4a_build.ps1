@@ -35,6 +35,19 @@ $B4ABuilder = (Resolve-Path $B4ABuilder).Path
 $ProjectPath = (Resolve-Path $Project).Path
 $BaseFolder = Split-Path -Parent $ProjectPath
 
+# B4A reads additional launcher resources from <project>\icon.
+# Generate them before every full-tree build; staged release projects already carry them.
+$SourceStoreIcon = Join-Path $BaseFolder "store\icon.png"
+$SourceMaskableIcon = Join-Path $BaseFolder "web\public\icon-maskable-512.png"
+$LauncherLegacyIcon = Join-Path $BaseFolder "icon\mipmap\ic_launcher.png"
+if ((Test-Path -LiteralPath $SourceStoreIcon -PathType Leaf) -and
+    (Test-Path -LiteralPath $SourceMaskableIcon -PathType Leaf)) {
+    & python (Join-Path $PSScriptRoot "prepare_launcher_icon.py") --root $BaseFolder
+    if ($LASTEXITCODE -ne 0) { throw "Canonical launcher icon generation failed." }
+} elseif (-not (Test-Path -LiteralPath $LauncherLegacyIcon -PathType Leaf)) {
+    throw "Android launcher icon resources missing in staged source: $LauncherLegacyIcon"
+}
+
 $DefaultIni = Join-Path $env:APPDATA "Anywhere Software\Basic4android\b4xV5.ini"
 if (-not (Test-Path $DefaultIni)) {
     throw "B4A INI não foi encontrado em: $DefaultIni"
