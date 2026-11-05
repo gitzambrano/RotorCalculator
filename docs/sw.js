@@ -1,11 +1,11 @@
-const CACHE_NAME = "rotorcalculator-web-1.35.0-137e43bbdb";
+const CACHE_NAME = "rotorcalculator-web-1.36.0-2981712e5a";
 const PRECACHE = [
   "./",
   "./.nojekyll",
   "./android-chrome-192x192.png",
   "./android-chrome-512x512.png",
   "./apple-touch-icon.png",
-  "./assets/index-QZaZe-e0.js",
+  "./assets/index-9tDzHoAE.js",
   "./assets/style-DUgzAyeH.css",
   "./favicon-16x16.png",
   "./favicon-32x32.png",
@@ -27,7 +27,8 @@ const PRECACHE = [
   "./privacy_policy_sepia.html",
   "./release-1.33.json",
   "./release-1.34.json",
-  "./release-1.35.json"
+  "./release-1.35.json",
+  "./release-1.36.json"
 ];
 const APP_SHELL = "./index.html";
 
