@@ -38,10 +38,10 @@ $BaseFolder = Split-Path -Parent $ProjectPath
 # B4A reads additional launcher resources from <project>\icon.
 # Generate them before every full-tree build; staged release projects already carry them.
 $SourceStoreIcon = Join-Path $BaseFolder "store\icon.png"
-$SourceMaskableIcon = Join-Path $BaseFolder "web\public\icon-maskable-512.png"
+$SourceHeaderEmblem = Join-Path $BaseFolder "Files\icon_header.png"
 $LauncherLegacyIcon = Join-Path $BaseFolder "icon\mipmap\ic_launcher.png"
 if ((Test-Path -LiteralPath $SourceStoreIcon -PathType Leaf) -and
-    (Test-Path -LiteralPath $SourceMaskableIcon -PathType Leaf)) {
+    (Test-Path -LiteralPath $SourceHeaderEmblem -PathType Leaf)) {
     & python (Join-Path $PSScriptRoot "prepare_launcher_icon.py") --root $BaseFolder
     if ($LASTEXITCODE -ne 0) { throw "Canonical launcher icon generation failed." }
 } elseif (-not (Test-Path -LiteralPath $LauncherLegacyIcon -PathType Leaf)) {
