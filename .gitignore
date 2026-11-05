@@ -13,6 +13,8 @@ temp_ui.xml
 tests/screenshots/
 
 # B4A Build intermediates
+# Deterministic output from tools/prepare_launcher_icon.py
+icon/
 Objects/
 AutoBackups/
 
