@@ -1,0 +1,12 @@
+<en-US>
+RotorCalculator 1.36.
+Corrected the Android launcher icon to match the official Play Store icon.
+Added an adaptive icon for current Android launchers.
+No changes to aerodynamic calculations.
+</en-US>
+<pt-BR>
+RotorCalculator 1.36.
+Corrigido o ícone instalado para corresponder ao ícone oficial da Play Store.
+Adicionado ícone adaptativo para o Android.
+Sem alterações nos cálculos aerodinâmicos.
+</pt-BR>
