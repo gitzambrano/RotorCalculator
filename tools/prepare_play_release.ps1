@@ -37,6 +37,12 @@ if (-not $AndroidSdk -or -not (Test-Path -LiteralPath $AndroidSdk -PathType Cont
     throw "Android SDK not found. Configure ANDROID_HOME or ANDROID_SDK_ROOT."
 }
 
+# Required source gate: always construct launcher icons from the official store artwork.
+& python (Join-Path $PSScriptRoot "prepare_launcher_icon.py") --root $Root
+if ($LASTEXITCODE -ne 0) { throw "Unable to generate canonical Android launcher icons." }
+& python (Join-Path $PSScriptRoot "verify_launcher_icon.py") --root $Root
+if ($LASTEXITCODE -ne 0) { throw "Android launcher source verification failed." }
+
 $Staging = Join-Path $Root ("scratch\release-" + $Version)
 $ProjectDir = Join-Path $Staging "source"
 $OutputDir = Join-Path $Staging "artifacts"
@@ -46,6 +52,7 @@ Get-ChildItem -LiteralPath $Root -File | Where-Object {
     $_.Extension -in @(".b4a", ".bas", ".meta")
 } | Copy-Item -Destination $ProjectDir
 Copy-Item -LiteralPath (Join-Path $Root "Files") -Destination $ProjectDir -Recurse
+Copy-Item -LiteralPath (Join-Path $Root "icon") -Destination $ProjectDir -Recurse
 Copy-Item -LiteralPath (Join-Path $Root "Libraries") -Destination $ProjectDir -Recurse
 
 $BuilderArgs = @{
@@ -101,6 +108,11 @@ if ($LASTEXITCODE -ne 0 -or (-not (($JarOutput | Out-String) -match "jar verifie
     throw "AAB signing verification failed: $($JarOutput | Out-String)"
 }
 
+# Release gate: compare the actual PNG pixels in the built APK/AAB with
+# store/icon.png; fail if the old or wrong launcher icon was packaged.
+& python (Join-Path $PSScriptRoot "verify_launcher_icon.py") --root $Root --apk $Apk --aapt $Aapt.FullName --aab $Aab
+if ($LASTEXITCODE -ne 0) { throw "Compiled Android launcher icon verification failed; abort release." }
+
 $Manifest = [ordered]@{
     version = $Version
     versionCode = [int]$VersionCode
@@ -110,7 +122,7 @@ $Manifest = [ordered]@{
     aab = (Split-Path $Aab -Leaf)
     aabSha256 = (Get-FileHash -LiteralPath $Aab -Algorithm SHA256).Hash.ToLowerInvariant()
     sourceRevision = ((git -C $Root rev-parse HEAD) | Out-String).Trim()
-    verified = "apk-signature,apk-metadata,aab-signature"
+    verified = "apk-signature,apk-metadata,aab-signature,launcher-source,launcher-apk,launcher-aab"
     uiEmulatorQa = "pending"
     playUpload = "not-started"
 }
