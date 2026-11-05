@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from io import BytesIO
 import json
 import re
 import struct
@@ -12,6 +13,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 import zlib
 from pathlib import Path
+from prepare_launcher_icon import make_foreground
 
 PNG_SIG = b"\x89PNG\r\n\x1a\n"
 
@@ -109,18 +111,21 @@ def check_sources(root: Path) -> None:
     if 'SetApplicationAttribute(android:icon, "@drawable/icon")' in content:
         fail("Stale drawable icon is still declared as Android launcher")
     legacy = (root / "store/icon.png").read_bytes()
-    maskable = (root / "web/public/icon-maskable-512.png").read_bytes()
-    if pixels(legacy)[0] != (512, 512) or pixels(maskable)[0] != (512, 512):
-        fail("Canonical launcher images must be 512x512")
+    if pixels(legacy)[0] != (512, 512):
+        fail("Official Store launcher image must be 512x512")
+    high, low = make_foreground(root / "Files/icon_header.png")
     if (root / "web/public/icon.png").read_bytes() != legacy:
         fail("Web and Play Store source icons diverged")
+    if (root / "icon/mipmap/ic_launcher.png").read_bytes() != legacy:
+        fail("Generated legacy launcher differs from official Store image")
     for relative, expected in (
-        ("icon/mipmap/ic_launcher.png", legacy),
-        ("icon/mipmap/foreground.png", maskable),
-        ("icon/mipmap-xxxhdpi/foreground.png", maskable),
+        ("icon/mipmap/foreground.png", low),
+        ("icon/mipmap-xxxhdpi/foreground.png", high),
     ):
-        if (root / relative).read_bytes() != expected:
-            fail(f"Missing or stale generated launcher resource: {relative}")
+        result = BytesIO()
+        expected.save(result, format="PNG", optimize=True)
+        if pixels((root / relative).read_bytes()) != pixels(result.getvalue()):
+            fail(f"Generated adaptive layer is missing or stale: {relative}")
     color_file = root / "icon/values/rotor_launcher_background.xml"
     colors = ET.parse(color_file).getroot()
     if colors.find("color[@name='rotor_launcher_background']") is None:
@@ -139,7 +144,7 @@ def check_sources(root: Path) -> None:
 def check_archive(path: Path, root: Path, prefix: str) -> None:
     targets = {
         f"{prefix}res/mipmap/ic_launcher.png": root / "store/icon.png",
-        f"{prefix}res/mipmap-xxxhdpi/foreground.png": root / "web/public/icon-maskable-512.png",
+        f"{prefix}res/mipmap-xxxhdpi/foreground.png": root / "icon/mipmap-xxxhdpi/foreground.png",
     }
     descriptor = f"{prefix}res/mipmap-anydpi-v26/ic_launcher.xml"
     with zipfile.ZipFile(path) as zf:
