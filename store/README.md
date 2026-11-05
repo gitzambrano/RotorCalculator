@@ -6,7 +6,7 @@ The automated publication script `tools/upload_playstore.py` interacts directly 
 
 ## 1. Store Listing Assets
 
-- `icon.png`: Official 512 × 512 Google Play and Android legacy launcher image. `web/public/icon.png` must be byte-identical. `web/public/icon-maskable-512.png` supplies the adaptive foreground. `tools/prepare_launcher_icon.py` generates the B4A icon resource tree from these inputs.
+- `icon.png`: Official 512 × 512 Google Play and Android legacy launcher image. `web/public/icon.png` must be byte-identical. `Files/icon_header.png` supplies the transparent adaptive rotor emblem. `tools/prepare_launcher_icon.py` generates the B4A icon resource tree from these inputs.
 - `feature-graphic.png`: Official 1024 × 500 feature graphic, generated via `python tools/generate_store_feature.py`.
 - `listing-en-US.json`: Production title, short description, and full description matching application capabilities.
 - `phone-screenshots/`: Real native Android device captures across standard phone form factors.
