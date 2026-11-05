@@ -155,7 +155,7 @@ def check_archive(path: Path, root: Path, prefix: str) -> None:
             fail(f"{path.name}: missing adaptive launcher descriptor {descriptor}; found: {icon_entries}")
         for folder, (basename, expected_file) in targets.items():
             expression = re.compile(
-                re.escape(f"{prefix}res/{folder}") + r"(?:-v\\d+)?/" + re.escape(basename)
+                re.escape(f"{prefix}res/{folder}") + r"(?:-v\d+)?/" + re.escape(basename)
             )
             entries = sorted(n for n in icon_entries if expression.fullmatch(n))
             if len(entries) != 1:
