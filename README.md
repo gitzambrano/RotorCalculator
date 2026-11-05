@@ -130,9 +130,9 @@ GitHub Actions runs only the lightweight checks of steps 1 and 2 (`verify_engine
 ### Preparing the signed Android 1.36 submission
 
 The canonical Play Store launcher artwork is `store/icon.png` (identical to
-`web/public/icon.png`); `web/public/icon-maskable-512.png` is the adaptive
-foreground. `tools/prepare_launcher_icon.py` generates B4A `icon/` resources
-before scripted builds (this output is deliberately Git-ignored). For a manual
+`web/public/icon.png`); `Files/icon_header.png` supplies the transparent
+rotor emblem for the adaptive foreground (with safe-zone padding). `tools/prepare_launcher_icon.py` generates B4A `icon/` resources
+before scripted builds using Pillow (this output is deliberately Git-ignored). For a manual
 B4A IDE compilation run `python tools/prepare_launcher_icon.py` first.
 
 `tools/verify_launcher_icon.py` checks source images and verifies **decoded
